@@ -18,6 +18,7 @@ interface WorkspaceState {
   leaderboardOpen: boolean
   notificationSenderOpen: boolean
   settingsPanelOpen: boolean
+  readinessExpanded: boolean
   teamLocationsVisible: boolean
   impersonatedTeamId: string | null
 }
@@ -38,6 +39,8 @@ interface WorkspaceActions {
   toggleLeaderboard: () => void
   toggleNotificationSender: () => void
   toggleSettingsPanel: () => void
+  setSettingsPanelOpen: (open: boolean) => void
+  setReadinessExpanded: (open: boolean) => void
   toggleTeamLocations: () => void
   impersonateTeam: (id: string | null) => void
   reset: () => void
@@ -58,6 +61,7 @@ const initialState: WorkspaceState = {
   leaderboardOpen: false,
   notificationSenderOpen: false,
   settingsPanelOpen: false,
+  readinessExpanded: false,
   teamLocationsVisible: false,
   impersonatedTeamId: null,
 }
@@ -121,6 +125,8 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
   toggleLeaderboard: () => set((s) => ({ leaderboardOpen: !s.leaderboardOpen })),
   toggleNotificationSender: () => set((s) => ({ notificationSenderOpen: !s.notificationSenderOpen })),
   toggleSettingsPanel: () => set((s) => ({ settingsPanelOpen: !s.settingsPanelOpen })),
+  setSettingsPanelOpen: (open) => set({ settingsPanelOpen: open }),
+  setReadinessExpanded: (open) => set({ readinessExpanded: open }),
   toggleTeamLocations: () => set((s) => ({ teamLocationsVisible: !s.teamLocationsVisible })),
   impersonateTeam: (id) => set({ impersonatedTeamId: id }),
   reset: () => set(initialState),

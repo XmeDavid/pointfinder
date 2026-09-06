@@ -5,6 +5,7 @@ import type { CreateBaseDto } from '@/lib/api/bases'
 export function useCreateBase(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['base', 'create'],
     mutationFn: (dto: Omit<CreateBaseDto, 'gameId'>) =>
       basesApi.create({ ...dto, gameId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bases', gameId] }),
@@ -14,6 +15,7 @@ export function useCreateBase(gameId: string) {
 export function useUpdateBase(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['base', 'update'],
     mutationFn: ({ baseId, dto }: { baseId: string; dto: Partial<CreateBaseDto> }) =>
       basesApi.update(baseId, { ...dto, gameId }),
     onSuccess: () => {

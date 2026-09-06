@@ -5,6 +5,7 @@ import type { Assignment } from '@/types'
 export function useCreateAssignment(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['assignments', 'create'],
     mutationFn: (dto: CreateAssignmentDto) =>
       assignmentsApi.create({ ...dto, gameId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assignments', gameId] }),
@@ -14,6 +15,7 @@ export function useCreateAssignment(gameId: string) {
 export function useSetAssignments(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['assignments', 'set'],
     mutationFn: (assignments: Omit<Assignment, 'id'>[]) =>
       assignmentsApi.bulkSet(gameId, assignments),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assignments', gameId] }),

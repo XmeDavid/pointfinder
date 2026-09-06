@@ -1595,5 +1595,16 @@
     "locationRadius": "Location radii between 5 and 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Location rings do not overlap",
     "legacyAppsNote": "The legacy iOS and Android apps cannot complete QR or location bases."
+  },
+  "tutorials": {
+    "common": {
+      "stepOf": "Step {{n}} of {{total}}",
+      "next": "Next",
+      "gotIt": "Got it",
+      "later": "I'll do it later",
+      "close": "Close tutorial",
+      "resume": "Resume",
+      "pillLabel": "Tutorial · step {{n}} of {{total}}"
+    }
   }
 }

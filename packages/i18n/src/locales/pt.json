@@ -1595,5 +1595,16 @@
     "locationRadius": "Raios de localização entre 5 e 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Os anéis de localização não se sobrepõem",
     "legacyAppsNote": "As apps antigas de iOS e Android não conseguem concluir bases QR ou de localização."
+  },
+  "tutorials": {
+    "common": {
+      "stepOf": "Passo {{n}} de {{total}}",
+      "next": "Seguinte",
+      "gotIt": "Percebi",
+      "later": "Faço isto mais tarde",
+      "close": "Fechar tutorial",
+      "resume": "Retomar",
+      "pillLabel": "Tutorial · passo {{n}} de {{total}}"
+    }
   }
 }

@@ -64,18 +64,22 @@ function ModeButton({
   isActive,
   onClick,
   sizeClass,
+  testId,
 }: {
   Icon: typeof Hammer;
   label: string;
   isActive: boolean;
   onClick: () => void;
   sizeClass: string;
+  testId: string;
 }) {
   return (
     <button
       onClick={onClick}
       title={label}
       aria-label={label}
+      aria-pressed={isActive}
+      data-testid={testId}
       className={cn(
         "relative flex items-center justify-center rounded-md transition-colors cursor-pointer",
         sizeClass,
@@ -128,6 +132,7 @@ export function IconRail({ showModes }: IconRailProps) {
                 isActive={store.mode === mode}
                 onClick={() => store.setMode(mode)}
                 sizeClass="w-8 h-8"
+                testId={`mode-${mode}`}
               />
             ))}
           </div>
@@ -214,6 +219,7 @@ export function IconRail({ showModes }: IconRailProps) {
                 isActive={store.mode === mode}
                 onClick={() => store.setMode(mode)}
                 sizeClass="w-full h-11"
+                testId={`mode-${mode}`}
               />
             ))}
           </>

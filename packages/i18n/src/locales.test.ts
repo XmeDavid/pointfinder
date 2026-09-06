@@ -64,3 +64,28 @@ describe('check-in method vocabulary', () => {
     ).toBe('Tags')
   })
 })
+
+describe('tutorial chrome vocabulary', () => {
+  const contractKeys = [
+    'tutorials.common.stepOf',
+    'tutorials.common.next',
+    'tutorials.common.gotIt',
+    'tutorials.common.later',
+    'tutorials.common.close',
+    'tutorials.common.resume',
+    'tutorials.common.pillLabel',
+  ]
+
+  it.each(['en', 'pt', 'de'] as const)('%s carries every tutorial chrome key', (lang) => {
+    const paths = new Set(keyPaths(resources[lang].translation as Record<string, unknown>))
+    for (const key of contractKeys) expect(paths.has(key)).toBe(true)
+  })
+
+  it.each(['en', 'pt', 'de'] as const)('%s interpolates the step counter', (lang) => {
+    const bundle = resources[lang].translation as Record<string, Record<string, Record<string, string>>>
+    expect(bundle.tutorials.common.stepOf).toContain('{{n}}')
+    expect(bundle.tutorials.common.stepOf).toContain('{{total}}')
+    expect(bundle.tutorials.common.pillLabel).toContain('{{n}}')
+    expect(bundle.tutorials.common.pillLabel).toContain('{{total}}')
+  })
+})

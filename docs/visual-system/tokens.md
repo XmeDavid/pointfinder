@@ -185,6 +185,32 @@ Blur rules:
 - Avoid nested glass panels.
 - Native platforms should prefer platform materials only when they improve readability.
 
+Scrims:
+
+| Token | Use |
+|---|---|
+| `color.surface.scrim` | Modal dialogs and drawers: the operator must deal with the overlay first |
+| `color.surface.tourScrim` | Guided tutorial spotlight: lighter, because the tutorial invites the operator to keep using the screen underneath |
+
+## Layering
+
+One ladder, shared by every operator surface. Do not invent an intermediate
+value; pick the rung that matches the meaning.
+
+| Layer | Class | What sits here |
+|---|---|---|
+| 30 | `z-30` | Floating map bars and workspace controls |
+| 40 | `z-40` | Desktop icon rail |
+| 50 | `z-50` | Drawers, dialogs, the mobile tab bar |
+| 60 | `z-[60]` | Portalled menus that must escape a scrolling rail |
+| 70 | `z-[70]` | Tutorial layer: spotlight, coach bubble, collapsed pill |
+| 100 | `z-[100]` | Toasts |
+
+The tutorial layer is above the drawer and portalled menus because it teaches
+the operator how to use them, and below toasts because a save confirmation must
+never be hidden by a coach mark. Everything on the tutorial layer that is not a
+control is `pointer-events-none`.
+
 ## Icons
 
 Use platform-standard icon systems:

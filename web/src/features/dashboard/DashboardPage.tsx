@@ -105,6 +105,7 @@ export function DashboardPage() {
       {/* Empty state */}
       {!isLoading && !isError && games && games.length === 0 && (
         <EmptyState
+          data-testid="dashboard-empty-state"
           title={t('dashboard.noGamesYet')}
           description={t('dashboard.createYourFirst')}
           action={

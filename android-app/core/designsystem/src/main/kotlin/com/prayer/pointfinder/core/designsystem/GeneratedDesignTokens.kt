@@ -21,6 +21,8 @@ object PFColors {
     val SurfaceMapDark = Color(0xFF101a14)
     val SurfaceScrimLight = Color(0x99101712)
     val SurfaceScrimDark = Color(0xb3000000)
+    val SurfaceTourScrimLight = Color(0x4d101712)
+    val SurfaceTourScrimDark = Color(0x80000000)
     val ContentPrimaryLight = Color(0xFF172019)
     val ContentPrimaryDark = Color(0xFFeef4ef)
     val ContentSecondaryLight = Color(0xFF4f5e53)

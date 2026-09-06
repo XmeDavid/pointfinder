@@ -474,3 +474,54 @@ happens on the map, in the logbook, or at another base is never missed. Notices
 come from `web/src/app/player/arrivalNotices.ts`; the component holds no timers and
 adds no entrance animation, so reduced-motion behaviour is unchanged. Test id
 `player-arrival-notice`.
+
+## Guided tutorials (2026-09-06)
+
+Component: Spotlight
+Status: canonical
+Location: `web/src/components/tour/Spotlight.tsx`
+Modes: Operator Setup, Operator Command
+States: no anchor (renders nothing), small control anchor, full-width map anchor,
+reduced motion (no fade)
+Notes: A body-level portal on the `z-[70]` tutorial layer holding one SVG whose
+mask is the viewport minus a rounded rectangle over the anchor rect, padded 8 px.
+Fills with `var(--pf-color-surface-tourScrim)`, the lighter tour scrim, so light
+and dark both dim without hiding the map. `pointer-events-none` end to end — the
+tour dims, it never blocks, and the operator can wander off at any moment. Test
+ids `tour-spotlight` and `tour-spotlight-hole`. Preview: Storybook
+`Tutorials/Spotlight`. See `docs/specs/2026-09-06-operator-tutorials-design.md`.
+
+Component: CoachBubble
+Status: canonical
+Location: `web/src/components/tour/CoachBubble.tsx`, `web/src/components/tour/placement.ts`
+Modes: Operator Setup, Operator Command
+States: default (no buttons — the step completes by doing the thing), ack step
+with Next, final step with Got it, with aside, with "I'll do it later", long
+German copy, desktop floating (right / left / below collision flipping), desktop
+centred (no anchor), mobile bottom sheet, reduced motion, inline (stories and
+harness)
+Notes: Built on `OverlayPanel` so the blur comes from the canonical surface
+rather than a feature file. `role="dialog"`, `aria-live="polite"`, labelled by
+its own title. It takes focus when a step starts unless the operator is typing
+in a field, in which case the field keeps focus. Escape pauses only while focus
+is inside the bubble, so it never fights the drawer and dialogs that also close
+on Escape. Placement is the pure `placeBubble` helper — right, else left, else
+below, always clamped to the `--safe-*` insets exactly like the floating menu in
+`components/ui/dropdown-menu.tsx`. Below `md` it becomes a bottom sheet reserving
+the 56 px mobile tab bar, capped at 45dvh with internal scroll so German copy
+scrolls instead of clipping. Test ids `tour-bubble`, `tour-bubble-title`,
+`tour-bubble-body`, `tour-bubble-aside`, `tour-next`, `tour-later`, `tour-close`.
+Preview: Storybook `Tutorials/CoachBubble` and `/dev/visual-system`.
+
+Component: TourPill
+Status: canonical
+Location: `web/src/components/tour/TourPill.tsx`
+Modes: Operator Setup, Operator Command
+States: mid-scenario, last step, paused, inline
+Notes: The collapsed tour. Shown when the operator paused, or when the current
+anchor is not rendered or is fully off screen, so a tutorial never points at
+nothing. Bottom centre, clear of the mobile tab bar, on the `z-[70]` layer.
+Resuming navigates back to the step's screen if the operator wandered, then
+re-runs the step's `prepare`, which is what brings the anchor back. Test ids
+`tour-pill`, `tour-pill-resume`. Preview: Storybook `Tutorials/TourPill` and
+`/dev/visual-system`.

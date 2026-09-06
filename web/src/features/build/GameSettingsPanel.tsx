@@ -308,7 +308,7 @@ export default function GameSettingsPanel({
               <label htmlFor="enforce-base-order" className="text-sm font-medium text-foreground">
                 {t('baseOrder.enforce', { defaultValue: 'Enforce base order' })}
               </label>
-              <Switch id="enforce-base-order" checked={game.enforceBaseOrder ?? false}
+              <Switch id="enforce-base-order" data-testid="enforce-base-order-switch" checked={game.enforceBaseOrder ?? false}
                 disabled={game.status !== 'setup' || updateGame.isPending}
                 onCheckedChange={(enforceBaseOrder) => {
                   setBaseOrderError(false)

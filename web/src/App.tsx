@@ -18,6 +18,9 @@ import { GuestGuard } from "@/lib/auth/GuestGuard";
 import { IconRail } from "@/components/layout/IconRail";
 import { FrozenBlocker } from "@/components/feedback/FrozenBlocker";
 import { BillingWarningBanner } from "@/components/feedback/BillingWarningBanner";
+import { TourHost } from "@/features/tutorials/TourHost";
+import { subscribeMutationLog } from "@/features/tutorials/mutationLog";
+import { useTourStore } from "@/features/tutorials/store";
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded feature pages
@@ -172,10 +175,14 @@ useAuthStore.subscribe((state, prevState) => {
   }
 });
 
+// Successful mutations feed the tutorial engine, so a step can say "the base
+// save succeeded after this step started". Lives for the life of the module.
+subscribeMutationLog(queryClient, (key, at) => useTourStore.getState().recordSuccess(key, at));
+
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
-const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><PushIntake /><TagIntake /></>, children: [
+const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><PushIntake /><TagIntake /><TourHost /></>, children: [
   ...playerRoutes,
   { path: "/tag/*", element: null },
   // ── Public routes ──────────────────────────────────────────────────────

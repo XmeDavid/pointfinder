@@ -5,6 +5,7 @@ import type { CreateChallengeDto } from '@/lib/api/challenges'
 export function useCreateChallenge(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['challenge', 'create'],
     mutationFn: (dto: Omit<CreateChallengeDto, 'gameId'>) =>
       challengesApi.create({ ...dto, gameId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['challenges', gameId] }),
@@ -14,6 +15,7 @@ export function useCreateChallenge(gameId: string) {
 export function useUpdateChallenge(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['challenge', 'update'],
     mutationFn: ({ challengeId, dto }: { challengeId: string; dto: Partial<CreateChallengeDto> }) =>
       challengesApi.update(challengeId, { ...dto, gameId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['challenges', gameId] }),

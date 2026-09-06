@@ -350,12 +350,13 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             <label className="block text-xs text-muted-foreground mb-1">
               Answer Type
             </label>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5" data-testid="answer-type-group">
               {ANSWER_TYPES.map((at) => (
                 <button
                   key={at.value}
                   type="button"
                   onClick={() => setLocalAnswerType(at.value)}
+                  aria-pressed={localAnswerType === at.value}
                   data-testid={`answer-type-${at.value}`}
                   className={cn(
                     'px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
@@ -375,6 +376,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             <button
               type="button"
               onClick={() => setLocalAutoValidate(!localAutoValidate)}
+              aria-pressed={localAutoValidate}
               data-testid="auto-validate-toggle"
               className={cn(
                 'px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
@@ -611,6 +613,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         <button
           type="button"
           onClick={() => setLocalLocationBound(!localLocationBound)}
+          aria-pressed={localLocationBound}
           data-testid="location-bound-toggle"
           className={cn(
             'px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',

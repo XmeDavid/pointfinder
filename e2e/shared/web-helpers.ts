@@ -30,11 +30,11 @@ export async function navigateToGameWorkspace(
 
 /**
  * Switch workspace mode by clicking the mode button in the IconRail.
+ * Both the desktop rail and the mobile tab bar carry `mode-{mode}`; only the
+ * laid-out one is visible, so pick that.
  */
 export async function switchWorkspaceMode(page: Page, mode: WorkspaceMode) {
-  const label = mode.charAt(0).toUpperCase() + mode.slice(1); // Build, Command, Review, Results
-  // Desktop IconRail has mode buttons with aria-label matching the mode name
-  const modeBtn = page.getByRole('button', { name: label, exact: true }).first();
+  const modeBtn = page.locator(`[data-testid="mode-${mode}"]:visible`).first();
   await expect(modeBtn).toBeVisible({ timeout: 5_000 });
   await modeBtn.click();
   // Small wait for mode transition animation

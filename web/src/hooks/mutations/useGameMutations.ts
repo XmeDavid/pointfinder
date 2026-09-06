@@ -6,6 +6,7 @@ import type { Game, GameStatus } from '@/types'
 export function useCreateGame() {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['game', 'create'],
     mutationFn: (dto: CreateGameDto) => gamesApi.create(dto),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['games'] }),
   })
@@ -14,6 +15,7 @@ export function useCreateGame() {
 export function useUpdateGame(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['game', 'update'],
     mutationFn: (dto: Partial<CreateGameDto>) => {
       const current = qc.getQueryData<Game>(['game', gameId])
       const merged: Partial<CreateGameDto> = current
@@ -53,6 +55,7 @@ export function useDeleteGame() {
 export function useUpdateGameStatus(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['game', 'status'],
     mutationFn: ({ status, resetProgress }: { status: GameStatus; resetProgress?: boolean }) =>
       gamesApi.updateStatus(gameId, status, resetProgress),
     onSuccess: () => {

@@ -259,3 +259,37 @@ overlap. Drawer actions wrap separately from its scrollable tab row. Bases,
 challenges, teams, and stages use `ListDetailLayout` to show one pane at a time on
 phones and preserve the split view on desktop. Include a setup-game fixture with
 the native NFC button; a browser-only live-game fixture misses these states.
+
+## Guided Tutorial
+
+Tutorials teach by doing, on the operator's own game, not in a sandbox. A
+scenario is an ordered list of steps; each step spotlights one existing element
+by its `data-testid` and explains what it does and what else the screen offers.
+
+Non-blocking is the rule. The scrim dims with the lighter tour scrim token, it
+never intercepts a click, and the operator can ignore the bubble, wander to
+another mode, and come back. Steps advance when real state changes — a base
+exists, a field has a value, a mutation succeeded — not because someone pressed
+Next. Next exists only for steps that are pure explanation. A step that is
+already satisfied is skipped rather than asked for again; an explanation the
+operator has not read is never skipped. Typed input counts only once it settles
+for half a second, so the bubble never moves on mid-word, and it never takes
+focus away from a field the operator is typing in.
+
+Prepare, do not perform. A step may reveal its anchor — switch mode, open a
+drawer tab, expand the readiness panel, open settings, select an entity — and
+nothing else. It never creates a base, links a tag, saves a form, or changes game
+status. The operator performs every domain action themselves, which is the whole
+point of teaching on a real game.
+
+Never point at nothing. If the anchor is not rendered or is entirely off screen,
+the bubble collapses to the pill; resuming from the pill returns to the step's
+screen and re-runs the step's prepare to bring the anchor back. Anchors are
+tracked through DOM mutations and for a short settle window after any trigger,
+so a drawer that springs open is followed, not guessed.
+
+On phones the bubble is a bottom sheet above the 56 px tab bar, capped in height
+with internal scroll, so the longest German step copy scrolls instead of clipping
+its buttons; on desktop it floats beside the anchor and flips against the
+viewport and the safe-area insets. Both live on the `z-[70]` tutorial layer:
+above drawers and menus, below toasts.

@@ -1595,5 +1595,16 @@
     "locationRadius": "Standortradien zwischen 5 und 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Standortringe überschneiden sich nicht",
     "legacyAppsNote": "Die alten iOS- und Android-Apps können QR- und Standort-Basen nicht abschließen."
+  },
+  "tutorials": {
+    "common": {
+      "stepOf": "Schritt {{n}} von {{total}}",
+      "next": "Weiter",
+      "gotIt": "Verstanden",
+      "later": "Mache ich später",
+      "close": "Tutorial schließen",
+      "resume": "Fortsetzen",
+      "pillLabel": "Tutorial · Schritt {{n}} von {{total}}"
+    }
   }
 }

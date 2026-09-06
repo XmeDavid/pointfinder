@@ -130,7 +130,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
     <ListDetailLayout selected={!!selectedBaseId} onBack={() => selectBase(null)} list={<>
         {game?.enforceBaseOrder && <div className="space-y-2 border-b border-border p-3">
           <p className="text-xs text-muted-foreground">{t('baseOrder.description', { defaultValue: 'Teams must check in at bases in the configured order.' })}</p>
-          <Button variant="outline" size="sm" className="h-auto min-h-9 whitespace-normal" disabled={game.status !== 'setup' || isLoading || isError || bases.length < 2}
+          <Button variant="outline" size="sm" className="h-auto min-h-9 whitespace-normal" data-testid="arrange-route-btn" disabled={game.status !== 'setup' || isLoading || isError || bases.length < 2}
             onClick={() => { selectBase(null); setArranging(true) }}>
             {t('baseOrder.arrange', { defaultValue: 'Arrange route' })}
           </Button>

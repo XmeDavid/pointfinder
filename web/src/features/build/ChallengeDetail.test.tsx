@@ -493,3 +493,33 @@ describe('ChallengeDetail', () => {
     })
   })
 })
+
+describe('ChallengeDetail tutorial anchors', () => {
+  beforeEach(() => {
+    resetChallengeCounter()
+    resetAssignmentCounter()
+    resetBaseCounter()
+    resetTeamCounter()
+    useWorkspaceStore.getState().reset()
+  })
+
+  it('reports the selected answer type and the two toggles through aria-pressed', async () => {
+    const user = userEvent.setup()
+    render(
+      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
+      { wrapper: createWrapper() },
+    )
+
+    const textButton = await screen.findByTestId('answer-type-text')
+    expect(screen.getByTestId('answer-type-group')).toContainElement(textButton)
+    expect(textButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('answer-type-file')).toHaveAttribute('aria-pressed', 'false')
+
+    const autoValidate = screen.getByTestId('auto-validate-toggle')
+    const before = autoValidate.getAttribute('aria-pressed')
+    await user.click(autoValidate)
+    expect(autoValidate.getAttribute('aria-pressed')).not.toBe(before)
+
+    expect(screen.getByTestId('location-bound-toggle').getAttribute('aria-pressed')).toMatch(/true|false/)
+  })
+})

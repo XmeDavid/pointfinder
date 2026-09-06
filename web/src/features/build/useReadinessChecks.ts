@@ -1,0 +1,105 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { distanceM } from '@pointfinder/game-core'
+import { useBases } from '@/hooks/queries/useBases'
+import { useChallenges } from '@/hooks/queries/useChallenges'
+import { useGame } from '@/hooks/queries/useGames'
+import { useTeams } from '@/hooks/queries/useTeams'
+import { useAssignments } from '@/hooks/queries/useAssignments'
+import { useVariableCompleteness } from '@/hooks/queries/useVariables'
+import { isValidCheckInRadiusM, resolveCheckInMethod, resolveCheckInRadiusM } from '@/types/checkIn'
+
+export interface ReadinessCheck {
+  label: string
+  passed: boolean
+}
+
+export interface ReadinessSummary {
+  checks: ReadinessCheck[]
+  /** True when any base uses a method the legacy Swift/Compose apps cannot play. */
+  legacyNote: boolean
+  /** Every check passes — the go-live gate. */
+  allPassed: boolean
+}
+
+export function useReadinessChecks(gameId: string): ReadinessSummary {
+  const { t } = useTranslation()
+  const { data: game } = useGame(gameId)
+  const { data: bases } = useBases(gameId)
+  const { data: challenges } = useChallenges(gameId)
+  const { data: teams } = useTeams(gameId)
+  const { data: assignments } = useAssignments(gameId)
+  const { data: completeness } = useVariableCompleteness(gameId)
+
+  const defaultRadius = game?.defaultCheckInRadiusM
+
+  return useMemo(() => {
+    const baseList = bases ?? []
+    const challengeList = challenges ?? []
+    const teamList = teams ?? []
+    const assignmentList = assignments ?? []
+
+    const baseIds = new Set(baseList.map((b) => b.id))
+    const challengeIds = new Set(challengeList.map((c) => c.id))
+
+    // Every NFC base must carry a written tag, hidden ones included, exactly as
+    // the server's go-live check counts them. QR bases always pass — the code is
+    // generated, not provisioned.
+    const nfcBases = baseList.filter((b) => resolveCheckInMethod(b.checkInMethod) === 'NFC')
+    const nfcLinkedCount = nfcBases.filter((b) => b.nfcLinked).length
+
+    const locationBases = baseList.filter((b) => resolveCheckInMethod(b.checkInMethod) === 'LOCATION')
+    const locatedCount = locationBases.filter((b) => b.lat !== 0 || b.lng !== 0).length
+    const radiusOkCount = locationBases.filter((b) =>
+      isValidCheckInRadiusM(resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)),
+    ).length
+
+    // Two rings overlap when the bases are closer than the sum of their radii;
+    // a player standing in the overlap could unlock either base.
+    let overlapping = false
+    for (let i = 0; i < locationBases.length && !overlapping; i++) {
+      for (let j = i + 1; j < locationBases.length; j++) {
+        const a = locationBases[i]
+        const b = locationBases[j]
+        const ra = resolveCheckInRadiusM(a.checkInRadiusM, defaultRadius)
+        const rb = resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)
+        if (distanceM(a, b) < ra + rb) {
+          overlapping = true
+          break
+        }
+      }
+    }
+
+    const checks: ReadinessCheck[] = [
+      { label: t('readiness.atLeastOneBase'), passed: baseList.length > 0 },
+      { label: t('readiness.atLeastOneChallenge'), passed: challengeList.length > 0 },
+      { label: t('readiness.atLeastOneTeam'), passed: teamList.length > 0 },
+      {
+        label: t('readiness.nfcLinked', { linked: nfcLinkedCount, total: nfcBases.length }),
+        passed: nfcLinkedCount === nfcBases.length,
+      },
+      {
+        label: t('readiness.assignmentsValid'),
+        passed: assignmentList.every(
+          (a) => baseIds.has(a.baseId) && challengeIds.has(a.challengeId),
+        ),
+      },
+      {
+        label: t('readiness.locationCoords', { ok: locatedCount, total: locationBases.length }),
+        passed: locatedCount === locationBases.length,
+      },
+      {
+        label: t('readiness.locationRadius', { ok: radiusOkCount, total: locationBases.length }),
+        passed: radiusOkCount === locationBases.length,
+      },
+      { label: t('readiness.locationOverlap'), passed: !overlapping },
+      { label: t('readiness.variablesComplete'), passed: completeness?.complete ?? true },
+    ]
+
+    return {
+      checks,
+      legacyNote: baseList.some((b) => resolveCheckInMethod(b.checkInMethod) !== 'NFC'),
+      allPassed: checks.every((check) => check.passed),
+    }
+  }, [bases, challenges, teams, assignments, completeness, defaultRadius, t])
+}

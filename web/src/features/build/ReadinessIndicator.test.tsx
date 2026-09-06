@@ -386,3 +386,32 @@ describe('ReadinessIndicator', () => {
   })
 
 })
+
+describe('ReadinessIndicator expansion lives in the workspace store', () => {
+  beforeEach(() => {
+    useWorkspaceStore.getState().reset()
+    resetBaseCounter()
+    resetChallengeCounter()
+    resetTeamCounter()
+    resetAssignmentCounter()
+  })
+
+  it('renders the checklist when the store says expanded, without a click', async () => {
+    setupFullyReadyHandlers()
+    useWorkspaceStore.getState().setReadinessExpanded(true)
+
+    render(<ReadinessIndicator gameId="game-1" gameStatus="setup" />, { wrapper: createWrapper() })
+
+    expect(await screen.findByTestId('readiness-checklist')).toBeInTheDocument()
+  })
+
+  it('writes the expansion back to the store when the header is pressed', async () => {
+    setupFullyReadyHandlers()
+    const user = userEvent.setup()
+
+    render(<ReadinessIndicator gameId="game-1" gameStatus="setup" />, { wrapper: createWrapper() })
+
+    await user.click(await screen.findByTestId('readiness-toggle'))
+    await waitFor(() => expect(useWorkspaceStore.getState().readinessExpanded).toBe(true))
+  })
+})

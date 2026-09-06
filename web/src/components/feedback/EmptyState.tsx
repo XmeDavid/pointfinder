@@ -7,6 +7,7 @@ interface EmptyStateProps extends HTMLAttributes<HTMLDivElement> {
   description?: string;
   action?: ReactNode;
   density?: 'compact' | 'default';
+  'data-testid'?: string;
 }
 
 export function EmptyState({

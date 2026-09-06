@@ -30,6 +30,7 @@ enum PFColorToken {
     static let surfaceInverse = Color.pfAdaptive(light: "#18201a", dark: "#edf3ed")
     static let surfaceMap = Color.pfAdaptive(light: "#dfe5da", dark: "#101a14")
     static let surfaceScrim = Color.pfAdaptive(light: "#10171299", dark: "#000000b3")
+    static let surfaceTourScrim = Color.pfAdaptive(light: "#1017124d", dark: "#00000080")
     static let contentPrimary = Color.pfAdaptive(light: "#172019", dark: "#eef4ef")
     static let contentSecondary = Color.pfAdaptive(light: "#4f5e53", dark: "#b6c2b8")
     static let contentMuted = Color.pfAdaptive(light: "#6d796f", dark: "#93a197")

@@ -7,6 +7,7 @@
   --pf-color-surface-inverse: #18201a;
   --pf-color-surface-map: #dfe5da;
   --pf-color-surface-scrim: #10171299;
+  --pf-color-surface-tourScrim: #1017124d;
   --pf-color-content-primary: #172019;
   --pf-color-content-secondary: #4f5e53;
   --pf-color-content-muted: #6d796f;
@@ -132,6 +133,7 @@
   --pf-color-surface-inverse: #edf3ed;
   --pf-color-surface-map: #101a14;
   --pf-color-surface-scrim: #000000b3;
+  --pf-color-surface-tourScrim: #00000080;
   --pf-color-content-primary: #eef4ef;
   --pf-color-content-secondary: #b6c2b8;
   --pf-color-content-muted: #93a197;

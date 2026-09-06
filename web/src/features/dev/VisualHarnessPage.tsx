@@ -50,6 +50,8 @@ import { CheckInMethodBadge, CheckInVerificationBadge } from '@/components/statu
 import { QrCodeSvg } from '@/components/common/QrCodeSvg'
 import { CHECK_IN_METHODS } from '@/types/checkIn'
 import type { CheckInVerification } from '@/types/checkIn'
+import { CoachBubble } from '@/components/tour/CoachBubble'
+import { TourPill } from '@/components/tour/TourPill'
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
 const submissionStatuses: SubmissionStatus[] = [
@@ -223,6 +225,56 @@ export function VisualHarnessPage() {
                 title="Preview code"
                 data-testid="harness-qr"
               />
+            </div>
+          </HarnessSection>
+
+          <HarnessSection title="Guided tutorial coach marks">
+            <div className="flex flex-col items-start gap-3" data-testid="harness-tutorials">
+              <CoachBubble
+                inline
+                anchorRect={null}
+                step={3}
+                total={12}
+                title="Place your first base"
+                body="Tap the map where players should go, then choose Place base here."
+                onClose={() => {}}
+              />
+              <CoachBubble
+                inline
+                anchorRect={null}
+                step={6}
+                total={12}
+                title="Points"
+                body="Scoring weight for this challenge."
+                aside="Players never see scores."
+                onAck={() => {}}
+                onClose={() => {}}
+              />
+              <CoachBubble
+                inline
+                anchorRect={null}
+                step={7}
+                total={12}
+                title="Write the NFC tag"
+                body="Hold a tag against the phone to link it to this base."
+                aside="Not now? The Tags tab lists every unlinked base and the readiness pill reminds you."
+                onAck={() => {}}
+                onLater={() => {}}
+                onClose={() => {}}
+              />
+              <CoachBubble
+                inline
+                anchorRect={null}
+                step={3}
+                total={12}
+                title="Platziere deine erste Basis auf der Karte"
+                body="Tippe auf die Karte an der Stelle, an der die Teams später ankommen sollen, und wähle anschließend „Basis hier platzieren“, damit die Basis mit den Koordinaten dieses Punktes angelegt wird."
+                aside="Die Basis lässt sich später jederzeit verschieben, indem du die Markierung ziehst oder die Koordinaten direkt eingibst."
+                onAck={() => {}}
+                onLater={() => {}}
+                onClose={() => {}}
+              />
+              <TourPill inline step={4} total={12} onResume={() => {}} />
             </div>
           </HarnessSection>
 

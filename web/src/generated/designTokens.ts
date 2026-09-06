@@ -36,6 +36,9 @@ export const designTokens = {
         },
         "scrim": {
           "$value": "#10171299"
+        },
+        "tourScrim": {
+          "$value": "#1017124d"
         }
       },
       "content": {
@@ -192,6 +195,9 @@ export const designTokens = {
         },
         "scrim": {
           "$value": "#000000b3"
+        },
+        "tourScrim": {
+          "$value": "#00000080"
         }
       },
       "content": {
@@ -756,6 +762,7 @@ export const tokenPaths = [
   "color.surface.inverse",
   "color.surface.map",
   "color.surface.scrim",
+  "color.surface.tourScrim",
   "color.content.primary",
   "color.content.secondary",
   "color.content.muted",

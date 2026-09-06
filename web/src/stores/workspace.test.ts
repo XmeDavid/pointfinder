@@ -129,4 +129,27 @@ describe('workspace store', () => {
     toggleSettingsPanel()
     expect(useWorkspaceStore.getState().settingsPanelOpen).toBe(true)
   })
+
+  it('starts with the readiness panel collapsed and can expand it imperatively', () => {
+    expect(useWorkspaceStore.getState().readinessExpanded).toBe(false)
+    useWorkspaceStore.getState().setReadinessExpanded(true)
+    expect(useWorkspaceStore.getState().readinessExpanded).toBe(true)
+    useWorkspaceStore.getState().setReadinessExpanded(false)
+    expect(useWorkspaceStore.getState().readinessExpanded).toBe(false)
+  })
+
+  it('opens and closes the settings panel imperatively, not only by toggling', () => {
+    useWorkspaceStore.getState().setSettingsPanelOpen(true)
+    expect(useWorkspaceStore.getState().settingsPanelOpen).toBe(true)
+    useWorkspaceStore.getState().setSettingsPanelOpen(true)
+    expect(useWorkspaceStore.getState().settingsPanelOpen).toBe(true)
+    useWorkspaceStore.getState().setSettingsPanelOpen(false)
+    expect(useWorkspaceStore.getState().settingsPanelOpen).toBe(false)
+  })
+
+  it('reset clears the readiness expansion', () => {
+    useWorkspaceStore.getState().setReadinessExpanded(true)
+    useWorkspaceStore.getState().reset()
+    expect(useWorkspaceStore.getState().readinessExpanded).toBe(false)
+  })
 })

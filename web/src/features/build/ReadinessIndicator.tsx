@@ -1,110 +1,10 @@
-import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { CheckCircle, Info, XCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { distanceM } from '@pointfinder/game-core'
 import { GlassPanel } from '@/components/layout/GlassPanel'
-import { useBases } from '@/hooks/queries/useBases'
-import { useChallenges } from '@/hooks/queries/useChallenges'
-import { useGame } from '@/hooks/queries/useGames'
-import { useTeams } from '@/hooks/queries/useTeams'
-import { useAssignments } from '@/hooks/queries/useAssignments'
-import { useVariableCompleteness } from '@/hooks/queries/useVariables'
 import { useUpdateGameStatus } from '@/hooks/mutations/useGameMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { isValidCheckInRadiusM, resolveCheckInMethod, resolveCheckInRadiusM } from '@/types/checkIn'
-
-interface ReadinessCheck {
-  label: string
-  passed: boolean
-}
-
-interface ReadinessSummary {
-  checks: ReadinessCheck[]
-  /** True when any base uses a method the legacy Swift/Compose apps cannot play. */
-  legacyNote: boolean
-}
-
-function useReadinessChecks(gameId: string): ReadinessSummary {
-  const { t } = useTranslation()
-  const { data: game } = useGame(gameId)
-  const { data: bases } = useBases(gameId)
-  const { data: challenges } = useChallenges(gameId)
-  const { data: teams } = useTeams(gameId)
-  const { data: assignments } = useAssignments(gameId)
-  const { data: completeness } = useVariableCompleteness(gameId)
-
-  const defaultRadius = game?.defaultCheckInRadiusM
-
-  return useMemo(() => {
-    const baseList = bases ?? []
-    const challengeList = challenges ?? []
-    const teamList = teams ?? []
-    const assignmentList = assignments ?? []
-
-    const baseIds = new Set(baseList.map((b) => b.id))
-    const challengeIds = new Set(challengeList.map((c) => c.id))
-
-    // Every NFC base must carry a written tag, hidden ones included, exactly as
-    // the server's go-live check counts them. QR bases always pass — the code is
-    // generated, not provisioned.
-    const nfcBases = baseList.filter((b) => resolveCheckInMethod(b.checkInMethod) === 'NFC')
-    const nfcLinkedCount = nfcBases.filter((b) => b.nfcLinked).length
-
-    const locationBases = baseList.filter((b) => resolveCheckInMethod(b.checkInMethod) === 'LOCATION')
-    const locatedCount = locationBases.filter((b) => b.lat !== 0 || b.lng !== 0).length
-    const radiusOkCount = locationBases.filter((b) =>
-      isValidCheckInRadiusM(resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)),
-    ).length
-
-    // Two rings overlap when the bases are closer than the sum of their radii;
-    // a player standing in the overlap could unlock either base.
-    let overlapping = false
-    for (let i = 0; i < locationBases.length && !overlapping; i++) {
-      for (let j = i + 1; j < locationBases.length; j++) {
-        const a = locationBases[i]
-        const b = locationBases[j]
-        const ra = resolveCheckInRadiusM(a.checkInRadiusM, defaultRadius)
-        const rb = resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)
-        if (distanceM(a, b) < ra + rb) {
-          overlapping = true
-          break
-        }
-      }
-    }
-
-    const checks: ReadinessCheck[] = [
-      { label: t('readiness.atLeastOneBase'), passed: baseList.length > 0 },
-      { label: t('readiness.atLeastOneChallenge'), passed: challengeList.length > 0 },
-      { label: t('readiness.atLeastOneTeam'), passed: teamList.length > 0 },
-      {
-        label: t('readiness.nfcLinked', { linked: nfcLinkedCount, total: nfcBases.length }),
-        passed: nfcLinkedCount === nfcBases.length,
-      },
-      {
-        label: t('readiness.assignmentsValid'),
-        passed: assignmentList.every(
-          (a) => baseIds.has(a.baseId) && challengeIds.has(a.challengeId),
-        ),
-      },
-      {
-        label: t('readiness.locationCoords', { ok: locatedCount, total: locationBases.length }),
-        passed: locatedCount === locationBases.length,
-      },
-      {
-        label: t('readiness.locationRadius', { ok: radiusOkCount, total: locationBases.length }),
-        passed: radiusOkCount === locationBases.length,
-      },
-      { label: t('readiness.locationOverlap'), passed: !overlapping },
-      { label: t('readiness.variablesComplete'), passed: completeness?.complete ?? true },
-    ]
-
-    return {
-      checks,
-      legacyNote: baseList.some((b) => resolveCheckInMethod(b.checkInMethod) !== 'NFC'),
-    }
-  }, [bases, challenges, teams, assignments, completeness, defaultRadius, t])
-}
+import { useReadinessChecks } from './useReadinessChecks'
 
 export default function ReadinessIndicator({
   gameId,
@@ -113,9 +13,10 @@ export default function ReadinessIndicator({
   gameId: string
   gameStatus?: string
 }) {
-  const [expanded, setExpanded] = useState(false)
   const { t } = useTranslation()
-  const { checks, legacyNote } = useReadinessChecks(gameId)
+  const { checks, legacyNote, allPassed } = useReadinessChecks(gameId)
+  const expanded = useWorkspaceStore((s) => s.readinessExpanded)
+  const setReadinessExpanded = useWorkspaceStore((s) => s.setReadinessExpanded)
   const updateStatus = useUpdateGameStatus(gameId)
   const setMode = useWorkspaceStore((s) => s.setMode)
 
@@ -124,7 +25,6 @@ export default function ReadinessIndicator({
 
   const passed = checks.filter((c) => c.passed).length
   const total = checks.length
-  const allPassed = passed === total
 
   // SVG ring calculations
   const size = 44
@@ -150,7 +50,7 @@ export default function ReadinessIndicator({
             type="button"
             aria-expanded={expanded}
             className="flex w-full items-center gap-3 px-3 py-3 text-left"
-            onClick={() => setExpanded((prev) => !prev)}
+            onClick={() => setReadinessExpanded(!expanded)}
             data-testid="readiness-toggle"
           >
             <svg
