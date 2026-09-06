@@ -63,7 +63,8 @@ public class GameController {
     @PostMapping("/{id}/operators/{userId}")
     public ResponseEntity<Void> addOperator(@PathVariable UUID id, @PathVariable UUID userId) {
         gameService.addOperator(id, userId);
-        return ResponseEntity.noContent().build();
+        // Audit 1.14: POST creating an association should return 201 Created, not 204.
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/{id}/operators/{userId}")

@@ -4,6 +4,18 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 
 ---
 
+## Finding 1.14 -- POST addOperator returns 204 instead of 201
+
+**Decision:** Change `GameController.addOperator()` to return `HttpStatus.CREATED` (201) instead of `ResponseEntity.noContent()` (204).
+
+**Alternatives considered:**
+- Keep 204 (the association already exists semantically as a join table row, so "no content" is defensible)
+- Return 201 with a Location header pointing to the operator resource
+
+**Rationale:** POST endpoints that create a new resource or association should return 201 Created per HTTP semantics. The other resource-creating POST in the same controller (`createGame`) already returns 201. Consistency within the controller is more important than the semantic nuance of whether an association row is a "resource." A Location header was not added because the operator association has no dedicated GET endpoint.
+
+---
+
 ## Finding 10.11 -- User.java PushPlatform default
 
 **Decision:** Remove `PushPlatform.ios` default from `User.java` entity and create migration V58 to drop `NOT NULL` + default on the `users.push_platform` column.
@@ -54,12 +66,19 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 
 ## Finding 3.9 -- AppState God Object
 
-**Decision:** Accept the current extension-based decomposition as sufficient.
+**Decision:** Accept the current extension-based decomposition. Updated doc comment with accurate line count (~1,400 lines across 5 files, not ~700) and a concrete extraction plan naming 4 subsystems.
+
+**Extraction plan (documented in AppState.swift lines 7-16):**
+1. `NotificationManager` -- push registration, token refresh, permission prompts (+Notifications)
+2. `LocationTracker` -- CLLocationManager lifecycle, geofencing, background updates
+3. `RealtimeSession` -- WebSocket connection, reconnect logic, message dispatch
+4. `SyncCoordinator` -- offline queue, conflict resolution, retry policy (+Snapshot)
 
 **Alternatives considered:**
-- Extract subsystems into dedicated @Observable classes (LocationTracker, NotificationManager, RealtimeClient, etc.)
+- Perform the extraction in this pass
+- Extract only the largest extension (GameActions at 666 lines)
 
-**Rationale:** AppState is already split across 5 files (AppState.swift + 4 extensions: Auth, GameActions, Notifications, Snapshot) with clear MARK sections. The main file is 256 lines. While `AppState+GameActions.swift` at 666 lines could benefit from further extraction, this is a significant architectural change that affects the entire iOS app's dependency graph. The current structure is documented with a tech-debt comment (lines 7-16 of AppState.swift) and works correctly.
+**Rationale:** AppState is split across 5 files (AppState.swift + 4 extensions: Auth, GameActions, Notifications, Snapshot). The main file is 256 lines, but `AppState+GameActions.swift` at 666 lines is the largest single file. Extraction into dedicated `@Observable` classes requires threading those classes through the SwiftUI environment and updating every View that reads state, which is a significant architectural change affecting the entire iOS app's dependency graph. The extraction plan is now documented in source so it can be picked up in a dedicated refactor sprint.
 
 ---
 

@@ -14,7 +14,7 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 |---|---------|--------|--------------|
 | 1.19 | ChallengeResponse missing fixedBaseId | Already fixed | Field exists in DTO (line 40) and is mapped in ChallengeService (line 292). No action needed. |
 | 3.5 | MobileRealtimeClient receive loop MainActor awareness | **Fixed (2026-07-17)** | MainActor comment existed but latent operator precedence bug remained: `self?.reconnectAttempt ?? 0 > 0` bound as `?? (0 > 0)` due to `??` having lower precedence than `>`. Fixed by adding parentheses: `(self?.reconnectAttempt ?? 0) > 0`. |
-| 3.9 | AppState God Object (~700 lines) | Partially addressed | Split into 5 files (AppState.swift + 4 extensions). Main file is 256 lines. Tech-debt comment at lines 7-16. See audit-decisions.md. |
+| 3.9 | AppState God Object (~1,400 lines) | Partially addressed | Split into 5 files (AppState.swift + 4 extensions). Main file is 256 lines. Doc comment updated with accurate line count and concrete 4-subsystem extraction plan. See audit-decisions.md. |
 | 3.14 | MapLibreMapView missing parent-child VC at call site | Already fixed | Line 433 now calls `configure(with: item.view, parentViewController: parentVC)`. |
 | 4.13 | Alt text hardcoded English in SubmissionsPage/ReviewLayout | Already fixed | Both files were restructured. Current code in SubmissionDetail.tsx uses `t('submissions.altFile', ...)` i18n keys. |
 | 6.16 | 56 instances of contentDescription = null | **Fixed** | Reduced to 4 decorative instances within labeled Buttons (correct per Compose a11y guidelines). OperatorRescueActionButton fixed in 2026-07-23 pass. 2026-07-31: replaced 25 remaining hardcoded English contentDescription strings with `stringResource()` across 15 files; added 14 new `cd_*` resources in EN/DE/PT; added full PT cd_ section. See audit-decisions.md. |
@@ -31,7 +31,7 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 | 1.11 | /api/player singular naming | Semantically justified | Yes |
 | 1.12 | PUT on collection without ID | Correct for bulk-set | Yes |
 | 1.13 | POST for location update | Acceptable | Yes |
-| 1.14 | POST returns 204 for association | Acceptable | Yes |
+| 1.14 | POST returns 204 for association | Acceptable | **Fixed (2026-09-06)** -- Changed to 201 Created |
 | 2.13 | PlayerService 14 dependencies | Large refactor | **Resolved (2026-08-31)** -- Extracted PlayerJoinService, PlayerNotificationQueryService, moved linkUploadSessions to SubmissionService. Deps reduced 21->16 |
 | 2.14 | GameService 16 dependencies | Large refactor | **Resolved (2026-08-31)** -- Extracted GameProgressResetService, GameReadinessValidator, removed import/export pass-through. Deps reduced 18->9 |
 | 2.16 | No spring.datasource.url in application.yml | Documented | Yes |
@@ -273,4 +273,25 @@ Full re-verification of all 22 findings against current codebase. Updated deferr
    - 8.7: Marked resolved (coordinate conventions are consistent throughout)
    - 8.13: Marked resolved (concurrency comment added)
    - 12.6: Marked resolved (PlayerJoinRateLimiter.java provides backend rate limiting)
+
+---
+
+## Changes Made (2026-09-06 pass)
+
+Full re-verification of all 22 findings. Two remaining actionable items fixed.
+
+1. **GameController.java** -- Changed `addOperator` POST endpoint to return `HttpStatus.CREATED` (201) instead of `noContent` (204). POST creating an association should return 201 (finding 1.14).
+2. **AppState.swift** -- Updated doc comment: corrected line count from ~700 to ~1,400 (actual total across 5 files). Added concrete extraction plan naming 4 subsystems: NotificationManager, LocationTracker, RealtimeSession, SyncCoordinator (finding 3.9).
+3. **docs/audit-fix-summary.md** -- Updated findings 1.14 (now fixed) and 3.9 (updated description). Added this section.
+
+### Remaining genuinely deferred items
+
+| # | Finding | Why still deferred |
+|---|---------|-------------------|
+| 9.3 | Android ViewModel tests | Mitigated by Maestro E2E; dedicated test sprint |
+| 9.4 | Android instrumentation tests | Mitigated by Maestro E2E |
+| 9.5 | MobileRealtimeClient reconnection/parsing tests | URL construction covered; reconnection logic deferred |
+| 9.6 | iOS View/ViewModel tests | Mitigated by Maestro E2E + unit tests; dedicated test sprint |
+| 9.7 | E2E parity gaps | Documented; incremental coverage |
+| 12.2 | Certificate pinning | Requires pin rotation infrastructure and release coordination |
 

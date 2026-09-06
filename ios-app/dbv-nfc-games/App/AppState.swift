@@ -5,15 +5,23 @@ import os
 
 /// Central observable state container for the iOS player/operator app.
 ///
-/// **Known tech debt (audit 3.9):** AppState is a "god object" (~700
+/// **Known tech debt (audit 3.9):** AppState is a "god object" (~1,400
 /// lines across this file and four extensions: +Auth, +GameActions,
 /// +Notifications, +Snapshot). It holds auth, game progress, solve
 /// sessions, deep links, notifications, location, sync, realtime, and
-/// error handling. A future refactor should extract independent
-/// subsystems (e.g. notifications, location tracking, realtime) into
-/// dedicated @Observable classes and inject them where needed. The
-/// current design works but makes unit-testing individual subsystems
-/// harder than it needs to be.
+/// error handling.
+///
+/// **Extraction plan:** The following subsystems should become dedicated
+/// `@Observable` classes injected via the SwiftUI environment:
+/// 1. `NotificationManager` — push registration, token refresh, permission prompts (+Notifications)
+/// 2. `LocationTracker` — CLLocationManager lifecycle, geofencing, background updates
+/// 3. `RealtimeSession` — WebSocket connection, reconnect logic, message dispatch
+/// 4. `SyncCoordinator` — offline queue, conflict resolution, retry policy (+Snapshot)
+///
+/// Each extraction should preserve `@MainActor` isolation and be
+/// accompanied by unit tests for the extracted class. The current
+/// design works but makes unit-testing individual subsystems harder
+/// than it needs to be.
 @MainActor
 @Observable
 final class AppState {
