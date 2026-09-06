@@ -56,7 +56,7 @@ export default function PlayerMap() {
     () => radiusCollection(open.filter((e) => e.view.checkInMethod === 'LOCATION').map((e) => ({ baseId: e.baseId, lat: e.view.lat, lng: e.view.lng, radiusM: e.view.checkInRadiusM ?? 15 }))),
     [open],
   )
-  const methods = useMemo(() => new Set((game.data?.bases ?? []).map((b) => b.checkInMethod)), [game.data])
+  const methods = useMemo(() => new Set((game.data?.bases ?? []).map((b) => b.checkInMethod ?? 'NFC')), [game.data])
   const hasNfcBases = methods.has('NFC')
   const hasQrBases = methods.has('QR')
   const hasLocationBases = methods.has('LOCATION')

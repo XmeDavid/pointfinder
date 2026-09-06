@@ -12,7 +12,7 @@ import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useVariableCompleteness } from '@/hooks/queries/useVariables'
 import { useUpdateGameStatus } from '@/hooks/mutations/useGameMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { isValidCheckInRadiusM, resolveCheckInRadiusM } from '@/types/checkIn'
+import { isValidCheckInRadiusM, resolveCheckInMethod, resolveCheckInRadiusM } from '@/types/checkIn'
 
 interface ReadinessCheck {
   label: string
@@ -48,10 +48,10 @@ function useReadinessChecks(gameId: string): ReadinessSummary {
     // Every NFC base must carry a written tag, hidden ones included, exactly as
     // the server's go-live check counts them. QR bases always pass — the code is
     // generated, not provisioned.
-    const nfcBases = baseList.filter((b) => b.checkInMethod === 'NFC')
+    const nfcBases = baseList.filter((b) => resolveCheckInMethod(b.checkInMethod) === 'NFC')
     const nfcLinkedCount = nfcBases.filter((b) => b.nfcLinked).length
 
-    const locationBases = baseList.filter((b) => b.checkInMethod === 'LOCATION')
+    const locationBases = baseList.filter((b) => resolveCheckInMethod(b.checkInMethod) === 'LOCATION')
     const locatedCount = locationBases.filter((b) => b.lat !== 0 || b.lng !== 0).length
     const radiusOkCount = locationBases.filter((b) =>
       isValidCheckInRadiusM(resolveCheckInRadiusM(b.checkInRadiusM, defaultRadius)),
@@ -101,7 +101,7 @@ function useReadinessChecks(gameId: string): ReadinessSummary {
 
     return {
       checks,
-      legacyNote: baseList.some((b) => b.checkInMethod !== 'NFC'),
+      legacyNote: baseList.some((b) => resolveCheckInMethod(b.checkInMethod) !== 'NFC'),
     }
   }, [bases, challenges, teams, assignments, completeness, defaultRadius, t])
 }

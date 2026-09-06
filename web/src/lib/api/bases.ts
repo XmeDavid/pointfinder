@@ -1,5 +1,11 @@
 import type { Base, CheckInMethod } from "@/types";
+import { resolveCheckInMethod } from "@/types/checkIn";
 import apiClient from "./client";
+
+/** Older backends omit the method; treat their rows as the NFC bases they are. */
+function normalizeBase(base: Base): Base {
+  return { ...base, checkInMethod: resolveCheckInMethod(base.checkInMethod), checkInRadiusM: base.checkInRadiusM ?? null };
+}
 
 export interface CreateBaseDto {
   name: string;
@@ -25,20 +31,20 @@ export interface CreateBaseDto {
 
 export const basesApi = {
   listByGame: async (gameId: string): Promise<Base[]> => {
-    const { data } = await apiClient.get(`/games/${gameId}/bases`);
-    return data;
+    const { data } = await apiClient.get<Base[]>(`/games/${gameId}/bases`);
+    return data.map(normalizeBase);
   },
 
   create: async (data: CreateBaseDto & { gameId: string }): Promise<Base> => {
     const { gameId, ...body } = data;
-    const { data: result } = await apiClient.post(`/games/${gameId}/bases`, body);
-    return result;
+    const { data: result } = await apiClient.post<Base>(`/games/${gameId}/bases`, body);
+    return normalizeBase(result);
   },
 
   update: async (id: string, data: Partial<CreateBaseDto> & { nfcLinked?: boolean; hidden?: boolean; gameId: string }): Promise<Base> => {
     const { gameId, ...body } = data;
-    const { data: result } = await apiClient.put(`/games/${gameId}/bases/${id}`, body);
-    return result;
+    const { data: result } = await apiClient.put<Base>(`/games/${gameId}/bases/${id}`, body);
+    return normalizeBase(result);
   },
 
   delete: async (id: string, gameId: string): Promise<void> => {
@@ -48,7 +54,7 @@ export const basesApi = {
   /** Audited: records that a physical tag now carries this base's URL. */
   markNfcLinked: async (id: string, gameId: string): Promise<Base> => {
     const { data } = await apiClient.patch<Base>(`/games/${gameId}/bases/${id}/nfc-link`);
-    return data;
+    return normalizeBase(data);
   },
   reorder: async (gameId: string, ids: string[]): Promise<void> => {
     await apiClient.patch(`/games/${gameId}/bases/reorder`, { ids });

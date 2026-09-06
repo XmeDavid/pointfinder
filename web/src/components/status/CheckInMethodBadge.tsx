@@ -1,7 +1,7 @@
 import type { ComponentType, SVGProps } from 'react'
 import { MapPin, Nfc, QrCode } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { CheckInMethod, CheckInVerification } from '@/types/checkIn'
+import { resolveCheckInMethod, type CheckInMethod, type CheckInVerification } from '@/types/checkIn'
 import { StatusBadge, type StatusBadgeTone } from './StatusBadge'
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
@@ -58,8 +58,9 @@ export interface CheckInMethodIconProps {
 }
 
 /** Icon-only method marker with an accessible label, for dense rows. */
-export function CheckInMethodIcon({ method, className, ...props }: CheckInMethodIconProps) {
+export function CheckInMethodIcon({ method: rawMethod, className, ...props }: CheckInMethodIconProps) {
   const { t } = useTranslation()
+  const method = resolveCheckInMethod(rawMethod)
   const Icon = checkInMethodIcons[method]
   return (
     <Icon
@@ -78,8 +79,9 @@ export interface CheckInMethodBadgeProps {
   'data-testid'?: string
 }
 
-export function CheckInMethodBadge({ method, size, className, ...props }: CheckInMethodBadgeProps) {
+export function CheckInMethodBadge({ method: rawMethod, size, className, ...props }: CheckInMethodBadgeProps) {
   const { t } = useTranslation()
+  const method = resolveCheckInMethod(rawMethod)
   const Icon = checkInMethodIcons[method]
   return (
     <StatusBadge

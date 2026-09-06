@@ -12,6 +12,7 @@ export {
   MIN_CHECK_IN_RADIUS_M,
   isValidCheckInRadiusM,
   parseCheckInRadiusInput,
+  resolveCheckInMethod,
   resolveCheckInRadiusM,
 } from "./checkIn";
 import type {

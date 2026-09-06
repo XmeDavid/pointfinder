@@ -135,4 +135,20 @@ describe('NfcTagsPage', () => {
     expect(await screen.findByTestId('codes-print-all')).toBeDisabled()
   })
 
+
+  it('renders rows from a backend that predates check-in methods as NFC bases', async () => {
+    resetBaseCounter()
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          { id: 'b1', gameId: 'g1', name: 'Chapel', description: '', lat: 1, lng: 2, nfcLinked: true, nfcToken: 'ab12cd34', hidden: false },
+        ]),
+      ),
+    )
+    renderPage()
+
+    expect(await screen.findByTestId('nfc-base-b1')).toHaveTextContent('Chapel')
+    expect(screen.getByTestId('nfc-base-b1')).toHaveTextContent('NFC linked')
+  })
+
 })

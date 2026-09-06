@@ -39,6 +39,15 @@ export interface ActivityCheckInMetadata {
   teammatesTotal?: number
 }
 
+/**
+ * Read a method off a server row. A backend that predates check-in methods
+ * sends none at all, and every such base was an NFC base, so that is the
+ * answer rather than a crash in the first badge that renders.
+ */
+export function resolveCheckInMethod(value: unknown): CheckInMethod {
+  return value === 'QR' || value === 'LOCATION' ? value : 'NFC'
+}
+
 /** Base radius when set, otherwise the game default. Never null. */
 export function resolveCheckInRadiusM(
   baseRadiusM: number | null | undefined,
