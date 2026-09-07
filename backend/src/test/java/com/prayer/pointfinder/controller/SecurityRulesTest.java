@@ -56,6 +56,9 @@ class SecurityRulesTest {
     private com.prayer.pointfinder.service.GameImportExportService gameImportExportService;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PracticeGameService practiceGameService;
+
+    @MockitoBean
     private JwtTokenProvider tokenProvider;
 
     @MockitoBean

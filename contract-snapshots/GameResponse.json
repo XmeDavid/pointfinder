@@ -18,5 +18,7 @@
   "orgName": null,
   "enforceBaseOrder": false,
   "defaultCheckInMethod": "NFC",
-  "defaultCheckInRadiusM": 15
+  "defaultCheckInRadiusM": 15,
+  "tutorialScenario": null,
+  "tutorialExpiresAt": null
 }

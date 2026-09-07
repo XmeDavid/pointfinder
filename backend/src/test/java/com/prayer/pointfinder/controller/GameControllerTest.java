@@ -53,6 +53,9 @@ class GameControllerTest {
     private GameImportExportService gameImportExportService;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PracticeGameService practiceGameService;
+
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
