@@ -70,6 +70,17 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
       }
     }
 
+    // A location-bound challenge lives at one base: pinned to it, or named by an
+    // assignment row. The server rejects go-live otherwise, and the go-live
+    // auto-assign never picks location-bound challenges up, so this one cannot
+    // be left for later.
+    const fixedChallengeIds = new Set(baseList.map((b) => b.fixedChallengeId).filter(Boolean))
+    const assignedChallengeIds = new Set(assignmentList.map((a) => a.challengeId))
+    const locationBoundChallenges = challengeList.filter((c) => c.locationBound)
+    const locationBoundAssignedCount = locationBoundChallenges.filter(
+      (c) => fixedChallengeIds.has(c.id) || assignedChallengeIds.has(c.id),
+    ).length
+
     const checks: ReadinessCheck[] = [
       { label: t('readiness.atLeastOneBase'), passed: baseList.length > 0 },
       { label: t('readiness.atLeastOneChallenge'), passed: challengeList.length > 0 },
@@ -83,6 +94,13 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
         passed: assignmentList.every(
           (a) => baseIds.has(a.baseId) && challengeIds.has(a.challengeId),
         ),
+      },
+      {
+        label: t('readiness.locationBoundAssigned', {
+          ok: locationBoundAssignedCount,
+          total: locationBoundChallenges.length,
+        }),
+        passed: locationBoundAssignedCount === locationBoundChallenges.length,
       },
       {
         label: t('readiness.locationCoords', { ok: locatedCount, total: locationBases.length }),

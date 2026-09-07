@@ -42,7 +42,6 @@ public class GameService {
     private final GameRepository gameRepository;
     private final OrgMembershipRepository orgMembershipRepository;
     private final UserRepository userRepository;
-    private final AssignmentRepository assignmentRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
     private final GameEventBroadcaster eventBroadcaster;
@@ -271,11 +270,13 @@ public class GameService {
         log.info("[OP] operation=advanceStatus gameId={} fromStatus={} toStatus={} operatorId={}",
                 id, fromStatus, target, currentOperator.getId());
 
-        if (target == GameStatus.setup) {
-            if (resetProgress) {
-                gameProgressResetService.resetProgress(id);
-            }
-            assignmentRepository.deleteByGameId(id);
+        // Reverting keeps the operator's plan: bases, challenges, teams and
+        // assignments stay as they are, and only the progress the operator
+        // chose to erase goes. Clearing assignments here used to leave a
+        // location-bound challenge unassigned, which the readiness check then
+        // rejected before the go-live auto-assign could ever refill it.
+        if (target == GameStatus.setup && resetProgress) {
+            gameProgressResetService.resetProgress(id);
         }
 
         if (target == GameStatus.live) {

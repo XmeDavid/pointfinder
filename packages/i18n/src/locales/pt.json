@@ -655,7 +655,7 @@
     "currentStatus": "Estado atual",
     "changeStateTo": "Alterar estado para",
     "revertToSetup": "Reverter para Configuração",
-    "revertToSetupDesc": "Mover o jogo de volta ao modo configuração. As atribuições serão limpas e re-geradas ao ir para live novamente.",
+    "revertToSetupDesc": "Mover o jogo de volta ao modo configuração. Bases, desafios, equipas e atribuições ficam como estão.",
     "revertToLive": "Reverter para Live",
     "revertToLiveDesc": "Reabrir o jogo para que as equipas possam continuar a jogar. Todo o progresso é preservado.",
     "progressQuestion": "O que deve acontecer com o progresso das equipas?",
@@ -1654,6 +1654,7 @@
     "locationCoords": "Bases de localização têm coordenadas ({{ok}}/{{total}})",
     "locationRadius": "Raios de localização entre 5 e 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Os anéis de localização não se sobrepõem",
+    "locationBoundAssigned": "Desafios ligados a um local atribuídos a uma base ({{ok}}/{{total}})",
     "legacyAppsNote": "As apps antigas de iOS e Android não conseguem concluir bases QR ou de localização."
   },
   "tutorials": {

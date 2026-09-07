@@ -118,7 +118,7 @@ class GameServiceTest {
 
         gameService = new GameService(
                 gameRepository, orgMembershipRepository, userRepository,
-                assignmentRepository, gameAccessService, fileStorageService,
+                gameAccessService, fileStorageService,
                 eventBroadcaster, challengeAssignmentService,
                 new GameProgressResetService(submissionRepository, checkInRepository,
                         activityEventRepository, uploadSessionRepository, teamLocationRepository),

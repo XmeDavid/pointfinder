@@ -87,7 +87,7 @@ describe('ReadinessIndicator', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByTestId('readiness-count')).toHaveTextContent('9/9')
+      expect(screen.getByTestId('readiness-count')).toHaveTextContent('10/10')
     })
   })
 
@@ -287,7 +287,7 @@ describe('ReadinessIndicator', () => {
     render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
 
     await waitFor(() => {
-      expect(screen.getByTestId('readiness-count')).toHaveTextContent('9/9')
+      expect(screen.getByTestId('readiness-count')).toHaveTextContent('10/10')
     })
 
     await user.click(screen.getByTestId('readiness-toggle'))
@@ -329,6 +329,46 @@ describe('ReadinessIndicator', () => {
 
     expect(await screen.findByText('Location bases have coordinates (2/3)')).toBeInTheDocument()
     expect(screen.getByText('Location rings do not overlap')).toBeInTheDocument()
+    expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
+  })
+
+  it('fails a location-bound challenge nobody assigned, and passes it once pinned or assigned', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({ id: 'b1', nfcLinked: true }),
+          createMockBase({ id: 'b2', nfcLinked: true, fixedChallengeId: 'c2' }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/challenges', () =>
+        HttpResponse.json([
+          createMockChallenge({ id: 'c1', locationBound: true }),
+          createMockChallenge({ id: 'c2', locationBound: true }),
+          createMockChallenge({ id: 'c3', locationBound: true }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/teams', () => HttpResponse.json([createMockTeam({ id: 't1' })])),
+      http.get('/api/games/:gameId/assignments', () =>
+        HttpResponse.json([createMockAssignment({ baseId: 'b1', challengeId: 'c1' })]),
+      ),
+      http.get('/api/games/:gameId/team-variables/completeness', () =>
+        HttpResponse.json({ complete: true, errors: [] }),
+      ),
+    )
+
+    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('readiness-toggle'))
+
+    // c1 is assigned, c2 is pinned to b2, c3 is neither: the server would
+    // reject go-live, so the checklist must say so instead of showing green.
+    expect(
+      await screen.findByText('Location-bound challenges assigned to a base (2/3)'),
+    ).toBeInTheDocument()
     expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
   })
 

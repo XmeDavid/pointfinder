@@ -655,7 +655,7 @@
     "currentStatus": "Aktueller Status",
     "changeStateTo": "Status ändern zu",
     "revertToSetup": "Auf Setup zurücksetzen",
-    "revertToSetupDesc": "Spiel zurück in den Setup-Modus versetzen. Zuweisungen werden gelöscht und beim erneuten Live-Start neu erzeugt.",
+    "revertToSetupDesc": "Spiel zurück in den Setup-Modus versetzen. Basen, Challenges, Teams und Zuweisungen bleiben wie sie sind.",
     "revertToLive": "Auf Live zurücksetzen",
     "revertToLiveDesc": "Spiel wieder öffnen, damit Teams weiterspielen können. Der gesamte Fortschritt bleibt erhalten.",
     "progressQuestion": "Was soll mit dem Team-Fortschritt passieren?",
@@ -1654,6 +1654,7 @@
     "locationCoords": "Standort-Basen haben Koordinaten ({{ok}}/{{total}})",
     "locationRadius": "Standortradien zwischen 5 und 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Standortringe überschneiden sich nicht",
+    "locationBoundAssigned": "Ortsgebundene Challenges einer Basis zugewiesen ({{ok}}/{{total}})",
     "legacyAppsNote": "Die alten iOS- und Android-Apps können QR- und Standort-Basen nicht abschließen."
   },
   "tutorials": {

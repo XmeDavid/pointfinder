@@ -655,7 +655,7 @@
     "currentStatus": "Current status",
     "changeStateTo": "Change state to",
     "revertToSetup": "Revert to Setup",
-    "revertToSetupDesc": "Move the game back to setup mode. Assignments will be cleared and re-generated when going live again.",
+    "revertToSetupDesc": "Move the game back to setup mode. Bases, challenges, teams and assignments stay as they are.",
     "revertToLive": "Revert to Live",
     "revertToLiveDesc": "Re-open the game so teams can continue playing. All progress is preserved.",
     "progressQuestion": "What should happen to team progress?",
@@ -1654,6 +1654,7 @@
     "locationCoords": "Location bases have coordinates ({{ok}}/{{total}})",
     "locationRadius": "Location radii between 5 and 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Location rings do not overlap",
+    "locationBoundAssigned": "Location-bound challenges assigned to a base ({{ok}}/{{total}})",
     "legacyAppsNote": "The legacy iOS and Android apps cannot complete QR or location bases."
   },
   "tutorials": {

@@ -77,6 +77,23 @@ If any condition fails, `PATCH /api/games/{id}/status` returns 400. The frontend
 4. `game_status` WebSocket event is broadcast to all connected operators.
 5. Players with the team's join code can now check in and submit.
 
+Step 3 also fills the plan: `ChallengeAssignmentService.autoAssignChallenges` adds one assignment
+row per team for every base that has none yet (the pinned challenge where the base has one, a
+random unused non-location-bound challenge otherwise). Bases that already carry assignments are
+left alone, so the operator's own grid always wins over the draw.
+
+### What Happens When a Game Reverts to Setup
+
+`live → setup` and `ended → setup` keep the whole plan: bases, challenges, teams **and
+assignments** stay exactly as they are. Only the progress the operator chose to erase goes
+(`resetProgress: true` archives submissions and check-ins and deletes team locations; `false`
+keeps them so teams carry on where they were). Going live again therefore succeeds with the same
+distribution, and a location-bound challenge that was assigned before the revert is still assigned
+when the readiness check runs. Until 2026-09-07 the revert deleted every assignment, which left any
+location-bound challenge unassigned and made the second go-live fail with
+`1 location-bound challenge(s) not assigned to any base` while the web checklist showed green; the
+web checklist now carries that condition too (`readiness.locationBoundAssigned`).
+
 ### What Is Blocked in Each State
 
 | Action | `setup` | `live` | `ended` |

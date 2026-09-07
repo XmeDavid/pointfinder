@@ -182,6 +182,44 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
         assertEquals("setup", resp.getBody().status());
     }
 
+    @Test
+    void liveToSetup_keepsAssignments() {
+        GameContext ctx = createReadyGame("LS2");
+        transition(ctx, "live");
+        // Going live materialises the plan: one row per base and team.
+        assertEquals(1, assignmentRepository.findByGameId(ctx.gameId).size());
+
+        ResponseEntity<GameResponse> resp = transition(ctx, "setup");
+
+        assertEquals(HttpStatus.OK, resp.getStatusCode());
+        assertEquals(1, assignmentRepository.findByGameId(ctx.gameId).size(),
+                "Reverting to setup must not throw the operator's assignments away");
+    }
+
+    @Test
+    void liveToSetupToLive_locationBoundChallengeStaysAssigned() {
+        // Regression: the revert used to wipe assignments, so a location-bound
+        // challenge could never pass the second go-live (the readiness check
+        // runs before auto-assign refills anything).
+        GameContext ctx = createReadyGame("LS3");
+        Game game = gameRepository.findById(ctx.gameId).orElseThrow();
+        Base base = baseRepository.findByGameId(ctx.gameId).get(0);
+        Challenge challenge = challengeRepository.findByGameId(ctx.gameId).get(0);
+        Team team = teamRepository.findByGameId(ctx.gameId).get(0);
+        assignmentRepository.save(Assignment.builder()
+                .game(game).base(base).challenge(challenge).team(team).build());
+
+        assertEquals(HttpStatus.OK, transition(ctx, "live").getStatusCode());
+        assertEquals(HttpStatus.OK, transitionWithReset(ctx, "setup", false).getStatusCode());
+
+        challenge.setLocationBound(true);
+        challengeRepository.save(challenge);
+
+        ResponseEntity<GameResponse> again = transition(ctx, "live");
+        assertEquals(HttpStatus.OK, again.getStatusCode());
+        assertEquals("live", again.getBody().status());
+    }
+
     // ── Invalid transitions ──────────────────────────────────────────
 
     @Test
