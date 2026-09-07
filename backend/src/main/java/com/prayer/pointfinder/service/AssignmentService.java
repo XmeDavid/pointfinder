@@ -80,7 +80,11 @@ public class AssignmentService {
                     .build();
         }).toList();
 
+        // Flush the delete before the inserts: Hibernate orders inserts ahead
+        // of queued deletes, so rewriting a row that already exists would hit
+        // uq_assignments_game_base_team and fail the whole grid write.
         assignmentRepository.deleteByGameId(gameId);
+        assignmentRepository.flush();
 
         List<AssignmentResponse> result = assignmentsToSave.stream()
                 .map(assignmentRepository::save)

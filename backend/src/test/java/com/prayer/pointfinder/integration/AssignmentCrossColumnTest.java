@@ -72,6 +72,34 @@ class AssignmentCrossColumnTest extends IntegrationTestBase {
     }
 
     @Test
+    void rewritingTheGridOverExistingRowsSucceeds() {
+        // Regression: the grid's PUT replaces the whole set. The delete was
+        // only queued, Hibernate flushed the inserts first, and the second
+        // write of any existing (base, team) pair died on the unique index.
+        User operator = createOperator("cross-rewrite@test.com", "password");
+        Game game = createGame(operator, "Rewrite", GameStatus.setup);
+        Base a = createBase(game, "A"); Base b = createBase(game, "B");
+        Challenge c1 = createChallenge(game, "One", com.prayer.pointfinder.entity.AnswerType.text, 10);
+        Challenge c2 = createChallenge(game, "Two", com.prayer.pointfinder.entity.AnswerType.text, 10);
+        Team falcons = createTeam(game, "Falcons", "FALC002");
+        Team lions = createTeam(game, "Lions", "LION002");
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        rows.add(row(a.getId(), c1.getId(), falcons.getId()));
+        rows.add(row(b.getId(), c2.getId(), falcons.getId()));
+        rows.add(row(a.getId(), c2.getId(), lions.getId()));
+        rows.add(row(b.getId(), c1.getId(), lions.getId()));
+        assertEquals(HttpStatus.OK, bulk(operator, game, rows).getStatusCode());
+
+        // The same set again, then one cell swapped: both are rewrites of live rows.
+        assertEquals(HttpStatus.OK, bulk(operator, game, rows).getStatusCode());
+        rows.set(0, row(a.getId(), c2.getId(), falcons.getId()));
+        rows.set(1, row(b.getId(), c1.getId(), falcons.getId()));
+        assertEquals(HttpStatus.OK, bulk(operator, game, rows).getStatusCode());
+        assertEquals(4, assignmentRepository.findByGameId(game.getId()).size());
+    }
+
+    @Test
     void aChallengeCannotBeAllTeamsAtOneBaseAndTeamSpecificAtAnother() {
         User operator = createOperator("cross-bulk@test.com", "password");
         Game game = createGame(operator, "Cross", GameStatus.setup);
