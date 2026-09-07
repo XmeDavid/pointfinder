@@ -1266,7 +1266,8 @@
       "title": "Reveals bases",
       "hint": "When a team completes this challenge here, these hidden bases appear on their map.",
       "needsPinAndLocation": "To reveal bases, pin this challenge to a base and make it location bound.",
-      "noHiddenBases": "No hidden bases to reveal yet. Hide a base in its visibility setting first."
+      "noHiddenBases": "No hidden bases to reveal yet. Hide a base in its visibility setting first.",
+      "claimedBy": "Already revealed by “{{challenge}}”"
     }
   },
   "command2": {
@@ -1707,7 +1708,7 @@
           "differentPath": "Practice: a different path",
           "variableOutcome": "Practice: a variable outcome"
         },
-        "replacing": "Replacing your practice game…"
+        "replacing": "Replacing your practice game “{{name}}”…"
       }
     },
     "scenarios": {

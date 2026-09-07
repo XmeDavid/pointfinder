@@ -155,7 +155,8 @@ export function CoachBubble({
         className="max-h-[45dvh] overflow-y-auto md:max-h-[70dvh]"
       >
         <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1" aria-live="polite" data-testid="tour-bubble-live">
+          <div className="min-w-0 flex-1">
+            {/* Outside the live region: the title announces the step, the bar only shows it. */}
             <div
               role="progressbar"
               aria-label={t('tutorials.common.progress', { n: step, total })}
@@ -167,9 +168,11 @@ export function CoachBubble({
             >
               <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${Math.round((step / Math.max(total, 1)) * 100)}%` }} />
             </div>
-            <h2 id={titleId} data-testid="tour-bubble-title" className="text-sm font-semibold text-foreground">
-              {title}
-            </h2>
+            <div aria-live="polite" data-testid="tour-bubble-live">
+              <h2 id={titleId} data-testid="tour-bubble-title" className="text-sm font-semibold text-foreground">
+                {title}
+              </h2>
+            </div>
           </div>
           <button
             type="button"

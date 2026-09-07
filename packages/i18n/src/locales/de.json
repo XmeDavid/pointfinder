@@ -1266,7 +1266,8 @@
       "title": "Deckt Stationen auf",
       "hint": "Wenn ein Team diese Challenge hier abschließt, erscheinen diese versteckten Stationen auf seiner Karte.",
       "needsPinAndLocation": "Um Stationen aufzudecken, fixiere diese Challenge an einer Station und mache sie ortsgebunden.",
-      "noHiddenBases": "Noch keine versteckten Stationen zum Aufdecken. Verstecke zuerst eine Station über ihre Sichtbarkeit."
+      "noHiddenBases": "Noch keine versteckten Stationen zum Aufdecken. Verstecke zuerst eine Station über ihre Sichtbarkeit.",
+      "claimedBy": "Wird bereits von „{{challenge}}“ aufgedeckt"
     }
   },
   "command2": {
@@ -1707,7 +1708,7 @@
           "differentPath": "Übung: ein anderer Weg",
           "variableOutcome": "Übung: ein variabler Ausgang"
         },
-        "replacing": "Dein Übungsspiel wird ersetzt …"
+        "replacing": "Dein Übungsspiel „{{name}}“ wird ersetzt …"
       }
     },
     "scenarios": {

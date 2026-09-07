@@ -284,7 +284,7 @@ public class PracticeGameService {
         UUID mill = base(gameId, "Old mill", lat + OFFSETS[0][0], lng + OFFSETS[0][1], false);
         UUID chapel = base(gameId, "Chapel steps", lat + OFFSETS[1][0], lng + OFFSETS[1][1], false);
         UUID lookout = base(gameId, "Lookout", lat + OFFSETS[2][0], lng + OFFSETS[2][1], false);
-        challenge(gameId, "Count the arches", "<p>How many arches does the old mill have?</p>", "<p>Good work. Your next stop is written on the sheet you were given.</p>", mill, List.of());
+        challenge(gameId, "Count the arches", "<p>How many arches does the old mill have?</p>", "<p>Good work. Where you go from here is written on the sheet you were given.</p>", mill, List.of());
         UUID c2 = challenge(gameId, "Photograph the bell", "<p>Take a photo of the chapel bell with your whole team in it.</p>", "<p>One to go.</p>");
         UUID c3 = challenge(gameId, "Name the peak", "<p>From the lookout, which peak is furthest away?</p>", "<p>Route complete.</p>");
         assign(gameId, List.of(new UUID[]{chapel, c2}, new UUID[]{lookout, c3}), List.of());

@@ -23,7 +23,8 @@ function has(s: TourState, teamName: string, basePrefix: string, n: string): boo
   const b = base(s, basePrefix)
   const c = challenge(s, n)
   if (!t || !b || !c) return false
-  return s.assignments.some((row) => row.teamId === t.id && row.baseId === b.id && row.challengeId === c.id)
+  // An all-teams row counts for every team, as in the grid model.
+  return s.assignments.some((row) => (!row.teamId || row.teamId === t.id) && row.baseId === b.id && row.challengeId === c.id)
 }
 const FALCONS_DONE = (s: TourState) => has(s, 'Falcons', 'Base A', '1') && has(s, 'Falcons', 'Base B', '2') && has(s, 'Falcons', 'Base C', '3')
 const LIONS_DONE = (s: TourState) => has(s, 'Lions', 'Base C', '1') && has(s, 'Lions', 'Base B', '2') && has(s, 'Lions', 'Base A', '3')

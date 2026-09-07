@@ -6,6 +6,7 @@ import type { Scenario, TourActions, TourState } from '../types'
  * game whose first challenge is pinned to the old mill.
  */
 const KEY = 'next'
+const PLACEHOLDER = `{{${KEY}}}`
 
 function ensureBuild(a: TourActions, s: TourState) {
   if (s.mode !== 'build') a.setMode('build')
@@ -88,7 +89,8 @@ export const variableOutcome: Scenario = {
       route: 'workspace',
       anchor: 'completion-content',
       prepare: openPinned,
-      done: { kind: 'predicate', test: (s) => s.field('completion-content').value.includes(KEY) },
+      // The placeholder itself, not the bare word: the seeded text may mention it.
+      done: { kind: 'predicate', test: (s) => s.field('completion-content').value.includes(PLACEHOLDER) },
       copy: { title: 'tutorials.variableOutcome.completion.title', body: 'tutorials.variableOutcome.completion.body' },
     },
     {

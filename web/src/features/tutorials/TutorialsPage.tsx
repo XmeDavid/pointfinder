@@ -166,7 +166,9 @@ export function TutorialsPage() {
 
         {busy && (
           <p className="text-sm text-muted-foreground" role="status" data-testid="tutorials-practice-busy">
-            {deleteGame.isPending ? t('tutorials.library.practice.replacing') : t('tutorials.library.practice.creating')}
+            {deleteGame.isPending
+              ? t('tutorials.library.practice.replacing', { name: practiceGame?.name ?? '' })
+              : t('tutorials.library.practice.creating')}
           </p>
         )}
         {error && (

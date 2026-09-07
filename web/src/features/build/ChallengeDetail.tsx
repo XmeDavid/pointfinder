@@ -181,6 +181,16 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
     () => bases.filter((base) => base.hidden && base.id !== challenge?.fixedBaseId),
     [bases, challenge?.fixedBaseId],
   )
+  // A base opens from exactly one challenge (the server rejects a second),
+  // so a target another challenge already reveals is shown but not offered.
+  const claimedBy = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const other of challenges) {
+      if (other.id === challengeId) continue
+      for (const baseId of other.unlocksBaseIds ?? []) map.set(baseId, other.title)
+    }
+    return map
+  }, [challenges, challengeId])
 
   const challengeAssignments = useMemo(
     () => assignments.filter((a) => a.challengeId === challengeId),
@@ -228,12 +238,18 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         // Unlock targets need a pinned, location-bound challenge; the server
         // ignores them otherwise, so send exactly what the editor shows.
         unlocksBaseIds: localLocationBound && challenge?.fixedBaseId ? localUnlocks : [],
+        // The update replaces the whole row: fields this form does not edit
+        // are carried over, or the server would clear them.
+        tagIds: challenge?.tagIds ?? [],
+        requirePresenceToSubmit: challenge?.requirePresenceToSubmit ?? false,
       },
     })
   }, [
     challengeId,
     localUnlocks,
     challenge?.fixedBaseId,
+    challenge?.tagIds,
+    challenge?.requirePresenceToSubmit,
     localTitle,
     localAnswerType,
     localAutoValidate,
@@ -659,21 +675,26 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
             <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('build.unlocks.title')} data-testid="unlocks-bases">
               {hiddenTargets.map((base) => {
                 const on = localUnlocks.includes(base.id)
+                const claimant = on ? undefined : claimedBy.get(base.id)
                 return (
                   <button
                     key={base.id}
                     type="button"
                     aria-pressed={on}
+                    disabled={Boolean(claimant)}
+                    title={claimant ? t('build.unlocks.claimedBy', { challenge: claimant }) : undefined}
                     onClick={() => setLocalUnlocks(on ? localUnlocks.filter((id) => id !== base.id) : [...localUnlocks, base.id])}
                     data-testid={`unlocks-base-${base.id}`}
                     className={cn(
-                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
+                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors border',
+                      claimant ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
                       on
                         ? 'bg-primary/10 text-primary border-primary/30'
                         : 'bg-background text-muted-foreground border-border hover:text-foreground',
                     )}
                   >
                     {base.name}
+                    {claimant && <span className="sr-only"> · {t('build.unlocks.claimedBy', { challenge: claimant })}</span>}
                   </button>
                 )
               })}
@@ -704,6 +725,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 points: challenge.points,
                 locationBound: challenge.locationBound,
                 operatorNotes: challenge.operatorNotes,
+                unlocksBaseIds: challenge.unlocksBaseIds ?? [],
+                requirePresenceToSubmit: challenge.requirePresenceToSubmit,
                 tagIds,
               },
             })

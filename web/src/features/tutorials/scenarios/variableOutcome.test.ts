@@ -61,8 +61,9 @@ describe('variable-outcome scenario', () => {
     { name: 'one team still empty stays on values', state: { ...seeded, fields: { 'variable-value-next-falcons': { present: true, value: 'the chapel' }, 'variable-value-next-lions': { present: true, value: '' } } }, expectId: 'variable-values' },
     { name: 'all values → save them', state: { ...seeded, fields: valueFields }, expectId: 'variable-save' },
     { name: 'saved → completion text', state: { ...seeded, fields: valueFields, stepCompletedAt: { 'variable-values': 100 }, lastSuccess: { 'variables:challenge': 200 } }, expectId: 'completion' },
-    { name: 'placeholder typed → save the challenge', state: { ...seeded, fields: { ...valueFields, 'completion-content': { present: true, value: 'Good work — go to next.' } }, stepCompletedAt: { 'variable-values': 100, completion: 300 }, lastSuccess: { 'variables:challenge': 200 } }, expectId: 'challenge-save' },
-    { name: 'challenge saved → finish', state: { ...seeded, fields: { ...valueFields, 'completion-content': { present: true, value: 'go to next' } }, stepCompletedAt: { 'variable-values': 100, completion: 300 }, lastSuccess: { 'variables:challenge': 200, 'challenge:update': 400 } }, expectId: 'finish' },
+    { name: 'the bare word is not the placeholder: stay on completion', state: { ...seeded, fields: { ...valueFields, 'completion-content': { present: true, value: 'Your next stop is on the sheet.' } }, stepCompletedAt: { 'variable-values': 100 }, lastSuccess: { 'variables:challenge': 200 } }, expectId: 'completion' },
+    { name: 'placeholder typed → save the challenge', state: { ...seeded, fields: { ...valueFields, 'completion-content': { present: true, value: 'Good work — go to {{next}}.' } }, stepCompletedAt: { 'variable-values': 100, completion: 300 }, lastSuccess: { 'variables:challenge': 200 } }, expectId: 'challenge-save' },
+    { name: 'challenge saved → finish', state: { ...seeded, fields: { ...valueFields, 'completion-content': { present: true, value: 'go to {{next}}' } }, stepCompletedAt: { 'variable-values': 100, completion: 300 }, lastSuccess: { 'variables:challenge': 200, 'challenge:update': 400 } }, expectId: 'finish' },
   ]
   it.each(cases)('$name', ({ state, expectId }) => {
     expect(advance(variableOutcome, makeTourState(state), NO_CLICKS, null)).toBe(expectId)

@@ -180,7 +180,7 @@ test('a variable outcome: a team variable used in the completion text', async ({
   await expect.poll(() => Object.keys(state.variables)).toEqual(['next'])
   await expect(title).toHaveText('Use it in the completion text')
   await page.getByTestId('completion-content').locator('[contenteditable="true"]').click()
-  await page.keyboard.type('Good work — go to next.')
+  await page.keyboard.type('Good work — go to {{next}}.')
   await expect(title).toHaveText('Save the challenge')
   await page.getByTestId('save-challenge').click()
   await expect(title).toHaveText('Variable done')

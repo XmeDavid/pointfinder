@@ -78,54 +78,69 @@ public class ChallengeAssignmentService {
         List<Assignment> assignmentsToCreate = new ArrayList<>();
 
         for (Base base : bases) {
-            boolean hasAssignments = existingAssignments.stream()
-                    .anyMatch(a -> a.getBase().getId().equals(base.getId()));
+            // The gap is per (base, team), not per base: a revert keeps the
+            // plan, so a team added while the game sat in setup must still
+            // get a challenge at every base when the game goes live again.
+            List<Assignment> atBase = existingAssignments.stream()
+                    .filter(a -> a.getBase().getId().equals(base.getId()))
+                    .toList();
+            boolean allTeamsRow = atBase.stream().anyMatch(a -> a.getTeam() == null);
+            Set<UUID> coveredTeamIds = atBase.stream()
+                    .filter(a -> a.getTeam() != null)
+                    .map(a -> a.getTeam().getId())
+                    .collect(Collectors.toSet());
+            List<Team> missingTeams = allTeamsRow
+                    ? List.of()
+                    : teams.stream().filter(t -> !coveredTeamIds.contains(t.getId())).toList();
+            if (missingTeams.isEmpty()) {
+                continue;
+            }
 
             if (base.getFixedChallenge() != null) {
-                if (!hasAssignments) {
-                    for (Team team : teams) {
-                        Assignment assignment = Assignment.builder()
-                                .game(game).base(base).challenge(base.getFixedChallenge()).team(team).build();
-                        assignmentsToCreate.add(assignment);
-                        teamAssignedChallenges.get(team.getId()).add(base.getFixedChallenge().getId());
-                    }
+                for (Team team : missingTeams) {
+                    assignmentsToCreate.add(Assignment.builder()
+                            .game(game).base(base).challenge(base.getFixedChallenge()).team(team).build());
+                    teamAssignedChallenges.get(team.getId()).add(base.getFixedChallenge().getId());
                 }
-            } else if (!hasAssignments) {
-                if (Boolean.TRUE.equals(game.getUniformAssignment())) {
+            } else if (Boolean.TRUE.equals(game.getUniformAssignment())) {
+                // Every team meets the same challenge at a base: reuse the one
+                // already placed there for the teams that lack it, draw once
+                // for a base nobody has yet.
+                Challenge selected = atBase.isEmpty() ? null : atBase.get(0).getChallenge();
+                if (selected == null) {
                     List<Challenge> sharedPool = randomPool.stream()
                             .filter(c -> !usedGlobally.contains(c.getId()))
                             .toList();
-
-                    if (!sharedPool.isEmpty()) {
-                        Challenge selected = sharedPool.get(RANDOM.nextInt(sharedPool.size()));
-                        usedGlobally.add(selected.getId());
-                        for (Team team : teams) {
-                            assignmentsToCreate.add(Assignment.builder()
-                                    .game(game).base(base).challenge(selected).team(team).build());
-                            teamAssignedChallenges.get(team.getId()).add(selected.getId());
-                        }
-                    } else {
+                    if (sharedPool.isEmpty()) {
                         log.warn("Shared challenge pool exhausted at base {} in game {}. " +
                                         "This should have been caught by go-live validation.",
                                 base.getId(), gameId);
+                        continue;
                     }
-                } else {
-                    for (Team team : teams) {
-                        Set<UUID> usedByTeam = teamAssignedChallenges.get(team.getId());
-                        List<Challenge> teamPool = randomPool.stream()
-                                .filter(c -> !usedByTeam.contains(c.getId()))
-                                .toList();
+                    selected = sharedPool.get(RANDOM.nextInt(sharedPool.size()));
+                    usedGlobally.add(selected.getId());
+                }
+                for (Team team : missingTeams) {
+                    assignmentsToCreate.add(Assignment.builder()
+                            .game(game).base(base).challenge(selected).team(team).build());
+                    teamAssignedChallenges.get(team.getId()).add(selected.getId());
+                }
+            } else {
+                for (Team team : missingTeams) {
+                    Set<UUID> usedByTeam = teamAssignedChallenges.get(team.getId());
+                    List<Challenge> teamPool = randomPool.stream()
+                            .filter(c -> !usedByTeam.contains(c.getId()))
+                            .toList();
 
-                        if (!teamPool.isEmpty()) {
-                            Challenge selected = teamPool.get(RANDOM.nextInt(teamPool.size()));
-                            assignmentsToCreate.add(Assignment.builder()
-                                    .game(game).base(base).challenge(selected).team(team).build());
-                            usedByTeam.add(selected.getId());
-                        } else {
-                            log.warn("Challenge pool exhausted for team {} at base {} in game {}. " +
-                                            "This should have been caught by go-live validation.",
-                                    team.getId(), base.getId(), gameId);
-                        }
+                    if (!teamPool.isEmpty()) {
+                        Challenge selected = teamPool.get(RANDOM.nextInt(teamPool.size()));
+                        assignmentsToCreate.add(Assignment.builder()
+                                .game(game).base(base).challenge(selected).team(team).build());
+                        usedByTeam.add(selected.getId());
+                    } else {
+                        log.warn("Challenge pool exhausted for team {} at base {} in game {}. " +
+                                        "This should have been caught by go-live validation.",
+                                team.getId(), base.getId(), gameId);
                     }
                 }
             }

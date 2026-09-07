@@ -494,6 +494,76 @@ describe('ChallengeDetail', () => {
   })
 })
 
+describe('ChallengeDetail keeps what it does not edit', () => {
+  beforeEach(() => {
+    resetChallengeCounter()
+    resetAssignmentCounter()
+    resetBaseCounter()
+    resetTeamCounter()
+    useWorkspaceStore.getState().reset()
+  })
+
+  function pinnedFixture() {
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({ id: 'trail', name: 'Trailhead', fixedChallengeId: 'challenge-1' }),
+          createMockBase({ id: 'bridge', name: 'Old bridge', hidden: true }),
+          createMockBase({ id: 'tower', name: 'Ruined tower', hidden: true }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/challenges', () =>
+        HttpResponse.json([
+          createMockChallenge({
+            id: 'challenge-1',
+            title: 'Trailhead riddle',
+            locationBound: true,
+            fixedBaseId: 'trail',
+            unlocksBaseIds: ['bridge'],
+            tagIds: ['tag-a'],
+            requirePresenceToSubmit: true,
+          }),
+          createMockChallenge({ id: 'challenge-2', title: 'Bridge count', unlocksBaseIds: ['tower'] }),
+        ]),
+      ),
+    )
+  }
+
+  it('the Save button carries tags, the presence rule and the unlock chain unchanged', async () => {
+    const user = userEvent.setup()
+    pinnedFixture()
+    let body: Record<string, unknown> | null = null
+    server.use(
+      http.put('/api/games/:gameId/challenges/:challengeId', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(createMockChallenge({ id: 'challenge-1', title: 'Trailhead riddle' }))
+      }),
+    )
+
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, { wrapper: createWrapper() })
+    await screen.findByTestId('unlocks-bases')
+    await user.click(screen.getByTestId('save-challenge'))
+
+    await waitFor(() => expect(body).not.toBeNull())
+    expect(body).toMatchObject({
+      tagIds: ['tag-a'],
+      requirePresenceToSubmit: true,
+      unlocksBaseIds: ['bridge'],
+    })
+  })
+
+  it('a hidden base another challenge already reveals is shown but cannot be picked', async () => {
+    pinnedFixture()
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, { wrapper: createWrapper() })
+
+    const tower = await screen.findByTestId('unlocks-base-tower')
+    expect(tower).toBeDisabled()
+    expect(tower).toHaveAttribute('title', 'Already revealed by “Bridge count”')
+    expect(screen.getByTestId('unlocks-base-bridge')).not.toBeDisabled()
+    expect(screen.getByTestId('unlocks-base-bridge')).toHaveAttribute('aria-pressed', 'true')
+  })
+})
+
 describe('ChallengeDetail tutorial anchors', () => {
   beforeEach(() => {
     resetChallengeCounter()

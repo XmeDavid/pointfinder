@@ -665,6 +665,83 @@ class ChallengeAssignmentServiceTest {
         verify(assignmentRepository, never()).saveAll(anyList());
     }
 
+    // ── Gaps are per (base, team): a team added after a revert ────────
+
+    @Test
+    void teamAddedAfterRevert_getsAChallengeAtEveryBase_perTeamMode() {
+        game.setUniformAssignment(false);
+        Base b1 = base("B1");
+        Base b2 = base("B2");
+        Team old = team("Old");
+        Team fresh = team("Fresh");
+        Challenge c1 = challenge("C1");
+        Challenge c2 = challenge("C2");
+        Challenge c3 = challenge("C3");
+        // The old team's rows survived the revert; the new team has none.
+        List<Assignment> existing = List.of(existingAssignment(b1, c1, old), existingAssignment(b2, c2, old));
+
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(b1, b2));
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(old, fresh));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(c1, c2, c3));
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(existing);
+
+        service.autoAssignChallenges(game);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Assignment>> captor = ArgumentCaptor.forClass(List.class);
+        verify(assignmentRepository).saveAll(captor.capture());
+        List<Assignment> saved = captor.getValue();
+        assertEquals(2, saved.size());
+        assertTrue(saved.stream().allMatch(a -> a.getTeam().getId().equals(fresh.getId())));
+        assertEquals(Set.of(b1.getId(), b2.getId()),
+                saved.stream().map(a -> a.getBase().getId()).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(2, saved.stream().map(a -> a.getChallenge().getId()).distinct().count(),
+                "the new team meets a different challenge at each base");
+    }
+
+    @Test
+    void teamAddedAfterRevert_reusesTheBaseChallenge_inUniformMode() {
+        game.setUniformAssignment(true);
+        Base b = base("B");
+        Team old = team("Old");
+        Team fresh = team("Fresh");
+        Challenge placed = challenge("Placed");
+        Challenge other = challenge("Other");
+
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(b));
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(old, fresh));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(placed, other));
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of(existingAssignment(b, placed, old)));
+
+        service.autoAssignChallenges(game);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Assignment>> captor = ArgumentCaptor.forClass(List.class);
+        verify(assignmentRepository).saveAll(captor.capture());
+        List<Assignment> saved = captor.getValue();
+        assertEquals(1, saved.size());
+        assertEquals(fresh.getId(), saved.get(0).getTeam().getId());
+        assertEquals(placed.getId(), saved.get(0).getChallenge().getId(), "uniform mode keeps one challenge per base");
+    }
+
+    @Test
+    void allTeamsRow_coversEveryTeam_soNothingIsAdded() {
+        Base b = base("B");
+        Team t1 = team("T1");
+        Team t2 = team("T2");
+        Challenge c = challenge("C");
+        Assignment allTeams = Assignment.builder().id(UUID.randomUUID()).game(game).base(b).challenge(c).team(null).build();
+
+        when(baseRepository.findByGameId(gameId)).thenReturn(List.of(b));
+        when(teamRepository.findByGameId(gameId)).thenReturn(List.of(t1, t2));
+        when(challengeRepository.findByGameId(gameId)).thenReturn(List.of(c));
+        when(assignmentRepository.findByGameId(gameId)).thenReturn(List.of(allTeams));
+
+        service.autoAssignChallenges(game);
+
+        verify(assignmentRepository, never()).saveAll(anyList());
+    }
+
     // ── Mixed scenario: fixed + random bases, multiple teams ─────────
 
     @Test

@@ -1266,7 +1266,8 @@
       "title": "Revela bases",
       "hint": "Quando uma equipa completa este desafio aqui, estas bases escondidas aparecem no seu mapa.",
       "needsPinAndLocation": "Para revelar bases, fixa este desafio a uma base e torna-o preso ao local.",
-      "noHiddenBases": "Ainda não há bases escondidas para revelar. Esconde uma base na sua visibilidade primeiro."
+      "noHiddenBases": "Ainda não há bases escondidas para revelar. Esconde uma base na sua visibilidade primeiro.",
+      "claimedBy": "Já revelada por “{{challenge}}”"
     }
   },
   "command2": {
@@ -1707,7 +1708,7 @@
           "differentPath": "Treino: um percurso diferente",
           "variableOutcome": "Treino: um desfecho variável"
         },
-        "replacing": "A substituir o teu jogo de treino…"
+        "replacing": "A substituir o teu jogo de treino “{{name}}”…"
       }
     },
     "scenarios": {

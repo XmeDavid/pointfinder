@@ -87,8 +87,10 @@ left alone, so the operator's own grid always wins over the draw.
 `live → setup` and `ended → setup` keep the whole plan: bases, challenges, teams **and
 assignments** stay exactly as they are. Only the progress the operator chose to erase goes
 (`resetProgress: true` archives submissions and check-ins and deletes team locations; `false`
-keeps them so teams carry on where they were). Going live again therefore succeeds with the same
-distribution, and a location-bound challenge that was assigned before the revert is still assigned
+keeps them so teams carry on where they were). Going live again keeps every existing row
+and only fills the gaps per base **and team** (a team added while the game sat in setup gets a
+challenge at every base; in uniform mode it meets the challenge already placed there), and a
+location-bound challenge that was assigned before the revert is still assigned
 when the readiness check runs. Until 2026-09-07 the revert deleted every assignment, which left any
 location-bound challenge unassigned and made the second go-live fail with
 `1 location-bound challenge(s) not assigned to any base` while the web checklist showed green; the
@@ -1335,7 +1337,7 @@ challenges in the same order from opposite ends, built in the assignment grid) a
 `next` and a completion text that uses `{{next}}`, so each team reads its own next stop).
 
 - **`fixed-route`** — a `practice-game` scenario that turns on `enforceBaseOrder`, explains the game-wide `unlockTrigger`, and opens the route editor. It teaches no new rule: every base already carries an `orderIndex` from creation, so `BaseOrderService.sequenceNumbers` always numbers the whole route and readiness has nothing to check.
-- **`exploration`** — a `practice-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. `Challenge.unlocksBaseIds` has no operator control in the web app yet, so the copy teaches the clue text, not an unlock mechanism.
+- **`exploration`** — a `practice-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. The copy teaches the clue text; the unlock mechanism (`Challenge.unlocksBaseIds`, edited in the challenge form's "Reveals bases" section) is the `unlock-chain` scenario's lesson.
 
 ---
 
