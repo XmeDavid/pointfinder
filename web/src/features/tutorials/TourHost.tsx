@@ -174,6 +174,8 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   useEffect(() => {
     if (steps.length === 0) return
     if (!currentStepId) return
+    // The pill freezes the run: steps finished behind it are picked up on resume.
+    if (paused) return
     if (step) {
       if (!done) return
       // The next step is chosen on a state that already carries this step's
@@ -191,7 +193,7 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     const next = advance(scenario, latest.current.state, clickedSteps, currentStepId)
     if (next === null) complete()
     else setCurrentStep(next)
-  }, [clickedSteps, complete, currentStepId, done, markStepCompleted, scenario, setCurrentStep, step, steps.length])
+  }, [clickedSteps, complete, currentStepId, done, markStepCompleted, paused, scenario, setCurrentStep, step, steps.length])
 
   // `prepare` reveals the anchor when the step starts. Idempotent per step id.
   const preparedFor = useRef<string | null>(null)
@@ -214,6 +216,7 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     if (step.route === 'workspace' && gameId && s.routeGameId !== gameId) a.navigate(`/game/${gameId}`)
     else if (step.route === 'dashboard' && !s.isDashboard) a.navigate('/dashboard')
     step.prepare?.(a, s)
+    preparedFor.current = step.id
     resume()
   }
 

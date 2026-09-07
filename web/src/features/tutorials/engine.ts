@@ -48,10 +48,14 @@ export function advance(
       index = exclusive ? effectiveIndex + 1 : effectiveIndex
     } else {
       const originalIndex = scenario.steps.findIndex((step) => step.id === fromStepId)
-      index = steps.findIndex(
-        (step) => scenario.steps.indexOf(step) > originalIndex,
-      )
-      if (index < 0) index = steps.length
+      if (originalIndex < 0) {
+        // A step id this build does not know (renamed since the row was
+        // written): start the walk from the top rather than guess.
+        index = 0
+      } else {
+        index = steps.findIndex((step) => scenario.steps.indexOf(step) > originalIndex)
+        if (index < 0) index = steps.length
+      }
     }
   }
   while (index < steps.length) {

@@ -12,6 +12,8 @@ export const SETTLE_MS = 600
 
 const EMPTY: AnchorTracking = { element: null, rect: null, visible: false }
 
+const ATTRIBUTE_FILTER = ['class', 'style', 'data-testid', 'hidden']
+
 function sameRect(a: DOMRect | null, b: DOMRect): boolean {
   return (
     a !== null && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height
@@ -22,11 +24,17 @@ function sameRect(a: DOMRect | null, b: DOMRect): boolean {
  * Tracks the element carrying `testId`: its live rect, whether it is on screen,
  * and the element itself so focus can return to it. The DOM is the external
  * store: it is re-read on resize, capture-phase scroll, the element's own
- * ResizeObserver, any DOM mutation (so an anchor that appears after a drawer
- * opens is found without a click), and whenever `tick` changes. Every trigger
- * also starts a short animation-frame loop, because a drawer that springs open
- * moves its children for a few hundred milliseconds without firing any of the
- * above.
+ * ResizeObserver, nodes appearing or leaving anywhere (so an anchor that
+ * appears after a drawer opens is found without a click), attribute changes on
+ * the anchor and its ancestors (a drawer sliding, a panel hiding), and whenever
+ * `tick` changes. Every trigger also starts a short animation-frame loop,
+ * because a drawer that springs open moves its children for a few hundred
+ * milliseconds without firing any of the above.
+ *
+ * Attribute changes are watched on the anchor's ancestor chain only, never on
+ * the whole document: the map rewrites marker transforms on every frame of a
+ * pan, and watching those would keep the settle loop running for as long as
+ * the operator drags.
  */
 export function useAnchorRect(testId: string | null, tick = 0): AnchorTracking {
   const cache = useRef<AnchorTracking>(EMPTY)
@@ -50,13 +58,33 @@ export function useAnchorRect(testId: string | null, tick = 0): AnchorTracking {
       let frame = 0
       let settleUntil = 0
       const hasFrames = typeof requestAnimationFrame !== 'undefined'
+      const hasMutations = typeof MutationObserver !== 'undefined' && typeof document !== 'undefined'
+
+      // The anchor's own size and the attributes along its ancestor chain.
+      let watched: HTMLElement | null = null
+      const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => settle())
+      const chain = hasMutations ? new MutationObserver(() => onMutation()) : null
+      const watch = () => {
+        const element = testId ? anchorElement(testId) : null
+        if (element === watched) return
+        watched = element
+        sizes?.disconnect()
+        chain?.disconnect()
+        if (!element) return
+        sizes?.observe(element)
+        for (let node: HTMLElement | null = element; node && node !== document.body; node = node.parentElement) {
+          chain?.observe(node, { attributes: true, attributeFilter: ATTRIBUTE_FILTER })
+        }
+      }
 
       // Notify now and keep notifying every frame until the settle window closes.
       const settle = () => {
+        watch()
         onChange()
         settleUntil = Date.now() + SETTLE_MS
         if (frame || !hasFrames) return
         const loop = () => {
+          watch()
           onChange()
           if (Date.now() < settleUntil) {
             frame = requestAnimationFrame(loop)
@@ -66,10 +94,6 @@ export function useAnchorRect(testId: string | null, tick = 0): AnchorTracking {
         }
         frame = requestAnimationFrame(loop)
       }
-
-      const element = testId ? anchorElement(testId) : null
-      const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(settle)
-      if (observer && element) observer.observe(element)
 
       let mutationFrame = 0
       const onMutation = () => {
@@ -82,24 +106,18 @@ export function useAnchorRect(testId: string | null, tick = 0): AnchorTracking {
           settle()
         })
       }
-      const mutations =
-        typeof MutationObserver === 'undefined' || typeof document === 'undefined'
-          ? null
-          : new MutationObserver(onMutation)
-      mutations?.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-testid', 'hidden'],
-      })
+      // Nodes coming and going anywhere: the anchor may not exist yet.
+      const arrivals = hasMutations ? new MutationObserver(onMutation) : null
+      arrivals?.observe(document.body, { childList: true, subtree: true })
 
       window.addEventListener('resize', settle)
       window.addEventListener('scroll', settle, true)
       settle()
 
       return () => {
-        observer?.disconnect()
-        mutations?.disconnect()
+        sizes?.disconnect()
+        chain?.disconnect()
+        arrivals?.disconnect()
         if (mutationFrame) cancelAnimationFrame(mutationFrame)
         if (frame) cancelAnimationFrame(frame)
         frame = 0

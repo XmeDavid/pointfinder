@@ -112,7 +112,7 @@ describe('TutorialsPage', () => {
       scenarioId: 'first-game',
       body: { status: 'in_progress', currentStep: null, gameId: null },
     })
-    expect(useTourStore.getState().activeScenario).toBe('first-game')
+    await waitFor(() => expect(useTourStore.getState().activeScenario).toBe('first-game'))
     expect(useTourStore.getState().currentStepId).toBeNull()
   })
 

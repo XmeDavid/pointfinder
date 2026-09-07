@@ -45,6 +45,23 @@ export const fixedRoute: Scenario = {
       },
     },
     {
+      // Arrange route is disabled below two bases, so a thin game is asked for
+      // bases first instead of being parked on a button it cannot press.
+      id: 'add-bases',
+      route: 'workspace',
+      anchor: 'new-entity-btn',
+      when: (s) => s.bases.length < 2,
+      prepare: (a) => {
+        a.setSettingsPanelOpen(false)
+        a.openDrawer('bases')
+      },
+      done: { kind: 'predicate', test: (s) => s.bases.length >= 2 },
+      copy: {
+        title: 'tutorials.fixedRoute.add-bases.title',
+        body: 'tutorials.fixedRoute.add-bases.body',
+      },
+    },
+    {
       id: 'arrange',
       route: 'workspace',
       anchor: 'arrange-route-btn',
@@ -58,12 +75,6 @@ export const fixedRoute: Scenario = {
         title: 'tutorials.fixedRoute.arrange.title',
         body: 'tutorials.fixedRoute.arrange.body',
       },
-      branchCopy: [
-        {
-          when: (s) => s.bases.length < 2,
-          body: 'tutorials.fixedRoute.arrange.branch.needsTwoBases',
-        },
-      ],
     },
     {
       id: 'route',

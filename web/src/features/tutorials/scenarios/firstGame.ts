@@ -133,14 +133,9 @@ const steps: Step[] = [
     route: 'workspace',
     anchor: 'base-checkin-radius',
     when: (s) => s.pressedIn('base-checkin-method') === 'base-checkin-method-location',
-    done: {
-      kind: 'predicate',
-      test: (s) => {
-        const radius = s.field('base-checkin-radius')
-        // Ring overlap is the readiness pill's job — it owns the only implementation.
-        return radius.present && radius.value !== '' && !s.field('base-checkin-radius-error').present
-      },
-    },
+    // An explanation, not a demand: the inherited game default is a valid
+    // radius, and an out-of-range value is rejected by the form itself.
+    done: { kind: 'ack' },
     copy: copyFor('base-radius', { aside: true }),
   },
   {

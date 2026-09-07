@@ -1699,7 +1699,7 @@
       },
       "base-radius": {
         "title": "Setze den GPS-Radius",
-        "body": "Standort-Stationen öffnen sich innerhalb dieses Rings. Zu klein, und ungenaue Handys scheitern; zu groß, und Nachbarstationen überlappen. Die Startbereitschaft warnt dich, wenn sich zwei Ringe berühren.",
+        "body": "Standort-Stationen öffnen sich innerhalb dieses Rings. Zu klein, und ungenaue Handys scheitern; zu groß, und Nachbarstationen überlappen. Die Startbereitschaft warnt dich, wenn sich zwei Ringe berühren. Der vom Spiel geerbte Wert ist ein guter Anfang — drücke Weiter, um ihn zu behalten.",
         "aside": "Leer lassen, um die Vorgabe des Spiels zu übernehmen."
       },
       "base-visibility": {
@@ -1830,12 +1830,13 @@
         "title": "Was die nächste Station freischaltet",
         "body": "Der Check-in kann genügen, oder du verlangst eine Abgabe oder eine freigegebene Antwort. Das gilt für das ganze Spiel, nicht nur für die Route. Für eine erste Route hält der Check-in die Teams in Bewegung."
       },
+      "add-bases": {
+        "title": "Füge eine zweite Station hinzu",
+        "body": "Eine Route braucht mindestens zwei Stationen, und Route anordnen bleibt bis dahin deaktiviert. Füge mit Neue Station eine weitere hinzu — die Tour geht weiter, sobald sie existiert."
+      },
       "arrange": {
         "title": "Routeneditor öffnen",
-        "body": "„Route anordnen“ öffnet die Besuchsreihenfolge. Sie braucht mindestens zwei Stationen und funktioniert nur während der Einrichtung. Daneben liegen die Suche, die Liste und jede einzelne Station zum Bearbeiten.",
-        "branch": {
-          "needsTwoBases": "„Route anordnen“ bleibt deaktiviert, bis das Spiel zwei Stationen hat. Lege auf der Karte noch eine an und komm zurück — der Button wird von selbst aktiv."
-        }
+        "body": "„Route anordnen“ öffnet die Besuchsreihenfolge. Sie braucht mindestens zwei Stationen und funktioniert nur während der Einrichtung. Daneben liegen die Suche, die Liste und jede einzelne Station zum Bearbeiten."
       },
       "route": {
         "title": "Reihenfolge festlegen",

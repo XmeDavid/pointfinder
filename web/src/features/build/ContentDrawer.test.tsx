@@ -121,6 +121,7 @@ describe('ContentDrawer', () => {
         createMockChallenge({ id: 'c1', title: 'One' }),
         createMockChallenge({ id: 'c2', title: 'Two' }),
         createMockChallenge({ id: 'c3', title: 'Three' }),
+        createMockChallenge({ id: 'c9', title: 'Pinned to Lookout' }),
       ])),
       http.get('/api/games/game-1/assignments', () => HttpResponse.json([
         { id: 'a1', gameId: 'game-1', baseId: 'b2', challengeId: 'c2', teamId: 'team-1' },
@@ -137,7 +138,8 @@ describe('ContentDrawer', () => {
     await user.click(screen.getByTestId('auto-assign-btn'))
 
     await waitFor(() => expect(sent.length).toBeGreaterThan(0))
-    // b2 keeps its per-team assignment, b3 is fixed to c9, so b1 and b4 take c1 and c3.
+    // b2 keeps its per-team assignment, b3 is fixed to c9 (so c9 is taken too),
+    // leaving b1 and b4 to take c1 and c3.
     expect(sent).toEqual([
       { baseId: 'b2', challengeId: 'c2', teamId: 'team-1' },
       { baseId: 'b1', challengeId: 'c1' },

@@ -8,12 +8,13 @@ import type { TourActions } from '../types'
 import { fixedRoute } from './fixedRoute'
 
 const NO_CLICKS: ReadonlySet<string> = new Set<string>()
+const TWO_BASES = [{ id: 'b1' }, { id: 'b2' }] as never
 
 describe('fixed-route scenario definition', () => {
   it('is a setup-game scenario with the contract step ids in order', () => {
     expect(fixedRoute.id).toBe('fixed-route')
     expect(fixedRoute.entry).toBe('setup-game')
-    expect(fixedRoute.steps.map((s) => s.id)).toEqual(['enable-order', 'unlock-trigger', 'arrange', 'route', 'readiness'])
+    expect(fixedRoute.steps.map((s) => s.id)).toEqual(['enable-order', 'unlock-trigger', 'add-bases', 'arrange', 'route', 'readiness'])
     expect(new Set(fixedRoute.steps.map((s) => s.id)).size).toBe(fixedRoute.steps.length)
   })
 
@@ -44,16 +45,19 @@ describe('fixed-route scenario definition', () => {
     }
   })
 
-  it('warns instead of stalling when the game has fewer than two bases', () => {
-    const step = fixedRoute.steps.find((s) => s.id === 'arrange')!
+  it('asks for bases first when the game has fewer than two, and only then', () => {
     const oneBase = makeTourState({ bases: [{ id: 'b1' }] as never })
-    const twoBases = makeTourState({ bases: [{ id: 'b1' }, { id: 'b2' }] as never })
-    expect(resolveBody(step, oneBase)).toBe('tutorials.fixedRoute.arrange.branch.needsTwoBases')
-    expect(resolveBody(step, twoBases)).toBe('tutorials.fixedRoute.arrange.body')
+    const twoBases = makeTourState({ bases: TWO_BASES })
+    expect(effectiveSteps(fixedRoute, oneBase).map((s) => s.id)).toContain('add-bases')
+    expect(effectiveSteps(fixedRoute, twoBases).map((s) => s.id)).not.toContain('add-bases')
+    const arrange = fixedRoute.steps.find((s) => s.id === 'arrange')!
+    expect(resolveBody(arrange, oneBase)).toBe('tutorials.fixedRoute.arrange.body')
   })
 
-  it('keeps every step in the effective list — no when guards', () => {
-    expect(effectiveSteps(fixedRoute, makeTourState()).map((s) => s.id)).toEqual(fixedRoute.steps.map((s) => s.id))
+  it('completes the bases step once the second base exists', () => {
+    const thin = { game: createMockGame({ enforceBaseOrder: true }), ackedSteps: new Set(['unlock-trigger']), bases: [{ id: 'b1' }] as never }
+    expect(advance(fixedRoute, makeTourState(thin), NO_CLICKS, null)).toBe('add-bases')
+    expect(advance(fixedRoute, makeTourState({ ...thin, bases: TWO_BASES }), NO_CLICKS, null)).toBe('arrange')
   })
 
   it('never switches mode when the workspace is already in build mode', () => {
@@ -76,17 +80,18 @@ describe('fixed-route scenario definition', () => {
 
 describe('fixed-route advance()', () => {
   const cases: Array<{ name: string; state: TourStateOverrides; from: string | null; expectId: string | null }> = [
-    { name: 'order off → enable-order', state: { game: createMockGame({ enforceBaseOrder: false }) }, from: null, expectId: 'enable-order' },
-    { name: 'order on → unlock-trigger', state: { game: createMockGame({ enforceBaseOrder: true }) }, from: null, expectId: 'unlock-trigger' },
+    { name: 'order off → enable-order', state: { bases: TWO_BASES, game: createMockGame({ enforceBaseOrder: false }) }, from: null, expectId: 'enable-order' },
+    { name: 'order on → unlock-trigger', state: { bases: TWO_BASES, game: createMockGame({ enforceBaseOrder: true }) }, from: null, expectId: 'unlock-trigger' },
     {
       name: 'unlock-trigger acked → arrange',
-      state: { game: createMockGame({ enforceBaseOrder: true }), ackedSteps: new Set(['unlock-trigger']) },
+      state: { bases: TWO_BASES, game: createMockGame({ enforceBaseOrder: true }), ackedSteps: new Set(['unlock-trigger']) },
       from: null,
       expectId: 'arrange',
     },
     {
       name: 'route editor present → route',
       state: {
+        bases: TWO_BASES,
         game: createMockGame({ enforceBaseOrder: true }),
         ackedSteps: new Set(['unlock-trigger']),
         fields: { 'base-route-editor': { present: true } },
@@ -97,6 +102,7 @@ describe('fixed-route advance()', () => {
     {
       name: 'route acked → readiness',
       state: {
+        bases: TWO_BASES,
         game: createMockGame({ enforceBaseOrder: true }),
         ackedSteps: new Set(['unlock-trigger', 'route']),
         fields: { 'base-route-editor': { present: true } },
@@ -107,6 +113,7 @@ describe('fixed-route advance()', () => {
     {
       name: 'everything acked → finished',
       state: {
+        bases: TWO_BASES,
         game: createMockGame({ enforceBaseOrder: true }),
         ackedSteps: new Set(['unlock-trigger', 'route', 'readiness']),
         fields: { 'base-route-editor': { present: true } },
@@ -116,7 +123,7 @@ describe('fixed-route advance()', () => {
     },
     {
       name: 'an unread explanation is never skipped, even from a later position',
-      state: { game: createMockGame({ enforceBaseOrder: true }), fields: { 'base-route-editor': { present: true } } },
+      state: { bases: TWO_BASES, game: createMockGame({ enforceBaseOrder: true }), fields: { 'base-route-editor': { present: true } } },
       from: 'unlock-trigger',
       expectId: 'unlock-trigger',
     },

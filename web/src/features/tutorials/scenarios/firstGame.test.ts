@@ -369,12 +369,8 @@ describe('first-game advance', () => {
     expect(test(state({ teams: [createMockTeam({ id: 't1' })] }))).toBe(true)
   })
 
-  it('accepts a GPS radius only when the field is present, filled and error-free', () => {
-    const test = predicateOf('base-radius')
-    expect(test(state({ fields: { 'base-checkin-radius': { present: true, value: '25' } } }))).toBe(true)
-    expect(test(state({ fields: { 'base-checkin-radius': { present: true, value: '' } } }))).toBe(false)
-    expect(
-      test(state({ fields: { 'base-checkin-radius': { present: true, value: '900' }, 'base-checkin-radius-error': { present: true } } })),
-    ).toBe(false)
+  it('explains the radius and accepts the inherited default with Next', () => {
+    const step = firstGame.steps.find((s) => s.id === 'base-radius')!
+    expect(step.done.kind).toBe('ack')
   })
 })

@@ -96,10 +96,20 @@ describe('CoachBubble', () => {
     renderBubble()
     const bubble = screen.getByTestId('tour-bubble')
     expect(bubble).toHaveAttribute('role', 'dialog')
-    expect(bubble).toHaveAttribute('aria-live', 'polite')
+    expect(screen.getByTestId('tour-bubble-live')).toHaveAttribute('aria-live', 'polite')
     expect(bubble.getAttribute('aria-labelledby')).toBe(screen.getByTestId('tour-bubble-title').id)
     expect(screen.getByTestId('tour-close')).toHaveAttribute('aria-label', 'Close tutorial')
     expect(document.activeElement).toBe(bubble)
+  })
+
+  it('leaves focus on a control the operator just pressed', () => {
+    const button = document.createElement('button')
+    button.textContent = 'Visible'
+    document.body.appendChild(button)
+    button.focus()
+    renderBubble()
+    expect(document.activeElement).toBe(button)
+    button.remove()
   })
 
   it('never steals focus from a field the operator is typing in', () => {

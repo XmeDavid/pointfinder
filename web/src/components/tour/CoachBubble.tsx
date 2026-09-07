@@ -34,13 +34,6 @@ export interface CoachBubbleProps {
   inline?: boolean
 }
 
-function isEditable(el: Element | null): boolean {
-  if (!el) return false
-  const tag = el.tagName
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true
-  return (el as HTMLElement).isContentEditable === true
-}
-
 export function CoachBubble({
   title,
   body,
@@ -74,10 +67,13 @@ export function CoachBubble({
     )
   }, [anchorRect, body, inline, isDesktop, title])
 
-  // Focus moves to the bubble when a step starts — unless the operator is
-  // typing, in which case the field keeps focus and the bubble just updates.
+  // Focus moves to the bubble when a step starts only if nothing else holds
+  // it (or the bubble itself does): a control the operator just pressed and a
+  // field they are typing in keep focus, and the live region below announces
+  // the new step instead.
   useEffect(() => {
-    if (isEditable(document.activeElement)) return
+    const active = document.activeElement
+    if (active && active !== document.body && !ref.current?.contains(active)) return
     ref.current?.focus()
   }, [title, step])
 
@@ -110,7 +106,6 @@ export function CoachBubble({
       data-side={sheet ? (sheetOnTop ? 'top' : 'bottom') : undefined}
       role="dialog"
       aria-labelledby={titleId}
-      aria-live="polite"
       tabIndex={-1}
       className={cn(
         'outline-none',
@@ -142,7 +137,7 @@ export function CoachBubble({
         className="max-h-[45dvh] overflow-y-auto md:max-h-[70dvh]"
       >
         <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1" aria-live="polite" data-testid="tour-bubble-live">
             <p className="text-xs text-muted-foreground">{t('tutorials.common.stepOf', { n: step, total })}</p>
             <h2 id={titleId} data-testid="tour-bubble-title" className="text-sm font-semibold text-foreground">
               {title}

@@ -15,6 +15,7 @@ import { useTourStore } from './store'
 export function WelcomeCard({ games }: { games: Game[] | undefined }) {
   const { t } = useTranslation()
   const active = useWorkspaceContext((s) => s.active)
+  const hydrated = useTourStore((s) => s.progressHydrated)
   const progress = useTourStore((s) => s.progress['first-game'])
   const running = useTourStore((s) => s.activeScenario === 'first-game')
   const start = useTourStore((s) => s.start)
@@ -22,7 +23,9 @@ export function WelcomeCard({ games }: { games: Game[] | undefined }) {
 
   if (active.type !== 'personal') return null
   if (!games || games.length > 0) return null
-  if (progress || running) return null
+  // Nothing until the server's rows are in: a card that flashes and vanishes
+  // for an operator who already skipped is worse than a late one.
+  if (!hydrated || progress || running) return null
 
   return (
     <SurfacePanel

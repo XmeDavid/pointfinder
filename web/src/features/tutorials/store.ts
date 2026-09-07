@@ -19,6 +19,8 @@ interface TourStoreState {
   tick: number
   /** Hydrated from the server; in-memory only until then. */
   progress: Partial<Record<ScenarioId, TutorialProgress>>
+  /** True once the server's rows have been merged in; the welcome card waits for it. */
+  progressHydrated: boolean
 }
 
 export interface StartOptions {
@@ -50,7 +52,7 @@ interface TourStoreActions {
   reset: () => void
 }
 
-type RunFields = Omit<TourStoreState, 'lastSuccess' | 'tick' | 'progress'>
+type RunFields = Omit<TourStoreState, 'lastSuccess' | 'tick' | 'progress' | 'progressHydrated'>
 
 const noRun = (): RunFields => ({
   activeScenario: null,
@@ -70,6 +72,7 @@ const initialState = (): TourStoreState => ({
   lastSuccess: {},
   tick: 0,
   progress: {},
+  progressHydrated: false,
 })
 
 /** A fresh run. `lastSuccess` survives: it is a log of the app, not of the run. */
@@ -132,12 +135,16 @@ export const useTourStore = create<TourStoreState & TourStoreActions>()((set) =>
   bindGame: (gameId) => set({ gameId }),
   recordSuccess: (key, at) => set((s) => ({ lastSuccess: { ...s.lastSuccess, [key]: at } })),
   bumpTick: () => set((s) => ({ tick: s.tick + 1 })),
+  // Server rows are merged over the local map, never swapped in: a row the
+  // operator just wrote (Skip on the welcome card) must survive a hydration
+  // that raced it and does not know about it yet.
   setProgress: (rows) =>
-    set(() => ({
+    set((s) => ({
+      progressHydrated: true,
       progress: rows.reduce<Partial<Record<ScenarioId, TutorialProgress>>>((acc, row) => {
         acc[row.scenarioId] = row
         return acc
-      }, {}),
+      }, { ...s.progress }),
     })),
   reset: () => set(initialState()),
 }))

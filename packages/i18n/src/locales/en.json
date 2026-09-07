@@ -1699,7 +1699,7 @@
       },
       "base-radius": {
         "title": "Set the GPS radius",
-        "body": "Location bases unlock inside this ring. Too small and phones with poor accuracy struggle; too large and neighbouring bases overlap. The readiness list warns you when two rings touch.",
+        "body": "Location bases unlock inside this ring. Too small and phones with poor accuracy struggle; too large and neighbouring bases overlap. The readiness list warns you when two rings touch. The inherited game default is a fine starting point — press Next to keep it.",
         "aside": "Leave it empty to inherit the game default."
       },
       "base-visibility": {
@@ -1830,12 +1830,13 @@
         "title": "What unlocks the next base",
         "body": "Check-in can be enough, or you can require a submission or an approved answer. The setting covers the whole game, not just the route. For a first route, check-in keeps teams moving."
       },
+      "add-bases": {
+        "title": "Add a second base",
+        "body": "A route needs at least two bases, and Arrange route stays disabled until then. Add one more with New Base — the tour moves on as soon as it exists."
+      },
       "arrange": {
         "title": "Open the route editor",
-        "body": "Arrange route opens the running order. It needs at least two bases and only works while the game is in setup. Beside it are the search, the base list and every base you can edit.",
-        "branch": {
-          "needsTwoBases": "Arrange route stays disabled until this game has two bases. Add one more on the map and come back — the button enables itself."
-        }
+        "body": "Arrange route opens the running order. It needs at least two bases and only works while the game is in setup. Beside it are the search, the base list and every base you can edit."
       },
       "route": {
         "title": "Set the order",

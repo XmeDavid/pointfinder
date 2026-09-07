@@ -108,6 +108,7 @@ describe('DashboardPage', () => {
 describe('DashboardPage tutorial welcome card', () => {
   beforeEach(() => {
     useTourStore.getState().reset()
+    useTourStore.setState({ progressHydrated: true })
     useWorkspaceContext.setState({ active: { type: 'personal' } })
   })
 

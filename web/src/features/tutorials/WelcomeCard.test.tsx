@@ -8,6 +8,7 @@ import { WelcomeCard } from './WelcomeCard'
 
 beforeEach(() => {
   useTourStore.getState().reset()
+  useTourStore.setState({ progressHydrated: true })
   useWorkspaceContext.setState({ active: { type: 'personal' } })
 })
 
@@ -18,6 +19,12 @@ describe('WelcomeCard', () => {
     expect(screen.getByText('Build your first game, guided')).toBeInTheDocument()
     expect(screen.getByTestId('tutorial-welcome-start')).toBeInTheDocument()
     expect(screen.getByTestId('tutorial-welcome-skip')).toBeInTheDocument()
+  })
+
+  it('stays hidden until the server progress rows have been hydrated', () => {
+    useTourStore.setState({ progressHydrated: false })
+    render(<WelcomeCard games={[]} />)
+    expect(screen.queryByTestId('tutorial-welcome-card')).not.toBeInTheDocument()
   })
 
   it('stays hidden while the games list is still loading', () => {

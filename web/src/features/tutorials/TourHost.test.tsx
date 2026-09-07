@@ -384,6 +384,26 @@ describe('TourHost anchors that move or vanish', () => {
     expect(useTourStore.getState().activeScenario).toBe('first-game')
   })
 
+  it('freezes the run while paused and picks the finished step up on resume', async () => {
+    const user = userEvent.setup()
+    renderHost()
+    act(() => {
+      useTourStore.getState().start('first-game', { gameId: 'game-1' })
+    })
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('type-a-name'))
+    act(() => {
+      useTourStore.getState().pause()
+    })
+    expect(screen.getByTestId('tour-pill')).toBeInTheDocument()
+
+    await user.type(screen.getByTestId('probe-name'), 'Old mill')
+    await new Promise((r) => setTimeout(r, INPUT_SETTLE_MS + 50))
+    expect(useTourStore.getState().currentStepId).toBe('type-a-name')
+
+    await user.click(screen.getByTestId('tour-pill-resume'))
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('read-this'))
+  })
+
   it('scrolls an off-screen anchor into view instead of collapsing to the pill', async () => {
     const offscreen = document.createElement('button')
     offscreen.setAttribute('data-testid', 'probe-missing')

@@ -61,8 +61,13 @@ export function TutorialsPage() {
   }
 
   function handleRestart(scenario: Scenario) {
-    updateProgress.mutate({ scenarioId: scenario.id, status: 'in_progress', currentStep: null })
-    launch(scenario, null, null)
+    // The reset row lands before the run starts, so the write-through's own
+    // PUT for the new run cannot be overtaken by it. A failed reset still
+    // launches: the write-through retries the row on the next change.
+    void updateProgress
+      .mutateAsync({ scenarioId: scenario.id, status: 'in_progress', currentStep: null })
+      .catch(() => undefined)
+      .then(() => launch(scenario, null, null))
   }
 
   return (

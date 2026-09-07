@@ -1699,7 +1699,7 @@
       },
       "base-radius": {
         "title": "Define o raio de GPS",
-        "body": "As bases por localização desbloqueiam dentro deste círculo. Pequeno demais e telemóveis pouco precisos falham; grande demais e as bases vizinhas sobrepõem-se. A lista de prontidão avisa-te.",
+        "body": "As bases por localização desbloqueiam dentro deste círculo. Pequeno demais e telemóveis pouco precisos falham; grande demais e as bases vizinhas sobrepõem-se. A lista de prontidão avisa-te. O valor herdado do jogo é um bom ponto de partida — carrega em Seguinte para o manter.",
         "aside": "Deixa vazio para herdar o valor padrão do jogo."
       },
       "base-visibility": {
@@ -1830,12 +1830,13 @@
         "title": "O que desbloqueia a base seguinte",
         "body": "O check-in pode bastar, ou podes exigir uma resposta enviada ou já aprovada. A definição vale para o jogo todo, não só para o percurso. Num primeiro percurso, o check-in mantém as equipas em movimento."
       },
+      "add-bases": {
+        "title": "Adiciona uma segunda base",
+        "body": "Um percurso precisa de pelo menos duas bases, e Organizar percurso fica desativado até lá. Adiciona mais uma com Nova base — o tutorial avança assim que ela existir."
+      },
       "arrange": {
         "title": "Abre o editor de percurso",
-        "body": "«Ordenar percurso» abre a ordem de visita. Precisa de pelo menos duas bases e só funciona com o jogo em configuração. Ao lado ficam a pesquisa, a lista e a edição de cada base.",
-        "branch": {
-          "needsTwoBases": "«Ordenar percurso» fica desativado até o jogo ter duas bases. Cria mais uma no mapa e volta aqui — o botão ativa-se sozinho."
-        }
+        "body": "«Ordenar percurso» abre a ordem de visita. Precisa de pelo menos duas bases e só funciona com o jogo em configuração. Ao lado ficam a pesquisa, a lista e a edição de cada base."
       },
       "route": {
         "title": "Define a ordem",

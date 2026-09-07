@@ -273,8 +273,11 @@ exists, a field has a value, a mutation succeeded — not because someone presse
 Next. Next exists only for steps that are pure explanation. A step that is
 already satisfied is skipped rather than asked for again; an explanation the
 operator has not read is never skipped. Typed input counts only once it settles
-for half a second, so the bubble never moves on mid-word, and it never takes
-focus away from a field the operator is typing in. A click on the spotlit
+for half a second, so the bubble never moves on mid-word. The bubble takes
+focus only when nothing else holds it; a field being typed in or a control just
+pressed keeps focus, and a polite live region announces the new step instead.
+Pausing to the pill freezes the run: steps finished behind it are picked up on
+resume. A click on the spotlit
 element is recorded together with the DOM it produced, so a step that waits for
 "printed and closed the sheet" cannot complete in the instant before the sheet
 opens; a saved entity lands in the query cache from the server's response

@@ -96,6 +96,7 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
     // per-team ones and fixed challenges) are kept as they are.
     const assignedBases = new Set(assignments.map((a) => a.baseId))
     const usedChallenges = new Set(assignments.map((a) => a.challengeId))
+    for (const base of bases) if (base.fixedChallengeId) usedChallenges.add(base.fixedChallengeId)
     const openBases = bases.filter((base) => !assignedBases.has(base.id) && !base.fixedChallengeId)
     const openChallenges = challenges.filter((challenge) => !usedChallenges.has(challenge.id))
     const pairs = openBases.slice(0, openChallenges.length).map((base, i) => ({
