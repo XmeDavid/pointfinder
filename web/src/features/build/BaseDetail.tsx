@@ -403,6 +403,8 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           <button
             onClick={() => setLocalHidden(false)}
             data-testid="visibility-visible"
+            type="button"
+            aria-pressed={!localHidden}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
               !localHidden
                 ? 'bg-primary/20 text-primary border border-primary/30'
@@ -414,6 +416,8 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           <button
             onClick={() => setLocalHidden(true)}
             data-testid="visibility-hidden"
+            type="button"
+            aria-pressed={localHidden}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
               localHidden
                 ? 'border border-warning/30 bg-warning/10 text-warning'

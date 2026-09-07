@@ -1820,6 +1820,57 @@
         "title": "That is your first game",
         "body": "You built a game, ran it, changed it and ran it again. Two more tutorials cover fixed routes, where bases unlock one at a time, and exploration games with hidden bases."
       }
+    },
+    "fixedRoute": {
+      "enable-order": {
+        "title": "Turn on the route",
+        "body": "Switch on Enforce base order. Teams then check in at bases in one shared order: base 2 is refused until base 1 is done. This panel also holds the game name, map style, operators and export."
+      },
+      "unlock-trigger": {
+        "title": "What unlocks the next base",
+        "body": "Check-in can be enough, or you can require a submission or an approved answer. The setting covers the whole game, not just the route. For a first route, check-in keeps teams moving."
+      },
+      "arrange": {
+        "title": "Open the route editor",
+        "body": "Arrange route opens the running order. It needs at least two bases and only works while the game is in setup. Beside it are the search, the base list and every base you can edit.",
+        "branch": {
+          "needsTwoBases": "Arrange route stays disabled until this game has two bases. Add one more on the map and come back — the button enables itself."
+        }
+      },
+      "route": {
+        "title": "Set the order",
+        "body": "Drag a base or use the arrows, then save. Every base already has a number, so the route is never incomplete — you only choose who comes first. One route serves all teams; challenges can still differ."
+      },
+      "readiness": {
+        "title": "Before you go live",
+        "body": "The route itself has no check here: every base is numbered automatically. This pill still guards bases, challenges, teams, assignments and check-in methods. Expand it any time to see what is missing."
+      }
+    },
+    "exploration": {
+      "place-first": {
+        "title": "Place a base first",
+        "body": "This game has no bases yet. Tap the map where players should end up and choose Place base here. The map is also where you drag markers and open a base for editing."
+      },
+      "pick-base": {
+        "title": "Pick a base to hide",
+        "body": "Open a base from this list. Everything about it lives in the panel that opens: name, coordinates, check-in method, tags and visibility. Search filters the list once a game grows."
+      },
+      "hide": {
+        "title": "Hide it from the map",
+        "body": "Choose Hidden. Players get no pin and no list row for this base until they check in there. A hidden GPS base still fires when a team walks into its radius."
+      },
+      "hide-save": {
+        "title": "Save the base",
+        "body": "Visibility is a draft until you save. Saving writes it and the list shows a Hidden tag. Nothing else on this form changes — you can keep editing the base afterwards."
+      },
+      "clue": {
+        "title": "Write the clue",
+        "body": "Unlocked Information is what a team reads after finishing a challenge. Put the clue to the hidden base here: a landmark, a riddle, a bearing. There is no pin to follow, so this text is the only guide."
+      },
+      "readiness": {
+        "title": "Hidden bases still count",
+        "body": "Readiness treats a hidden base like any other: it needs a working check-in method, and an NFC one needs a linked tag. Expand the pill for the full checklist before going live."
+      }
     }
   }
 }

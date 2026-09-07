@@ -1820,6 +1820,57 @@
         "title": "Dein erstes Spiel steht",
         "body": "Du hast ein Spiel gebaut, gestartet, geändert und erneut gestartet. Zwei weitere Tutorials zeigen feste Routen, bei denen Stationen nacheinander aufgehen, und Erkundungsspiele mit versteckten Stationen."
       }
+    },
+    "fixedRoute": {
+      "enable-order": {
+        "title": "Route einschalten",
+        "body": "Schalte „Stationsreihenfolge erzwingen“ ein. Teams checken dann in einer gemeinsamen Reihenfolge ein: Station 2 wird abgelehnt, solange Station 1 offen ist. In diesem Panel liegen außerdem Spielname, Kartenstil, Operatoren und Export."
+      },
+      "unlock-trigger": {
+        "title": "Was die nächste Station freischaltet",
+        "body": "Der Check-in kann genügen, oder du verlangst eine Abgabe oder eine freigegebene Antwort. Das gilt für das ganze Spiel, nicht nur für die Route. Für eine erste Route hält der Check-in die Teams in Bewegung."
+      },
+      "arrange": {
+        "title": "Routeneditor öffnen",
+        "body": "„Route anordnen“ öffnet die Besuchsreihenfolge. Sie braucht mindestens zwei Stationen und funktioniert nur während der Einrichtung. Daneben liegen die Suche, die Liste und jede einzelne Station zum Bearbeiten.",
+        "branch": {
+          "needsTwoBases": "„Route anordnen“ bleibt deaktiviert, bis das Spiel zwei Stationen hat. Lege auf der Karte noch eine an und komm zurück — der Button wird von selbst aktiv."
+        }
+      },
+      "route": {
+        "title": "Reihenfolge festlegen",
+        "body": "Zieh eine Station oder nutze die Pfeile, dann speichern. Jede Station hat schon eine Nummer, die Route ist also nie unvollständig — du wählst nur, wer zuerst kommt. Eine Route für alle Teams, die Challenges dürfen sich unterscheiden."
+      },
+      "readiness": {
+        "title": "Vor dem Livegang",
+        "body": "Für die Route selbst gibt es hier keine Prüfung: jede Station wird automatisch nummeriert. Die Anzeige wacht weiter über Stationen, Challenges, Teams, Zuordnungen und Check-in-Methoden. Klapp sie jederzeit auf, um Offenes zu sehen."
+      }
+    },
+    "exploration": {
+      "place-first": {
+        "title": "Zuerst eine Station setzen",
+        "body": "Dieses Spiel hat noch keine Stationen. Tipp auf die Karte, wo die Spieler ankommen sollen, und wähle Station hier setzen. Auf der Karte ziehst du auch Marker und öffnest eine Station zum Bearbeiten."
+      },
+      "pick-base": {
+        "title": "Station zum Verstecken wählen",
+        "body": "Öffne eine Station aus dieser Liste. Alles dazu steht im Panel, das sich öffnet: Name, Koordinaten, Check-in-Methode, Tags und Sichtbarkeit. Die Suche filtert die Liste, sobald ein Spiel wächst."
+      },
+      "hide": {
+        "title": "Von der Karte verstecken",
+        "body": "Wähle Versteckt. Spieler sehen weder Pin noch Listeneintrag, bis sie hier einchecken. Eine versteckte GPS-Station löst trotzdem aus, sobald ein Team in ihren Radius läuft."
+      },
+      "hide-save": {
+        "title": "Station speichern",
+        "body": "Die Sichtbarkeit ist ein Entwurf, bis du speicherst. Danach zeigt die Liste den Hinweis Versteckt. Sonst ändert sich nichts — du kannst die Station danach weiter bearbeiten."
+      },
+      "clue": {
+        "title": "Hinweis schreiben",
+        "body": "„Freigeschaltete Information“ liest ein Team, nachdem es eine Challenge abgeschlossen hat. Schreib hier den Hinweis auf die versteckte Station: ein Wahrzeichen, ein Rätsel, eine Richtung. Es gibt keinen Pin, nur diesen Text."
+      },
+      "readiness": {
+        "title": "Versteckte Stationen zählen mit",
+        "body": "Die Startbereitschaft behandelt eine versteckte Station wie jede andere: sie braucht eine funktionierende Check-in-Methode, bei NFC ein verknüpftes Tag. Klapp die Anzeige auf, um vor dem Livegang alles zu prüfen."
+      }
     }
   }
 }

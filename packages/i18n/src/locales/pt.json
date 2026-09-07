@@ -1820,6 +1820,57 @@
         "title": "O teu primeiro jogo está feito",
         "body": "Construíste um jogo, puseste-o a correr, mudaste-o e voltaste a pô-lo a correr. Há mais dois tutoriais: percursos fixos, com bases a desbloquear uma a uma, e jogos de exploração com bases escondidas."
       }
+    },
+    "fixedRoute": {
+      "enable-order": {
+        "title": "Liga o percurso",
+        "body": "Liga «Impor ordem das bases». As equipas passam a fazer check-in numa ordem partilhada: a base 2 é recusada enquanto a 1 estiver por fazer. Este painel guarda também o nome do jogo, o estilo do mapa, os operadores e a exportação."
+      },
+      "unlock-trigger": {
+        "title": "O que desbloqueia a base seguinte",
+        "body": "O check-in pode bastar, ou podes exigir uma resposta enviada ou já aprovada. A definição vale para o jogo todo, não só para o percurso. Num primeiro percurso, o check-in mantém as equipas em movimento."
+      },
+      "arrange": {
+        "title": "Abre o editor de percurso",
+        "body": "«Ordenar percurso» abre a ordem de visita. Precisa de pelo menos duas bases e só funciona com o jogo em configuração. Ao lado ficam a pesquisa, a lista e a edição de cada base.",
+        "branch": {
+          "needsTwoBases": "«Ordenar percurso» fica desativado até o jogo ter duas bases. Cria mais uma no mapa e volta aqui — o botão ativa-se sozinho."
+        }
+      },
+      "route": {
+        "title": "Define a ordem",
+        "body": "Arrasta uma base ou usa as setas e guarda. Todas as bases já têm número, por isso o percurso nunca fica incompleto — só escolhes quem vem primeiro. O percurso é o mesmo para todas as equipas; os desafios podem variar."
+      },
+      "readiness": {
+        "title": "Antes de arrancares",
+        "body": "O percurso não tem verificação aqui: cada base é numerada automaticamente. Esta pastilha continua a vigiar bases, desafios, equipas, atribuições e métodos de check-in. Abre-a quando quiseres para ver o que falta."
+      }
+    },
+    "exploration": {
+      "place-first": {
+        "title": "Cria primeiro uma base",
+        "body": "Este jogo ainda não tem bases. Toca no mapa onde os jogadores devem chegar e escolhe Colocar base aqui. É também no mapa que arrastas marcadores e abres uma base para editar."
+      },
+      "pick-base": {
+        "title": "Escolhe a base a esconder",
+        "body": "Abre uma base desta lista. Tudo sobre ela fica no painel que se abre: nome, coordenadas, método de check-in, etiquetas e visibilidade. A pesquisa filtra a lista quando o jogo cresce."
+      },
+      "hide": {
+        "title": "Esconde-a do mapa",
+        "body": "Escolhe Escondida. Os jogadores não veem pino nem linha na lista até fazerem check-in aqui. Uma base GPS escondida continua a disparar quando uma equipa entra no seu raio."
+      },
+      "hide-save": {
+        "title": "Guarda a base",
+        "body": "A visibilidade é um rascunho até guardares. Ao guardar, a lista passa a mostrar a etiqueta Escondida. Mais nada muda no formulário — podes continuar a editar a base depois."
+      },
+      "clue": {
+        "title": "Escreve a pista",
+        "body": "«Informação desbloqueada» é o que a equipa lê depois de concluir um desafio. Põe aqui a pista para a base escondida: um marco, um enigma, uma direção. Não há pino a seguir, este texto é o único guia."
+      },
+      "readiness": {
+        "title": "As bases escondidas contam",
+        "body": "A prontidão trata uma base escondida como qualquer outra: precisa de um método de check-in válido e, se for NFC, de uma etiqueta ligada. Abre a pastilha para veres a lista antes de arrancares."
+      }
     }
   }
 }

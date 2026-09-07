@@ -70,6 +70,8 @@ export interface TourState {
 export interface TourActions {
   setMode: (mode: GameMode) => void
   openDrawer: (tab: DrawerTab) => void
+  /** Closes the content drawer so an anchor outside it (readiness, modes, settings) is not behind its scrim. */
+  closeDrawer: () => void
   selectBase: (id: string | null) => void
   selectChallenge: (id: string | null) => void
   selectTeam: (id: string | null) => void

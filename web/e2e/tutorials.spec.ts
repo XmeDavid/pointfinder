@@ -135,3 +135,120 @@ test('skipping the welcome card hides it without starting a run', async ({ page 
   await expect(page.getByTestId('tour-bubble')).toHaveCount(0)
   await expect(page.getByTestId('tour-pill')).toHaveCount(0)
 })
+
+const setupGame = {
+  id: 'g',
+  name: 'Ordered forest game',
+  status: 'setup',
+  description: '',
+  createdBy: 'u',
+  operatorIds: ['u'],
+  enforceBaseOrder: false,
+  uniformAssignment: false,
+  broadcastEnabled: false,
+  broadcastCode: null,
+  tileSource: 'osm',
+  unlockTrigger: 'CHECK_IN',
+  startDate: null,
+  endDate: null,
+  defaultCheckInMethod: 'NFC',
+  defaultCheckInRadiusM: 15,
+}
+
+function twoBases() {
+  return ['Old mill', 'Lookout'].map((name, i) => ({
+    id: `b${i + 1}`, gameId: 'g', name, description: '', lat: 40 + i / 1000, lng: -8,
+    nfcLinked: true, hidden: false, checkInMethod: 'NFC', checkInRadiusM: null,
+  }))
+}
+
+const oneChallenge = [{
+  id: 'c1', gameId: 'g', title: 'Count the arches', description: '', content: '<p>Count them.</p>',
+  completionContent: '', answerType: 'text', autoValidate: false, points: 10, locationBound: false, requirePresenceToSubmit: false,
+}]
+
+/** A setup game with two bases and one challenge, served to a library-launched scenario. */
+async function mockSetupGameApi(page: Page, state: { game: Record<string, unknown>; bases: ReturnType<typeof twoBases> }) {
+  const progress: unknown[] = []
+  await page.route('**/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const method = request.method()
+    if (path.startsWith('/api/auth/')) return route.fulfill({ json: { accessToken: token, user } })
+    if (path === '/api/workspaces') return route.fulfill({ json: { personal: { tier: 'free', status: 'active', activeGames: 1 }, organizations: [] } })
+    if (path.startsWith('/api/quota/')) return route.fulfill({ json: { limits: { maxActiveGames: 10 }, usage: { currentActiveGames: 1 } } })
+    if (path === '/api/users/me/tutorials') return route.fulfill({ json: progress })
+    if (path.startsWith('/api/users/me/tutorials/')) {
+      const body = request.postDataJSON() as { status: string; currentStep: string | null; gameId: string | null }
+      const row = { scenarioId: path.split('/').pop()!, ...body, startedAt: '2026-09-06T09:00:00Z', completedAt: null }
+      progress.splice(0, progress.length, row)
+      return route.fulfill({ json: row })
+    }
+    if (path === '/api/games/g') {
+      if (method === 'PUT') state.game = { ...state.game, ...(request.postDataJSON() as Record<string, unknown>) }
+      return route.fulfill({ json: state.game })
+    }
+    if (path === '/api/games') return route.fulfill({ json: [state.game] })
+    if (path === '/api/games/g/bases/b1' && method === 'PUT') {
+      const body = request.postDataJSON() as { hidden?: boolean }
+      state.bases = state.bases.map((b) => (b.id === 'b1' ? { ...b, ...body } : b))
+      return route.fulfill({ json: state.bases.find((b) => b.id === 'b1') })
+    }
+    if (path === '/api/games/g/bases') {
+      return route.fulfill({ json: state.bases.map((b, i) => ({ ...b, sequenceNumber: state.game.enforceBaseOrder ? i + 1 : null })) })
+    }
+    if (path === '/api/games/g/challenges') return route.fulfill({ json: oneChallenge })
+    if (path === '/api/games/g/team-variables/completeness') return route.fulfill({ json: { complete: true, errors: [] } })
+    return route.fulfill({ json: [] })
+  })
+}
+
+test('the fixed-route tutorial walks from the library to the route editor', async ({ page }) => {
+  const state = { game: { ...setupGame } as Record<string, unknown>, bases: twoBases() }
+  await mockSetupGameApi(page, state)
+  await login(page)
+
+  await page.goto('/tutorials')
+  await expect(page.getByTestId('tutorials-page')).toBeVisible()
+  await page.getByTestId('tutorial-start-fixed-route').click()
+  await page.getByTestId('setup-game-option-g').click()
+
+  const title = page.getByTestId('tour-bubble-title')
+  await expect(title).toHaveText('Turn on the route')
+
+  await page.locator('[data-testid="enforce-base-order-switch"]:visible').click()
+  await expect.poll(() => state.game.enforceBaseOrder).toBe(true)
+  await expect(title).toHaveText('What unlocks the next base')
+
+  await page.getByTestId('tour-next').click()
+  await expect(title).toHaveText('Open the route editor')
+
+  await page.locator('[data-testid="arrange-route-btn"]:visible').click()
+  await expect(page.getByTestId('base-route-editor')).toBeVisible()
+  await expect(title).toHaveText('Set the order')
+  await expect(page.getByTestId('tour-bubble')).toBeVisible()
+})
+
+test('the exploration tutorial walks from the library to the saved hidden base', async ({ page }) => {
+  const state = { game: { ...setupGame, name: 'Hidden ruins' } as Record<string, unknown>, bases: twoBases() }
+  await mockSetupGameApi(page, state)
+  await login(page)
+
+  await page.goto('/tutorials')
+  await page.getByTestId('tutorial-start-exploration').click()
+  await page.getByTestId('setup-game-option-g').click()
+
+  const title = page.getByTestId('tour-bubble-title')
+  await expect(title).toHaveText('Pick a base to hide')
+
+  await page.locator('[data-testid="base-item-b1"]:visible').click()
+  await expect(title).toHaveText('Hide it from the map')
+
+  await page.locator('[data-testid="visibility-hidden"]:visible').click()
+  await expect(title).toHaveText('Save the base')
+
+  await page.locator('[data-testid="save-base-btn"]:visible').click()
+  await expect.poll(() => state.bases.find((b) => b.id === 'b1')?.hidden).toBe(true)
+  await expect(title).toHaveText('Write the clue')
+  await expect(page.getByTestId('tour-bubble')).toBeVisible()
+})

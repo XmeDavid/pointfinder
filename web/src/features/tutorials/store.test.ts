@@ -11,9 +11,11 @@ const probe: Scenario = {
   steps: [],
 }
 
+const bundled = SCENARIOS['fixed-route']
+
 beforeEach(() => {
   useTourStore.getState().reset()
-  delete SCENARIOS['fixed-route']
+  if (bundled) SCENARIOS['fixed-route'] = bundled
 })
 
 describe('tour store lifecycle', () => {
@@ -157,11 +159,11 @@ describe('tour store lifecycle', () => {
 
 describe('scenario registry', () => {
   it('lists bundled scenarios in library order and accepts registrations', () => {
-    expect(scenarioList().map((s) => s.id)).toEqual(['first-game'])
-    expect(getScenario('fixed-route')).toBeUndefined()
+    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route', 'exploration'])
+    expect(getScenario('fixed-route')).toBe(bundled)
 
     registerScenario(probe)
     expect(getScenario('fixed-route')).toBe(probe)
-    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route'])
+    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route', 'exploration'])
   })
 })

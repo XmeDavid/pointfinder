@@ -1,5 +1,7 @@
 import type { Scenario, ScenarioId } from '../types'
 import { firstGame } from './firstGame'
+import { fixedRoute } from './fixedRoute'
+import { exploration } from './exploration'
 
 /** Library display order. Scenario modules are imported and registered at the bottom of this file. */
 export const SCENARIO_ORDER: readonly ScenarioId[] = ['first-game', 'fixed-route', 'exploration'] as const
@@ -25,3 +27,5 @@ export function scenarioList(): Scenario[] {
 // Bundled scenarios. Registering here (not in the scenario files) keeps the
 // import graph one-directional and guarantees the app actually loads them.
 registerScenario(firstGame)
+registerScenario(fixedRoute)
+registerScenario(exploration)

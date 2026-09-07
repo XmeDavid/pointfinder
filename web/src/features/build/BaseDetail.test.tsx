@@ -242,3 +242,21 @@ describe('BaseDetail', () => {
   })
 
 })
+
+describe('BaseDetail tutorial anchors', () => {
+  it('exposes the draft visibility as aria-pressed on both buttons', async () => {
+    const user = userEvent.setup()
+    renderBaseDetail()
+
+    const visible = await screen.findByTestId('visibility-visible')
+    const hidden = screen.getByTestId('visibility-hidden')
+    expect(visible).toHaveAttribute('aria-pressed', 'true')
+    expect(hidden).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(hidden)
+
+    // The draft flips immediately, before any save.
+    expect(screen.getByTestId('visibility-hidden')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('visibility-visible')).toHaveAttribute('aria-pressed', 'false')
+  })
+})

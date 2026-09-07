@@ -1261,6 +1261,13 @@ allowlist (`first-game`, `fixed-route`, `exploration`).
 Tutorial progress is UI preference. It touches no game, team, submission, or
 score, so it writes no activity event and never appears in the audit export.
 
+### The other bundled scenarios
+
+- **`fixed-route`** — a `setup-game` scenario that turns on `enforceBaseOrder`, explains the game-wide `unlockTrigger`, and opens the route editor. It teaches no new rule: every base already carries an `orderIndex` from creation, so `BaseOrderService.sequenceNumbers` always numbers the whole route and readiness has nothing to check.
+- **`exploration`** — a `setup-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. `Challenge.unlocksBaseIds` has no operator control in the web app yet, so the copy teaches the clue text, not an unlock mechanism.
+
+---
+
 ## Appendix: Platform Implementation Matrix
 
 | Feature | Backend | Frontend | Android | iOS |

@@ -11,6 +11,7 @@ export function useTourActions(): TourActions {
   const navigate = useNavigate()
   const setMode = useWorkspaceStore((s) => s.setMode)
   const openDrawer = useWorkspaceStore((s) => s.openDrawer)
+  const closeDrawer = useWorkspaceStore((s) => s.closeDrawer)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
   const selectTeam = useWorkspaceStore((s) => s.selectTeam)
@@ -21,6 +22,7 @@ export function useTourActions(): TourActions {
     () => ({
       setMode,
       openDrawer: (tab) => openDrawer(tab),
+      closeDrawer,
       selectBase,
       selectChallenge,
       selectTeam,
@@ -28,6 +30,6 @@ export function useTourActions(): TourActions {
       setSettingsPanelOpen,
       navigate: (to) => navigate(to),
     }),
-    [navigate, openDrawer, selectBase, selectChallenge, selectTeam, setMode, setReadinessExpanded, setSettingsPanelOpen],
+    [closeDrawer, navigate, openDrawer, selectBase, selectChallenge, selectTeam, setMode, setReadinessExpanded, setSettingsPanelOpen],
   )
 }
