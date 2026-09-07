@@ -24,6 +24,7 @@ export interface TopBarProps {
 
 export function TopBar({ game, stages }: TopBarProps) {
   const { t } = useTranslation()
+  const practiceLabel = game.status === 'ended' ? t('tutorials.practice.ended') : t('tutorials.practice.endsIn', { hours: practiceHoursLeft(game.tutorialExpiresAt) })
   const elapsed = useElapsedTimer(game.status === 'live' ? game.startDate : null)
   const selectedStageId = useWorkspaceStore((s) => s.selectedStageId)
   const selectStage = useWorkspaceStore((s) => s.selectStage)
@@ -57,9 +58,14 @@ export function TopBar({ game, stages }: TopBarProps) {
             <Badge
               variant="info"
               data-testid="practice-game-badge"
-              title={game.status === 'ended' ? t('tutorials.practice.ended') : t('tutorials.practice.endsIn', { hours: practiceHoursLeft(game.tutorialExpiresAt) })}
+              title={practiceLabel}
+              aria-label={practiceLabel}
             >
               {t('tutorials.practice.badge')}
+              <span className="hidden sm:inline" aria-hidden="true">
+                {' · '}
+                {game.status === 'ended' ? t('tutorials.practice.endedShort') : t('tutorials.practice.hoursShort', { hours: practiceHoursLeft(game.tutorialExpiresAt) })}
+              </span>
             </Badge>
           )}
         </div>

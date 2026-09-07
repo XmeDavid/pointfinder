@@ -98,9 +98,12 @@ public class QuotaService {
     public void enforceActiveGameLimit(User user) {
         if (!enforcementEnabled) return;
         UserSubscription sub = userSubRepository.findByUserId(user.getId()).orElse(null);
-        if (sub == null || sub.getTier() == IndividualTier.pro) return;
+        if (sub != null && sub.getTier() == IndividualTier.pro) return;
 
-        Integer max = getOverride(sub.getQuotaOverrides(), "max_active_games", 1);
+        // No subscription row means the free tier, exactly as getPersonalQuota
+        // reports it to the dashboard; the limit must not depend on whether a
+        // row happens to exist.
+        Integer max = getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_active_games", 1);
         if (max == null) return;
 
         long current = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusInAndTutorialScenarioIsNull(

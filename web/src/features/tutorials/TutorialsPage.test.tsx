@@ -196,4 +196,42 @@ describe('TutorialsPage', () => {
     expect(useTourStore.getState().gameId).toBe('practice-fixed-route')
     expect(useTourStore.getState().currentStepId).toBeNull()
   })
+
+  it('offers to replace when the server says a practice game exists that the stale list did not show', async () => {
+    let listCalls = 0
+    server.use(
+      http.get('/api/games', () => {
+        listCalls += 1
+        // First load: nothing. After the 409, the refetch reveals the practice game made elsewhere.
+        return HttpResponse.json(listCalls === 1 ? [] : [
+          { ...createMockGame({ id: 'practice-elsewhere', name: 'Made on the phone', status: 'setup' }), tutorialScenario: 'fixed-route', tutorialExpiresAt: '2026-09-08T09:00:00Z' },
+        ])
+      }),
+      http.post('/api/users/me/tutorials/:scenarioId/practice-game', () =>
+        HttpResponse.json({ status: 409, message: 'exists', code: 'TUTORIAL_PRACTICE_GAME_EXISTS' }, { status: 409 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tutorial-start-exploration')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('tutorial-start-exploration'))
+
+    expect(await screen.findByText('Replace your practice game?')).toBeInTheDocument()
+    expect(screen.queryByTestId('tutorials-practice-error')).not.toBeInTheDocument()
+  })
+
+  it('shows a localized error when the practice game cannot be created', async () => {
+    server.use(http.post('/api/users/me/tutorials/:scenarioId/practice-game', () =>
+      HttpResponse.json({ status: 500, message: 'boom' }, { status: 500 }),
+    ))
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tutorial-start-fixed-route')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('tutorial-start-fixed-route'))
+
+    expect(await screen.findByTestId('tutorials-practice-error')).toBeInTheDocument()
+    expect(useTourStore.getState().activeScenario).toBeNull()
+  })
 })

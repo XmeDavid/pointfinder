@@ -890,7 +890,10 @@
     "UNLOCK_OVERRIDE_NOT_FOUND": "Não há substituição para remover.",
     "TAG_LABEL_DUPLICATE": "Já existe uma etiqueta com este nome neste jogo.",
     "TAG_CAP_EXCEEDED": "Limite máximo de 50 etiquetas por jogo atingido.",
-    "TAG_IN_USE": "Não é possível eliminar: a etiqueta está a ser utilizada por um ou mais itens."
+    "TAG_IN_USE": "Não é possível eliminar: a etiqueta está a ser utilizada por um ou mais itens.",
+    "QUOTA_ACTIVE_GAMES_EXCEEDED": "Atingiste o limite de jogos ativos do teu plano. Termina ou apaga um jogo, ou faz upgrade.",
+    "TUTORIAL_PRACTICE_GAME_EXISTS": "Já tens um jogo de treino. Apaga-o ou mantém-no primeiro.",
+    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "Este tutorial cria o seu jogo pela janela Novo jogo."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
@@ -1900,7 +1903,9 @@
       "kept": "Este é agora um jogo normal.",
       "settingsTitle": "Jogo de treino",
       "settingsBody": "Um tutorial criou este jogo. Aceita um jogador e termina sozinho dentro de {{hours}} h. Mantém-no para o tornar um jogo normal, ou apaga-o.",
-      "settingsBodyEnded": "Um tutorial criou este jogo e ele já terminou. Mantém-no para o tornar um jogo normal, ou apaga-o."
+      "settingsBodyEnded": "Um tutorial criou este jogo e ele já terminou. Mantém-no para o tornar um jogo normal, ou apaga-o.",
+      "endedShort": "terminado",
+      "hoursShort": "faltam {{hours}} h"
     }
   }
 }

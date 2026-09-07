@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createMockGame } from '@/test/factories/game'
-import { activePracticeGame, isPracticeGame, practiceHoursLeft } from './practiceGame'
+import { afterEach, vi } from 'vitest'
+import { activePracticeGame, isPracticeGame, practiceHoursLeft, readPracticeCentre } from './practiceGame'
 
 describe('practice game helpers', () => {
   it('recognises a practice game by its scenario marker', () => {
@@ -27,4 +28,29 @@ describe('practice game helpers', () => {
     expect(activePracticeGame(games)?.id).toBe('current')
     expect(activePracticeGame(undefined)).toBeUndefined()
   })
+
+describe('readPracticeCentre', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('returns the position when geolocation answers', async () => {
+    vi.stubGlobal('navigator', {
+      geolocation: {
+        getCurrentPosition: (ok: (p: { coords: { latitude: number; longitude: number } }) => void) =>
+          ok({ coords: { latitude: 41.15, longitude: -8.61 } }),
+      },
+    })
+    await expect(readPracticeCentre()).resolves.toEqual({ lat: 41.15, lng: -8.61 })
+  })
+
+  it('gives up quietly when geolocation is denied, missing, or slow', async () => {
+    vi.stubGlobal('navigator', {
+      geolocation: { getCurrentPosition: (_ok: unknown, fail: (e: unknown) => void) => fail(new Error('denied')) },
+    })
+    await expect(readPracticeCentre()).resolves.toBeUndefined()
+    vi.stubGlobal('navigator', {})
+    await expect(readPracticeCentre()).resolves.toBeUndefined()
+    vi.stubGlobal('navigator', { geolocation: { getCurrentPosition: () => {} } })
+    await expect(readPracticeCentre(20)).resolves.toBeUndefined()
+  })
+})
 })

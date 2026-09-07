@@ -7,6 +7,7 @@ import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.entity.UnlockTrigger;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.mapper.GameResponseMapper;
@@ -146,7 +147,14 @@ public class GameService {
                 .build();
         game.getOperators().add(currentUser);
 
-        game = gameRepository.save(game);
+        try {
+            game = gameRepository.saveAndFlush(game);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            if (!practice) throw e;
+            throw new com.prayer.pointfinder.exception.ConflictException(
+                    "You already have a practice game; delete or keep it first",
+                    ErrorCode.TUTORIAL_PRACTICE_GAME_EXISTS);
+        }
         if (practice) {
             PracticeGames.bindProgressRow(progressRepository, userId, PracticeGames.FIRST_GAME, game.getId());
         }
@@ -252,6 +260,12 @@ public class GameService {
 
         GameStatus fromStatus = game.getStatus();
         validateStatusTransition(fromStatus, target);
+        // Bringing an ended personal game back counts against the active-game
+        // quota like a creation would; practice games live outside it.
+        if (fromStatus == GameStatus.ended && target != GameStatus.ended
+                && game.getOrganization() == null && !game.isPracticeGame()) {
+            quotaService.enforceActiveGameLimit(game.getCreatedBy());
+        }
 
         User currentOperator = SecurityUtils.getCurrentUser();
         log.info("[OP] operation=advanceStatus gameId={} fromStatus={} toStatus={} operatorId={}",

@@ -71,4 +71,17 @@ describe('PracticeGameChoices', () => {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboard'))
     expect(onDone).toHaveBeenCalledOnce()
   })
+
+  it('reports a failed delete and stays put', async () => {
+    server.use(http.delete('/api/games/:id', () => HttpResponse.json({ status: 500, message: 'boom' }, { status: 500 })))
+    const user = userEvent.setup()
+    const onDone = renderChoices()
+
+    await user.click(screen.getByTestId('practice-delete-btn'))
+    await user.click(screen.getByTestId('confirm-action-btn'))
+
+    expect(await screen.findByTestId('practice-game-message')).toBeInTheDocument()
+    expect(onDone).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
 })

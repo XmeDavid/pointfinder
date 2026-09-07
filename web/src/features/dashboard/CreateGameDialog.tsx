@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useTourStore } from '@/features/tutorials/store'
+import { getApiErrorCode, getApiErrorMessage } from '@/lib/api/errors'
 import { useCreateGame } from '@/hooks/mutations/useGameMutations'
 import type { Game } from '@/types'
 
@@ -18,23 +20,38 @@ export function CreateGameDialog({
   onCreated?: (game: Game) => void
 }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const createGame = useCreateGame()
   const firstGameRun = useTourStore((s) => s.activeScenario === 'first-game')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   if (!open) return null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    const game = await createGame.mutateAsync({
-      name: name.trim(),
-      description: description.trim(),
-      // Inside the first-game tutorial the server marks this as a practice
-      // game; outside a run the flag is simply ignored.
-      ...(firstGameRun ? { tutorialScenario: 'first-game' } : {}),
-    })
+    setError(null)
+    let game: Game
+    try {
+      game = await createGame.mutateAsync({
+        name: name.trim(),
+        description: description.trim(),
+        // Inside the first-game tutorial the server marks this as a practice
+        // game; outside a run the flag is simply ignored.
+        ...(firstGameRun ? { tutorialScenario: 'first-game' } : {}),
+      })
+    } catch (err) {
+      // At the active-game limit the answer is a plan, not a retry.
+      if (getApiErrorCode(err) === 'QUOTA_ACTIVE_GAMES_EXCEEDED') {
+        onClose()
+        navigate('/billing')
+        return
+      }
+      setError(getApiErrorMessage(err, t('common.unknownError')))
+      return
+    }
     onClose()
     if (onCreated) {
       onCreated(game)
@@ -101,6 +118,11 @@ export function CreateGameDialog({
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
+          {error && (
+            <p className="text-sm text-destructive" role="alert" data-testid="create-game-error">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"

@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.service;
 
+import com.prayer.pointfinder.mapper.GameResponseMapper;
 import com.prayer.pointfinder.dto.response.*;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
@@ -139,25 +140,7 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<GameResponse> getUserGames(UUID userId) {
         return gameRepository.findByOperatorOrCreator(userId).stream()
-                .map(g -> new GameResponse(
-                        g.getId(),
-                        g.getName(),
-                        g.getDescription(),
-                        g.getStartDate(),
-                        g.getEndDate(),
-                        g.getStatus().name(),
-                        g.getCreatedBy() != null ? g.getCreatedBy().getId() : null,
-                        g.getOperators() != null
-                                ? g.getOperators().stream().map(User::getId).toList()
-                                : List.of(),
-                        g.getUniformAssignment(),
-                        g.getBroadcastEnabled(),
-                        g.getBroadcastCode(),
-                        g.getTileSource(),
-                        g.getUnlockTrigger() != null ? g.getUnlockTrigger().name() : null,
-                        g.getOrganization() != null ? g.getOrganization().getId() : null,
-                        g.getOrganization() != null ? g.getOrganization().getName() : null
-                ))
+                .map(g -> GameResponseMapper.toResponse(g))
                 .toList();
     }
 
@@ -169,25 +152,7 @@ public class AdminService {
         // Use the org-id-based queries on GameRepository
         List<Game> games = gameRepository.findByOrganizationIdIn(List.of(orgId));
         return games.stream()
-                .map(g -> new GameResponse(
-                        g.getId(),
-                        g.getName(),
-                        g.getDescription(),
-                        g.getStartDate(),
-                        g.getEndDate(),
-                        g.getStatus().name(),
-                        g.getCreatedBy() != null ? g.getCreatedBy().getId() : null,
-                        g.getOperators() != null
-                                ? g.getOperators().stream().map(User::getId).toList()
-                                : List.of(),
-                        g.getUniformAssignment(),
-                        g.getBroadcastEnabled(),
-                        g.getBroadcastCode(),
-                        g.getTileSource(),
-                        g.getUnlockTrigger() != null ? g.getUnlockTrigger().name() : null,
-                        g.getOrganization() != null ? g.getOrganization().getId() : null,
-                        g.getOrganization() != null ? g.getOrganization().getName() : null
-                ))
+                .map(g -> GameResponseMapper.toResponse(g))
                 .toList();
     }
 }

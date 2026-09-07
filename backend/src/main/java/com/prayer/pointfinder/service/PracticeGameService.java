@@ -13,6 +13,7 @@ import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.mapper.GameResponseMapper;
@@ -21,6 +22,7 @@ import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.repository.UserTutorialProgressRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,7 +92,15 @@ public class PracticeGameService {
                 .tutorialExpiresAt(PracticeGames.expiry())
                 .build();
         game.getOperators().add(user);
-        game = gameRepository.save(game);
+        try {
+            game = gameRepository.saveAndFlush(game);
+        } catch (DataIntegrityViolationException e) {
+            // The partial unique index (V63) is the last word against two
+            // concurrent creations that both passed the existence check.
+            throw new ConflictException(
+                    "You already have a practice game; delete or keep it first",
+                    ErrorCode.TUTORIAL_PRACTICE_GAME_EXISTS);
+        }
 
         seed(game.getId(), scenarioId, request.getLat(), request.getLng());
         PracticeGames.bindProgressRow(progressRepository, userId, scenarioId, game.getId());
@@ -105,9 +115,9 @@ public class PracticeGameService {
         if (!game.isPracticeGame()) {
             throw new BadRequestException("This is not a practice game", ErrorCode.TUTORIAL_NOT_PRACTICE_GAME);
         }
-        if (game.getStatus() != GameStatus.ended) {
-            quotaService.enforceActiveGameLimit(game.getCreatedBy());
-        }
+        // Always under the quota, ended or not: an ended game can be brought
+        // back to setup, so a free keep would be a free extra game.
+        quotaService.enforceActiveGameLimit(game.getCreatedBy());
         game.setTutorialScenario(null);
         game.setTutorialExpiresAt(null);
         return GameResponseMapper.toResponse(gameRepository.save(game));

@@ -107,6 +107,35 @@ describe('CreateGameDialog', () => {
     expect('tutorialScenario' in sent).toBe(false)
   })
 
+  it('sends the operator to billing when the active-game limit refuses the create', async () => {
+    const user = userEvent.setup()
+    server.use(http.post('/api/games', () =>
+      HttpResponse.json({ status: 400, message: 'Active game limit reached (1)', code: 'QUOTA_ACTIVE_GAMES_EXCEEDED' }, { status: 400 }),
+    ))
+    const { onClose } = renderDialog()
+
+    await user.type(screen.getByLabelText('Name'), 'One too many')
+    await user.click(screen.getByRole('button', { name: /create game/i }))
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/billing'))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('shows a localized message for any other rejected create and stays open', async () => {
+    const user = userEvent.setup()
+    server.use(http.post('/api/games', () =>
+      HttpResponse.json({ status: 409, message: 'raw server text', code: 'TUTORIAL_PRACTICE_GAME_EXISTS' }, { status: 409 }),
+    ))
+    const { onClose } = renderDialog()
+
+    await user.type(screen.getByLabelText('Name'), 'Another practice')
+    await user.click(screen.getByRole('button', { name: /create game/i }))
+
+    expect(await screen.findByTestId('create-game-error')).toHaveTextContent('You already have a practice game. Delete or keep it first.')
+    expect(onClose).not.toHaveBeenCalled()
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
   it('disables submit when name is empty', () => {
     renderDialog()
     const submitBtn = screen.getByRole('button', { name: /create game/i })

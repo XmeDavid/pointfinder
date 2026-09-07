@@ -890,7 +890,10 @@
     "UNLOCK_OVERRIDE_NOT_FOUND": "Keine Überschreibung zum Entfernen vorhanden.",
     "TAG_LABEL_DUPLICATE": "Ein Tag mit diesem Namen existiert bereits in diesem Spiel.",
     "TAG_CAP_EXCEEDED": "Maximale Anzahl von 50 Tags pro Spiel erreicht.",
-    "TAG_IN_USE": "Löschen nicht möglich: Der Tag wird von einem oder mehreren Elementen verwendet."
+    "TAG_IN_USE": "Löschen nicht möglich: Der Tag wird von einem oder mehreren Elementen verwendet.",
+    "QUOTA_ACTIVE_GAMES_EXCEEDED": "Du hast das Limit aktiver Spiele deines Plans erreicht. Beende oder lösche ein Spiel, oder upgrade.",
+    "TUTORIAL_PRACTICE_GAME_EXISTS": "Du hast bereits ein Übungsspiel. Lösche oder behalte es zuerst.",
+    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "Dieses Tutorial erstellt sein Spiel über den Dialog Neues Spiel."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",
@@ -1900,7 +1903,9 @@
       "kept": "Das ist jetzt ein normales Spiel.",
       "settingsTitle": "Übungsspiel",
       "settingsBody": "Ein Tutorial hat dieses Spiel erstellt. Es nimmt eine Person auf und endet von selbst in {{hours}} h. Behalte es, um es zu einem normalen Spiel zu machen, oder lösche es.",
-      "settingsBodyEnded": "Ein Tutorial hat dieses Spiel erstellt, und es ist beendet. Behalte es, um es zu einem normalen Spiel zu machen, oder lösche es."
+      "settingsBodyEnded": "Ein Tutorial hat dieses Spiel erstellt, und es ist beendet. Behalte es, um es zu einem normalen Spiel zu machen, oder lösche es.",
+      "endedShort": "beendet",
+      "hoursShort": "noch {{hours}} h"
     }
   }
 }

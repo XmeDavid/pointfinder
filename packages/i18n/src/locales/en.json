@@ -890,7 +890,10 @@
     "UNLOCK_OVERRIDE_NOT_FOUND": "No override to remove.",
     "TAG_LABEL_DUPLICATE": "A tag with this name already exists in this game.",
     "TAG_CAP_EXCEEDED": "Maximum 50 tags per game reached.",
-    "TAG_IN_USE": "Can't delete: tag is in use by one or more items."
+    "TAG_IN_USE": "Can't delete: tag is in use by one or more items.",
+    "QUOTA_ACTIVE_GAMES_EXCEEDED": "You are at your plan's active game limit. End or delete a game, or upgrade.",
+    "TUTORIAL_PRACTICE_GAME_EXISTS": "You already have a practice game. Delete or keep it first.",
+    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "This tutorial creates its game through the New Game dialog."
   },
   "realtimeHealth": {
     "title": "Realtime Health",
@@ -1900,7 +1903,9 @@
       "kept": "This is now a normal game.",
       "settingsTitle": "Practice game",
       "settingsBody": "A tutorial created this game. It takes one player and ends itself in {{hours}} h. Keep it to turn it into a normal game, or delete it.",
-      "settingsBodyEnded": "A tutorial created this game and it has ended. Keep it to turn it into a normal game, or delete it."
+      "settingsBodyEnded": "A tutorial created this game and it has ended. Keep it to turn it into a normal game, or delete it.",
+      "endedShort": "ended",
+      "hoursShort": "{{hours}} h left"
     }
   }
 }

@@ -1319,9 +1319,11 @@ practice game the operator creates through `POST /games` with
 `first-game` row is `in_progress` and is otherwise ignored.
 
 **POST /games/:id/keep** turns a practice game into a normal game: clears both
-marker fields under the normal active-game quota (`400
-QUOTA_ACTIVE_GAMES_EXCEEDED` when enforcement is on and the operator is at the
-limit, `400 TUTORIAL_NOT_PRACTICE_GAME` for a normal game). Needs game access.
+marker fields under the normal active-game quota, whether or not the game has
+ended (`400 QUOTA_ACTIVE_GAMES_EXCEEDED` when enforcement is on and the operator
+is at the limit, `400 TUTORIAL_NOT_PRACTICE_GAME` for a normal game). Needs game
+access. Reviving an ended personal game through `PATCH /games/:id/status` is
+checked against the same quota.
 
 ### Invites
 

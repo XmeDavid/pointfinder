@@ -8,6 +8,8 @@ import com.prayer.pointfinder.entity.UserTutorialProgressId;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.repository.GameRepository;
+import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.repository.UserTutorialProgressRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,7 @@ public class TutorialProgressService {
     public static final Set<String> KNOWN_SCENARIOS = Set.of("first-game", "fixed-route", "exploration");
 
     private final UserTutorialProgressRepository progressRepository;
+    private final GameAccessService gameAccessService;
     private final GameRepository gameRepository;
 
     @Transactional(readOnly = true)
@@ -87,12 +90,29 @@ public class TutorialProgressService {
         // The bound game may already be gone: the closing card deletes a practice
         // game and the client's debounced write lands after. Storing null keeps
         // the row (and its completion) instead of failing the foreign key.
-        UUID gameId = request.getGameId();
-        row.setGameId(gameId != null && gameRepository.existsById(gameId) ? gameId : null);
+        row.setGameId(accessibleGameId(request.getGameId()));
         row.setCompletedAt(status == TutorialStatus.COMPLETED ? now : null);
         row.setUpdatedAt(now);
 
         return toResponse(progressRepository.save(row));
+    }
+
+    /**
+     * The id when the caller can access that game, else null (deleted, or not
+     * theirs). Looked up through the repository, not the transactional access
+     * helper: an exception inside a joined transaction would mark this write
+     * rollback-only even though it is caught here.
+     */
+    private UUID accessibleGameId(UUID gameId) {
+        if (gameId == null) return null;
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) return null;
+        try {
+            gameAccessService.ensureCurrentUserCanAccessGame(game);
+            return gameId;
+        } catch (ForbiddenException notTheirs) {
+            return null;
+        }
     }
 
     private TutorialProgressResponse toResponse(UserTutorialProgress row) {

@@ -9,11 +9,11 @@ import { useGames } from '@/hooks/queries/useGames'
 import { useTutorialProgress } from '@/hooks/queries/useTutorialProgress'
 import { useCreatePracticeGame, useUpdateTutorialProgress } from '@/hooks/mutations/useTutorialMutations'
 import { useDeleteGame } from '@/hooks/mutations/useGameMutations'
-import { getApiErrorMessage } from '@/lib/api/errors'
+import { getApiErrorCode, getApiErrorMessage } from '@/lib/api/errors'
 import { useTourStore } from './store'
 import { scenarioList } from './scenarios'
 import { ScenarioCard } from './ScenarioCard'
-import { activePracticeGame, isPracticeGame } from './practiceGame'
+import { activePracticeGame, isPracticeGame, readPracticeCentre } from './practiceGame'
 import type { Scenario, ScenarioId, TutorialProgress } from './types'
 
 const PRACTICE_NAME_KEY: Partial<Record<ScenarioId, string>> = {
@@ -32,7 +32,7 @@ export function TutorialsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const progressQuery = useTutorialProgress()
-  const { data: games } = useGames()
+  const { data: games, refetch: refetchGames } = useGames()
   const updateProgress = useUpdateTutorialProgress()
   const createPractice = useCreatePracticeGame()
   const deleteGame = useDeleteGame()
@@ -65,13 +65,23 @@ export function TutorialsPage() {
   async function createAndStart(scenario: Scenario) {
     setError(null)
     try {
+      const centre = await readPracticeCentre()
       const game = await createPractice.mutateAsync({
         scenarioId: scenario.id,
-        body: { name: t(PRACTICE_NAME_KEY[scenario.id] ?? 'tutorials.library.practice.gameName.generic') },
+        body: { name: t(PRACTICE_NAME_KEY[scenario.id] ?? 'tutorials.library.practice.gameName.generic'), ...centre },
       })
       start(scenario.id, { gameId: game.id, stepId: null })
       navigate(`/game/${game.id}`)
     } catch (err) {
+      if (getApiErrorCode(err) === 'TUTORIAL_PRACTICE_GAME_EXISTS') {
+        // The games list was stale (another tab or device made one): show
+        // the replace question instead of a dead end.
+        const fresh = await refetchGames()
+        if (activePracticeGame(fresh.data)) {
+          setReplacing({ scenario, resumeStepId: null })
+          return
+        }
+      }
       setError(getApiErrorMessage(err, t('tutorials.library.practice.createFailed')))
     }
   }

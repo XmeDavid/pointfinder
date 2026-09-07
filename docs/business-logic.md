@@ -1234,7 +1234,7 @@ against a snapshot of the games list taken when the run started, not against a t
 Progress lives in `user_tutorial_progress`, one row per `(operator, scenario)`.
 No row means the operator has never started that scenario. A row carries the
 status (`in_progress`, `completed`, `skipped`), the step id the operator is on,
-and — for `setup-game` scenarios — the game the run is bound to.
+and — for `practice-game` scenarios — the game the run is bound to.
 
 Because progress is server-side, a reload, a second browser, or the Tauri shell
 all resume the same run, and a completed tutorial stays completed everywhere.
@@ -1283,8 +1283,10 @@ A tutorial never runs on a game the operator made for a real event. It runs on a
   `POST /api/users/me/tutorials/{scenarioId}/practice-game`, seeded by `PracticeGameService`
   with three QR bases, one text challenge per base (two for exploration) and a team, placed
   around the centre the client passes.
-- **Keep** (`POST /api/games/{id}/keep`) clears the marker under the normal active-game quota;
-  at the limit the web client sends the operator to billing. **Delete** is the normal delete.
+- **Keep** (`POST /api/games/{id}/keep`) clears the marker under the normal active-game quota,
+  ended or not (an ended game can be brought back to setup, and that revival is itself checked
+  against the quota now); at the limit the web client sends the operator to billing. The
+  one-at-a-time rule is also a partial unique index on `games(created_by)` (V63). **Delete** is the normal delete.
   Restart from the library replaces the current practice game after a confirm. A kept game has
   no marker, so restart and expiry never touch it.
 
