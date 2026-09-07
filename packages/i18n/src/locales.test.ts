@@ -82,7 +82,7 @@ describe('tutorial chrome vocabulary', () => {
   })
 
   it.each(['en', 'pt', 'de'] as const)('%s interpolates the step counter', (lang) => {
-    const bundle = resources[lang].translation as Record<string, Record<string, Record<string, string>>>
+    const bundle = resources[lang].translation as unknown as { tutorials: { common: Record<string, string> } }
     expect(bundle.tutorials.common.stepOf).toContain('{{n}}')
     expect(bundle.tutorials.common.stepOf).toContain('{{total}}')
     expect(bundle.tutorials.common.pillLabel).toContain('{{n}}')
@@ -133,7 +133,7 @@ describe('operator tutorial vocabulary', () => {
   })
 
   it.each(['en', 'pt', 'de'] as const)('%s keeps bubble bodies short enough for a 20rem bubble', (lang) => {
-    const bundle = resources[lang].translation as Record<string, Record<string, Record<string, string>>>
+    const bundle = resources[lang].translation as unknown as { tutorials: { firstGame: Record<string, { body: string }> } }
     for (const [step, copy] of Object.entries(bundle.tutorials.firstGame)) {
       expect(copy.body.split(/\s+/).length, `${lang} ${step}.body word count`).toBeLessThanOrEqual(50)
     }
