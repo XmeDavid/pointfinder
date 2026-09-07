@@ -46,7 +46,7 @@ describe('ChallengePicker', () => {
 
     expect(screen.getByRole('dialog', { name: 'Old mill · Falcons' })).toBeInTheDocument()
     const arches = screen.getByTestId('challenge-option-c1')
-    expect(arches).toHaveAttribute('aria-selected', 'true')
+    expect(arches).toHaveAttribute('aria-pressed', 'true')
     expect(arches).toHaveTextContent('10 pts')
     expect(arches).toHaveTextContent('Outdoor')
     const bell = screen.getByTestId('challenge-option-c2')
@@ -59,6 +59,7 @@ describe('ChallengePicker', () => {
     await user.click(screen.getByTestId('challenge-option-c3'))
     expect(onChange).toHaveBeenCalledWith('c3')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByTestId('cell')).toHaveFocus()
   })
 
   it('searches by title and by tag label, and offers "No challenge" only without a query', async () => {

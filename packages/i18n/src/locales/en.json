@@ -1250,13 +1250,14 @@
       "pickerNoMatch": "No challenge matches.",
       "pickerTaken": "Already placed",
       "pickerTakenAt": "At {{base}}",
-      "pickerPoints": "{{count}} pts",
+      "pickerPoints_one": "{{count}} pt",
+      "pickerPoints_other": "{{count}} pts",
       "pickerLocationBound": "Location-bound",
       "pickerPinned": "Pinned",
       "pickerAnswer": {
-            "text": "Text",
-            "file": "File",
-            "none": "No answer"
+        "text": "Text",
+        "file": "File",
+        "none": "No answer"
       },
       "open": "Assignments",
       "title": "Assignments",

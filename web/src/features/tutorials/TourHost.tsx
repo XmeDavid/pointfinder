@@ -67,8 +67,8 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   const anchorId = step ? resolveAnchor(step, state) : null
   const { element, rect, visible } = useAnchorRect(anchorId || null, tick)
   // A modal that does not hold the anchor (a picker opened from the anchored
-  // sheet, a confirm) gets the screen to itself: the tour hides until it
-  // closes, instead of sitting over the modal's controls.
+  // sheet, a confirm) gets the screen to itself: the tour collapses to a pill
+  // at the top until it closes, instead of sitting over the modal's controls.
   // `tick` is the DOM snapshot key: it bumps when the modal mounts.
   const covered = useMemo(() => {
     if (typeof document === 'undefined') return false
@@ -254,9 +254,9 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   )
 
   // A step with no anchor (the closing card) shows a centred bubble and dims nothing.
-  // Under a foreign modal even the pill would sit over the sheet's last rows;
-  // the tour is simply absent until the modal closes.
-  if (covered) return null
+  // Under a foreign modal the tour keeps its pill, at the top so it never
+  // sits over a bottom sheet's last rows; the coach mark returns on close.
+  if (covered) return <TourPill step={index + 1} total={total} onResume={handleResume} position="top" />
 
   if (anchorId === '') {
     return paused ? <TourPill step={index + 1} total={total} onResume={handleResume} /> : bubble(null)

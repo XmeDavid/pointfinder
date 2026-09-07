@@ -50,6 +50,9 @@ describe('different-path scenario', () => {
     })
     expect(resolveAnchor(differentPath.steps[2], desktop)).toBe('assignment-cell-A-falcons')
     expect(resolveAnchor(differentPath.steps[3], desktop)).toBe('assignment-cell-C-lions')
+    // Once base A is set for the Falcons, the mark moves down the route to base B.
+    const oneDown = makeTourState({ ...seeded, assignments: [row('A', 'c1', 'falcons')] })
+    expect(resolveAnchor(differentPath.steps[2], oneDown)).toBe('assignment-base-B')
   })
 
   it.each(['en', 'pt', 'de'] as const)('has every copy key in %s', (lang) => {

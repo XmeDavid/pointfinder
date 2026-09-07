@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -16,6 +16,18 @@ export function AssignmentList({ ctx }: { ctx: GridContext }) {
   const { t } = useTranslation()
   const [openBaseId, setOpenBaseId] = useState<string | null>(null)
   const openBase = openBaseId ? ctx.bases.find((base) => base.id === openBaseId) ?? null : null
+  // Closing the sheet puts focus back on the row that opened it.
+  const lastOpened = useRef<string | null>(null)
+  useEffect(() => {
+    if (openBaseId) {
+      lastOpened.current = openBaseId
+      return
+    }
+    const id = lastOpened.current
+    if (!id) return
+    lastOpened.current = null
+    document.querySelector<HTMLButtonElement>(`[data-testid="assignment-base-${id}"]`)?.focus()
+  }, [openBaseId])
 
   const summary = (base: Base): string => {
     const mode = baseMode(ctx.assignments, base.id)
@@ -56,7 +68,7 @@ export function AssignmentList({ ctx }: { ctx: GridContext }) {
         {openBase && (
           <DialogContent
             onClose={() => setOpenBaseId(null)}
-            className="flex max-h-[90dvh] w-full flex-col self-end overflow-hidden rounded-b-none p-0 sm:max-w-lg sm:self-center sm:rounded-lg"
+            className="flex max-h-[90dvh] w-full flex-col self-end overflow-hidden rounded-b-none p-0 max-sm:mb-[calc(-1rem-var(--safe-bottom))] max-sm:pb-[var(--safe-bottom)] sm:max-w-lg sm:self-center sm:rounded-lg"
             data-testid="assignment-base-dialog"
           >
             <DialogHeader className="mb-0 shrink-0 border-b border-border px-4 pb-3 pt-4 pr-12 text-left">

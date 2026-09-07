@@ -32,7 +32,8 @@ export interface ChallengePickerProps {
  * A searchable challenge chooser. The trigger looks like a select and carries
  * `data-value`; the list opens in a dialog (a bottom sheet on phones) with
  * one row per challenge showing points, answer type, location-bound, pinned
- * base and tags, so the right one is findable in a game with dozens. Test
+ * base and tags, so the right one is findable in a game with dozens. Closing
+ * returns focus to the trigger. Test
  * ids: the trigger's `testId`, `challenge-picker-search`,
  * `challenge-option-none`, `challenge-option-{challengeId}`.
  */
@@ -53,6 +54,8 @@ export function ChallengePicker({
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const wasOpen = useRef(false)
 
   const current = value ? challenges.find((c) => c.id === value) ?? null : null
   const tagById = useMemo(() => new Map(tags.map((tag) => [tag.id, tag])), [tags])
@@ -67,9 +70,17 @@ export function ChallengePicker({
   }, [challenges, query, tagById])
 
   useEffect(() => {
-    if (!open) return
-    const frame = requestAnimationFrame(() => searchRef.current?.focus())
-    return () => cancelAnimationFrame(frame)
+    if (open) {
+      wasOpen.current = true
+      const frame = requestAnimationFrame(() => searchRef.current?.focus())
+      return () => cancelAnimationFrame(frame)
+    }
+    // Closing hands focus back to the trigger, as the select it replaces did,
+    // so a keyboard operator can move straight on to the next cell.
+    if (wasOpen.current) {
+      wasOpen.current = false
+      triggerRef.current?.focus()
+    }
   }, [open])
 
   const show = () => {
@@ -85,6 +96,7 @@ export function ChallengePicker({
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={show}
         disabled={disabled}
@@ -107,7 +119,7 @@ export function ChallengePicker({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           onClose={() => setOpen(false)}
-          className="flex max-h-[85dvh] w-full flex-col self-end overflow-hidden rounded-b-none p-0 sm:max-h-[80dvh] sm:max-w-lg sm:self-center sm:rounded-lg"
+          className="flex max-h-[85dvh] w-full flex-col self-end overflow-hidden rounded-b-none p-0 max-sm:mb-[calc(-1rem-var(--safe-bottom))] max-sm:pb-[var(--safe-bottom)] sm:max-h-[80dvh] sm:max-w-lg sm:self-center sm:rounded-lg"
           data-testid={testId ? `${testId}-dialog` : undefined}
         >
           <DialogHeader className="mb-0 shrink-0 border-b border-border px-4 pb-3 pt-4 pr-12 text-left">
@@ -124,7 +136,7 @@ export function ChallengePicker({
             />
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-2" role="listbox" aria-label={label} data-testid="challenge-picker-list">
+          <ul className="min-h-0 flex-1 overflow-y-auto p-2" aria-label={label} data-testid="challenge-picker-list">
             {!query && (
               <Row selected={value === null} onClick={() => choose(null)} testId="challenge-option-none">
                 <span className="text-sm text-muted-foreground">{t('build.assignments.pickerNone')}</span>
@@ -143,7 +155,8 @@ export function ChallengePicker({
                   onClick={() => choose(challenge.id)}
                   testId={`challenge-option-${challenge.id}`}
                 >
-                  <span className="flex min-w-0 flex-col gap-1">
+                  {/* The reason stays at full strength: it is what a blocked row is for. */}
+                  <span className={cn('flex min-w-0 flex-col gap-1', !allowed && 'opacity-50')}>
                     <span className="truncate text-sm font-medium text-foreground">{challenge.title}</span>
                     <span className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
                       <span>{t('build.assignments.pickerPoints', { count: challenge.points })}</span>
@@ -168,18 +181,18 @@ export function ChallengePicker({
                           {tag.label}
                         </span>
                       ))}
-                      {reason && <span className="font-medium text-foreground">{reason}</span>}
                     </span>
                   </span>
+                  {reason && <span className="shrink-0 text-[11px] font-medium text-foreground">{reason}</span>}
                 </Row>
               )
             })}
             {shown.length === 0 && (
-              <p className="px-3 py-6 text-center text-xs text-muted-foreground" data-testid="challenge-picker-empty">
+              <li className="px-3 py-6 text-center text-xs text-muted-foreground" data-testid="challenge-picker-empty">
                 {t('build.assignments.pickerNoMatch')}
-              </p>
+              </li>
             )}
-          </div>
+          </ul>
         </DialogContent>
       </Dialog>
     </>
@@ -200,21 +213,22 @@ function Row({
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      role="option"
-      aria-selected={selected}
-      disabled={disabled}
-      onClick={onClick}
-      data-testid={testId}
-      className={cn(
-        'flex w-full items-start justify-between gap-2 rounded-md px-3 py-2 text-left transition-colors',
-        selected ? 'bg-primary/10' : 'hover:bg-muted',
-        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-      )}
-    >
-      {children}
-      {selected && <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />}
-    </button>
+    <li>
+      <button
+        type="button"
+        aria-pressed={selected}
+        disabled={disabled}
+        onClick={onClick}
+        data-testid={testId}
+        className={cn(
+          'flex w-full items-start justify-between gap-2 rounded-md px-3 py-2 text-left transition-colors',
+          selected ? 'bg-primary/10' : 'hover:bg-muted',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+        )}
+      >
+        {children}
+        {selected && <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />}
+      </button>
+    </li>
   )
 }

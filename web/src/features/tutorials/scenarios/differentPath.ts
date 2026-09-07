@@ -36,6 +36,13 @@ function cellOrBase(s: TourState, basePrefix: string, teamName: string): string 
   const cell = `assignment-cell-${b?.id ?? ''}-${t?.id ?? ''}`
   return s.field(cell).present ? cell : `assignment-base-${b?.id ?? ''}`
 }
+/** The mark follows the route: the first base where the team does not yet meet its challenge. */
+function nextCell(s: TourState, teamName: string, route: ReadonlyArray<readonly [string, string]>): string {
+  const open = route.find(([basePrefix, n]) => !has(s, teamName, basePrefix, n)) ?? route[0]
+  return cellOrBase(s, open[0], teamName)
+}
+const FALCONS_ROUTE = [['Base A', '1'], ['Base B', '2'], ['Base C', '3']] as const
+const LIONS_ROUTE = [['Base C', '1'], ['Base B', '2'], ['Base A', '3']] as const
 
 const FALCONS_DONE = (s: TourState) => has(s, 'Falcons', 'Base A', '1') && has(s, 'Falcons', 'Base B', '2') && has(s, 'Falcons', 'Base C', '3')
 const LIONS_DONE = (s: TourState) => has(s, 'Lions', 'Base C', '1') && has(s, 'Lions', 'Base B', '2') && has(s, 'Lions', 'Base A', '3')
@@ -74,7 +81,7 @@ export const differentPath: Scenario = {
     {
       id: 'falcons',
       route: 'workspace',
-      anchor: (s) => cellOrBase(s, 'Base A', 'Falcons'),
+      anchor: (s) => nextCell(s, 'Falcons', FALCONS_ROUTE),
       prepare: openGrid,
       done: { kind: 'predicate', test: FALCONS_DONE },
       copy: { title: 'tutorials.differentPath.falcons.title', body: 'tutorials.differentPath.falcons.body' },
@@ -82,7 +89,7 @@ export const differentPath: Scenario = {
     {
       id: 'lions',
       route: 'workspace',
-      anchor: (s) => cellOrBase(s, 'Base C', 'Lions'),
+      anchor: (s) => nextCell(s, 'Lions', LIONS_ROUTE),
       prepare: openGrid,
       done: { kind: 'predicate', test: (s) => FALCONS_DONE(s) && LIONS_DONE(s) },
       copy: { title: 'tutorials.differentPath.lions.title', body: 'tutorials.differentPath.lions.body' },

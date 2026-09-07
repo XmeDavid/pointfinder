@@ -12,13 +12,15 @@ export interface TourPillProps {
   onResume: () => void
   /** Render in flow instead of portalling — for stories and the visual harness. */
   inline?: boolean
+  /** Top of the screen while a modal owns the bottom; bottom centre otherwise. */
+  position?: 'bottom' | 'top'
 }
 
 /**
  * The collapsed tour: shown while paused, or while the current anchor is off
  * screen or not rendered. Bottom centre, clear of the mobile tab bar.
  */
-export function TourPill({ step, total, onResume, inline = false }: TourPillProps) {
+export function TourPill({ step, total, onResume, inline = false, position = 'bottom' }: TourPillProps) {
   const { t } = useTranslation()
   const reduced = useReducedMotion()
 
@@ -28,7 +30,8 @@ export function TourPill({ step, total, onResume, inline = false }: TourPillProp
       className={cn(
         inline ? 'relative inline-block' : 'fixed left-1/2 z-[70] -translate-x-1/2',
       )}
-      style={inline ? undefined : { bottom: 'calc(var(--safe-bottom) + 56px)' }}
+      style={inline ? undefined : position === 'top' ? { top: 'calc(var(--safe-top) + 8px)' } : { bottom: 'calc(var(--safe-bottom) + 56px)' }}
+      data-position={inline ? undefined : position}
       initial={reduced ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={reduced ? undefined : { opacity: 0, y: 8 }}

@@ -1250,13 +1250,14 @@
       "pickerNoMatch": "Keine Challenge passt.",
       "pickerTaken": "Bereits vergeben",
       "pickerTakenAt": "Bei {{base}}",
-      "pickerPoints": "{{count}} Pkt.",
+      "pickerPoints_one": "{{count}} Pkt.",
+      "pickerPoints_other": "{{count}} Pkt.",
       "pickerLocationBound": "Ortsgebunden",
       "pickerPinned": "Angeheftet",
       "pickerAnswer": {
-            "text": "Text",
-            "file": "Datei",
-            "none": "Keine Antwort"
+        "text": "Text",
+        "file": "Datei",
+        "none": "Keine Antwort"
       },
       "open": "Zuordnungen",
       "title": "Zuordnungen",

@@ -1250,13 +1250,14 @@
       "pickerNoMatch": "Nenhum desafio corresponde.",
       "pickerTaken": "Já colocado",
       "pickerTakenAt": "Em {{base}}",
-      "pickerPoints": "{{count}} pts",
+      "pickerPoints_one": "{{count}} pt",
+      "pickerPoints_other": "{{count}} pts",
       "pickerLocationBound": "Ligado ao local",
       "pickerPinned": "Fixado",
       "pickerAnswer": {
-            "text": "Texto",
-            "file": "Ficheiro",
-            "none": "Sem resposta"
+        "text": "Texto",
+        "file": "Ficheiro",
+        "none": "Sem resposta"
       },
       "open": "Atribuições",
       "title": "Atribuições",

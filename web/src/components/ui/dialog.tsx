@@ -19,6 +19,10 @@ interface DialogProps {
 
 function Dialog({ open, onOpenChange, children }: DialogProps) {
   const titleId = React.useId();
+  // Dialogs nest in the DOM (no portal), so a dialog opened from inside
+  // another renders within this wrapper. Every instance listens for Escape
+  // on `document`; only the innermost open one may act on it.
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
 
   // Lock body scroll while the dialog is open
   React.useEffect(() => {
@@ -35,6 +39,8 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        const modals = wrapperRef.current?.querySelectorAll('[role="dialog"][aria-modal="true"]').length ?? 0;
+        if (modals > 1) return; // a nested dialog is open and answers instead
         e.stopPropagation();
         onOpenChange(false);
       }
@@ -47,7 +53,7 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return (
     <DialogContext.Provider value={{ titleId }}>
-      <div className="fixed inset-0 z-50">
+      <div ref={wrapperRef} className="fixed inset-0 z-50">
         <div
           className="fixed inset-0 bg-[var(--pf-color-surface-scrim)]"
           aria-hidden="true"
