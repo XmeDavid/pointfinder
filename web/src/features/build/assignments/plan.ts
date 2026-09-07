@@ -32,7 +32,11 @@ export function cellChallenge(rows: readonly AssignmentRow[], baseId: string, co
   return row?.challengeId ?? null
 }
 
-/** Challenges a cell may take: not used elsewhere in the same column. */
+/**
+ * Challenges a cell may take. An all-teams row counts for every team, so the
+ * all-teams column excludes anything held anywhere else, and a team column
+ * excludes what that team holds elsewhere and what is all-teams elsewhere.
+ */
 export function optionsFor(
   rows: readonly AssignmentRow[],
   challenges: readonly Challenge[],
@@ -41,7 +45,7 @@ export function optionsFor(
 ): Challenge[] {
   const taken = new Set(
     rows
-      .filter((row) => row.baseId !== baseId && (column === ALL_TEAMS ? !row.teamId : row.teamId === column))
+      .filter((row) => row.baseId !== baseId && (column === ALL_TEAMS || !row.teamId || row.teamId === column))
       .map((row) => row.challengeId),
   )
   return challenges.filter((challenge) => !taken.has(challenge.id))
@@ -72,7 +76,8 @@ export function setCell(
 
   if (column === ALL_TEAMS) {
     if (challengeId === null) return otherBases
-    const withoutDuplicate = otherBases.filter((row) => !(!row.teamId && row.challengeId === challengeId))
+    // Everyone meets it here, so no column may hold it at another base.
+    const withoutDuplicate = otherBases.filter((row) => row.challengeId !== challengeId)
     return [...withoutDuplicate, { gameId, baseId, challengeId }]
   }
 
@@ -81,10 +86,11 @@ export function setCell(
   let next = otherBases
   const keep: AssignmentRow[] = own.filter((row) => row.teamId && row.teamId !== teamId)
   if (allRow) {
+    // Converting: every other team keeps what it had here. Nothing is dropped
+    // on their behalf; a clash the data already carried surfaces as the
+    // server's reason instead of a silent loss.
     for (const other of teamIds) {
-      if (other === teamId) continue
-      const meetsElsewhere = next.some((row) => row.teamId === other && row.challengeId === allRow.challengeId)
-      if (!meetsElsewhere) keep.push({ gameId, baseId, challengeId: allRow.challengeId, teamId: other })
+      if (other !== teamId) keep.push({ gameId, baseId, challengeId: allRow.challengeId, teamId: other })
     }
   }
   if (challengeId !== null) {
@@ -104,9 +110,7 @@ export function splitToTeams(
   const allRow = rows.find((row) => row.baseId === baseId && !row.teamId)
   if (!allRow) return [...rows]
   const otherBases = rows.filter((row) => row.baseId !== baseId)
-  const perTeam = teamIds
-    .filter((teamId) => !otherBases.some((row) => row.teamId === teamId && row.challengeId === allRow.challengeId))
-    .map((teamId) => ({ gameId, baseId, challengeId: allRow.challengeId, teamId }))
+  const perTeam = teamIds.map((teamId) => ({ gameId, baseId, challengeId: allRow.challengeId, teamId }))
   return [...otherBases, ...perTeam]
 }
 
@@ -123,6 +127,11 @@ export function mergeToAll(
 /** Removes every row of one challenge (unassign it everywhere). */
 export function clearChallenge(rows: readonly AssignmentRow[], challengeId: string): AssignmentRow[] {
   return rows.filter((row) => row.challengeId !== challengeId)
+}
+
+/** Distinct challenges held at a base across its columns. */
+export function challengesAt(rows: readonly AssignmentRow[], baseId: string): string[] {
+  return [...new Set(rows.filter((row) => row.baseId === baseId).map((row) => row.challengeId))]
 }
 
 /** Where a challenge sits for one column, or null. */

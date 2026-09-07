@@ -115,6 +115,6 @@ test('an all-teams pick over per-team rows asks first, and a refused write shows
       : route.fallback(),
   )
   await page.getByTestId('assignment-cell-b2-all').selectOption('c3')
-  await expect(page.getByTestId('assignment-grid-error')).toHaveText('A challenge can sit at one base per team.')
+  await expect(page.getByTestId('assignment-grid-error')).toHaveText('A challenge waits at one base for a team, or once for all teams.')
   await expect(page.getByTestId('assignment-cell-b2-all')).toHaveValue('')
 })

@@ -901,7 +901,7 @@
     "ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE": "Este desafio já está noutra base para todas as equipas.",
     "ASSIGNMENT_MIXED_MODES": "Uma base é para todas as equipas ou por equipa, não ambos.",
     "ASSIGNMENT_DUPLICATE": "A mesma base e equipa foram atribuídas duas vezes.",
-    "ASSIGNMENT_CHALLENGE_REPEATED": "Um desafio fica numa base por equipa."
+    "ASSIGNMENT_CHALLENGE_REPEATED": "Um desafio fica numa base por equipa, ou uma vez para todas as equipas."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
@@ -1240,7 +1240,6 @@
       "base": "Base",
       "allTeams": "Todas as equipas",
       "none": "—",
-      "perTeam": "Por equipa",
       "switchToTeams": "Atribuir por equipa",
       "switchToAll": "Atribuir a todas as equipas",
       "confirmAllTitle": "Atribuir a todas as equipas?",
@@ -1250,14 +1249,18 @@
       "assignedAt": "Atribuído em",
       "assignToBase": "Atribuir a uma base",
       "unassign": "Desatribuir",
-      "notAssigned": "Não atribuído",
       "noTeams": "Cria equipas para atribuir por equipa.",
       "noChallenges": "Ainda não há desafios.",
       "noBases": "Ainda não há bases.",
       "teamAt": "{{team}} em",
-      "challengeFor": "{{team}}",
       "readOnly": "As atribuições já não podem mudar: o jogo terminou.",
-      "autoAssignFailed": "A atribuição automática não foi guardada."
+      "autoAssignFailed": "A atribuição automática não foi guardada.",
+      "occupiedAll": "todas as equipas: {{title}}",
+      "occupiedTeams": "por equipa",
+      "alsoAllTeamsAt": "Também em {{base}} para todas as equipas.",
+      "confirmReplaceTitle": "Substituir o que está em {{base}}?",
+      "confirmReplaceBody": "As atribuições atuais desaparecem e este desafio fica na base para todas as equipas.",
+      "confirmMergeBody": "A escolha da primeira equipa passa a ser de todas; as escolhas das outras equipas desaparecem."
     }
   },
   "command2": {

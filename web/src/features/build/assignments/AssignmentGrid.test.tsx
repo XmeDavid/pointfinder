@@ -106,7 +106,7 @@ describe('AssignmentGrid', () => {
 
     await user.selectOptions(screen.getByTestId('assignment-cell-B-all'), 'c2')
 
-    expect(await screen.findByTestId('assignment-grid-error')).toHaveTextContent('A challenge can sit at one base per team.')
+    expect(await screen.findByTestId('assignment-grid-error')).toHaveTextContent('A challenge waits at one base for a team, or once for all teams.')
     await waitFor(() => expect(screen.getByTestId('assignment-cell-B-all')).toHaveValue(''))
   })
 

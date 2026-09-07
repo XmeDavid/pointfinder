@@ -34,5 +34,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
 
     boolean existsByGameIdAndChallengeIdAndTeamIdIsNull(UUID gameId, UUID challengeId);
 
+    boolean existsByGameIdAndChallengeIdAndTeamIdIsNotNull(UUID gameId, UUID challengeId);
+
     void deleteByGameId(UUID gameId);
 }

@@ -588,6 +588,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         bases={bases}
         teams={teams}
         onNavigateToBase={selectBase}
+              challenges={challenges}
       />
 
       {/* Operator notes */}

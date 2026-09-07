@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useIsMutating } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api/errors'
 import { Plus, Shuffle, X } from 'lucide-react'
@@ -44,6 +45,7 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
   const createStage = useCreateStage(gameId)
   const setAssignments = useSetAssignments(gameId)
   const [autoAssignError, setAutoAssignError] = useState<string | null>(null)
+  const writingAssignments = useIsMutating({ mutationKey: ['assignments', 'set'] }) > 0
 
   const { data: game } = useGame(gameId)
   const baseRouteLocked = !!game?.enforceBaseOrder && game.status !== 'setup'
@@ -150,8 +152,9 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
         {drawerTab === 'bases' && (
           <button
             onClick={handleAutoAssign}
+            disabled={writingAssignments || game?.status === 'ended'}
             data-testid="auto-assign-btn"
-            className="inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-muted text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
+            className="disabled:opacity-40 disabled:cursor-not-allowed inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-muted text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
           >
             <Shuffle className="h-3.5 w-3.5" />
             {t('build.drawer.autoAssign')}

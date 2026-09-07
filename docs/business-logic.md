@@ -103,15 +103,18 @@ Editing a pair opens a single dialog that writes the base and challenge via **tw
 
 **Assignments are a grid.** One row per base; one column for "All teams" plus one per team;
 each cell a challenge. A base is either an all-teams row or per-team rows (never both), and
-within one column a challenge appears at most once, so a team meets a challenge at exactly one
-base. That is how two teams walk the same bases with the challenges in a different order:
+a challenge appears at most once per team, an all-teams row counting for every team, so a team
+meets a challenge at exactly one base (the backend rejects a challenge that is all-teams at one
+base and team-specific at another, in either order). That is how two teams walk the same bases with the challenges in a different order:
 Falcons A→1, B→2, C→3 and Lions A→3, B→2, C→1 are six per-team rows. The web app edits this
 grid from three places that all send the complete next list through
 `PUT /games/:gameId/assignments` (which replaces the set): the **Assignments** grid in the
 Bases tab, the challenge's assignment section (one base for all teams, or one base per team),
 and the base's assignment section (one challenge for all teams, or one per team). Converting a
-base from all-teams to per-team keeps the challenge for every team; the reverse asks first. A
-refused write shows the server's reason (`ASSIGNMENT_*` codes) inline.
+base from all-teams to per-team keeps the challenge for every team; anything that would discard
+other rows (the reverse, or placing a challenge on a base that already has others) asks first.
+A pinned base shows its fixed challenge read-only in the all-teams column. A refused write
+shows the server's reason (`ASSIGNMENT_*` codes) inline.
 
 **Auto-assign** in the build drawer pairs each base that has no assignment and no fixed challenge with a challenge that no assignment uses yet, in list order, and re-submits the existing assignments unchanged through `PUT /games/:gameId/assignments` (which replaces the game's whole set). It never builds a base × challenge cross product: an "All Teams" challenge lives at exactly one base and a base carries one such challenge, so the backend rejects that shape with a 409.
 

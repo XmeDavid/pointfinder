@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createMockChallenge } from '@/test/factories/challenge'
-import { ALL_TEAMS, baseMode, baseOfChallenge, cellChallenge, clearChallenge, mergeToAll, optionsFor, setCell, splitToTeams, type AssignmentRow } from './plan'
+import { ALL_TEAMS, baseMode, baseOfChallenge, cellChallenge, challengesAt, clearChallenge, mergeToAll, optionsFor, setCell, splitToTeams, type AssignmentRow } from './plan'
 
 const G = 'g'
 const TEAMS = ['falcons', 'lions']
@@ -44,14 +44,24 @@ describe('assignment plan', () => {
     expect(sorted(rows)).toEqual(['A:falcons=c1', 'A:lions=c3', 'B:all=c2'])
   })
 
-  it('does not hand the old all-teams challenge to a team that already meets it elsewhere', () => {
+  it('never drops another team\'s row on its behalf when converting', () => {
+    // Data the rules no longer allow to be created; the server, not the planner, reports it.
     let rows = [row('A', 'c1'), row('C', 'c1', 'falcons')]
     rows = setCell(rows, G, 'A', 'lions', 'c3', TEAMS)
-    expect(sorted(rows)).toEqual(['A:lions=c3', 'C:falcons=c1'])
+    expect(sorted(rows)).toEqual(['A:falcons=c1', 'A:lions=c3', 'C:falcons=c1'])
   })
 
-  it('an all-teams pick replaces the per-team rows and the same challenge elsewhere in that column', () => {
-    let rows = [row('A', 'c1', 'falcons'), row('A', 'c3', 'lions'), row('B', 'c2')]
+  it('treats an all-teams row as every team\'s: the challenge is offered in no other column elsewhere', () => {
+    const challenges = ['c1', 'c2', 'c3'].map((id) => createMockChallenge({ id, title: id }))
+    const rows = [row('A', 'c1'), row('B', 'c2', 'lions')]
+    expect(optionsFor(rows, challenges, 'C', 'falcons').map((c) => c.id)).toEqual(['c2', 'c3'])
+    expect(optionsFor(rows, challenges, 'C', 'lions').map((c) => c.id)).toEqual(['c3'])
+    expect(optionsFor(rows, challenges, 'C', ALL_TEAMS).map((c) => c.id)).toEqual(['c3'])
+    expect(challengesAt(rows, 'A')).toEqual(['c1'])
+  })
+
+  it('an all-teams pick replaces the per-team rows and the same challenge anywhere else', () => {
+    let rows = [row('A', 'c1', 'falcons'), row('A', 'c3', 'lions'), row('B', 'c2'), row('C', 'c2', 'lions')]
     rows = setCell(rows, G, 'A', ALL_TEAMS, 'c2', TEAMS)
     expect(sorted(rows)).toEqual(['A:all=c2'])
   })
@@ -63,15 +73,17 @@ describe('assignment plan', () => {
 
   it('offers only challenges unused in the column, plus the cell\'s own', () => {
     const challenges = ['c1', 'c2', 'c3'].map((id) => createMockChallenge({ id, title: id }))
-    const rows = [row('A', 'c1', 'falcons'), row('B', 'c2', 'falcons'), row('A', 'c3')]
-    expect(optionsFor(rows, challenges, 'C', 'falcons').map((c) => c.id)).toEqual(['c3'])
-    expect(optionsFor(rows, challenges, 'B', 'falcons').map((c) => c.id)).toEqual(['c2', 'c3'])
-    expect(optionsFor(rows, challenges, 'B', ALL_TEAMS).map((c) => c.id)).toEqual(['c1', 'c2'])
+    const rows = [row('A', 'c1', 'falcons'), row('B', 'c2', 'falcons'), row('D', 'c3')]
+    // Falcons meet c1 at A and c2 at B; c3 waits for everyone at D.
+    expect(optionsFor(rows, challenges, 'C', 'falcons').map((c) => c.id)).toEqual([])
+    expect(optionsFor(rows, challenges, 'B', 'falcons').map((c) => c.id)).toEqual(['c2'])
+    expect(optionsFor(rows, challenges, 'C', 'lions').map((c) => c.id)).toEqual(['c1', 'c2'])
+    expect(optionsFor(rows, challenges, 'B', ALL_TEAMS).map((c) => c.id)).toEqual(['c2'])
   })
 
   it('splits and merges a base between the two modes', () => {
     const split = splitToTeams([row('A', 'c1'), row('B', 'c1', 'lions')], G, 'A', TEAMS)
-    expect(sorted(split)).toEqual(['A:falcons=c1', 'B:lions=c1'])
+    expect(sorted(split)).toEqual(['A:falcons=c1', 'A:lions=c1', 'B:lions=c1'])
     const merged = mergeToAll([row('A', 'c1', 'falcons'), row('A', 'c3', 'lions')], G, 'A', 'c1')
     expect(sorted(merged)).toEqual(['A:all=c1'])
   })

@@ -901,7 +901,7 @@
     "ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE": "Diese Challenge liegt bereits an einer anderen Station für alle Teams.",
     "ASSIGNMENT_MIXED_MODES": "Eine Station gilt entweder für alle Teams oder je Team, nicht beides.",
     "ASSIGNMENT_DUPLICATE": "Dieselbe Station und dasselbe Team wurden doppelt zugeordnet.",
-    "ASSIGNMENT_CHALLENGE_REPEATED": "Eine Challenge liegt je Team an genau einer Station."
+    "ASSIGNMENT_CHALLENGE_REPEATED": "Eine Challenge liegt je Team an einer Station, oder einmal für alle Teams."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",
@@ -1240,7 +1240,6 @@
       "base": "Station",
       "allTeams": "Alle Teams",
       "none": "—",
-      "perTeam": "Je Team",
       "switchToTeams": "Je Team zuordnen",
       "switchToAll": "Allen Teams zuordnen",
       "confirmAllTitle": "Allen Teams zuordnen?",
@@ -1250,14 +1249,18 @@
       "assignedAt": "Zugeordnet an",
       "assignToBase": "Einer Station zuordnen",
       "unassign": "Zuordnung aufheben",
-      "notAssigned": "Nicht zugeordnet",
       "noTeams": "Lege Teams an, um je Team zuzuordnen.",
       "noChallenges": "Noch keine Challenges.",
       "noBases": "Noch keine Stationen.",
       "teamAt": "{{team}} an",
-      "challengeFor": "{{team}}",
       "readOnly": "Zuordnungen lassen sich nicht mehr ändern: das Spiel ist beendet.",
-      "autoAssignFailed": "Automatisch zuordnen konnte nicht speichern."
+      "autoAssignFailed": "Automatisch zuordnen konnte nicht speichern.",
+      "occupiedAll": "alle Teams: {{title}}",
+      "occupiedTeams": "je Team",
+      "alsoAllTeamsAt": "Auch an {{base}} für alle Teams.",
+      "confirmReplaceTitle": "Ersetzen, was an {{base}} liegt?",
+      "confirmReplaceBody": "Die bisherigen Zuordnungen entfallen, und diese Challenge übernimmt die Station für alle Teams.",
+      "confirmMergeBody": "Die Wahl des ersten Teams gilt dann für alle; die Wahl der anderen Teams entfällt."
     }
   },
   "command2": {

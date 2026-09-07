@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { useSetAssignments } from '@/hooks/mutations/useAssignmentMutations'
 import { getApiErrorMessage } from '@/lib/api/errors'
 import type { Assignment, Challenge, Team } from '@/types/v2'
@@ -30,6 +31,7 @@ export function BaseAssignmentSection({
   const setAssignments = useSetAssignments(gameId)
   const [error, setError] = useState<string | null>(null)
   const [perTeamDraft, setPerTeamDraft] = useState(false)
+  const [confirmMerge, setConfirmMerge] = useState(false)
 
   const stored = baseMode(assignments, baseId)
   const mode: 'none' | 'all' | 'teams' = stored === 'none' && perTeamDraft ? 'teams' : stored
@@ -53,10 +55,20 @@ export function BaseAssignmentSection({
     setPerTeamDraft(true)
   }
 
-  function switchToAll() {
+  function mergeToAll() {
     const first = assignments.find((a) => a.baseId === baseId && a.teamId)
     setPerTeamDraft(false)
     if (first) write(setCell(assignments, gameId, baseId, ALL_TEAMS, first.challengeId, teamIds))
+  }
+
+  /** Merging keeps the first team's choice; when the teams differ, ask first. */
+  function switchToAll() {
+    const distinct = new Set(assignments.filter((a) => a.baseId === baseId && a.teamId).map((a) => a.challengeId))
+    if (distinct.size > 1) {
+      setConfirmMerge(true)
+      return
+    }
+    mergeToAll()
   }
 
   const challengeOptions = (column: string, current: string | null) => (
@@ -110,7 +122,11 @@ export function BaseAssignmentSection({
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            {challenges.length === 0 ? t('build.assignments.noChallenges') : t('build.assignments.allTeams')}
+            {challenges.length === 0
+              ? t('build.assignments.noChallenges')
+              : teams.length === 0
+                ? t('build.assignments.noTeams')
+                : t('build.assignments.allTeams')}
           </p>
         </div>
       ) : (
@@ -143,6 +159,19 @@ export function BaseAssignmentSection({
           })}
         </ul>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmMerge}
+        onCancel={() => setConfirmMerge(false)}
+        onConfirm={() => {
+          setConfirmMerge(false)
+          mergeToAll()
+        }}
+        title={t('build.assignments.confirmAllTitle')}
+        description={t('build.assignments.confirmMergeBody')}
+        confirmLabel={t('build.assignments.confirmAllAction')}
+        variant="default"
+      />
     </section>
   )
 }

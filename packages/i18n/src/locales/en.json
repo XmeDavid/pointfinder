@@ -901,7 +901,7 @@
     "ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE": "This challenge is already at another base for all teams.",
     "ASSIGNMENT_MIXED_MODES": "A base is either for all teams or per team, not both.",
     "ASSIGNMENT_DUPLICATE": "The same base and team were assigned twice.",
-    "ASSIGNMENT_CHALLENGE_REPEATED": "A challenge can sit at one base per team."
+    "ASSIGNMENT_CHALLENGE_REPEATED": "A challenge waits at one base for a team, or once for all teams."
   },
   "realtimeHealth": {
     "title": "Realtime Health",
@@ -1240,7 +1240,6 @@
       "base": "Base",
       "allTeams": "All teams",
       "none": "—",
-      "perTeam": "Per team",
       "switchToTeams": "Assign per team",
       "switchToAll": "Assign to all teams",
       "confirmAllTitle": "Assign to all teams?",
@@ -1250,14 +1249,18 @@
       "assignedAt": "Assigned at",
       "assignToBase": "Assign to base",
       "unassign": "Unassign",
-      "notAssigned": "Not assigned",
       "noTeams": "Create teams to assign per team.",
       "noChallenges": "No challenges yet.",
       "noBases": "No bases yet.",
       "teamAt": "{{team}} at",
-      "challengeFor": "{{team}}",
       "readOnly": "Assignments can no longer change: the game has ended.",
-      "autoAssignFailed": "Auto-assign could not save."
+      "autoAssignFailed": "Auto-assign could not save.",
+      "occupiedAll": "all teams: {{title}}",
+      "occupiedTeams": "per team",
+      "alsoAllTeamsAt": "Also at {{base}} for all teams.",
+      "confirmReplaceTitle": "Replace what is at {{base}}?",
+      "confirmReplaceBody": "Its current assignments go, and this challenge takes the base for all teams.",
+      "confirmMergeBody": "The first team's choice becomes everyone's; the other teams' choices go."
     }
   },
   "command2": {

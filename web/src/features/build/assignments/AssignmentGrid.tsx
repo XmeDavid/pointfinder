@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useIsMutating } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,7 @@ export function AssignmentGrid({
   const { data: teams = [] } = useTeams(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
   const setAssignments = useSetAssignments(gameId)
+  const writing = useIsMutating({ mutationKey: ['assignments', 'set'] }) > 0
   const [error, setError] = useState<string | null>(null)
   const [confirmAll, setConfirmAll] = useState<{ baseId: string; challengeId: string } | null>(null)
 
@@ -89,9 +91,9 @@ export function AssignmentGrid({
       ) : (
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-max min-w-full border-collapse text-sm">
-            <thead className="sticky top-0 z-10 bg-card">
+            <thead className="sticky top-0 z-20 bg-card">
               <tr>
-                <th scope="col" className="sticky left-0 z-20 bg-card px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th scope="col" className="sticky left-0 z-30 bg-card px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {t('build.assignments.base')}
                 </th>
                 {columns.map((column) => (
@@ -122,12 +124,20 @@ export function AssignmentGrid({
                       const value = cellChallenge(assignments, base.id, column.id) ?? ''
                       const options = optionsFor(assignments, challenges, base.id, column.id)
                       const dimmed = column.id === ALL_TEAMS ? mode === 'teams' : mode === 'all'
+                      if (column.id === ALL_TEAMS && base.fixedChallengeId) {
+                        // A pinned base already has its challenge for everyone; per-team cells may still override it.
+                        return (
+                          <td key={column.id} className="px-2 py-1.5 align-top text-sm text-muted-foreground" data-testid={`assignment-cell-${base.id}-all`}>
+                            {challengeTitle(base.fixedChallengeId)}
+                          </td>
+                        )
+                      }
                       return (
                         <td key={column.id} className="px-2 py-1.5 align-top">
                           <Select
                             value={value}
                             onChange={(event) => change(base.id, column.id, event.target.value)}
-                            disabled={!editable || setAssignments.isPending}
+                            disabled={!editable || writing}
                             aria-label={`${base.name} · ${column.label}`}
                             data-testid={`assignment-cell-${base.id}-${column.id}`}
                             className={dimmed ? 'h-9 min-w-40 opacity-60' : 'h-9 min-w-40'}

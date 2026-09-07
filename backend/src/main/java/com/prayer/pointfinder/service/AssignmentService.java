@@ -151,14 +151,25 @@ public class AssignmentService {
         }
     }
 
+    /**
+     * A team meets a challenge at exactly one base. An "All Teams" row counts
+     * for every team, so a challenge cannot be all-teams at one base and
+     * team-specific at another, in either order.
+     */
     private void validateChallengeNotAlreadyAssignedToTeam(UUID gameId, UUID challengeId, UUID teamId) {
         if (teamId != null) {
             if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamId(gameId, challengeId, teamId)) {
                 throw new ConflictException("This challenge is already assigned to this team at another base", ErrorCode.ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE);
             }
+            if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamIdIsNull(gameId, challengeId)) {
+                throw new ConflictException("This challenge already waits for every team at another base", ErrorCode.ASSIGNMENT_CHALLENGE_REPEATED);
+            }
         } else {
             if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamIdIsNull(gameId, challengeId)) {
                 throw new ConflictException("This challenge is already assigned as an 'All Teams' assignment at another base", ErrorCode.ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE);
+            }
+            if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamIdIsNotNull(gameId, challengeId)) {
+                throw new ConflictException("This challenge is already assigned to a team at another base", ErrorCode.ASSIGNMENT_CHALLENGE_REPEATED);
             }
         }
     }
@@ -201,6 +212,20 @@ public class AssignmentService {
             String challengeTeamKey = challengeId + ":" + teamId;
             if (!seenChallengeTeam.add(challengeTeamKey)) {
                 throw new ConflictException("Same challenge assigned to the same team at multiple bases", ErrorCode.ASSIGNMENT_CHALLENGE_REPEATED);
+            }
+        }
+
+        // Across columns: an all-teams row at base X means every team meets the
+        // challenge there, so a team-specific row for it at another base repeats it.
+        java.util.Map<UUID, UUID> allTeamsBaseByChallenge = new java.util.HashMap<>();
+        for (CreateAssignmentRequest req : requests) {
+            if (req.getTeamId() == null) allTeamsBaseByChallenge.put(req.getChallengeId(), req.getBaseId());
+        }
+        for (CreateAssignmentRequest req : requests) {
+            if (req.getTeamId() == null) continue;
+            UUID allTeamsBase = allTeamsBaseByChallenge.get(req.getChallengeId());
+            if (allTeamsBase != null && !allTeamsBase.equals(req.getBaseId())) {
+                throw new ConflictException("Same challenge assigned for all teams at one base and to a team at another", ErrorCode.ASSIGNMENT_CHALLENGE_REPEATED);
             }
         }
     }
