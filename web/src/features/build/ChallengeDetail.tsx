@@ -142,6 +142,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const [localPoints, setLocalPoints] = useState('0')
   const [localOperatorNotes, setLocalOperatorNotes] = useState('')
   const [localLocationBound, setLocalLocationBound] = useState(false)
+  const [localUnlocks, setLocalUnlocks] = useState<string[]>([])
   const [localCompletionContent, setLocalCompletionContent] = useState('')
 
   // Preview-as-team state — toggles the editors from authoring to read-only
@@ -164,6 +165,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       setLocalPoints(challenge.points.toString())
       setLocalOperatorNotes(challenge.operatorNotes ?? '')
       setLocalLocationBound(challenge.locationBound)
+      setLocalUnlocks(challenge.unlocksBaseIds ?? [])
       setLocalCompletionContent(challenge.completionContent)
     }
   }, [challenge, challengeId])
@@ -174,6 +176,12 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   }, [challengeId])
 
   // For delete cascade count
+  // Hidden bases this challenge may reveal; never its own pinned base.
+  const hiddenTargets = useMemo(
+    () => bases.filter((base) => base.hidden && base.id !== challenge?.fixedBaseId),
+    [bases, challenge?.fixedBaseId],
+  )
+
   const challengeAssignments = useMemo(
     () => assignments.filter((a) => a.challengeId === challengeId),
     [assignments, challengeId],
@@ -217,10 +225,15 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         operatorNotes: localOperatorNotes || undefined,
         locationBound: localLocationBound,
         completionContent: localCompletionContent,
+        // Unlock targets need a pinned, location-bound challenge; the server
+        // ignores them otherwise, so send exactly what the editor shows.
+        unlocksBaseIds: localLocationBound && challenge?.fixedBaseId ? localUnlocks : [],
       },
     })
   }, [
     challengeId,
+    localUnlocks,
+    challenge?.fixedBaseId,
     localTitle,
     localAnswerType,
     localAutoValidate,
@@ -625,6 +638,48 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         >
           Require physical presence
         </button>
+      </section>
+
+      {/* Reveals bases: an unlock chain */}
+      <section className="space-y-2" data-testid="unlocks-section">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {t('build.unlocks.title')}
+        </h3>
+        {!challenge.fixedBaseId || !localLocationBound ? (
+          <p className="text-xs text-muted-foreground" data-testid="unlocks-hint">
+            {t('build.unlocks.needsPinAndLocation')}
+          </p>
+        ) : hiddenTargets.length === 0 ? (
+          <p className="text-xs text-muted-foreground" data-testid="unlocks-hint">
+            {t('build.unlocks.noHiddenBases')}
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">{t('build.unlocks.hint')}</p>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('build.unlocks.title')} data-testid="unlocks-bases">
+              {hiddenTargets.map((base) => {
+                const on = localUnlocks.includes(base.id)
+                return (
+                  <button
+                    key={base.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setLocalUnlocks(on ? localUnlocks.filter((id) => id !== base.id) : [...localUnlocks, base.id])}
+                    data-testid={`unlocks-base-${base.id}`}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
+                      on
+                        ? 'bg-primary/10 text-primary border-primary/30'
+                        : 'bg-background text-muted-foreground border-border hover:text-foreground',
+                    )}
+                  >
+                    {base.name}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
       </section>
 
       {/* Tags section */}

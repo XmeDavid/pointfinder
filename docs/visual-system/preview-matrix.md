@@ -44,5 +44,6 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Guided tutorial coach bubble, spotlight and collapsed pill | yes | n/a | n/a |
 | Operator guided tutorials: welcome card, per-step coach marks, first-game method branches, fixed-route, exploration, practice-game badge and keep/delete closing card | partial | n/a | n/a |
 | Operator assignment grid: bases × (all teams + each team) with per-cell challenge pickers, all-teams/per-team conversion, refused-write reason inline; challenge and base assignment sections in both modes | partial | n/a | n/a |
+| Operator tutorials, advanced: unlock chain (reveals editor), a different path (grid), a variable outcome (team variables in completion text); progress bar instead of a step counter | partial | n/a | n/a |
 
 Required screenshot widths for migrated web journeys: 390, 768, 1280, and 1600 pixels. A row moves to `yes` only when its canonical states render without backend data and the relevant accessibility labels are present. Check-in method rows are marked `n/a` for the legacy Swift and Compose apps: those apps keep working for NFC bases only and receive no QR or location UI. Guided tutorials are marked `n/a` for the legacy apps too: the operator tutorial engine ships once in `web/` for the browser and the Tauri shell.

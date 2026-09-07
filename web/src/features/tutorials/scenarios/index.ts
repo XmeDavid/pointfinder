@@ -2,9 +2,12 @@ import type { Scenario, ScenarioId } from '../types'
 import { firstGame } from './firstGame'
 import { fixedRoute } from './fixedRoute'
 import { exploration } from './exploration'
+import { unlockChain } from './unlockChain'
+import { differentPath } from './differentPath'
+import { variableOutcome } from './variableOutcome'
 
 /** Library display order. Scenario modules are imported and registered at the bottom of this file. */
-export const SCENARIO_ORDER: readonly ScenarioId[] = ['first-game', 'fixed-route', 'exploration'] as const
+export const SCENARIO_ORDER: readonly ScenarioId[] = ['first-game', 'fixed-route', 'exploration', 'unlock-chain', 'different-path', 'variable-outcome'] as const
 
 /**
  * Deliberately partial: a scenario that has not shipped yet simply has no entry,
@@ -29,3 +32,6 @@ export function scenarioList(): Scenario[] {
 registerScenario(firstGame)
 registerScenario(fixedRoute)
 registerScenario(exploration)
+registerScenario(unlockChain)
+registerScenario(differentPath)
+registerScenario(variableOutcome)

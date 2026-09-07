@@ -159,11 +159,11 @@ describe('tour store lifecycle', () => {
 
 describe('scenario registry', () => {
   it('lists bundled scenarios in library order and accepts registrations', () => {
-    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route', 'exploration'])
+    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route', 'exploration', 'unlock-chain', 'different-path', 'variable-outcome'])
     expect(getScenario('fixed-route')).toBe(bundled)
 
     registerScenario(probe)
     expect(getScenario('fixed-route')).toBe(probe)
-    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route', 'exploration'])
+    expect(scenarioList().map((s) => s.id)).toEqual(['first-game', 'fixed-route', 'exploration', 'unlock-chain', 'different-path', 'variable-outcome'])
   })
 })

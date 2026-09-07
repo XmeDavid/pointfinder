@@ -1261,6 +1261,12 @@
       "confirmReplaceTitle": "Substituir o que está em {{base}}?",
       "confirmReplaceBody": "As atribuições atuais desaparecem e este desafio fica na base para todas as equipas.",
       "confirmMergeBody": "A escolha da primeira equipa passa a ser de todas; as escolhas das outras equipas desaparecem."
+    },
+    "unlocks": {
+      "title": "Revela bases",
+      "hint": "Quando uma equipa completa este desafio aqui, estas bases escondidas aparecem no seu mapa.",
+      "needsPinAndLocation": "Para revelar bases, fixa este desafio a uma base e torna-o preso ao local.",
+      "noHiddenBases": "Ainda não há bases escondidas para revelar. Esconde uma base na sua visibilidade primeiro."
     }
   },
   "command2": {
@@ -1716,6 +1722,18 @@
       "exploration": {
         "title": "Esconde bases para exploração",
         "blurb": "Mantém bases fora do mapa dos jogadores até serem encontradas e usa o texto de conclusão para dar as pistas."
+      },
+      "unlockChain": {
+        "title": "Encadeia os desbloqueios",
+        "blurb": "Uma base leva à seguinte, uma bifurcação deixa as equipas escolher, e uma base bónus esconde-se atrás no trilho."
+      },
+      "differentPath": {
+        "title": "Um percurso diferente",
+        "blurb": "Duas equipas, as mesmas três bases e desafios pela mesma ordem, mas a começar em pontas opostas."
+      },
+      "variableOutcome": {
+        "title": "Um desfecho variável",
+        "blurb": "Um texto de conclusão que manda cada equipa para um sítio diferente, através de uma variável de equipa."
       }
     },
     "firstGame": {
@@ -1960,6 +1978,100 @@
       "settingsBodyEnded": "Um tutorial criou este jogo e ele já terminou. Mantém-no para o tornar um jogo normal, ou apaga-o.",
       "endedShort": "terminado",
       "hoursShort": "faltam {{hours}} h"
+    },
+    "unlockChain": {
+      "intro": {
+        "title": "Só o início do trilho aparece",
+        "body": "Cinco bases estão escondidas. Cada uma aparece quando uma equipa completa o desafio que a revela: a ponte, depois uma bifurcação, depois um bónus atrás no trilho ou o cume. Falta o primeiro elo — vais defini-lo."
+      },
+      "open-first": {
+        "title": "Abre o desafio do início do trilho",
+        "body": "As revelações definem-se no desafio que está fixo a uma base e preso ao local. Abre o desafio do início do trilho."
+      },
+      "reveal": {
+        "title": "Revela a ponte velha",
+        "body": "Em Revela bases, escolhe Ponte velha. Quando uma equipa completa este desafio no início do trilho, a ponte aparece no seu mapa."
+      },
+      "save-reveal": {
+        "title": "Guarda a ligação",
+        "body": "Guarda. A cadeia começa agora no início do trilho."
+      },
+      "fork": {
+        "title": "Uma bifurcação",
+        "body": "O desafio da ponte revela duas bases de uma vez: a torre e o vau. As equipas escolhem qual seguir — ambas contam."
+      },
+      "bonus": {
+        "title": "Um bónus atrás delas",
+        "body": "O desafio da torre revela um esconderijo atrás no trilho; o do vau revela o cume. Voltar atrás é uma decisão de equipa que vale pontos."
+      },
+      "finish": {
+        "title": "Cadeia feita",
+        "body": "Bases que aparecem uma a uma fazem um percurso parecer uma descoberta. Mantém este jogo de treino ou apaga-o."
+      }
+    },
+    "differentPath": {
+      "intro": {
+        "title": "As mesmas bases, inícios opostos",
+        "body": "Três bases em triângulo, três desafios. Os Falcons começam em A e acabam em C; os Lions começam em C e acabam em A. Ambos fazem o desafio 1 primeiro, depois o 2, depois o 3 — o que muda é que base tem que desafio para cada equipa."
+      },
+      "open-grid": {
+        "title": "Abre Atribuições",
+        "body": "Atribuições é a grelha: linhas são bases, uma coluna por equipa. Abre-a."
+      },
+      "falcons": {
+        "title": "Falcons: A→1, B→2, C→3",
+        "body": "Na coluna Falcons, dá à base A o desafio 1, à base B o 2 e à base C o 3."
+      },
+      "lions": {
+        "title": "Lions: C→1, B→2, A→3",
+        "body": "Na coluna Lions, a base C recebe o desafio 1, a B o 2, a A o 3. A grelha mantém um desafio numa base por equipa, por isso as duas colunas podem diferir à vontade."
+      },
+      "briefing": {
+        "title": "Diz-lhes onde começar",
+        "body": "Nada impõe uma ordem física aqui; cada equipa começa onde a mandares. Põe o início no briefing da equipa, ou usa um percurso fixo quando a ordem tem de ser imposta."
+      },
+      "finish": {
+        "title": "Dois percursos, um jogo",
+        "body": "É assim que um conjunto de bases serve percursos opostos. Mantém este jogo de treino ou apaga-o."
+      }
+    },
+    "variableOutcome": {
+      "intro": {
+        "title": "As mesmas palavras, destino diferente",
+        "body": "Depois do moinho velho, os Falcons devem ir para a capela e os Lions para o miradouro — com um só texto de conclusão. As variáveis de equipa fazem isso: escreve {{next}} uma vez, dá a cada equipa o seu valor."
+      },
+      "open-challenge": {
+        "title": "Abre o desafio fixo",
+        "body": "O desafio do moinho velho está fixo à sua base. Abre-o."
+      },
+      "variable-key": {
+        "title": "Dá nome à variável",
+        "body": "Em Variáveis do desafio, escreve a chave: next."
+      },
+      "variable-add": {
+        "title": "Adiciona-a",
+        "body": "Adiciona a variável. Aparece um campo de valor para cada equipa."
+      },
+      "variable-values": {
+        "title": "Um valor por equipa",
+        "body": "Dá aos Falcons a capela e aos Lions o miradouro. Cada equipa precisa de um valor antes de o jogo poder ir ao vivo."
+      },
+      "variable-save": {
+        "title": "Guarda os valores",
+        "body": "Guarda as variáveis."
+      },
+      "completion": {
+        "title": "Usa-a no texto de conclusão",
+        "body": "No texto pós-conclusão, escreve {{next}} onde vai o destino, por exemplo \"Bom trabalho — vai para {{next}}.\" A pré-visualização resolve-o por equipa."
+      },
+      "challenge-save": {
+        "title": "Guarda o desafio",
+        "body": "Guarda. Cada equipa lê agora a sua próxima paragem."
+      },
+      "finish": {
+        "title": "Variável feita",
+        "body": "As variáveis funcionam em qualquer texto ou resposta de um desafio. Mantém este jogo de treino ou apaga-o."
+      }
     }
   }
 }

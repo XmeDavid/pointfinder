@@ -124,6 +124,8 @@ export interface Challenge {
   points: number;
   locationBound: boolean;
   unlocksBaseIds?: string[];
+  /** Base this challenge is pinned to (the base's fixedChallengeId), when any. */
+  fixedBaseId?: string;
   requirePresenceToSubmit: boolean;
   /**
    * Operator-only free-text notes. Only present on the operator-facing

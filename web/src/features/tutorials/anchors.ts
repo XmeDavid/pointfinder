@@ -31,6 +31,14 @@ export const KNOWN_ANCHORS: readonly string[] = [
   'new-entity-btn',
   'auto-assign-btn',
   'assignment-grid-btn',
+  'assignment-grid',
+  'unlocks-section',
+  'unlocks-bases',
+  'team-variables-editor',
+  'variable-key-input',
+  'add-variable-btn',
+  'save-variables-btn',
+  'completion-content',
   'arrange-route-btn',
   'base-route-editor',
   // base detail
@@ -68,6 +76,9 @@ export const KNOWN_ANCHORS: readonly string[] = [
 
 /** Template anchors: a scenario anchor may start with one of these and append an entity id. */
 export const ANCHOR_PREFIXES: readonly string[] = [
+  'unlocks-base-',
+  'assignment-cell-',
+  'variable-value-',
   'answer-type-',
   'base-checkin-method-',
   'base-item-',

@@ -1261,6 +1261,12 @@
       "confirmReplaceTitle": "Replace what is at {{base}}?",
       "confirmReplaceBody": "Its current assignments go, and this challenge takes the base for all teams.",
       "confirmMergeBody": "The first team's choice becomes everyone's; the other teams' choices go."
+    },
+    "unlocks": {
+      "title": "Reveals bases",
+      "hint": "When a team completes this challenge here, these hidden bases appear on their map.",
+      "needsPinAndLocation": "To reveal bases, pin this challenge to a base and make it location bound.",
+      "noHiddenBases": "No hidden bases to reveal yet. Hide a base in its visibility setting first."
     }
   },
   "command2": {
@@ -1716,6 +1722,18 @@
       "exploration": {
         "title": "Hide bases for exploration",
         "blurb": "Keep bases off the player map until a team finds them, and use completion text to hand out the clues."
+      },
+      "unlockChain": {
+        "title": "Chain the unlocks",
+        "blurb": "One base leads to the next, a fork lets teams choose, and a bonus base hides back down the trail."
+      },
+      "differentPath": {
+        "title": "A different path",
+        "blurb": "Two teams, the same three bases and challenges in the same order, but starting from opposite ends."
+      },
+      "variableOutcome": {
+        "title": "A variable outcome",
+        "blurb": "One completion text that sends each team somewhere different, through a team variable."
       }
     },
     "firstGame": {
@@ -1960,6 +1978,100 @@
       "settingsBodyEnded": "A tutorial created this game and it has ended. Keep it to turn it into a normal game, or delete it.",
       "endedShort": "ended",
       "hoursShort": "{{hours}} h left"
+    },
+    "unlockChain": {
+      "intro": {
+        "title": "Only the trailhead shows",
+        "body": "Five bases are hidden. Each appears when a team completes the challenge that reveals it: the bridge, then a fork, then a bonus back down the trail or the summit. The first link is missing — you will set it."
+      },
+      "open-first": {
+        "title": "Open the trailhead challenge",
+        "body": "Reveals are set on the challenge that is pinned to a base and location bound. Open the trailhead's challenge."
+      },
+      "reveal": {
+        "title": "Reveal the old bridge",
+        "body": "Under Reveals bases, pick Old bridge. When a team completes this challenge at the trailhead, the bridge appears on their map."
+      },
+      "save-reveal": {
+        "title": "Save the link",
+        "body": "Save. The chain now runs from the trailhead."
+      },
+      "fork": {
+        "title": "A fork",
+        "body": "The bridge's challenge reveals two bases at once: the tower and the ford. Teams choose which to go for — both count."
+      },
+      "bonus": {
+        "title": "A bonus behind them",
+        "body": "The tower's challenge reveals a cache back down the trail; the ford's reveals the summit. Going back is a team decision worth points."
+      },
+      "finish": {
+        "title": "Chain done",
+        "body": "Bases that appear one by one make a route feel like a discovery. Keep this practice game or delete it."
+      }
+    },
+    "differentPath": {
+      "intro": {
+        "title": "Same bases, opposite starts",
+        "body": "Three bases in a triangle, three challenges. Falcons start at A and end at C; Lions start at C and end at A. Both do challenge 1 first, then 2, then 3 — so what changes is which base carries which challenge for each team."
+      },
+      "open-grid": {
+        "title": "Open Assignments",
+        "body": "Assignments is the grid: rows are bases, one column per team. Open it."
+      },
+      "falcons": {
+        "title": "Falcons: A→1, B→2, C→3",
+        "body": "In the Falcons column, give base A challenge 1, base B challenge 2 and base C challenge 3."
+      },
+      "lions": {
+        "title": "Lions: C→1, B→2, A→3",
+        "body": "In the Lions column, base C gets challenge 1, base B challenge 2, base A challenge 3. The grid keeps a challenge at one base per team, so the two columns can differ freely."
+      },
+      "briefing": {
+        "title": "Tell them where to start",
+        "body": "Nothing enforces a physical order here; each team simply starts where you send them. Put the start in the team's briefing, or use a fixed route when order must be enforced."
+      },
+      "finish": {
+        "title": "Two paths, one game",
+        "body": "That is how one set of bases serves opposite routes. Keep this practice game or delete it."
+      }
+    },
+    "variableOutcome": {
+      "intro": {
+        "title": "Same words, different destination",
+        "body": "After the old mill, Falcons should be sent to the chapel and Lions to the lookout — with one completion text. Team variables do that: write {{next}} once, give each team its own value."
+      },
+      "open-challenge": {
+        "title": "Open the pinned challenge",
+        "body": "The old mill's challenge is pinned to its base. Open it."
+      },
+      "variable-key": {
+        "title": "Name the variable",
+        "body": "Under Challenge variables, type the key: next."
+      },
+      "variable-add": {
+        "title": "Add it",
+        "body": "Add the variable. A value field appears for every team."
+      },
+      "variable-values": {
+        "title": "One value per team",
+        "body": "Give Falcons the chapel and Lions the lookout. Every team needs a value before the game can go live."
+      },
+      "variable-save": {
+        "title": "Save the values",
+        "body": "Save the variables."
+      },
+      "completion": {
+        "title": "Use it in the completion text",
+        "body": "In the post-completion text, type {{next}} where the destination goes, e.g. \"Good work — go to {{next}}.\" The preview resolves it per team."
+      },
+      "challenge-save": {
+        "title": "Save the challenge",
+        "body": "Save. Each team now reads its own next stop."
+      },
+      "finish": {
+        "title": "Variable done",
+        "body": "Variables work anywhere in a challenge's text or answer. Keep this practice game or delete it."
+      }
     }
   }
 }

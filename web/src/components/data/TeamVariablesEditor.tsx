@@ -173,6 +173,7 @@ export function TeamVariablesEditor({ gameId, challengeId, teams }: TeamVariable
                           value={variable.teamValues[team.id] ?? ''}
                           onChange={(e) => updateValue(variable.key, team.id, e.target.value)}
                           placeholder={t('build.variableValuePlaceholder')}
+                          data-testid={`variable-value-${variable.key}-${team.id}`}
                           className="h-8 text-sm"
                         />
                       </div>

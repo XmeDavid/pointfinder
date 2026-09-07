@@ -1261,6 +1261,12 @@
       "confirmReplaceTitle": "Ersetzen, was an {{base}} liegt?",
       "confirmReplaceBody": "Die bisherigen Zuordnungen entfallen, und diese Challenge übernimmt die Station für alle Teams.",
       "confirmMergeBody": "Die Wahl des ersten Teams gilt dann für alle; die Wahl der anderen Teams entfällt."
+    },
+    "unlocks": {
+      "title": "Deckt Stationen auf",
+      "hint": "Wenn ein Team diese Challenge hier abschließt, erscheinen diese versteckten Stationen auf seiner Karte.",
+      "needsPinAndLocation": "Um Stationen aufzudecken, fixiere diese Challenge an einer Station und mache sie ortsgebunden.",
+      "noHiddenBases": "Noch keine versteckten Stationen zum Aufdecken. Verstecke zuerst eine Station über ihre Sichtbarkeit."
     }
   },
   "command2": {
@@ -1716,6 +1722,18 @@
       "exploration": {
         "title": "Stationen für Erkundung verstecken",
         "blurb": "Halte Stationen von der Spielerkarte fern, bis ein Team sie findet, und gib die Hinweise über den Abschlusstext."
+      },
+      "unlockChain": {
+        "title": "Freischaltungen verketten",
+        "blurb": "Eine Station führt zur nächsten, eine Gabelung lässt Teams wählen, und eine Bonusstation versteckt sich zurück am Weg."
+      },
+      "differentPath": {
+        "title": "Ein anderer Weg",
+        "blurb": "Zwei Teams, dieselben drei Stationen und Challenges in derselben Reihenfolge, aber von entgegengesetzten Enden gestartet."
+      },
+      "variableOutcome": {
+        "title": "Ein variabler Ausgang",
+        "blurb": "Ein Abschlusstext, der jedes Team woandershin schickt, über eine Team-Variable."
       }
     },
     "firstGame": {
@@ -1960,6 +1978,100 @@
       "settingsBodyEnded": "Ein Tutorial hat dieses Spiel erstellt, und es ist beendet. Behalte es, um es zu einem normalen Spiel zu machen, oder lösche es.",
       "endedShort": "beendet",
       "hoursShort": "noch {{hours}} h"
+    },
+    "unlockChain": {
+      "intro": {
+        "title": "Nur der Wegbeginn ist sichtbar",
+        "body": "Fünf Stationen sind versteckt. Jede erscheint, wenn ein Team die Challenge abschließt, die sie aufdeckt: die Brücke, dann eine Gabelung, dann ein Bonus zurück am Weg oder der Gipfel. Das erste Glied fehlt — das setzt du."
+      },
+      "open-first": {
+        "title": "Öffne die Challenge am Wegbeginn",
+        "body": "Aufdecken wird an der Challenge eingestellt, die an einer Station fixiert und ortsgebunden ist. Öffne die Challenge des Wegbeginns."
+      },
+      "reveal": {
+        "title": "Decke die alte Brücke auf",
+        "body": "Wähle unter Deckt Stationen auf die Alte Brücke. Schließt ein Team diese Challenge am Wegbeginn ab, erscheint die Brücke auf seiner Karte."
+      },
+      "save-reveal": {
+        "title": "Speichere das Glied",
+        "body": "Speichern. Die Kette beginnt jetzt am Wegbeginn."
+      },
+      "fork": {
+        "title": "Eine Gabelung",
+        "body": "Die Challenge der Brücke deckt zwei Stationen auf einmal auf: den Turm und die Furt. Teams wählen, wohin — beide zählen."
+      },
+      "bonus": {
+        "title": "Ein Bonus hinter ihnen",
+        "body": "Die Challenge des Turms deckt ein Versteck zurück am Weg auf; die der Furt den Gipfel. Umzukehren ist eine Teamentscheidung, die Punkte wert ist."
+      },
+      "finish": {
+        "title": "Kette fertig",
+        "body": "Stationen, die nacheinander erscheinen, lassen eine Route wie eine Entdeckung wirken. Behalte dieses Übungsspiel oder lösche es."
+      }
+    },
+    "differentPath": {
+      "intro": {
+        "title": "Dieselben Stationen, entgegengesetzte Starts",
+        "body": "Drei Stationen im Dreieck, drei Challenges. Die Falcons starten bei A und enden bei C; die Lions starten bei C und enden bei A. Beide machen zuerst Challenge 1, dann 2, dann 3 — was sich ändert, ist, welche Station für welches Team welche Challenge trägt."
+      },
+      "open-grid": {
+        "title": "Öffne die Zuordnungen",
+        "body": "Zuordnungen ist das Raster: Zeilen sind Stationen, eine Spalte je Team. Öffne es."
+      },
+      "falcons": {
+        "title": "Falcons: A→1, B→2, C→3",
+        "body": "Gib in der Spalte Falcons Station A die Challenge 1, Station B die 2 und Station C die 3."
+      },
+      "lions": {
+        "title": "Lions: C→1, B→2, A→3",
+        "body": "In der Spalte Lions bekommt Station C die Challenge 1, B die 2, A die 3. Das Raster hält je Team eine Challenge an einer Station, also dürfen sich die Spalten frei unterscheiden."
+      },
+      "briefing": {
+        "title": "Sag ihnen, wo es losgeht",
+        "body": "Nichts erzwingt hier eine physische Reihenfolge; jedes Team beginnt, wo du es hinschickst. Schreib den Start ins Team-Briefing, oder nutze eine feste Route, wenn die Reihenfolge erzwungen werden muss."
+      },
+      "finish": {
+        "title": "Zwei Wege, ein Spiel",
+        "body": "So bedient ein Satz Stationen entgegengesetzte Routen. Behalte dieses Übungsspiel oder lösche es."
+      }
+    },
+    "variableOutcome": {
+      "intro": {
+        "title": "Dieselben Worte, anderes Ziel",
+        "body": "Nach der alten Mühle sollen die Falcons zur Kapelle und die Lions zum Aussichtspunkt — mit einem einzigen Abschlusstext. Team-Variablen machen das: schreibe {{next}} einmal, gib jedem Team seinen eigenen Wert."
+      },
+      "open-challenge": {
+        "title": "Öffne die fixierte Challenge",
+        "body": "Die Challenge der alten Mühle ist an ihrer Station fixiert. Öffne sie."
+      },
+      "variable-key": {
+        "title": "Benenne die Variable",
+        "body": "Tippe unter Challenge-Variablen den Schlüssel: next."
+      },
+      "variable-add": {
+        "title": "Füge sie hinzu",
+        "body": "Füge die Variable hinzu. Für jedes Team erscheint ein Wertfeld."
+      },
+      "variable-values": {
+        "title": "Ein Wert je Team",
+        "body": "Gib den Falcons die Kapelle und den Lions den Aussichtspunkt. Jedes Team braucht einen Wert, bevor das Spiel live gehen kann."
+      },
+      "variable-save": {
+        "title": "Speichere die Werte",
+        "body": "Speichere die Variablen."
+      },
+      "completion": {
+        "title": "Nutze sie im Abschlusstext",
+        "body": "Tippe im Text nach Abschluss {{next}} dorthin, wo das Ziel steht, z. B. „Gut gemacht — geh zu {{next}}.“ Die Vorschau löst es je Team auf."
+      },
+      "challenge-save": {
+        "title": "Speichere die Challenge",
+        "body": "Speichern. Jedes Team liest jetzt sein eigenes nächstes Ziel."
+      },
+      "finish": {
+        "title": "Variable fertig",
+        "body": "Variablen funktionieren überall im Text oder in der Antwort einer Challenge. Behalte dieses Übungsspiel oder lösche es."
+      }
     }
   }
 }

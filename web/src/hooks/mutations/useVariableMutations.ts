@@ -5,6 +5,7 @@ import type { TeamVariablesBulkRequest } from '@/lib/api/team-variables'
 export function useSaveGameVariables(gameId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['variables', 'game'],
     mutationFn: (body: TeamVariablesBulkRequest) =>
       teamVariablesApi.saveGameVariables(gameId, body),
     onSuccess: () => {
@@ -16,6 +17,7 @@ export function useSaveGameVariables(gameId: string) {
 export function useSaveChallengeVariables(gameId: string, challengeId: string) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['variables', 'challenge'],
     mutationFn: (body: TeamVariablesBulkRequest) =>
       teamVariablesApi.saveChallengeVariables(gameId, challengeId, body),
     onSuccess: () => {

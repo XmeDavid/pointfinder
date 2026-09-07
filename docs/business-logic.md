@@ -1324,6 +1324,16 @@ A tutorial never runs on a game the operator made for a real event. It runs on a
 
 ### The other bundled scenarios
 
+Six scenarios ship. Besides the first game, `fixed-route` and `exploration` (below), three
+advanced ones each seed their own practice game: **`unlock-chain`** (one visible trailhead,
+five hidden bases revealed by the challenge pinned to the previous one, with a fork and a
+bonus back down the trail; the operator sets the first link in the challenge form's new
+"Reveals bases" editor, which the backend accepts only on a pinned, location-bound challenge
+and only for hidden targets), **`different-path`** (three bases, two teams, the same three
+challenges in the same order from opposite ends, built in the assignment grid) and
+**`variable-outcome`** (a complete game whose pinned first challenge gets a team variable
+`next` and a completion text that uses `{{next}}`, so each team reads its own next stop).
+
 - **`fixed-route`** — a `practice-game` scenario that turns on `enforceBaseOrder`, explains the game-wide `unlockTrigger`, and opens the route editor. It teaches no new rule: every base already carries an `orderIndex` from creation, so `BaseOrderService.sequenceNumbers` always numbers the whole route and readiness has nothing to check.
 - **`exploration`** — a `practice-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. `Challenge.unlocksBaseIds` has no operator control in the web app yet, so the copy teaches the clue text, not an unlock mechanism.
 

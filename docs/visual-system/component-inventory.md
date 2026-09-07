@@ -374,6 +374,16 @@ Notes: Recovery links and titles use visible player progress only. Hidden bases
 can be referenced by route number without disclosing their identity or location.
 Preview: `/dev/visual-system`.
 
+Component: ChallengeDetail — Reveals bases
+Status: canonical
+Location: `web/src/features/build/ChallengeDetail.tsx` (section `unlocks-section`)
+Modes: Operator Build
+States: needs pin and location bound (hint), no hidden bases (hint), toggles per hidden
+base (aria-pressed), saved with the challenge
+Notes: Mirrors the backend rule that unlock targets need a pinned, location-bound
+challenge and hidden target bases; the challenge's own base is never offered. Test ids:
+`unlocks-bases`, `unlocks-base-{baseId}`, `unlocks-hint`.
+
 Component: AssignmentGrid
 Status: canonical
 Location: `web/src/features/build/assignments/AssignmentGrid.tsx`
