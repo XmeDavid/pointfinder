@@ -96,13 +96,14 @@ export function BasesTab({ gameId }: BasesTabProps) {
     ? [...bases].sort((a, b) => (a.sequenceNumber ?? Number.MAX_SAFE_INTEGER) - (b.sequenceNumber ?? Number.MAX_SAFE_INTEGER))
     : bases, [bases, game?.enforceBaseOrder])
 
-  // A base belongs to a stage through its own stageId or the stage's base list.
+  // Stage membership comes from the stage's own base list: the server derives
+  // it from Base.stageId, and the stages query is the one a stage change
+  // invalidates, so it cannot lag behind a stale bases cache.
   const stageOf = useMemo(() => {
     const map = new Map<string, string>()
     for (const stage of stages) for (const id of stage.baseIds) map.set(id, stage.id)
-    for (const base of bases) if (base.stageId) map.set(base.id, base.stageId)
     return map
-  }, [stages, bases])
+  }, [stages])
   const stageOptions = useMemo(() => {
     if (stages.length === 0) return []
     const ordered = [...stages].sort((a, b) => a.orderIndex - b.orderIndex).map((s) => ({ id: s.id, label: s.name }))
@@ -110,19 +111,24 @@ export function BasesTab({ gameId }: BasesTabProps) {
     return unstaged ? [...ordered, { id: 'none', label: t('build.filters.noStage') }] : ordered
   }, [stages, bases, stageOf, t])
   const tagOptions = useMemo(() => tags.map((tag) => ({ id: tag.id, label: tag.label, color: tag.color })), [tags])
-  const filtersActive = stageFilter.length > 0 || tagFilter.length > 0
+  // A chosen stage or tag that no longer exists (deleted, or the last unstaged
+  // base got a stage) stops filtering instead of emptying the list with no
+  // pressed chip to clear.
+  const activeStage = useMemo(() => stageFilter.filter((id) => stageOptions.some((o) => o.id === id)), [stageFilter, stageOptions])
+  const activeTags = useMemo(() => tagFilter.filter((id) => tagOptions.some((o) => o.id === id)), [tagFilter, tagOptions])
+  const filtersActive = activeStage.length > 0 || activeTags.length > 0
 
   const filteredBases = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const stage = stageFilter[0]
+    const stage = activeStage[0]
     return orderedBases.filter((b) => {
       if (q && !b.name.toLowerCase().includes(q)) return false
       if (stage === 'none' && stageOf.has(b.id)) return false
       if (stage && stage !== 'none' && stageOf.get(b.id) !== stage) return false
-      if (tagFilter.length > 0 && !tagFilter.some((id) => b.tagIds?.includes(id))) return false
+      if (activeTags.length > 0 && !activeTags.some((id) => b.tagIds?.includes(id))) return false
       return true
     })
-  }, [orderedBases, search, stageFilter, stageOf, tagFilter])
+  }, [orderedBases, search, activeStage, stageOf, activeTags])
 
   const routeEditorOpen = arranging && !!game?.enforceBaseOrder
 
@@ -163,8 +169,8 @@ export function BasesTab({ gameId }: BasesTabProps) {
           <QuickFilters
             className="mt-2"
             groups={[
-              { id: 'stage', label: t('build.filters.stage'), mode: 'single', options: stageOptions, value: stageFilter, onChange: setStageFilter },
-              { id: 'tag', label: t('build.filters.tags'), mode: 'multi', options: tagOptions, value: tagFilter, onChange: setTagFilter },
+              { id: 'stage', label: t('build.filters.stage'), mode: 'single', options: stageOptions, value: activeStage, onChange: setStageFilter },
+              { id: 'tag', label: t('build.filters.tags'), mode: 'multi', options: tagOptions, value: activeTags, onChange: setTagFilter },
             ]}
           />
         </div>
@@ -195,7 +201,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
           ))}
           {!isLoading && !isError && filteredBases.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-              {filtersActive ? t('bases.noResults') : search ? t('build.searchBasesEmpty') : t('build.noBasesYet')}
+              {bases.length === 0 ? t('build.noBasesYet') : filtersActive ? t('bases.noResults') : t('build.searchBasesEmpty')}
             </div>
           )}
         </div>

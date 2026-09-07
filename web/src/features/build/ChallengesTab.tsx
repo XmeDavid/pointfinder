@@ -145,15 +145,17 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
   const { data: tags = [] } = useTags(gameId)
   const [tagFilter, setTagFilter] = useState<string[]>([])
   const tagOptions = useMemo(() => tags.map((tag) => ({ id: tag.id, label: tag.label, color: tag.color })), [tags])
+  // A chosen tag that was deleted stops filtering instead of emptying the list.
+  const activeTags = useMemo(() => tagFilter.filter((id) => tags.some((tag) => tag.id === id)), [tagFilter, tags])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return challenges.filter((c) => {
       if (q && !c.title.toLowerCase().includes(q) && !c.description.toLowerCase().includes(q)) return false
-      if (tagFilter.length > 0 && !tagFilter.some((id) => c.tagIds?.includes(id))) return false
+      if (activeTags.length > 0 && !activeTags.some((id) => c.tagIds?.includes(id))) return false
       return true
     })
-  }, [challenges, search, tagFilter])
+  }, [challenges, search, activeTags])
 
   return (
     <ListDetailLayout data-testid="challenges-tab" selected={!!selectedChallengeId} onBack={() => selectChallenge(null)} list={<>
@@ -167,7 +169,7 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
           />
           <QuickFilters
             className="mt-2"
-            groups={[{ id: 'tag', label: t('build.filters.tags'), mode: 'multi', options: tagOptions, value: tagFilter, onChange: setTagFilter }]}
+            groups={[{ id: 'tag', label: t('build.filters.tags'), mode: 'multi', options: tagOptions, value: activeTags, onChange: setTagFilter }]}
           />
         </div>
 
@@ -198,11 +200,11 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
           ))}
           {!isLoading && !isError && filtered.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-              {tagFilter.length > 0
-                ? t('challenges.noResults')
-                : search
-                  ? t('build.searchChallengesEmpty')
-                  : t('build.noChallengesYet')}
+              {challenges.length === 0
+                ? t('build.noChallengesYet')
+                : activeTags.length > 0
+                  ? t('challenges.noResults')
+                  : t('build.searchChallengesEmpty')}
             </div>
           )}
         </div>

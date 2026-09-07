@@ -216,7 +216,7 @@ describe('ChallengesTab tag filter', () => {
     expect(screen.getByText('Photo hunt')).toBeInTheDocument()
   })
 
-  it('says which filter emptied the list, and hides the chips when the game has no tags', async () => {
+  it('says which filter emptied the list', async () => {
     const user = userEvent.setup()
     server.use(
       http.get('/api/games/:gameId/challenges', () => HttpResponse.json([createMockChallenge({ id: 'ch-1', title: 'Riddle' })])),
@@ -225,10 +225,15 @@ describe('ChallengesTab tag filter', () => {
     await waitFor(() => expect(screen.getByText('Riddle')).toBeInTheDocument())
     await user.click(screen.getByTestId('filter-tag-tag-1'))
     expect(screen.getByText('No challenges match the current filters — try clearing a filter.')).toBeInTheDocument()
+  })
 
-    server.use(http.get('/api/games/:gameId/tags', () => HttpResponse.json([])))
-    const { container } = render(createElement(ChallengesTab, { gameId: 'game-2' }), { wrapper: createWrapper() })
-    await waitFor(() => expect(container.textContent).toContain('Riddle'))
-    expect(container.querySelector('[data-testid="quick-filters"]')).toBeNull()
+  it('hides the chips when the game has no tags', async () => {
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => HttpResponse.json([createMockChallenge({ id: 'ch-1', title: 'Riddle' })])),
+      http.get('/api/games/:gameId/tags', () => HttpResponse.json([])),
+    )
+    render(createElement(ChallengesTab, { gameId }), { wrapper: createWrapper() })
+    await waitFor(() => expect(screen.getByText('Riddle')).toBeInTheDocument())
+    expect(screen.queryByTestId('quick-filters')).not.toBeInTheDocument()
   })
 })

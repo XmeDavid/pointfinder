@@ -204,15 +204,15 @@ describe('BasesTab quick filters', () => {
     server.use(
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
-          createMockBase({ id: 'base-1', name: 'Base Alpha', stageId: 'stage-1', tagIds: ['tag-1'] }),
-          createMockBase({ id: 'base-2', name: 'Base Beta', stageId: 'stage-2', tagIds: ['tag-1', 'tag-2'] }),
-          createMockBase({ id: 'base-3', name: 'Base Gamma', stageId: null }),
+          createMockBase({ id: 'base-1', name: 'Base Alpha', tagIds: ['tag-1'] }),
+          createMockBase({ id: 'base-2', name: 'Base Beta', tagIds: ['tag-1', 'tag-2'] }),
+          createMockBase({ id: 'base-3', name: 'Base Gamma' }),
         ]),
       ),
       http.get('/api/games/:gameId/stages', () =>
         HttpResponse.json([
-          createMockStage({ id: 'stage-2', name: 'Afternoon', orderIndex: 1 }),
-          createMockStage({ id: 'stage-1', name: 'Morning', orderIndex: 0 }),
+          createMockStage({ id: 'stage-2', name: 'Afternoon', orderIndex: 1, baseIds: ['base-2'] }),
+          createMockStage({ id: 'stage-1', name: 'Morning', orderIndex: 0, baseIds: ['base-1'] }),
         ]),
       ),
       http.get('/api/games/:gameId/tags', () =>
@@ -227,7 +227,7 @@ describe('BasesTab quick filters', () => {
     renderBasesTab()
     await waitFor(() => expect(screen.getByText('Base Alpha')).toBeInTheDocument())
 
-    const chips = screen.getByRole('group', { name: 'Stage' })
+    const chips = screen.getByRole('radiogroup', { name: 'Stage' })
     expect(chips.textContent).toContain('All')
     expect(chips.textContent?.indexOf('Morning')).toBeLessThan(chips.textContent?.indexOf('Afternoon') ?? -1)
     expect(screen.getByTestId('filter-stage-none')).toBeInTheDocument()

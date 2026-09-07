@@ -388,17 +388,21 @@ Component: QuickFilters
 Status: canonical
 Location: `web/src/components/data/QuickFilters.tsx`
 Modes: Operator Build (Bases and Challenges drawer tabs)
-States: no groups with options (renders nothing), single-select group with an
-"All" chip, multi-select group, coloured tag chips (tag colour with readable
-text when pressed), nothing chosen (no Clear), something chosen (Clear resets
-every group), long labels (chips truncate), no matches (the tab shows
-`bases.noResults` / `challenges.noResults`)
-Notes: Bases offers a Stage group only when the game has stages (ordered by
-`orderIndex`, plus "No stage" when a base belongs to none) and a Tags group when
-the game has tags; Challenges offers Tags. Tag filters match any chosen tag;
-the stage filter and the search combine with them. Test ids: `quick-filters`,
-`filter-{group}-all`, `filter-{group}-{optionId}`, `filter-stage-none`,
-`quick-filters-clear`. Storybook: `Data/QuickFilters`.
+States: no group with options (renders nothing), single-select row (radiogroup
+with an "All" radio), multi-select row (toggle chips), coloured tag chips (tag
+colour with WCAG-derived text when pressed; theme text plus a colour dot when
+not, since the palette is readable only as a background), nothing chosen (no
+Clear), something chosen (Clear resets every row and keeps focus on the row),
+long labels (chips truncate), 24 px minimum hit target
+Notes: Bases offers a Stage row only when the game has stages (ordered by
+`orderIndex`, membership from `Stage.baseIds`, plus "No stage" when a base
+belongs to none) and a Tags row when the game has tags; Challenges offers Tags.
+Tag chips match any chosen tag; the stage chip and the search combine with
+them. The tabs prune a chosen id that no longer has a chip, so a deleted tag or
+a vanished "No stage" never keeps filtering. The tab shows `bases.noResults` /
+`challenges.noResults` when filters empty a non-empty list. Test ids:
+`quick-filters`, `filter-{group}-all`, `filter-{group}-{optionId}`,
+`filter-stage-none`, `quick-filters-clear`. Storybook: `Data/QuickFilters`.
 
 Component: AssignmentGrid
 Status: canonical

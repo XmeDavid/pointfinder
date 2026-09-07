@@ -21,13 +21,12 @@ describe('QuickFilters', () => {
         groups={[group({ id: 'stage', mode: 'single', options: [{ id: 's1', label: 'One' }, { id: 's2', label: 'Two' }], value: ['s1'], onChange })]}
       />,
     )
-    expect(screen.getByTestId('filter-stage-all')).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByTestId('filter-stage-s1')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('radiogroup', { name: 'Group' })).toBeInTheDocument()
+    expect(screen.getByTestId('filter-stage-all')).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByTestId('filter-stage-s1')).toHaveAttribute('aria-checked', 'true')
 
     await user.click(screen.getByTestId('filter-stage-s2'))
     expect(onChange).toHaveBeenLastCalledWith(['s2'])
-    await user.click(screen.getByTestId('filter-stage-s1'))
-    expect(onChange).toHaveBeenLastCalledWith([])
     await user.click(screen.getByTestId('filter-stage-all'))
     expect(onChange).toHaveBeenLastCalledWith([])
   })
@@ -60,13 +59,23 @@ describe('QuickFilters', () => {
       />,
     )
     expect(screen.getByTestId('filter-tag-t1')).toHaveStyle({ backgroundColor: '#16a34a' })
+    expect(screen.getByRole('group', { name: 'Quick filters' })).toBeInTheDocument()
     await user.click(screen.getByTestId('quick-filters-clear'))
     expect(onStage).toHaveBeenCalledWith([])
     expect(onTag).toHaveBeenCalledWith([])
+    // Focus stays on the row instead of falling to the body.
+    expect(screen.getByTestId('filter-stage-all')).toHaveFocus()
   })
 
   it('hides Clear while nothing is chosen', () => {
     render(<QuickFilters groups={[group({ id: 'tag', options: [{ id: 't1', label: 'A' }] })]} />)
     expect(screen.queryByTestId('quick-filters-clear')).not.toBeInTheDocument()
+  })
+
+  it('an unpressed coloured chip keeps theme text and shows the colour as a dot', () => {
+    render(<QuickFilters groups={[group({ id: 'tag', options: [{ id: 't1', label: 'Yellow', color: '#eab308' }] })]} />)
+    const chip = screen.getByTestId('filter-tag-t1')
+    expect(chip).not.toHaveStyle({ color: '#eab308' })
+    expect(chip.querySelector('span[aria-hidden="true"]')).toHaveStyle({ backgroundColor: '#eab308' })
   })
 })
