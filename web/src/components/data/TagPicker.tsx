@@ -57,24 +57,27 @@ export function TagPicker({ gameId, selectedTagIds, onChange }: TagPickerProps) 
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => {
           const selected = selectedSet.has(tag.id)
-          // Selected pills use the tag's solid colour as background; pair with
-          // WCAG-derived black/white text so operator palette choices stay
-          // readable regardless of hue (white text on pale yellow → unreadable).
-          // Unselected pills keep the transparent-bg + tag-coloured-text look.
+          // Same chip as the drawer's QuickFilters: a selected pill is the
+          // tag colour with WCAG-derived black/white text; an unselected one
+          // keeps theme text and shows the colour as a dot, because the
+          // palette is only guaranteed readable as a background, never as
+          // 12px text (yellow on the light theme sits near 2:1).
           return (
             <button
               key={tag.id}
               type="button"
+              aria-pressed={selected}
               onClick={() => toggleTag(tag.id)}
               data-testid={`tag-toggle-${tag.id}`}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer border"
-              style={{
-                backgroundColor: selected ? tag.color : 'transparent',
-                color: selected ? getReadableTextColor(tag.color) : tag.color,
-                borderColor: selected ? tag.color : `${tag.color}30`,
-              }}
+              className={`inline-flex min-h-6 items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer border ${selected ? '' : 'text-foreground hover:bg-muted'}`}
+              style={
+                selected
+                  ? { backgroundColor: tag.color, color: getReadableTextColor(tag.color), borderColor: tag.color }
+                  : { backgroundColor: 'transparent', borderColor: `${tag.color}55` }
+              }
             >
-              {selected && <Check className="h-3 w-3" />}
+              {selected && <Check className="h-3 w-3 shrink-0" aria-hidden="true" />}
+              {!selected && <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} aria-hidden="true" />}
               {tag.label}
             </button>
           )
