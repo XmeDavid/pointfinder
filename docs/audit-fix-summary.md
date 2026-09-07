@@ -295,3 +295,12 @@ Full re-verification of all 22 findings. Two remaining actionable items fixed.
 | 9.7 | E2E parity gaps | Documented; incremental coverage |
 | 12.2 | Certificate pinning | Requires pin rotation infrastructure and release coordination |
 
+---
+
+## Verification (2026-09-07 automated pass)
+
+Full re-verification of all 22 findings. No regressions found. No new actionable items.
+
+**Confirmed still fixed:** All 16 resolved findings verified against current source. Key checks: ChallengeResponse.fixedBaseId present, StringListJsonConverter null guard intact, NotificationService null-platform warning log present, AuthController uses X-Forwarded-Host only, FileController Content-Disposition set, MobileRealtimeClient parenthesized precedence fix intact, MapLibreMapView passes parentViewController, SubmissionDetail uses i18n alt text, Android failed sync warning banner present and checkForFailedActions called from PlayerRootScreen, contentDescription reduced to 3 decorative instances in labeled buttons/@Preview.
+
+**Remaining 6 deferred items:** No change in status. These require dedicated sprints (test architecture for 9.3/9.4/9.5/9.6/9.7) or infrastructure coordination (12.2 certificate pinning). Writing shallow tests without proper fake repositories and test dispatchers would create maintenance burden without meaningful coverage. All mitigated by existing Maestro E2E coverage (33 specs) and the HTTP-layer security baseline respectively.
