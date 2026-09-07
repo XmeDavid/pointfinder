@@ -41,8 +41,15 @@ describe('different-path scenario', () => {
       if (anchor === '') continue
       expect(isKnownAnchor(anchor), `${step.id} anchor ${anchor}`).toBe(true)
     }
-    expect(resolveAnchor(differentPath.steps[2], state)).toBe('assignment-cell-A-falcons')
-    expect(resolveAnchor(differentPath.steps[3], state)).toBe('assignment-cell-C-lions')
+    // Without the cells in the DOM (a phone's base list) the marks point at the base rows.
+    expect(resolveAnchor(differentPath.steps[2], state)).toBe('assignment-base-A')
+    expect(resolveAnchor(differentPath.steps[3], state)).toBe('assignment-base-C')
+    const desktop = makeTourState({
+      ...seeded,
+      fields: { 'assignment-cell-A-falcons': { present: true, value: '' }, 'assignment-cell-C-lions': { present: true, value: '' } },
+    })
+    expect(resolveAnchor(differentPath.steps[2], desktop)).toBe('assignment-cell-A-falcons')
+    expect(resolveAnchor(differentPath.steps[3], desktop)).toBe('assignment-cell-C-lions')
   })
 
   it.each(['en', 'pt', 'de'] as const)('has every copy key in %s', (lang) => {

@@ -1241,6 +1241,23 @@
       "createFailed": "Failed to create stage: {{err}}"
     },
     "assignments": {
+      "phoneHint": "Tap a base to choose what each team meets there.",
+      "baseHint": "Pick the challenge each team meets here. Choose under All teams to give everyone the same one.",
+      "perTeamCount": "Per team · {{set}} of {{total}} set",
+      "unassigned": "No challenge yet",
+      "pickerSearch": "Search challenges or tags…",
+      "pickerNone": "No challenge",
+      "pickerNoMatch": "No challenge matches.",
+      "pickerTaken": "Already placed",
+      "pickerTakenAt": "At {{base}}",
+      "pickerPoints": "{{count}} pts",
+      "pickerLocationBound": "Location-bound",
+      "pickerPinned": "Pinned",
+      "pickerAnswer": {
+            "text": "Text",
+            "file": "File",
+            "none": "No answer"
+      },
       "open": "Assignments",
       "title": "Assignments",
       "hint": "One challenge per base. All teams share it, or each team gets its own — the grid keeps a challenge at one base per team.",

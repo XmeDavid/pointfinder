@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CoachBubble } from '@/components/tour/CoachBubble'
 import { Spotlight } from '@/components/tour/Spotlight'
@@ -66,6 +66,16 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   const step = index >= 0 ? steps[index] : undefined
   const anchorId = step ? resolveAnchor(step, state) : null
   const { element, rect, visible } = useAnchorRect(anchorId || null, tick)
+  // A modal that does not hold the anchor (a picker opened from the anchored
+  // sheet, a confirm) gets the screen to itself: the tour hides until it
+  // closes, instead of sitting over the modal's controls.
+  // `tick` is the DOM snapshot key: it bumps when the modal mounts.
+  const covered = useMemo(() => {
+    if (typeof document === 'undefined') return false
+    const modals = document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]')
+    return Array.from(modals).some((modal) => !(element && modal.contains(element)))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [element, tick])
 
   // Latest state/actions without making them effect dependencies. Declared
   // first so every effect below reads this render's values.
@@ -244,6 +254,10 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   )
 
   // A step with no anchor (the closing card) shows a centred bubble and dims nothing.
+  // Under a foreign modal even the pill would sit over the sheet's last rows;
+  // the tour is simply absent until the modal closes.
+  if (covered) return null
+
   if (anchorId === '') {
     return paused ? <TourPill step={index + 1} total={total} onResume={handleResume} /> : bubble(null)
   }

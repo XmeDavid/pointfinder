@@ -1241,6 +1241,23 @@
       "createFailed": "Phase konnte nicht erstellt werden: {{err}}"
     },
     "assignments": {
+      "phoneHint": "Tippe auf eine Basis, um zu wählen, was jedes Team dort erwartet.",
+      "baseHint": "Wähle die Challenge, die jedes Team hier trifft. Unter Alle Teams bekommen alle dieselbe.",
+      "perTeamCount": "Pro Team · {{set}} von {{total}} gesetzt",
+      "unassigned": "Noch keine Challenge",
+      "pickerSearch": "Challenges oder Tags suchen …",
+      "pickerNone": "Keine Challenge",
+      "pickerNoMatch": "Keine Challenge passt.",
+      "pickerTaken": "Bereits vergeben",
+      "pickerTakenAt": "Bei {{base}}",
+      "pickerPoints": "{{count}} Pkt.",
+      "pickerLocationBound": "Ortsgebunden",
+      "pickerPinned": "Angeheftet",
+      "pickerAnswer": {
+            "text": "Text",
+            "file": "Datei",
+            "none": "Keine Antwort"
+      },
       "open": "Zuordnungen",
       "title": "Zuordnungen",
       "hint": "Eine Challenge je Station. Alle Teams teilen sie, oder jedes Team bekommt seine eigene — das Raster hält je Team eine Challenge an genau einer Station.",

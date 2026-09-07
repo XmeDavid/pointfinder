@@ -26,6 +26,17 @@ function has(s: TourState, teamName: string, basePrefix: string, n: string): boo
   // An all-teams row counts for every team, as in the grid model.
   return s.assignments.some((row) => (!row.teamId || row.teamId === t.id) && row.baseId === b.id && row.challengeId === c.id)
 }
+/**
+ * The cell on a desktop; on a phone the grid is a base list whose cells live
+ * in a sheet, so the coach mark points at the base row until it is open.
+ */
+function cellOrBase(s: TourState, basePrefix: string, teamName: string): string {
+  const b = base(s, basePrefix)
+  const t = team(s, teamName)
+  const cell = `assignment-cell-${b?.id ?? ''}-${t?.id ?? ''}`
+  return s.field(cell).present ? cell : `assignment-base-${b?.id ?? ''}`
+}
+
 const FALCONS_DONE = (s: TourState) => has(s, 'Falcons', 'Base A', '1') && has(s, 'Falcons', 'Base B', '2') && has(s, 'Falcons', 'Base C', '3')
 const LIONS_DONE = (s: TourState) => has(s, 'Lions', 'Base C', '1') && has(s, 'Lions', 'Base B', '2') && has(s, 'Lions', 'Base A', '3')
 
@@ -63,7 +74,7 @@ export const differentPath: Scenario = {
     {
       id: 'falcons',
       route: 'workspace',
-      anchor: (s) => `assignment-cell-${base(s, 'Base A')?.id ?? ''}-${team(s, 'Falcons')?.id ?? ''}`,
+      anchor: (s) => cellOrBase(s, 'Base A', 'Falcons'),
       prepare: openGrid,
       done: { kind: 'predicate', test: FALCONS_DONE },
       copy: { title: 'tutorials.differentPath.falcons.title', body: 'tutorials.differentPath.falcons.body' },
@@ -71,7 +82,7 @@ export const differentPath: Scenario = {
     {
       id: 'lions',
       route: 'workspace',
-      anchor: (s) => `assignment-cell-${base(s, 'Base C')?.id ?? ''}-${team(s, 'Lions')?.id ?? ''}`,
+      anchor: (s) => cellOrBase(s, 'Base C', 'Lions'),
       prepare: openGrid,
       done: { kind: 'predicate', test: (s) => FALCONS_DONE(s) && LIONS_DONE(s) },
       copy: { title: 'tutorials.differentPath.lions.title', body: 'tutorials.differentPath.lions.body' },

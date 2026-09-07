@@ -404,10 +404,25 @@ a vanished "No stage" never keeps filtering. The tab shows `bases.noResults` /
 `quick-filters`, `filter-{group}-all`, `filter-{group}-{optionId}`,
 `filter-stage-none`, `quick-filters-clear`. Storybook: `Data/QuickFilters`.
 
+Component: ChallengePicker
+Status: canonical
+Location: `web/src/components/data/ChallengePicker.tsx`
+Modes: Operator Build (assignment grid cells, base sheet on phones)
+States: empty ("—"), chosen, dimmed (column the base does not use), disabled
+(read-only game, write in flight), open list with search, row meta (points,
+answer type, location-bound, pinned, tag dots), rows that cannot be picked with
+the reason ("At {base}"), no match, "No challenge" row
+Notes: Replaces the native select in assignment cells so a challenge is
+findable in a game with dozens: the trigger keeps the cell's test id and
+carries `data-value`; the list opens as a dialog (a bottom sheet on phones).
+Test ids: `{testId}`, `challenge-picker-search`, `challenge-option-none`,
+`challenge-option-{challengeId}`, `challenge-picker-empty`. Storybook:
+`Data/ChallengePicker`.
+
 Component: AssignmentGrid
 Status: canonical
 Location: `web/src/features/build/assignments/AssignmentGrid.tsx`
-Modes: Operator Build
+Modes: Operator Build (table from the md breakpoint up, base list plus per-base sheet below it)
 States: empty (no bases, no challenges), all-teams base, per-team base, mixed
 grid, converting per-team to all-teams (confirm), refused write (inline reason),
 read-only after the game ended, long team and challenge names, phone (horizontal

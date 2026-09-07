@@ -78,6 +78,7 @@ export const KNOWN_ANCHORS: readonly string[] = [
 export const ANCHOR_PREFIXES: readonly string[] = [
   'unlocks-base-',
   'assignment-cell-',
+  'assignment-base-',
   'variable-value-',
   'answer-type-',
   'base-checkin-method-',

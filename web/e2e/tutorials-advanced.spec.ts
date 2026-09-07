@@ -143,9 +143,23 @@ test('a different path: both routes are built in the grid', async ({ page }) => 
   await page.locator('[data-testid="assignment-grid-btn"]:visible').click()
   await expect(title).toHaveText('Falcons: A→1, B→2, C→3')
 
-  for (const [b, c] of [['A', 'c1'], ['B', 'c2'], ['C', 'c3']]) await page.getByTestId(`assignment-cell-${b}-falcons`).selectOption(c)
+  // On a phone the cells live in the base's sheet: open it, pick, and close
+  // it before the next base (the coach bubble reads through the scrim).
+  const pick = async (b: string, column: string, c: string) => {
+    const cell = page.getByTestId(`assignment-cell-${b}-${column}`)
+    if (!(await cell.isVisible())) {
+      if (await page.getByTestId('assignment-base-dialog').isVisible()) await page.getByTestId('assignment-base-done').click()
+      await page.getByTestId(`assignment-base-${b}`).click()
+    }
+    await cell.click()
+    await page.getByTestId(`challenge-option-${c}`).click()
+    await expect(cell).toHaveAttribute('data-value', c)
+  }
+  for (const [b, c] of [['A', 'c1'], ['B', 'c2'], ['C', 'c3']]) await pick(b, 'falcons', c)
+  if (await page.getByTestId('assignment-base-dialog').isVisible()) await page.getByTestId('assignment-base-done').click()
   await expect(title).toHaveText('Lions: C→1, B→2, A→3')
-  for (const [b, c] of [['C', 'c1'], ['B', 'c2'], ['A', 'c3']]) await page.getByTestId(`assignment-cell-${b}-lions`).selectOption(c)
+  for (const [b, c] of [['C', 'c1'], ['B', 'c2'], ['A', 'c3']]) await pick(b, 'lions', c)
+  if (await page.getByTestId('assignment-base-dialog').isVisible()) await page.getByTestId('assignment-base-done').click()
   await expect(title).toHaveText('Tell them where to start')
   await page.getByTestId('tour-next').click()
   await expect(title).toHaveText('Two paths, one game')

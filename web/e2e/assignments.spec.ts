@@ -61,6 +61,30 @@ async function login(page: Page) {
 
 const key = (rows: Row[]) => rows.map((r) => `${r.baseId}:${r.teamId ?? 'all'}=${r.challengeId}`).sort()
 
+/** Choose a challenge in a grid cell. On a phone the cell lives in the base's sheet. */
+async function pickCell(page: Page, baseId: string, column: string, challengeId: string) {
+  const cell = page.getByTestId(`assignment-cell-${baseId}-${column}`)
+  if (!(await cell.isVisible())) {
+    const sheet = page.getByTestId('assignment-base-dialog')
+    if (await sheet.isVisible()) await page.getByTestId('assignment-base-done').click()
+    await page.getByTestId(`assignment-base-${baseId}`).click()
+  }
+  await cell.click()
+  await page.getByTestId(`challenge-option-${challengeId}`).click()
+  await expect(cell).toHaveAttribute('data-value', challengeId)
+}
+
+/** Open a cell's picker without choosing (for confirm and refusal flows). */
+async function pickCellOpen(page: Page, baseId: string, column: string) {
+  const cell = page.getByTestId(`assignment-cell-${baseId}-${column}`)
+  if (!(await cell.isVisible())) {
+    const sheet = page.getByTestId('assignment-base-dialog')
+    if (await sheet.isVisible()) await page.getByTestId('assignment-base-done').click()
+    await page.getByTestId(`assignment-base-${baseId}`).click()
+  }
+  await cell.click()
+}
+
 test('two teams walk the same bases with the challenges in reverse order', async ({ page }) => {
   const state = { rows: [] as Row[], puts: [] as Row[][] }
   await mockApi(page, state)
@@ -78,10 +102,7 @@ test('two teams walk the same bases with the challenges in reverse order', async
     ['b1', 'falcons', 'c1'], ['b2', 'falcons', 'c2'], ['b3', 'falcons', 'c3'],
     ['b1', 'lions', 'c3'], ['b2', 'lions', 'c2'], ['b3', 'lions', 'c1'],
   ]
-  for (const [baseId, teamId, challengeId] of picks) {
-    await page.getByTestId(`assignment-cell-${baseId}-${teamId}`).selectOption(challengeId)
-    await expect(page.getByTestId(`assignment-cell-${baseId}-${teamId}`)).toHaveValue(challengeId)
-  }
+  for (const [baseId, teamId, challengeId] of picks) await pickCell(page, baseId, teamId, challengeId)
 
   await expect.poll(() => state.puts.length).toBe(6)
   expect(key(state.rows)).toEqual([
@@ -90,7 +111,15 @@ test('two teams walk the same bases with the challenges in reverse order', async
 
   // A challenge a team already meets elsewhere is not offered to that team again.
   const lionsAtB1 = page.getByTestId('assignment-cell-b1-lions')
-  await expect(lionsAtB1.locator('option')).toHaveText(['—', 'Name the peak'])
+  if (!(await lionsAtB1.isVisible())) {
+    await page.getByTestId('assignment-base-done').click()
+    await page.getByTestId('assignment-base-b1').click()
+  }
+  await lionsAtB1.click()
+  await expect(page.getByTestId('challenge-option-c1')).toBeDisabled()
+  await expect(page.getByTestId('challenge-option-c2')).toBeDisabled()
+  await expect(page.getByTestId('challenge-option-c3')).toBeEnabled()
+  await page.keyboard.press('Escape')
   await expect(page.getByTestId('assignment-grid-error')).toHaveCount(0)
 })
 
@@ -103,7 +132,8 @@ test('an all-teams pick over per-team rows asks first, and a refused write shows
   await page.locator('[data-testid="tab-bases"]:visible').click()
   await page.locator('[data-testid="assignment-grid-btn"]:visible').click()
 
-  await page.getByTestId('assignment-cell-b1-all').selectOption('c2')
+  await pickCellOpen(page, 'b1', 'all')
+  await page.getByTestId('challenge-option-c2').click()
   await expect(page.getByText('Assign to all teams?')).toBeVisible()
   await page.getByTestId('confirm-action-btn').click()
   await expect.poll(() => state.puts.length).toBe(1)
@@ -114,7 +144,8 @@ test('an all-teams pick over per-team rows asks first, and a refused write shows
       ? route.fulfill({ status: 409, json: { status: 409, message: 'raw', code: 'ASSIGNMENT_CHALLENGE_REPEATED' } })
       : route.fallback(),
   )
-  await page.getByTestId('assignment-cell-b2-all').selectOption('c3')
+  await pickCellOpen(page, 'b2', 'all')
+  await page.getByTestId('challenge-option-c3').click()
   await expect(page.getByTestId('assignment-grid-error')).toHaveText('A challenge waits at one base for a team, or once for all teams.')
-  await expect(page.getByTestId('assignment-cell-b2-all')).toHaveValue('')
+  await expect(page.getByTestId('assignment-cell-b2-all')).toHaveAttribute('data-value', '')
 })

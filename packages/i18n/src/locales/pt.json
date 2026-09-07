@@ -1241,6 +1241,23 @@
       "createFailed": "Falha ao criar fase: {{err}}"
     },
     "assignments": {
+      "phoneHint": "Toca numa base para escolher o que cada equipa encontra lá.",
+      "baseHint": "Escolhe o desafio que cada equipa encontra aqui. Escolhe em Todas as equipas para dar o mesmo a todas.",
+      "perTeamCount": "Por equipa · {{set}} de {{total}} definidos",
+      "unassigned": "Ainda sem desafio",
+      "pickerSearch": "Procurar desafios ou etiquetas…",
+      "pickerNone": "Sem desafio",
+      "pickerNoMatch": "Nenhum desafio corresponde.",
+      "pickerTaken": "Já colocado",
+      "pickerTakenAt": "Em {{base}}",
+      "pickerPoints": "{{count}} pts",
+      "pickerLocationBound": "Ligado ao local",
+      "pickerPinned": "Fixado",
+      "pickerAnswer": {
+            "text": "Texto",
+            "file": "Ficheiro",
+            "none": "Sem resposta"
+      },
       "open": "Atribuições",
       "title": "Atribuições",
       "hint": "Um desafio por base. Todas as equipas partilham-no, ou cada equipa tem o seu — a grelha mantém um desafio numa base por equipa.",
