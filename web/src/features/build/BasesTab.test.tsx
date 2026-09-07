@@ -140,6 +140,19 @@ describe('BasesTab', () => {
 })
 
 
+describe('assignment grid', () => {
+  it('opens the grid from the list and closes back to it', async () => {
+    const user = userEvent.setup()
+    renderBasesTab()
+    await screen.findByText('Base Alpha')
+    await user.click(screen.getByTestId('assignment-grid-btn'))
+    expect(await screen.findByTestId('assignment-grid')).toBeInTheDocument()
+    expect(screen.queryByTestId('base-list')).not.toBeInTheDocument()
+    await user.click(screen.getByTestId('assignment-grid-close'))
+    expect(await screen.findByTestId('base-list')).toBeInTheDocument()
+  })
+})
+
 describe('ordered bases', () => {
   it('hides route controls when enforcement is off', async () => {
     renderBasesTab()

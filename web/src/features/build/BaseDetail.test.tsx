@@ -88,15 +88,15 @@ describe('BaseDetail', () => {
     })
   })
 
-  it('clicking challenge name calls selectChallenge', async () => {
+  it('opens the linked challenge from the assignment section', async () => {
     const user = userEvent.setup()
     renderBaseDetail()
 
     await waitFor(() => {
-      expect(screen.getByTestId('challenge-link-challenge-1')).toBeInTheDocument()
+      expect(screen.getByTestId('link-challenge-btn')).toHaveValue('challenge-1')
     })
 
-    await user.click(screen.getByTestId('challenge-link-challenge-1'))
+    await user.click(screen.getByTestId('open-linked-challenge-btn'))
     expect(mockStore.selectChallenge).toHaveBeenCalledWith('challenge-1')
   })
 

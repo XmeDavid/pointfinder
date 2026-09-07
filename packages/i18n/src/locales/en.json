@@ -893,7 +893,15 @@
     "TAG_IN_USE": "Can't delete: tag is in use by one or more items.",
     "QUOTA_ACTIVE_GAMES_EXCEEDED": "You are at your plan's active game limit. End or delete a game, or upgrade.",
     "TUTORIAL_PRACTICE_GAME_EXISTS": "You already have a practice game. Delete or keep it first.",
-    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "This tutorial creates its game through the New Game dialog."
+    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "This tutorial creates its game through the New Game dialog.",
+    "ASSIGNMENT_TEAM_HAS_BASE": "That team already has a challenge at this base.",
+    "ASSIGNMENT_BASE_ALL_TEAMS": "This base is assigned to all teams; switch it to per team first.",
+    "ASSIGNMENT_BASE_TEAM_SPECIFIC": "This base is assigned per team; switch it to all teams first.",
+    "ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE": "That team already meets this challenge at another base.",
+    "ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE": "This challenge is already at another base for all teams.",
+    "ASSIGNMENT_MIXED_MODES": "A base is either for all teams or per team, not both.",
+    "ASSIGNMENT_DUPLICATE": "The same base and team were assigned twice.",
+    "ASSIGNMENT_CHALLENGE_REPEATED": "A challenge can sit at one base per team."
   },
   "realtimeHealth": {
     "title": "Realtime Health",
@@ -1223,6 +1231,33 @@
     "variableValuePlaceholder": "Value...",
     "stage": {
       "createFailed": "Failed to create stage: {{err}}"
+    },
+    "assignments": {
+      "open": "Assignments",
+      "title": "Assignments",
+      "hint": "One challenge per base. All teams share it, or each team gets its own — the grid keeps a challenge at one base per team.",
+      "close": "Done",
+      "base": "Base",
+      "allTeams": "All teams",
+      "none": "—",
+      "perTeam": "Per team",
+      "switchToTeams": "Assign per team",
+      "switchToAll": "Assign to all teams",
+      "confirmAllTitle": "Assign to all teams?",
+      "confirmAllBody": "Each team's own choice at this base is replaced by this one.",
+      "confirmAllAction": "Assign to all",
+      "pinned": "Pinned: {{title}}",
+      "assignedAt": "Assigned at",
+      "assignToBase": "Assign to base",
+      "unassign": "Unassign",
+      "notAssigned": "Not assigned",
+      "noTeams": "Create teams to assign per team.",
+      "noChallenges": "No challenges yet.",
+      "noBases": "No bases yet.",
+      "teamAt": "{{team}} at",
+      "challengeFor": "{{team}}",
+      "readOnly": "Assignments can no longer change: the game has ended.",
+      "autoAssignFailed": "Auto-assign could not save."
     }
   },
   "command2": {
@@ -1797,7 +1832,7 @@
       },
       "assign": {
         "title": "Link challenges to bases",
-        "body": "Assignments decide which challenge waits at which base. Auto-assign pairs each base that has nothing yet with an unused challenge, in order; open a base to pick by hand, or assign per team for split routes."
+        "body": "Assignments decide which challenge waits at which base. Auto-assign pairs each base that has nothing yet with an unused challenge, in order; open a base to pick by hand, or open Assignments for a different route per team."
       },
       "new-team": {
         "title": "Create a team",

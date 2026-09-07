@@ -7,6 +7,7 @@ import { useGame } from '@/hooks/queries/useGames'
 import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { Button } from '@/components/ui/button'
 import { BaseRouteEditor } from './BaseRouteEditor'
+import { AssignmentGrid } from './assignments/AssignmentGrid'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { SearchInput } from '@/components/data/SearchInput'
 import { Spinner } from '@/components/feedback/Spinner'
@@ -77,6 +78,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
 
   const { data: game } = useGame(gameId)
   const [arranging, setArranging] = useState(false)
+  const [gridOpen, setGridOpen] = useState(false)
   const { data: bases = [], isLoading, isError, refetch } = useBases(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
 
@@ -98,6 +100,10 @@ export function BasesTab({ gameId }: BasesTabProps) {
     return <BaseRouteEditor gameId={gameId} bases={orderedBases}
       editable={game?.status === 'setup'} onClose={() => setArranging(false)} />
   }
+  if (gridOpen) {
+    return <AssignmentGrid gameId={gameId} bases={orderedBases}
+      editable={game?.status !== 'ended'} onClose={() => setGridOpen(false)} />
+  }
 
   return (
     <ListDetailLayout selected={!!selectedBaseId} onBack={() => selectBase(null)} list={<>
@@ -109,6 +115,13 @@ export function BasesTab({ gameId }: BasesTabProps) {
           </Button>
           {game.status !== 'setup' && <p className="text-xs text-muted-foreground">{t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' })}</p>}
         </div>}
+        <div className="border-b border-border p-2">
+          <Button variant="outline" size="sm" className="h-auto min-h-9 w-full whitespace-normal" data-testid="assignment-grid-btn"
+            disabled={isLoading || isError || bases.length === 0}
+            onClick={() => { selectBase(null); setGridOpen(true) }}>
+            {t('build.assignments.open')}
+          </Button>
+        </div>
         {/* Search */}
         <div className="p-2 border-b border-border">
           <SearchInput

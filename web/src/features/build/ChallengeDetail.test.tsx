@@ -76,7 +76,7 @@ describe('ChallengeDetail', () => {
     // "Content" appears as both section header and field label
     expect(screen.getAllByText('Content').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Scoring')).toBeInTheDocument()
-    expect(screen.getByText('Assignment')).toBeInTheDocument()
+    expect(screen.getByText('Assignments')).toBeInTheDocument()
     expect(screen.getByText('Operator Notes')).toBeInTheDocument()
     expect(screen.getByText('Location Bound')).toBeInTheDocument()
     expect(screen.getByText('Post-completion')).toBeInTheDocument()

@@ -29,6 +29,7 @@ export const KNOWN_ANCHORS: readonly string[] = [
   'tab-nfc',
   'new-entity-btn',
   'auto-assign-btn',
+  'assignment-grid-btn',
   'arrange-route-btn',
   'base-route-editor',
   // base detail

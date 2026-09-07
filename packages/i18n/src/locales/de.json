@@ -893,7 +893,15 @@
     "TAG_IN_USE": "Löschen nicht möglich: Der Tag wird von einem oder mehreren Elementen verwendet.",
     "QUOTA_ACTIVE_GAMES_EXCEEDED": "Du hast das Limit aktiver Spiele deines Plans erreicht. Beende oder lösche ein Spiel, oder upgrade.",
     "TUTORIAL_PRACTICE_GAME_EXISTS": "Du hast bereits ein Übungsspiel. Lösche oder behalte es zuerst.",
-    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "Dieses Tutorial erstellt sein Spiel über den Dialog Neues Spiel."
+    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "Dieses Tutorial erstellt sein Spiel über den Dialog Neues Spiel.",
+    "ASSIGNMENT_TEAM_HAS_BASE": "Dieses Team hat an dieser Station bereits eine Challenge.",
+    "ASSIGNMENT_BASE_ALL_TEAMS": "Diese Station gilt für alle Teams; stelle sie zuerst auf je Team um.",
+    "ASSIGNMENT_BASE_TEAM_SPECIFIC": "Diese Station ist je Team zugeordnet; stelle sie zuerst auf alle Teams um.",
+    "ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE": "Dieses Team trifft diese Challenge bereits an einer anderen Station.",
+    "ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE": "Diese Challenge liegt bereits an einer anderen Station für alle Teams.",
+    "ASSIGNMENT_MIXED_MODES": "Eine Station gilt entweder für alle Teams oder je Team, nicht beides.",
+    "ASSIGNMENT_DUPLICATE": "Dieselbe Station und dasselbe Team wurden doppelt zugeordnet.",
+    "ASSIGNMENT_CHALLENGE_REPEATED": "Eine Challenge liegt je Team an genau einer Station."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",
@@ -1223,6 +1231,33 @@
     "variableValuePlaceholder": "Wert...",
     "stage": {
       "createFailed": "Phase konnte nicht erstellt werden: {{err}}"
+    },
+    "assignments": {
+      "open": "Zuordnungen",
+      "title": "Zuordnungen",
+      "hint": "Eine Challenge je Station. Alle Teams teilen sie, oder jedes Team bekommt seine eigene — das Raster hält je Team eine Challenge an genau einer Station.",
+      "close": "Fertig",
+      "base": "Station",
+      "allTeams": "Alle Teams",
+      "none": "—",
+      "perTeam": "Je Team",
+      "switchToTeams": "Je Team zuordnen",
+      "switchToAll": "Allen Teams zuordnen",
+      "confirmAllTitle": "Allen Teams zuordnen?",
+      "confirmAllBody": "Die eigene Wahl jedes Teams an dieser Station wird durch diese ersetzt.",
+      "confirmAllAction": "Allen zuordnen",
+      "pinned": "Fixiert: {{title}}",
+      "assignedAt": "Zugeordnet an",
+      "assignToBase": "Einer Station zuordnen",
+      "unassign": "Zuordnung aufheben",
+      "notAssigned": "Nicht zugeordnet",
+      "noTeams": "Lege Teams an, um je Team zuzuordnen.",
+      "noChallenges": "Noch keine Challenges.",
+      "noBases": "Noch keine Stationen.",
+      "teamAt": "{{team}} an",
+      "challengeFor": "{{team}}",
+      "readOnly": "Zuordnungen lassen sich nicht mehr ändern: das Spiel ist beendet.",
+      "autoAssignFailed": "Automatisch zuordnen konnte nicht speichern."
     }
   },
   "command2": {
@@ -1797,7 +1832,7 @@
       },
       "assign": {
         "title": "Challenges zuordnen",
-        "body": "Zuordnungen entscheiden, welche Challenge an welcher Station wartet. Automatisch zuordnen gibt jeder noch leeren Station der Reihe nach eine unbenutzte Challenge; öffne eine Station für die Handauswahl, oder ordne je Team zu."
+        "body": "Zuordnungen entscheiden, welche Challenge an welcher Station wartet. Automatisch zuordnen gibt jeder noch leeren Station der Reihe nach eine unbenutzte Challenge; öffne eine Station für die Handauswahl, oder öffne Zuordnungen für eine eigene Route je Team."
       },
       "new-team": {
         "title": "Lege ein Team an",

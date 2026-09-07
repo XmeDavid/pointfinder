@@ -893,7 +893,15 @@
     "TAG_IN_USE": "Não é possível eliminar: a etiqueta está a ser utilizada por um ou mais itens.",
     "QUOTA_ACTIVE_GAMES_EXCEEDED": "Atingiste o limite de jogos ativos do teu plano. Termina ou apaga um jogo, ou faz upgrade.",
     "TUTORIAL_PRACTICE_GAME_EXISTS": "Já tens um jogo de treino. Apaga-o ou mantém-no primeiro.",
-    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "Este tutorial cria o seu jogo pela janela Novo jogo."
+    "TUTORIAL_PRACTICE_GAME_NOT_ALLOWED": "Este tutorial cria o seu jogo pela janela Novo jogo.",
+    "ASSIGNMENT_TEAM_HAS_BASE": "Essa equipa já tem um desafio nesta base.",
+    "ASSIGNMENT_BASE_ALL_TEAMS": "Esta base está atribuída a todas as equipas; muda-a para por equipa primeiro.",
+    "ASSIGNMENT_BASE_TEAM_SPECIFIC": "Esta base está atribuída por equipa; muda-a para todas as equipas primeiro.",
+    "ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE": "Essa equipa já encontra este desafio noutra base.",
+    "ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE": "Este desafio já está noutra base para todas as equipas.",
+    "ASSIGNMENT_MIXED_MODES": "Uma base é para todas as equipas ou por equipa, não ambos.",
+    "ASSIGNMENT_DUPLICATE": "A mesma base e equipa foram atribuídas duas vezes.",
+    "ASSIGNMENT_CHALLENGE_REPEATED": "Um desafio fica numa base por equipa."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
@@ -1223,6 +1231,33 @@
     "variableValuePlaceholder": "Valor...",
     "stage": {
       "createFailed": "Falha ao criar fase: {{err}}"
+    },
+    "assignments": {
+      "open": "Atribuições",
+      "title": "Atribuições",
+      "hint": "Um desafio por base. Todas as equipas partilham-no, ou cada equipa tem o seu — a grelha mantém um desafio numa base por equipa.",
+      "close": "Concluído",
+      "base": "Base",
+      "allTeams": "Todas as equipas",
+      "none": "—",
+      "perTeam": "Por equipa",
+      "switchToTeams": "Atribuir por equipa",
+      "switchToAll": "Atribuir a todas as equipas",
+      "confirmAllTitle": "Atribuir a todas as equipas?",
+      "confirmAllBody": "A escolha de cada equipa nesta base é substituída por esta.",
+      "confirmAllAction": "Atribuir a todas",
+      "pinned": "Fixo: {{title}}",
+      "assignedAt": "Atribuído em",
+      "assignToBase": "Atribuir a uma base",
+      "unassign": "Desatribuir",
+      "notAssigned": "Não atribuído",
+      "noTeams": "Cria equipas para atribuir por equipa.",
+      "noChallenges": "Ainda não há desafios.",
+      "noBases": "Ainda não há bases.",
+      "teamAt": "{{team}} em",
+      "challengeFor": "{{team}}",
+      "readOnly": "As atribuições já não podem mudar: o jogo terminou.",
+      "autoAssignFailed": "A atribuição automática não foi guardada."
     }
   },
   "command2": {
@@ -1797,7 +1832,7 @@
       },
       "assign": {
         "title": "Liga desafios às bases",
-        "body": "As atribuições decidem que desafio espera em que base. A atribuição automática emparelha cada base ainda vazia com um desafio por usar, pela ordem; abre uma base para escolher à mão, ou atribui por equipa."
+        "body": "As atribuições decidem que desafio espera em que base. A atribuição automática emparelha cada base ainda vazia com um desafio por usar, pela ordem; abre uma base para escolher à mão, ou abre Atribuições para um percurso diferente por equipa."
       },
       "new-team": {
         "title": "Cria uma equipa",

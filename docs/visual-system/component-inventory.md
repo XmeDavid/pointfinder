@@ -374,6 +374,21 @@ Notes: Recovery links and titles use visible player progress only. Hidden bases
 can be referenced by route number without disclosing their identity or location.
 Preview: `/dev/visual-system`.
 
+Component: AssignmentGrid
+Status: canonical
+Location: `web/src/features/build/assignments/AssignmentGrid.tsx`
+Modes: Operator Build
+States: empty (no bases, no challenges), all-teams base, per-team base, mixed
+grid, converting per-team to all-teams (confirm), refused write (inline reason),
+read-only after the game ended, long team and challenge names, phone (horizontal
+scroll with sticky base column)
+Notes: Rows are bases in route order; columns are "All teams" plus one per team;
+each cell is a native select with only the challenges unused in that column.
+Every change sends the complete next list through the bulk-set endpoint.
+`ChallengeAssignmentSection` and `BaseAssignmentSection` are the same model seen
+from one challenge or one base. Test ids: `assignment-grid`,
+`assignment-cell-{baseId}-{all|teamId}`, `assignment-grid-error`.
+
 The base primitives (Button, Badge, Alert, Card, Input, Textarea, Label, FormLabel,
 Select, Switch, Tabs, Dialog, ConfirmDeleteDialog, DropdownMenu, Collapsible,
 Tooltip, Skeleton, Toast) live in `web/src/components/ui/`, with the toast hook

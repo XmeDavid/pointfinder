@@ -101,6 +101,18 @@ Most games use a **fixed base + challenge pair** as their primary building block
 
 Editing a pair opens a single dialog that writes the base and challenge via **two sequential mutations** (`basesApi.update` first, then `challengesApi.update`). If the base update fails, the challenge is NOT touched. If the base succeeds and the challenge fails, the base is left saved and the operator is prompted to retry the challenge half — there is no rollback path because the model is intentionally decoupled on the backend.
 
+**Assignments are a grid.** One row per base; one column for "All teams" plus one per team;
+each cell a challenge. A base is either an all-teams row or per-team rows (never both), and
+within one column a challenge appears at most once, so a team meets a challenge at exactly one
+base. That is how two teams walk the same bases with the challenges in a different order:
+Falcons A→1, B→2, C→3 and Lions A→3, B→2, C→1 are six per-team rows. The web app edits this
+grid from three places that all send the complete next list through
+`PUT /games/:gameId/assignments` (which replaces the set): the **Assignments** grid in the
+Bases tab, the challenge's assignment section (one base for all teams, or one base per team),
+and the base's assignment section (one challenge for all teams, or one per team). Converting a
+base from all-teams to per-team keeps the challenge for every team; the reverse asks first. A
+refused write shows the server's reason (`ASSIGNMENT_*` codes) inline.
+
 **Auto-assign** in the build drawer pairs each base that has no assignment and no fixed challenge with a challenge that no assignment uses yet, in list order, and re-submits the existing assignments unchanged through `PUT /games/:gameId/assignments` (which replaces the game's whole set). It never builds a base × challenge cross product: an "All Teams" challenge lives at exactly one base and a base carries one such challenge, so the backend rejects that shape with a 409.
 
 The legacy `BasesPage`, `ChallengesPage`, and `AssignmentsPage` remain available for advanced workflows (random assignments, team-specific overrides, unlocks configuration, rich-text content, team variables, etc.) and are linked from the header of the unified view as "Manage bases", "Manage challenges", and "Advanced assignments".

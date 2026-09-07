@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api/errors'
 import { Plus, Shuffle, X } from 'lucide-react'
 import { useWorkspaceStore, type DrawerTab } from '@/stores/workspace'
 import { useCreateBase } from '@/hooks/mutations/useBaseMutations'
@@ -41,6 +43,7 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
   const createTeam = useCreateTeam(gameId)
   const createStage = useCreateStage(gameId)
   const setAssignments = useSetAssignments(gameId)
+  const [autoAssignError, setAutoAssignError] = useState<string | null>(null)
 
   const { data: game } = useGame(gameId)
   const baseRouteLocked = !!game?.enforceBaseOrder && game.status !== 'setup'
@@ -106,7 +109,10 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
     }))
     if (pairs.length === 0) return
     const kept = assignments.map((a) => ({ gameId, baseId: a.baseId, challengeId: a.challengeId, teamId: a.teamId }))
-    setAssignments.mutate([...kept, ...pairs])
+    setAutoAssignError(null)
+    setAssignments.mutate([...kept, ...pairs], {
+      onError: (err) => setAutoAssignError(getApiErrorMessage(err, t('build.assignments.autoAssignFailed'))),
+    })
   }
 
   return (
@@ -176,6 +182,12 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
           <X className="h-4 w-4" />
         </button>
       </div>
+
+      {autoAssignError && (
+        <p className="border-b border-border px-3 py-2 text-xs text-destructive" role="alert" data-testid="auto-assign-error">
+          {autoAssignError}
+        </p>
+      )}
 
       {/* Body */}
       <div className="min-w-0 flex-1 flex min-h-0">
