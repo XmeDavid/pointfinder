@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -150,5 +151,19 @@ class TutorialProgressEndpointTest extends IntegrationTestBase {
                 PATH, HttpMethod.GET, new HttpEntity<>(null, null), String.class);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void aGameIdThatNoLongerExistsIsStoredAsNullInsteadOfFailing() {
+        User operator = createOperator("endpoint-gone-game@test.com", "password");
+        Map<String, Object> body = body("completed", "finish");
+        body.put("gameId", UUID.randomUUID());
+
+        ResponseEntity<TutorialProgressResponse> completed = put(operator, "first-game", body);
+
+        assertEquals(HttpStatus.OK, completed.getStatusCode());
+        assertNotNull(completed.getBody());
+        assertEquals("completed", completed.getBody().status());
+        assertNull(completed.getBody().gameId());
     }
 }

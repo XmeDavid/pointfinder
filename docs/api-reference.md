@@ -1289,6 +1289,40 @@ else returns `400 TUTORIAL_SCENARIO_UNKNOWN`. An unrecognised `status` returns
 `400 TUTORIAL_STATUS_UNKNOWN`. Returns the stored row. Not audited — this is UI
 preference, not domain state.
 
+**POST /users/me/tutorials/:scenarioId/practice-game** (PracticeGameRequest)
+
+```json
+{ "name": "Practice: fixed route", "lat": 41.15, "lng": -8.61 }
+```
+
+Creates, seeds and binds a **practice game** for a `practice-game` scenario
+(`fixed-route`, `exploration`) and returns `201` with the `GameResponse`. A
+tutorial never runs on a game the operator made for a real event; it runs on a
+practice game, which:
+
+- is marked with `tutorialScenario` and `tutorialExpiresAt` on `GameResponse`;
+- is excluded from the personal active-game count and quota;
+- takes a **single player** (`400 TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT` on the
+  second join), so the operator can see the player side and nothing more;
+- is ended by the scheduler 24 hours after creation if still in setup or live;
+- can be kept (`POST /games/:id/keep`) or deleted (`DELETE /games/:id`).
+
+Seeding places bases around `lat`/`lng` (the operator's map centre; a fixed
+spot when omitted): three QR bases, three (fixed route) or two (exploration)
+text challenges assigned one per base, and one team. The scenario's progress
+row is set to `in_progress` with a null step and the new `gameId`.
+
+`409 TUTORIAL_PRACTICE_GAME_EXISTS` while the caller owns a practice game that
+has not ended. `400 TUTORIAL_PRACTICE_GAME_NOT_ALLOWED` for `first-game`, whose
+practice game the operator creates through `POST /games` with
+`tutorialScenario: "first-game"`; that flag is honoured only while the caller's
+`first-game` row is `in_progress` and is otherwise ignored.
+
+**POST /games/:id/keep** turns a practice game into a normal game: clears both
+marker fields under the normal active-game quota (`400
+QUOTA_ACTIVE_GAMES_EXCEEDED` when enforcement is on and the operator is at the
+limit, `400 TUTORIAL_NOT_PRACTICE_GAME` for a normal game). Needs game access.
+
 ### Invites
 
 **Base path**: `/api/invites`
@@ -1435,6 +1469,10 @@ All error responses include a machine-readable `code` field in addition to the h
 |------|------|---------|
 | `TUTORIAL_SCENARIO_UNKNOWN` | 400 | The scenario id is not on the server allowlist. Details carry `scenarioId`. |
 | `TUTORIAL_STATUS_UNKNOWN` | 400 | The status is not `in_progress`, `completed`, or `skipped`. Details carry `status`. |
+| `TUTORIAL_PRACTICE_GAME_EXISTS` | 409 | The operator already owns a practice game that has not ended; delete or keep it first. |
+| `TUTORIAL_PRACTICE_GAME_NOT_ALLOWED` | 400 | Only `practice-game` scenarios use the practice endpoint; `first-game` creates its game through `POST /games`. Details carry `scenarioId`. |
+| `TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT` | 400 | A practice game takes a single player. |
+| `TUTORIAL_NOT_PRACTICE_GAME` | 400 | Keep was called on a game that is not a practice game. |
 
 ### WebSocket Error Codes
 

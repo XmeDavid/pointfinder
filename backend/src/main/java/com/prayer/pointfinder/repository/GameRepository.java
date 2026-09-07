@@ -87,6 +87,15 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
 
     long countByCreatedByIdAndOrganizationIsNullAndStatusIn(UUID userId, List<GameStatus> statuses);
 
+    /** Personal active games that count against the quota: practice games are left out. */
+    long countByCreatedByIdAndOrganizationIsNullAndStatusInAndTutorialScenarioIsNull(UUID userId, List<GameStatus> statuses);
+
+    // ── Practice games ────────────────────────────────────────────────────
+
+    boolean existsByCreatedByIdAndTutorialScenarioIsNotNullAndStatusNot(UUID userId, GameStatus status);
+
+    List<Game> findByTutorialScenarioIsNotNullAndTutorialExpiresAtBeforeAndStatusNot(Instant now, GameStatus status);
+
     long countByOrganizationIdAndStatus(UUID orgId, GameStatus status);
 
     long countByOrganizationIdAndStatusIn(UUID orgId, List<GameStatus> statuses);

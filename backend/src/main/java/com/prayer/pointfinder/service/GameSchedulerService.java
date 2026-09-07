@@ -58,6 +58,25 @@ public class GameSchedulerService {
     private long stalledThresholdMinutes;
 
     /**
+     * Ends practice games (tutorial games) that have reached their expiry, in
+     * setup or live. Ended games keep their content and no longer count
+     * anywhere, so a late "keep" still works.
+     */
+    @Scheduled(fixedRate = 60000)
+    @Transactional(timeout = 10)
+    public void expirePracticeGames() {
+        List<Game> expired = gameRepository.findByTutorialScenarioIsNotNullAndTutorialExpiresAtBeforeAndStatusNot(
+                Instant.now(), GameStatus.ended);
+        for (Game game : expired) {
+            log.info("Ending expired practice game '{}' (id={}, scenario={})",
+                    game.getName(), game.getId(), game.getTutorialScenario());
+            game.setStatus(GameStatus.ended);
+            gameRepository.save(game);
+            eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
+        }
+    }
+
+    /**
      * Runs every 60 seconds to check for live games that have passed their end date
      * and automatically transitions them to ended.
      */

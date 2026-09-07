@@ -28,7 +28,7 @@ public class WorkspaceService {
         UserSubscription sub = userSubRepository.findByUserId(user.getId()).orElse(null);
         String tier = sub != null ? sub.getTier().name() : "free";
         String status = sub != null ? sub.getStatus().name() : "active";
-        long personalActiveGames = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusIn(
+        long personalActiveGames = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusInAndTutorialScenarioIsNull(
             user.getId(), List.of(GameStatus.setup, GameStatus.live));
 
         WorkspaceResponse.PersonalWorkspace personal = new WorkspaceResponse.PersonalWorkspace(

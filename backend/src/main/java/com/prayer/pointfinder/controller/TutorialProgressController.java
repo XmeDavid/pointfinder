@@ -1,13 +1,18 @@
 package com.prayer.pointfinder.controller;
 
+import com.prayer.pointfinder.dto.request.PracticeGameRequest;
 import com.prayer.pointfinder.dto.request.UpdateTutorialProgressRequest;
+import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.dto.response.TutorialProgressResponse;
+import com.prayer.pointfinder.service.PracticeGameService;
 import com.prayer.pointfinder.service.TutorialProgressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TutorialProgressController {
 
+    private final PracticeGameService practiceGameService;
     private final TutorialProgressService tutorialProgressService;
 
     @GetMapping
@@ -41,5 +47,19 @@ public class TutorialProgressController {
             @Valid @RequestBody UpdateTutorialProgressRequest request
     ) {
         return ResponseEntity.ok(tutorialProgressService.upsertForCurrentUser(scenarioId, request));
+    }
+
+    /**
+     * Creates, seeds and binds a practice game for a {@code practice-game}
+     * scenario. 409 while the caller already owns a practice game that has not
+     * ended.
+     */
+    @PostMapping("/{scenarioId}/practice-game")
+    public ResponseEntity<GameResponse> createPracticeGame(
+            @PathVariable String scenarioId,
+            @Valid @RequestBody PracticeGameRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(practiceGameService.createForCurrentUser(scenarioId, request));
     }
 }

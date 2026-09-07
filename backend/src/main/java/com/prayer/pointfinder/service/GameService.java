@@ -48,6 +48,8 @@ public class GameService {
     private final ChallengeAssignmentService challengeAssignmentService;
     private final GameProgressResetService gameProgressResetService;
     private final GameReadinessValidator gameReadinessValidator;
+    private final QuotaService quotaService;
+    private final UserTutorialProgressRepository progressRepository;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -116,6 +118,16 @@ public class GameService {
         currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
+        // The first-game tutorial has the operator create their practice game
+        // through this dialog. The flag is honoured only while that run is in
+        // progress; anything else is a normal game under the normal quota.
+        boolean practice = PracticeGames.isFirstGameRun(progressRepository, userId, request.getTutorialScenario());
+        if (practice) {
+            PracticeGames.ensureNoActivePracticeGame(gameRepository, userId);
+        } else {
+            quotaService.enforceActiveGameLimit(currentUser);
+        }
+
         Game game = Game.builder()
                 .name(request.getName())
                 .description(request.getDescription() != null ? request.getDescription() : "")
@@ -129,10 +141,15 @@ public class GameService {
                 .defaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
+                .tutorialScenario(practice ? PracticeGames.FIRST_GAME : null)
+                .tutorialExpiresAt(practice ? PracticeGames.expiry() : null)
                 .build();
         game.getOperators().add(currentUser);
 
         game = gameRepository.save(game);
+        if (practice) {
+            PracticeGames.bindProgressRow(progressRepository, userId, PracticeGames.FIRST_GAME, game.getId());
+        }
         return toResponse(game);
     }
 

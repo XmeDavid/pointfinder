@@ -9,6 +9,7 @@ import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.service.GameImportExportService;
 import com.prayer.pointfinder.service.GameService;
+import com.prayer.pointfinder.service.PracticeGameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GameController {
 
+    private final PracticeGameService practiceGameService;
     private final GameService gameService;
     private final GameImportExportService gameImportExportService;
 
@@ -46,6 +48,12 @@ public class GameController {
     public ResponseEntity<GameResponse> updateGame(@PathVariable UUID id,
                                                     @Valid @RequestBody UpdateGameRequest request) {
         return ResponseEntity.ok(gameService.updateGame(id, request));
+    }
+
+    /** Turns a practice game into a normal game, under the normal active-game quota. */
+    @PostMapping("/{id}/keep")
+    public ResponseEntity<GameResponse> keepGame(@PathVariable UUID id) {
+        return ResponseEntity.ok(practiceGameService.keepForCurrentUser(id));
     }
 
     @DeleteMapping("/{id}")

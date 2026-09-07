@@ -105,6 +105,22 @@ public class Game {
     private Integer defaultCheckInRadiusM = 15;
 
     /**
+     * Set when this is a practice game created by a tutorial (the scenario id).
+     * Practice games sit outside the personal active-game quota, take a single
+     * player, and are ended by the scheduler at {@link #tutorialExpiresAt}.
+     * "Keep" clears both fields and the game becomes a normal one.
+     */
+    @Column(name = "tutorial_scenario", length = 64)
+    private String tutorialScenario;
+
+    @Column(name = "tutorial_expires_at")
+    private Instant tutorialExpiresAt;
+
+    public boolean isPracticeGame() {
+        return tutorialScenario != null;
+    }
+
+    /**
      * Monotonically-increasing state version for the snapshot / realtime
      * recovery contract (P0 Track 2 Slice 1).
      *

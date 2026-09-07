@@ -50,7 +50,7 @@ public class QuotaService {
             .orElse(UserSubscription.builder().tier(IndividualTier.free).status(SubscriptionStatus.active).build());
 
         QuotaResponse.Limits limits = resolvePersonalLimits(sub);
-        long activeGames = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusIn(
+        long activeGames = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusInAndTutorialScenarioIsNull(
             user.getId(), List.of(GameStatus.setup, GameStatus.live));
         long currentResourceBytes = resourceRepository.sumSizeBytesByCreatedByIdAndOrganizationIsNull(user.getId());
 
@@ -103,7 +103,7 @@ public class QuotaService {
         Integer max = getOverride(sub.getQuotaOverrides(), "max_active_games", 1);
         if (max == null) return;
 
-        long current = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusIn(
+        long current = gameRepository.countByCreatedByIdAndOrganizationIsNullAndStatusInAndTutorialScenarioIsNull(
             user.getId(), List.of(GameStatus.setup, GameStatus.live));
         if (current >= max) {
             throw new BadRequestException("Active game limit reached (" + max + ")", ErrorCode.QUOTA_ACTIVE_GAMES_EXCEEDED);
@@ -152,6 +152,21 @@ public class QuotaService {
         long current = gameRepository.countOperatorsByGameId(game.getId());
         if (current >= max) {
             throw new BadRequestException("Operator limit reached (" + max + ")", ErrorCode.QUOTA_OPERATORS_PER_GAME_EXCEEDED);
+        }
+    }
+
+    /**
+     * A practice game takes a single player, so the operator can open the
+     * player app and see that side, and nothing more. This is a product rule
+     * of practice games, not a subscription quota, so it ignores the
+     * enforcement switch.
+     */
+    public void enforcePracticeGamePlayerLimit(Game game) {
+        if (!game.isPracticeGame()) return;
+        if (playerRepository.countByGameId(game.getId()) >= 1) {
+            throw new BadRequestException(
+                "A practice game takes a single player",
+                ErrorCode.TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT);
         }
     }
 

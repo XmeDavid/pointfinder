@@ -72,6 +72,10 @@ class GameServiceTest {
     @Mock
     private TeamVariableService teamVariableService;
     @Mock
+    private com.prayer.pointfinder.service.QuotaService quotaService;
+    @Mock
+    private com.prayer.pointfinder.repository.UserTutorialProgressRepository progressRepository;
+    @Mock
     private TeamVariableRepository teamVariableRepository;
     @Mock
     private ChallengeTeamVariableRepository challengeTeamVariableRepository;
@@ -119,7 +123,8 @@ class GameServiceTest {
                 new GameProgressResetService(submissionRepository, checkInRepository,
                         activityEventRepository, uploadSessionRepository, teamLocationRepository),
                 new GameReadinessValidator(baseRepository, challengeRepository,
-                        teamRepository, assignmentRepository, teamVariableService, stageRepository)
+                        teamRepository, assignmentRepository, teamVariableService, stageRepository),
+                quotaService, progressRepository
         );
 
         // Default stub: exportGame calls this to build the tags section

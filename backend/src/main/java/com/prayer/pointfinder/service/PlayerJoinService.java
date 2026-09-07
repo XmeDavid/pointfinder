@@ -49,7 +49,8 @@ public class PlayerJoinService {
                 .orElse(null);
 
         if (player == null) {
-            // Enforce player limit only for new players (not rejoins)
+            // Enforce player limits only for new players (not rejoins)
+            quotaService.enforcePracticeGamePlayerLimit(game);
             quotaService.enforcePlayersPerGameLimit(game);
             player = Player.builder()
                     .team(team)

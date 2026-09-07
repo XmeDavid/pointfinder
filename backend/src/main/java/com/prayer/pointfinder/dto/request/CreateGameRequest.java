@@ -37,4 +37,12 @@ public class CreateGameRequest {
     @Min(value = 5, message = "Check-in radius must be at least 5 m")
     @Max(value = 200, message = "Check-in radius must be at most 200 m")
     private Integer defaultCheckInRadiusM;
+
+    /**
+     * Set to {@code first-game} by the create dialog while that tutorial is
+     * running. Honoured only while the caller's {@code first-game} progress row
+     * is {@code in_progress}; otherwise a normal game is created.
+     */
+    @jakarta.validation.constraints.Size(max = 64)
+    private String tutorialScenario;
 }

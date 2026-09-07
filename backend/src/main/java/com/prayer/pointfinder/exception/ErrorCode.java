@@ -138,4 +138,12 @@ public enum ErrorCode {
     TUTORIAL_SCENARIO_UNKNOWN,
     /** The tutorial status is not one of {@code in_progress|completed|skipped}. Details carry {@code status}. */
     TUTORIAL_STATUS_UNKNOWN,
+    /** The operator already owns a practice game that has not ended; delete or keep it first. */
+    TUTORIAL_PRACTICE_GAME_EXISTS,
+    /** Only {@code practice-game} scenarios create their game through the practice endpoint. */
+    TUTORIAL_PRACTICE_GAME_NOT_ALLOWED,
+    /** A practice game takes a single player. */
+    TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT,
+    /** "Keep" was called on a game that is not a practice game. */
+    TUTORIAL_NOT_PRACTICE_GAME,
 }

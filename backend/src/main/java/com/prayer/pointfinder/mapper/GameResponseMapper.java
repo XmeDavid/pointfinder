@@ -43,7 +43,9 @@ public final class GameResponseMapper {
                 game.getDefaultCheckInMethod() != null
                         ? game.getDefaultCheckInMethod().name()
                         : com.prayer.pointfinder.entity.CheckInMethod.NFC.name(),
-                game.getDefaultCheckInRadiusM() != null ? game.getDefaultCheckInRadiusM() : 15
+                game.getDefaultCheckInRadiusM() != null ? game.getDefaultCheckInRadiusM() : 15,
+                game.getTutorialScenario(),
+                game.getTutorialExpiresAt()
         );
     }
 }
