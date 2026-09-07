@@ -45,6 +45,7 @@ export function makeTourState(overrides: TourStateOverrides = {}): TourState {
     stepCompletedAt: {},
     ackedSteps: new Set<string>(),
     laterSteps: new Set<string>(),
+    clickedSteps: new Set<string>(),
     field: (testId: string) => ({ ...NO_FIELD, ...(fields[testId] ?? {}) }),
     pressedIn: (groupTestId: string) => pressedGroups[groupTestId] ?? null,
     ...rest,

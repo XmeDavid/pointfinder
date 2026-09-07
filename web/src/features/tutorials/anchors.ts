@@ -39,6 +39,7 @@ export const KNOWN_ANCHORS: readonly string[] = [
   'base-checkin-radius',
   'base-checkin-radius-error',
   'base-qr-print',
+  'codes-print-sheet',
   'visibility-visible',
   'visibility-hidden',
   'link-challenge-btn',

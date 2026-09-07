@@ -25,6 +25,23 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 describe('useCreateBase', () => {
+  it('appends the created base to the cached list', async () => {
+    const qc = createTestClient()
+    qc.setQueryData(['bases', 'game-1'], [{ id: 'base-1', gameId: 'game-1', name: 'Existing' }])
+
+    const { result } = renderHook(() => useCreateBase('game-1'), {
+      wrapper: createWrapper(qc),
+    })
+    await act(async () => {
+      result.current.mutate({ name: 'New Base', description: '', lat: 38.72, lng: -9.14 })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const names = (qc.getQueryData(['bases', 'game-1']) as Array<{ name: string }>).map((b) => b.name)
+    expect(names).toContain('Existing')
+    expect(names).toContain('New Base')
+  })
+
   it('creates a base and invalidates the bases cache', async () => {
     const qc = createTestClient()
     const invalidateSpy = vi.spyOn(qc, 'invalidateQueries')
@@ -50,6 +67,33 @@ describe('useCreateBase', () => {
 })
 
 describe('useUpdateBase', () => {
+  it('writes the saved base into the cached list before the refetch lands', async () => {
+    const qc = createTestClient()
+    qc.setQueryData(['bases', 'game-1'], [
+      { id: 'base-1', gameId: 'game-1', name: 'Old', checkInMethod: 'NFC' },
+      { id: 'base-2', gameId: 'game-1', name: 'Other', checkInMethod: 'NFC' },
+    ])
+    let seenAtSuccess: unknown
+    qc.getMutationCache().subscribe((event) => {
+      if (event.type === 'updated' && event.mutation.state.status === 'success') {
+        seenAtSuccess = qc.getQueryData(['bases', 'game-1'])
+      }
+    })
+
+    const { result } = renderHook(() => useUpdateBase('game-1'), {
+      wrapper: createWrapper(qc),
+    })
+    await act(async () => {
+      result.current.mutate({ baseId: 'base-1', dto: { name: 'Saved', checkInMethod: 'QR' } })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const list = seenAtSuccess as Array<{ id: string; name: string; checkInMethod: string }>
+    expect(list.map((b) => b.id)).toEqual(['base-1', 'base-2'])
+    expect(list[0]).toMatchObject({ id: 'base-1', name: 'Saved', checkInMethod: 'QR' })
+    expect(list[1].name).toBe('Other')
+  })
+
   it('updates a base and invalidates the bases cache', async () => {
     const qc = createTestClient()
     const invalidateSpy = vi.spyOn(qc, 'invalidateQueries')

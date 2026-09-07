@@ -1716,7 +1716,7 @@
       },
       "base-qr": {
         "title": "QR-Code drucken",
-        "body": "Diese Station öffnet sich per QR-Code. Drucke ihn und bringe ihn vor Ort an, wetterfest, wenn er draußen hängt. Der Reiter Tags und Codes druckt alle Codes auf einem Blatt."
+        "body": "Diese Station öffnet sich per QR-Code. Drucke ihn und bringe ihn vor Ort an, wetterfest, wenn er draußen hängt. Der Reiter Tags und Codes druckt alle Codes auf einem Blatt. Schließe das Druckblatt, wenn du fertig bist."
       },
       "base-nfc": {
         "title": "NFC-Tag beschreiben",
@@ -1782,7 +1782,7 @@
       },
       "assign": {
         "title": "Challenges zuordnen",
-        "body": "Zuordnungen entscheiden, welche Challenge an welcher Station wartet. Automatisch zuordnen gibt jeder Station jede Challenge; öffne eine Station für die Handauswahl, oder ordne je Team zu."
+        "body": "Zuordnungen entscheiden, welche Challenge an welcher Station wartet. Automatisch zuordnen gibt jeder noch leeren Station der Reihe nach eine unbenutzte Challenge; öffne eine Station für die Handauswahl, oder ordne je Team zu."
       },
       "new-team": {
         "title": "Lege ein Team an",

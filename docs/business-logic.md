@@ -101,6 +101,8 @@ Most games use a **fixed base + challenge pair** as their primary building block
 
 Editing a pair opens a single dialog that writes the base and challenge via **two sequential mutations** (`basesApi.update` first, then `challengesApi.update`). If the base update fails, the challenge is NOT touched. If the base succeeds and the challenge fails, the base is left saved and the operator is prompted to retry the challenge half — there is no rollback path because the model is intentionally decoupled on the backend.
 
+**Auto-assign** in the build drawer pairs each base that has no assignment and no fixed challenge with a challenge that no assignment uses yet, in list order, and re-submits the existing assignments unchanged through `PUT /games/:gameId/assignments` (which replaces the game's whole set). It never builds a base × challenge cross product: an "All Teams" challenge lives at exactly one base and a base carries one such challenge, so the backend rejects that shape with a 409.
+
 The legacy `BasesPage`, `ChallengesPage`, and `AssignmentsPage` remain available for advanced workflows (random assignments, team-specific overrides, unlocks configuration, rich-text content, team variables, etc.) and are linked from the header of the unified view as "Manage bases", "Manage challenges", and "Advanced assignments".
 
 Source spec: `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` § "P1: Operator Workflow and Content Model" (Principle 5 — "Build a unified operator view as an aggregate over the existing model first. Do not collapse the underlying base/challenge/assignment model until the product behavior is proven").

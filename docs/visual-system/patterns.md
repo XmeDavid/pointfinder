@@ -274,19 +274,26 @@ Next. Next exists only for steps that are pure explanation. A step that is
 already satisfied is skipped rather than asked for again; an explanation the
 operator has not read is never skipped. Typed input counts only once it settles
 for half a second, so the bubble never moves on mid-word, and it never takes
-focus away from a field the operator is typing in.
+focus away from a field the operator is typing in. A click on the spotlit
+element is recorded together with the DOM it produced, so a step that waits for
+"printed and closed the sheet" cannot complete in the instant before the sheet
+opens; a saved entity lands in the query cache from the server's response
+before the refetch, so a guard keyed on the saved value reads it at once.
 
-Prepare, do not perform. A step may reveal its anchor — switch mode, open a
-drawer tab, expand the readiness panel, open settings, select an entity — and
-nothing else. It never creates a base, links a tag, saves a form, or changes game
+Prepare, do not perform. A step may reveal its anchor — switch mode, open or
+close the drawer (the drawer's scrim covers the readiness panel, the mode rail
+and settings), expand the readiness panel, open settings, select an entity —
+and nothing else. It never creates a base, links a tag, saves a form, or changes game
 status. The operator performs every domain action themselves, which is the whole
 point of teaching on a real game.
 
-Never point at nothing. If the anchor is not rendered or is entirely off screen,
-the bubble collapses to the pill; resuming from the pill returns to the step's
-screen and re-runs the step's prepare to bring the anchor back. Anchors are
-tracked through DOM mutations and for a short settle window after any trigger,
-so a drawer that springs open is followed, not guessed.
+Never point at nothing. An anchor that is rendered but sits outside the viewport
+(a form field below the fold of a drawer) is scrolled into view once per step
+before anything else happens. If the anchor is not rendered at all, the bubble
+collapses to the pill; resuming from the pill returns to the step's screen and
+re-runs the step's prepare to bring the anchor back. Anchors are tracked through
+DOM mutations and for a short settle window after any trigger, so a drawer that
+springs open is followed, not guessed.
 
 On phones the bubble is a bottom sheet above the 56 px tab bar, capped in height
 with internal scroll, so the longest German step copy scrolls instead of clipping

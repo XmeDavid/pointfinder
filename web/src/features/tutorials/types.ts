@@ -62,6 +62,8 @@ export interface TourState {
   stepCompletedAt: Record<string, number>
   ackedSteps: ReadonlySet<string>
   laterSteps: ReadonlySet<string>
+  /** Steps whose anchor has been clicked, for predicates that need a click plus a follow-up. */
+  clickedSteps: ReadonlySet<string>
   field: (testId: string) => FieldReading
   /** testid of the aria-pressed=true child. */
   pressedIn: (groupTestId: string) => string | null

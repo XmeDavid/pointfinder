@@ -108,6 +108,21 @@ describe('BasesTab', () => {
     })
   })
 
+  it('marks only unlinked NFC bases as missing a tag', async () => {
+    server.use(
+      http.get('/api/games/game-1/bases', () => HttpResponse.json([
+        createMockBase({ id: 'nfc', name: 'Tagless', checkInMethod: 'NFC', nfcLinked: false }),
+        createMockBase({ id: 'qr', name: 'Printed', checkInMethod: 'QR', nfcLinked: false }),
+        createMockBase({ id: 'gps', name: 'Radius', checkInMethod: 'LOCATION', nfcLinked: false, hidden: true }),
+      ])),
+    )
+    renderBasesTab()
+    await screen.findByText('Tagless')
+    expect(screen.getAllByTitle('Missing NFC')).toHaveLength(1)
+    expect(screen.getByTitle('Ready')).toBeInTheDocument()
+    expect(screen.getByTitle('Hidden (ready)')).toBeInTheDocument()
+  })
+
   it('shows challenge count subtitle', async () => {
     renderBasesTab()
 

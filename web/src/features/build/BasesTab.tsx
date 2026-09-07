@@ -12,39 +12,12 @@ import { SearchInput } from '@/components/data/SearchInput'
 import { Spinner } from '@/components/feedback/Spinner'
 import { BaseDetail } from './BaseDetail'
 import type { Base, Assignment } from '@/types'
+import { BaseStatusDot } from './BaseStatusDot'
 
 interface BasesTabProps {
   gameId: string
 }
 
-function BaseStatusDot({ base }: { base: Base }) {
-  if (base.hidden) {
-    const color = base.nfcLinked
-      ? 'border-primary/60 bg-primary/20'
-      : 'border-destructive/60 bg-destructive/20'
-    const title = base.nfcLinked ? 'Hidden (NFC linked)' : 'Hidden (missing NFC)'
-    return (
-      <span
-        className={`inline-block h-2 w-2 rounded-full border border-dashed shrink-0 ${color}`}
-        title={title}
-      />
-    )
-  }
-  if (!base.nfcLinked) {
-    return (
-      <span
-        className="inline-block h-2 w-2 rounded-full bg-destructive shrink-0"
-        title="Missing NFC"
-      />
-    )
-  }
-  return (
-    <span
-      className="inline-block h-2 w-2 rounded-full bg-primary shrink-0"
-      title="Ready"
-    />
-  )
-}
 
 function getBaseSubtitle(base: Base, assignments: Assignment[]): string {
   const baseAssignments = assignments.filter((a) => a.baseId === base.id)

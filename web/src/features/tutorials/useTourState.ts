@@ -28,6 +28,7 @@ export function useTourState(): TourState {
   const startedAt = useTourStore((s) => s.startedAt)
   const ackedSteps = useTourStore((s) => s.ackedSteps)
   const laterSteps = useTourStore((s) => s.laterSteps)
+  const clickedSteps = useTourStore((s) => s.clickedSteps)
   const stepCompletedAt = useTourStore((s) => s.stepCompletedAt)
   const lastSuccess = useTourStore((s) => s.lastSuccess)
   // DOM reads are frozen between ticks so a predicate cannot fire on an
@@ -105,6 +106,7 @@ export function useTourState(): TourState {
     stepCompletedAt,
     ackedSteps,
     laterSteps,
+    clickedSteps,
     field,
     pressedIn: pressedInGroup,
   }

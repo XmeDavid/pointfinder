@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CoachBubble } from '@/components/tour/CoachBubble'
 import { Spotlight } from '@/components/tour/Spotlight'
@@ -88,34 +88,55 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     bindGame(routeGameId)
   }, [bindGame, gameId, scenario.entry, state.gamesAtStart, state.routeGameId])
 
+  // Pending nudges live outside the listener effect: the listeners re-subscribe
+  // whenever the anchor element changes (a click that unmounts its own button
+  // does exactly that), and a cancelled frame would leave the step unread.
+  // A click on the anchor is recorded in the same frame that re-reads the DOM,
+  // after React has committed whatever the click opened, so a predicate never
+  // sees "clicked" next to a snapshot taken before the click happened.
+  const frame = useRef(0)
+  const typing = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingClick = useRef<string | null>(null)
+  const flush = useCallback(() => {
+    const clickedStep = pendingClick.current
+    pendingClick.current = null
+    if (clickedStep) clicked(clickedStep)
+    bumpTick()
+  }, [bumpTick, clicked])
+  const nudge = useCallback(() => {
+    if (frame.current) return
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0
+      flush()
+    })
+  }, [flush])
+  const onInput = useCallback(() => {
+    // Typing supersedes a pending immediate nudge: the field is read once it settles.
+    if (frame.current) {
+      cancelAnimationFrame(frame.current)
+      frame.current = 0
+    }
+    if (typing.current) clearTimeout(typing.current)
+    typing.current = setTimeout(() => {
+      typing.current = null
+      flush()
+    }, INPUT_SETTLE_MS)
+  }, [flush])
+  useEffect(
+    () => () => {
+      if (frame.current) cancelAnimationFrame(frame.current)
+      if (typing.current) clearTimeout(typing.current)
+    },
+    [],
+  )
+
   // Capture-phase listeners: record clicks inside the anchor, and nudge the
   // engine whenever anything in the app is pressed or typed, so predicates that
   // read unsaved form fields stay live. Typing settles before it counts.
   useEffect(() => {
-    let frame = 0
-    let typing: ReturnType<typeof setTimeout> | null = null
-    const nudge = () => {
-      if (frame) return
-      frame = requestAnimationFrame(() => {
-        frame = 0
-        bumpTick()
-      })
-    }
-    const onInput = () => {
-      // Typing supersedes a pending immediate nudge: the field is read once it settles.
-      if (frame) {
-        cancelAnimationFrame(frame)
-        frame = 0
-      }
-      if (typing) clearTimeout(typing)
-      typing = setTimeout(() => {
-        typing = null
-        bumpTick()
-      }, INPUT_SETTLE_MS)
-    }
     const onClick = (event: Event) => {
       const target = event.target
-      if (step && element && target instanceof Node && element.contains(target)) clicked(step.id)
+      if (step && element && target instanceof Node && element.contains(target)) pendingClick.current = step.id
       nudge()
     }
     // New nodes (a drawer opening, a detail form mounting) are read without a
@@ -127,13 +148,24 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     document.addEventListener('input', onInput, true)
     return () => {
       mutations?.disconnect()
-      if (frame) cancelAnimationFrame(frame)
-      if (typing) clearTimeout(typing)
       document.removeEventListener('click', onClick, true)
       document.removeEventListener('change', nudge, true)
       document.removeEventListener('input', onInput, true)
     }
-  }, [bumpTick, clicked, element, step])
+  }, [element, nudge, onInput, step])
+
+  // An anchor that exists but sits outside the viewport (a form field below the
+  // fold of a drawer) is brought into view once per step, so the tour points at
+  // the control instead of collapsing to the pill.
+  const scrolledFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!step || !element || visible) return
+    if (scrolledFor.current === step.id) return
+    scrolledFor.current = step.id
+    if (typeof element.scrollIntoView === 'function') {
+      element.scrollIntoView({ block: 'center', inline: 'nearest' })
+    }
+  }, [element, step, visible])
 
   const done = step ? isStepDone(step, state, clickedSteps) : false
 
@@ -144,8 +176,14 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     if (!currentStepId) return
     if (step) {
       if (!done) return
-      markStepCompleted(step.id, Date.now())
-      const next = advance(scenario, latest.current.state, clickedSteps, step.id, true)
+      // The next step is chosen on a state that already carries this step's
+      // completion time: a guard such as "saved since the revert" must not see
+      // the pre-completion snapshot and fall back to the run's start.
+      const now = Date.now()
+      markStepCompleted(step.id, now)
+      const s = latest.current.state
+      const completed = { ...s, stepCompletedAt: { ...s.stepCompletedAt, [step.id]: now } }
+      const next = advance(scenario, completed, clickedSteps, step.id, true)
       if (next === null) complete()
       else setCurrentStep(next)
       return

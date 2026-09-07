@@ -3,7 +3,7 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { INPUT_SETTLE_MS, TourHost } from './TourHost'
 import { useTourStore } from './store'
 import { SCENARIOS, registerScenario } from './scenarios'
@@ -114,7 +114,9 @@ describe('TourHost', () => {
   })
 
   it('shows the bubble on the first step, pins its id, and advances once typing settles', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
+    // Only the debounce's own timer is faked: faking setInterval would stall
+    // jsdom's requestAnimationFrame loop for the rest of the file.
+    vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderHost()
     act(() => {
@@ -233,6 +235,177 @@ describe('TourHost', () => {
     await waitFor(() => expect(useTourStore.getState().activeScenario).toBeNull())
     expect(useTourStore.getState().progress['first-game']?.status).toBe('completed')
     expect(useTourStore.getState().progress['first-game']?.gameId).toBe('game-1')
+  })
+})
+
+describe('TourHost anchors that move or vanish', () => {
+  it('still reads the DOM when the click unmounts the step anchor itself', async () => {
+    const user = userEvent.setup()
+    const scenario: Scenario = {
+      ...probe,
+      steps: [
+        {
+          id: 'open-editor',
+          anchor: 'probe-open',
+          done: { kind: 'predicate', test: (s) => s.field('probe-editor').present },
+          copy: { title: 'tutorials.common.next', body: 'tutorials.common.gotIt' },
+        },
+        {
+          id: 'after',
+          anchor: 'probe-editor',
+          done: { kind: 'ack' },
+          copy: { title: 'tutorials.common.resume', body: 'tutorials.common.close' },
+        },
+      ],
+    }
+    registerScenario(scenario)
+
+    function Editorish() {
+      const [open, setOpen] = useState(false)
+      return open ? (
+        <section data-testid="probe-editor">editor</section>
+      ) : (
+        <button type="button" data-testid="probe-open" onClick={() => setOpen(true)}>
+          open
+        </button>
+      )
+    }
+    render(
+      <Harness path="/game/game-1">
+        <Editorish />
+        <TourHost />
+      </Harness>,
+    )
+    act(() => {
+      useTourStore.getState().start('first-game', { gameId: 'game-1' })
+    })
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('open-editor'))
+
+    await user.click(screen.getByTestId('probe-open'))
+
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('after'))
+  })
+
+  it('records the click on the same tick as the DOM it opened', async () => {
+    const user = userEvent.setup()
+    const scenario: Scenario = {
+      ...probe,
+      steps: [
+        {
+          id: 'print',
+          anchor: 'probe-print',
+          // Done once the sheet the click opens has been closed again.
+          done: {
+            kind: 'predicate',
+            test: (s) => s.clickedSteps.has('print') && !s.field('probe-sheet').present,
+          },
+          copy: { title: 'tutorials.common.next', body: 'tutorials.common.gotIt' },
+        },
+        {
+          id: 'after',
+          anchor: 'probe-print',
+          done: { kind: 'ack' },
+          copy: { title: 'tutorials.common.resume', body: 'tutorials.common.close' },
+        },
+      ],
+    }
+    registerScenario(scenario)
+
+    function Printish() {
+      const [open, setOpen] = useState(false)
+      return (
+        <>
+          <button type="button" data-testid="probe-print" onClick={() => setOpen(true)}>
+            print
+          </button>
+          {open && (
+            <section data-testid="probe-sheet">
+              <button type="button" data-testid="probe-sheet-close" onClick={() => setOpen(false)}>
+                close
+              </button>
+            </section>
+          )}
+        </>
+      )
+    }
+    render(
+      <Harness path="/game/game-1">
+        <Printish />
+        <TourHost />
+      </Harness>,
+    )
+    act(() => {
+      useTourStore.getState().start('first-game', { gameId: 'game-1' })
+    })
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('print'))
+
+    await user.click(screen.getByTestId('probe-print'))
+    await waitFor(() => expect(useTourStore.getState().clickedSteps.has('print')).toBe(true))
+    // The sheet is open, so the step is still the current one.
+    expect(useTourStore.getState().currentStepId).toBe('print')
+
+    await user.click(screen.getByTestId('probe-sheet-close'))
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('after'))
+  })
+
+  it('advances on a state that already carries the completed step time', async () => {
+    const scenario: Scenario = {
+      ...probe,
+      steps: [
+        {
+          id: 'first',
+          anchor: 'probe-name',
+          done: { kind: 'predicate', test: () => true },
+          copy: { title: 'tutorials.common.next', body: 'tutorials.common.gotIt' },
+        },
+        {
+          id: 'save-again',
+          anchor: 'probe-name',
+          // Satisfied only by a save that happened after "first" completed.
+          done: {
+            kind: 'predicate',
+            test: (s) => (s.lastSuccess['probe:save'] ?? 0) > (s.stepCompletedAt['first'] ?? s.startedAt),
+          },
+          copy: { title: 'tutorials.common.resume', body: 'tutorials.common.close' },
+        },
+      ],
+    }
+    registerScenario(scenario)
+    renderHost()
+    act(() => {
+      useTourStore.getState().start('first-game', { gameId: 'game-1' })
+      // A save from early in the run, long before "first" completes: it must
+      // not count for "save-again" just because the guard read a stale clock.
+      useTourStore.setState({ startedAt: 1_000 })
+      useTourStore.getState().recordSuccess('probe:save', 2_000)
+    })
+
+    await waitFor(() => expect(useTourStore.getState().currentStepId).toBe('save-again'))
+    expect(useTourStore.getState().activeScenario).toBe('first-game')
+  })
+
+  it('scrolls an off-screen anchor into view instead of collapsing to the pill', async () => {
+    const offscreen = document.createElement('button')
+    offscreen.setAttribute('data-testid', 'probe-missing')
+    offscreen.getBoundingClientRect = () =>
+      ({ top: 5000, left: 10, right: 210, bottom: 5040, width: 200, height: 40, x: 10, y: 5000, toJSON: () => ({}) }) as DOMRect
+    const scrollIntoView = vi.fn(() => {
+      offscreen.getBoundingClientRect = () =>
+        ({ top: 100, left: 10, right: 210, bottom: 140, width: 200, height: 40, x: 10, y: 100, toJSON: () => ({}) }) as DOMRect
+      window.dispatchEvent(new Event('scroll'))
+    })
+    offscreen.scrollIntoView = scrollIntoView as unknown as typeof offscreen.scrollIntoView
+    document.body.appendChild(offscreen)
+
+    renderHost()
+    act(() => {
+      useTourStore.getState().start('first-game', { gameId: 'game-1', stepId: 'read-this' })
+    })
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
+    expect(await screen.findByTestId('tour-bubble-title')).toHaveTextContent('Resume')
+    expect(screen.queryByTestId('tour-pill')).not.toBeInTheDocument()
+    offscreen.remove()
   })
 })
 

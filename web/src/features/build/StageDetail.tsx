@@ -9,36 +9,8 @@ import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { TransitionType } from '@/types/stage'
-import type { Base } from '@/types/base'
+import { BaseStatusDot } from './BaseStatusDot'
 
-function BaseStatusDot({ base }: { base: Base }) {
-  if (base.hidden) {
-    const color = base.nfcLinked
-      ? 'border-primary/60 bg-primary/20'
-      : 'border-destructive/60 bg-destructive/20'
-    const title = base.nfcLinked ? 'Hidden (NFC linked)' : 'Hidden (missing NFC)'
-    return (
-      <span
-        className={`inline-block h-2 w-2 rounded-full border border-dashed shrink-0 ${color}`}
-        title={title}
-      />
-    )
-  }
-  if (!base.nfcLinked) {
-    return (
-      <span
-        className="inline-block h-2 w-2 rounded-full bg-destructive shrink-0"
-        title="Missing NFC"
-      />
-    )
-  }
-  return (
-    <span
-      className="inline-block h-2 w-2 rounded-full bg-primary shrink-0"
-      title="Ready"
-    />
-  )
-}
 
 export default function StageDetail({
   stageId,

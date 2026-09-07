@@ -1716,7 +1716,7 @@
       },
       "base-qr": {
         "title": "Print the QR code",
-        "body": "This base unlocks by QR code. Print it and put it at the location, weatherproofed if it lives outdoors. The Tags & codes tab prints every code on one sheet."
+        "body": "This base unlocks by QR code. Print it and put it at the location, weatherproofed if it lives outdoors. The Tags & codes tab prints every code on one sheet. Close the print sheet when you are done."
       },
       "base-nfc": {
         "title": "Write the NFC tag",
@@ -1782,7 +1782,7 @@
       },
       "assign": {
         "title": "Link challenges to bases",
-        "body": "Assignments decide which challenge waits at which base. Auto-assign gives every base every challenge; open a base to pick by hand, or assign per team for split routes."
+        "body": "Assignments decide which challenge waits at which base. Auto-assign pairs each base that has nothing yet with an unused challenge, in order; open a base to pick by hand, or assign per team for split routes."
       },
       "new-team": {
         "title": "Create a team",

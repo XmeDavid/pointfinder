@@ -1716,7 +1716,7 @@
       },
       "base-qr": {
         "title": "Imprime o código QR",
-        "body": "Esta base desbloqueia por código QR. Imprime-o e coloca-o no local, protegido da chuva se ficar ao ar livre. O separador Etiquetas e códigos imprime todos os códigos numa folha."
+        "body": "Esta base desbloqueia por código QR. Imprime-o e coloca-o no local, protegido da chuva se ficar ao ar livre. O separador Etiquetas e códigos imprime todos os códigos numa folha. Fecha a folha de impressão quando terminares."
       },
       "base-nfc": {
         "title": "Grava a etiqueta NFC",
@@ -1782,7 +1782,7 @@
       },
       "assign": {
         "title": "Liga desafios às bases",
-        "body": "As atribuições decidem que desafio espera em que base. A atribuição automática dá todos os desafios a todas as bases; abre uma base para escolher à mão, ou atribui por equipa."
+        "body": "As atribuições decidem que desafio espera em que base. A atribuição automática emparelha cada base ainda vazia com um desafio por usar, pela ordem; abre uma base para escolher à mão, ou atribui por equipa."
       },
       "new-team": {
         "title": "Cria uma equipa",

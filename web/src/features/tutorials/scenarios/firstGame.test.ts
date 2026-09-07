@@ -110,6 +110,7 @@ describe('first-game scenario definition', () => {
       selectTeam: vi.fn(),
       setReadinessExpanded: vi.fn(),
       setSettingsPanelOpen: vi.fn(),
+      closeDrawer: vi.fn(),
       navigate: vi.fn(),
     } as unknown as TourActions
     for (const step of firstGame.steps) step.prepare?.(actions, state({ mode: 'build' }))
@@ -233,6 +234,33 @@ describe('first-game advance', () => {
       }),
       from: 'base-save',
       expected: 'base-qr',
+    },
+    {
+      name: 'the printed code keeps its step while the print sheet is open',
+      state: state({
+        ...inWorkspace,
+        bases: [createMockBase({ id: 'b1', name: 'Old mill', checkInMethod: 'QR' })],
+        selectedBaseId: 'b1',
+        stepCompletedAt: { 'base-name': 200 },
+        lastSuccess: { 'base:update': 300 },
+        clickedSteps: new Set(['base-qr']),
+        fields: { 'codes-print-sheet': { present: true } },
+      }),
+      from: 'base-qr',
+      expected: 'base-qr',
+    },
+    {
+      name: 'closing the print sheet after printing moves to the second base',
+      state: state({
+        ...inWorkspace,
+        bases: [createMockBase({ id: 'b1', name: 'Old mill', checkInMethod: 'QR' })],
+        selectedBaseId: 'b1',
+        stepCompletedAt: { 'base-name': 200 },
+        lastSuccess: { 'base:update': 300 },
+        clickedSteps: new Set(['base-qr']),
+      }),
+      from: 'base-qr',
+      expected: 'second-base',
     },
     {
       name: 'a saved unlinked NFC base asks for the tag',

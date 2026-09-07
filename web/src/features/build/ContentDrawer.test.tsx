@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/test/msw/server'
+import { createMockBase } from '@/test/factories/base'
+import { createMockChallenge } from '@/test/factories/challenge'
 import { ContentDrawer } from './ContentDrawer'
 
 const platform = vi.hoisted(() => ({ native: false }))
@@ -101,6 +105,44 @@ describe('ContentDrawer', () => {
     mockStore.drawerTab = 'challenges'
     const { container } = renderDrawer()
     expect(container.querySelector('[data-testid="auto-assign-btn"]')).not.toBeInTheDocument()
+  })
+
+  it('auto-assign pairs open bases with unused challenges and keeps existing assignments', async () => {
+    const user = userEvent.setup()
+    let sent: Array<{ baseId: string; challengeId: string; teamId?: string }> = []
+    server.use(
+      http.get('/api/games/game-1/bases', () => HttpResponse.json([
+        createMockBase({ id: 'b1', name: 'Mill' }),
+        createMockBase({ id: 'b2', name: 'Bridge' }),
+        createMockBase({ id: 'b3', name: 'Lookout', fixedChallengeId: 'c9' }),
+        createMockBase({ id: 'b4', name: 'Chapel' }),
+      ])),
+      http.get('/api/games/game-1/challenges', () => HttpResponse.json([
+        createMockChallenge({ id: 'c1', title: 'One' }),
+        createMockChallenge({ id: 'c2', title: 'Two' }),
+        createMockChallenge({ id: 'c3', title: 'Three' }),
+      ])),
+      http.get('/api/games/game-1/assignments', () => HttpResponse.json([
+        { id: 'a1', gameId: 'game-1', baseId: 'b2', challengeId: 'c2', teamId: 'team-1' },
+      ])),
+      http.put('/api/games/game-1/assignments', async ({ request }) => {
+        const body = (await request.json()) as { assignments: typeof sent }
+        sent = body.assignments
+        return HttpResponse.json(sent.map((a, i) => ({ id: `n${i}`, gameId: 'game-1', ...a })))
+      }),
+    )
+    renderDrawer()
+    await waitFor(() => expect(screen.getByText('Mill')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('auto-assign-btn'))
+
+    await waitFor(() => expect(sent.length).toBeGreaterThan(0))
+    // b2 keeps its per-team assignment, b3 is fixed to c9, so b1 and b4 take c1 and c3.
+    expect(sent).toEqual([
+      { baseId: 'b2', challengeId: 'c2', teamId: 'team-1' },
+      { baseId: 'b1', challengeId: 'c1' },
+      { baseId: 'b4', challengeId: 'c3' },
+    ])
   })
 
   it('close button calls closeDrawer', async () => {

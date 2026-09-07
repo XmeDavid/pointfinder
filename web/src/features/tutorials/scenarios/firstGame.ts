@@ -172,7 +172,13 @@ const steps: Step[] = [
     route: 'workspace',
     anchor: 'base-qr-print',
     when: (s) => selectedBase(s)?.checkInMethod === 'QR',
-    done: { kind: 'click' },
+    // Done once the print sheet has been opened and closed again: completing on
+    // the click alone would let the next step deselect the base and unmount the
+    // sheet under the operator.
+    done: {
+      kind: 'predicate',
+      test: (s) => s.clickedSteps.has('base-qr') && !s.field('codes-print-sheet').present,
+    },
     copy: copyFor('base-qr'),
   },
   {
@@ -348,6 +354,9 @@ const steps: Step[] = [
     anchor: (s) => (s.readiness.allPassed ? 'go-live-btn' : 'readiness-indicator'),
     prepare: (a, s) => {
       ensureBuild(a, s)
+      // The readiness panel sits behind the drawer's scrim while a tab is open.
+      a.closeDrawer()
+      a.setSettingsPanelOpen(false)
       a.setReadinessExpanded(true)
     },
     done: { kind: 'predicate', test: (s) => s.game?.status === 'live' },
@@ -361,6 +370,7 @@ const steps: Step[] = [
     id: 'modes',
     route: 'workspace',
     anchor: 'mode-command',
+    prepare: (a) => a.closeDrawer(),
     done: { kind: 'ack' },
     copy: copyFor('modes'),
   },
@@ -368,7 +378,10 @@ const steps: Step[] = [
     id: 'revert',
     route: 'workspace',
     anchor: 'revert-to-setup-btn',
-    prepare: (a) => a.setSettingsPanelOpen(true),
+    prepare: (a) => {
+      a.closeDrawer()
+      a.setSettingsPanelOpen(true)
+    },
     done: { kind: 'predicate', test: (s) => s.game?.status === 'setup' },
     copy: copyFor('revert'),
   },
@@ -393,6 +406,9 @@ const steps: Step[] = [
     anchor: (s) => (s.readiness.allPassed ? 'go-live-btn' : 'readiness-indicator'),
     prepare: (a, s) => {
       ensureBuild(a, s)
+      // The readiness panel sits behind the drawer's scrim while a tab is open.
+      a.closeDrawer()
+      a.setSettingsPanelOpen(false)
       a.setReadinessExpanded(true)
     },
     done: { kind: 'predicate', test: (s) => s.game?.status === 'live' },

@@ -47,7 +47,7 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
   const { data: bases = [] } = useBases(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   // Keep the query alive so child tabs share the cache
-  useAssignments(gameId)
+  const { data: assignments = [] } = useAssignments(gameId)
 
   const currentTabMeta = tabs.find((t) => t.key === drawerTab)
   // Tags & codes is no longer phone-only: QR codes are generated and printed
@@ -90,17 +90,22 @@ export function ContentDrawer({ gameId }: ContentDrawerProps) {
   }
 
   const handleAutoAssign = () => {
-    // Auto-assign: create one assignment per base+challenge combo for all teams
-    const newAssignments = bases.flatMap((base) =>
-      challenges.map((challenge) => ({
-        gameId,
-        baseId: base.id,
-        challengeId: challenge.id,
-      })),
-    )
-    if (newAssignments.length > 0) {
-      setAssignments.mutate(newAssignments)
-    }
+    // An "all teams" challenge waits at exactly one base and a base carries one
+    // such challenge, so auto-assign pairs the bases that have nothing yet with
+    // the challenges nobody uses, in order. Existing assignments (including
+    // per-team ones and fixed challenges) are kept as they are.
+    const assignedBases = new Set(assignments.map((a) => a.baseId))
+    const usedChallenges = new Set(assignments.map((a) => a.challengeId))
+    const openBases = bases.filter((base) => !assignedBases.has(base.id) && !base.fixedChallengeId)
+    const openChallenges = challenges.filter((challenge) => !usedChallenges.has(challenge.id))
+    const pairs = openBases.slice(0, openChallenges.length).map((base, i) => ({
+      gameId,
+      baseId: base.id,
+      challengeId: openChallenges[i].id,
+    }))
+    if (pairs.length === 0) return
+    const kept = assignments.map((a) => ({ gameId, baseId: a.baseId, challengeId: a.challengeId, teamId: a.teamId }))
+    setAssignments.mutate([...kept, ...pairs])
   }
 
   return (
