@@ -5,6 +5,7 @@ import com.prayer.pointfinder.dto.response.AssignmentResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
@@ -134,30 +135,30 @@ public class AssignmentService {
     private void validateNoConflictingAssignment(UUID gameId, UUID baseId, UUID teamId) {
         if (teamId != null) {
             if (assignmentRepository.existsByGameIdAndBaseIdAndTeamId(gameId, baseId, teamId)) {
-                throw new ConflictException("Team already has an assignment for this base");
+                throw new ConflictException("Team already has an assignment for this base", ErrorCode.ASSIGNMENT_TEAM_HAS_BASE);
             }
             if (assignmentRepository.existsByGameIdAndBaseIdAndTeamIdIsNull(gameId, baseId)) {
-                throw new ConflictException("Base already has an 'All Teams' assignment");
+                throw new ConflictException("Base already has an 'All Teams' assignment", ErrorCode.ASSIGNMENT_BASE_ALL_TEAMS);
             }
             return;
         }
 
         if (assignmentRepository.existsByGameIdAndBaseIdAndTeamIdIsNull(gameId, baseId)) {
-            throw new ConflictException("Base already has an 'All Teams' assignment");
+            throw new ConflictException("Base already has an 'All Teams' assignment", ErrorCode.ASSIGNMENT_BASE_ALL_TEAMS);
         }
         if (assignmentRepository.existsByGameIdAndBaseIdAndTeamIdIsNotNull(gameId, baseId)) {
-            throw new ConflictException("Base already has team-specific assignments");
+            throw new ConflictException("Base already has team-specific assignments", ErrorCode.ASSIGNMENT_BASE_TEAM_SPECIFIC);
         }
     }
 
     private void validateChallengeNotAlreadyAssignedToTeam(UUID gameId, UUID challengeId, UUID teamId) {
         if (teamId != null) {
             if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamId(gameId, challengeId, teamId)) {
-                throw new ConflictException("This challenge is already assigned to this team at another base");
+                throw new ConflictException("This challenge is already assigned to this team at another base", ErrorCode.ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE);
             }
         } else {
             if (assignmentRepository.existsByGameIdAndChallengeIdAndTeamIdIsNull(gameId, challengeId)) {
-                throw new ConflictException("This challenge is already assigned as an 'All Teams' assignment at another base");
+                throw new ConflictException("This challenge is already assigned as an 'All Teams' assignment at another base", ErrorCode.ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE);
             }
         }
     }
@@ -176,30 +177,30 @@ public class AssignmentService {
 
             if (teamId == null) {
                 if (basesWithTeamSpecific.contains(baseId)) {
-                    throw new ConflictException("Cannot mix 'All Teams' and team-specific assignments for the same base");
+                    throw new ConflictException("Cannot mix 'All Teams' and team-specific assignments for the same base", ErrorCode.ASSIGNMENT_MIXED_MODES);
                 }
                 if (!basesWithAllTeams.add(baseId)) {
-                    throw new ConflictException("Duplicate 'All Teams' assignment for the same base");
+                    throw new ConflictException("Duplicate 'All Teams' assignment for the same base", ErrorCode.ASSIGNMENT_DUPLICATE);
                 }
                 if (!seenChallengeAllTeams.add(challengeId)) {
-                    throw new ConflictException("Same challenge assigned as 'All Teams' at multiple bases");
+                    throw new ConflictException("Same challenge assigned as 'All Teams' at multiple bases", ErrorCode.ASSIGNMENT_CHALLENGE_REPEATED);
                 }
                 continue;
             }
 
             if (basesWithAllTeams.contains(baseId)) {
-                throw new ConflictException("Cannot mix team-specific and 'All Teams' assignments for the same base");
+                throw new ConflictException("Cannot mix team-specific and 'All Teams' assignments for the same base", ErrorCode.ASSIGNMENT_MIXED_MODES);
             }
 
             String key = baseId + ":" + teamId;
             if (!seenTeamSpecific.add(key)) {
-                throw new ConflictException("Duplicate assignment for the same base and team");
+                throw new ConflictException("Duplicate assignment for the same base and team", ErrorCode.ASSIGNMENT_DUPLICATE);
             }
             basesWithTeamSpecific.add(baseId);
 
             String challengeTeamKey = challengeId + ":" + teamId;
             if (!seenChallengeTeam.add(challengeTeamKey)) {
-                throw new ConflictException("Same challenge assigned to the same team at multiple bases");
+                throw new ConflictException("Same challenge assigned to the same team at multiple bases", ErrorCode.ASSIGNMENT_CHALLENGE_REPEATED);
             }
         }
     }

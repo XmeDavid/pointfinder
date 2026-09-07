@@ -1475,6 +1475,14 @@ All error responses include a machine-readable `code` field in addition to the h
 | `TUTORIAL_PRACTICE_GAME_NOT_ALLOWED` | 400 | Only `practice-game` scenarios use the practice endpoint; `first-game` creates its game through `POST /games`. Details carry `scenarioId`. |
 | `TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT` | 400 | A practice game takes a single player. |
 | `TUTORIAL_NOT_PRACTICE_GAME` | 400 | Keep was called on a game that is not a practice game. |
+| `ASSIGNMENT_TEAM_HAS_BASE` | 409 | The team already has a challenge at this base. |
+| `ASSIGNMENT_BASE_ALL_TEAMS` | 409 | The base already carries an "All Teams" assignment. |
+| `ASSIGNMENT_BASE_TEAM_SPECIFIC` | 409 | The base already carries team-specific assignments. |
+| `ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE` | 409 | The team already meets this challenge at another base. |
+| `ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE` | 409 | The challenge is already an "All Teams" assignment at another base. |
+| `ASSIGNMENT_MIXED_MODES` | 409 | A bulk set mixes "All Teams" and team-specific rows on one base. |
+| `ASSIGNMENT_DUPLICATE` | 409 | A bulk set names the same base and team (or the same base as "All Teams") twice. |
+| `ASSIGNMENT_CHALLENGE_REPEATED` | 409 | A bulk set puts the same challenge at two bases within one column (a team, or "All Teams"). |
 
 ### WebSocket Error Codes
 

@@ -146,4 +146,22 @@ public enum ErrorCode {
     TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT,
     /** "Keep" was called on a game that is not a practice game. */
     TUTORIAL_NOT_PRACTICE_GAME,
+
+    // ── Assignments ───────────────────────────────────────────────────────
+    /** The team already has a challenge at this base. */
+    ASSIGNMENT_TEAM_HAS_BASE,
+    /** The base already carries an "All Teams" assignment. */
+    ASSIGNMENT_BASE_ALL_TEAMS,
+    /** The base already carries team-specific assignments. */
+    ASSIGNMENT_BASE_TEAM_SPECIFIC,
+    /** The team already meets this challenge at another base. */
+    ASSIGNMENT_CHALLENGE_TEAM_ELSEWHERE,
+    /** This challenge is already an "All Teams" assignment at another base. */
+    ASSIGNMENT_CHALLENGE_ALL_TEAMS_ELSEWHERE,
+    /** A bulk set mixes "All Teams" and team-specific rows on one base. */
+    ASSIGNMENT_MIXED_MODES,
+    /** A bulk set names the same base and team, or the same base as "All Teams", twice. */
+    ASSIGNMENT_DUPLICATE,
+    /** A bulk set puts the same challenge at two bases within one column. */
+    ASSIGNMENT_CHALLENGE_REPEATED,
 }
