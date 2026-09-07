@@ -7,6 +7,7 @@
 export const KNOWN_ANCHORS: readonly string[] = [
   // dashboard
   'create-game-btn',
+  'game-name-input',
   'dashboard-empty-state',
   // workspace chrome
   'map-wrapper',

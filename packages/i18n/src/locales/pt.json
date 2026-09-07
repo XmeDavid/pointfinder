@@ -1681,7 +1681,11 @@
     "firstGame": {
       "create-game": {
         "title": "Começa por um jogo",
-        "body": "Cada evento vive dentro de um jogo, e um jogo novo começa sempre em configuração. Dá-lhe um nome e cria-o — mudar o nome, definir datas e importar um jogo pronto também se faz neste ecrã."
+        "body": "Cada evento vive dentro de um jogo, e um jogo novo começa sempre em configuração. Toca em Novo jogo para começar um — mudar o nome, definir datas e importar um jogo pronto também se faz neste ecrã."
+      },
+      "name-game": {
+        "title": "Dá-lhe um nome e cria-o",
+        "body": "Dá-lhe o nome do evento; a descrição é opcional e pode esperar. Criar abre o jogo no seu espaço de trabalho, ainda em configuração."
       },
       "orient": {
         "title": "A tua lista de prontidão",

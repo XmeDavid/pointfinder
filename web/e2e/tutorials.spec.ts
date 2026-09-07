@@ -81,6 +81,8 @@ test('the welcome card starts the guided first game and the coach marks follow t
 
   // 3 — creating the game moves the run into the workspace and onto the readiness pill
   await page.locator('[data-testid="create-game-btn"]:visible').click()
+  // 2b — the tap is acknowledged: the tour follows the operator into the dialog
+  await expect(page.getByTestId('tour-bubble-title')).toHaveText('Name it and create it')
   await page.getByTestId('game-name-input').fill('Tutorial game')
   await page.getByTestId('game-save-btn').click()
   await expect(page).toHaveURL(/\/game\/g1$/)

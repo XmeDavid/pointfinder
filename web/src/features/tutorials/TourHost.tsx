@@ -230,6 +230,7 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
       step={index + 1}
       total={total}
       anchorRect={anchorRect}
+      avoidRect={anchorRect ? (element?.closest('[role="dialog"]')?.getBoundingClientRect() ?? anchorRect) : null}
       isLast={index === total - 1}
       footer={
         index === total - 1 && state.game && isPracticeGame(state.game) ? (

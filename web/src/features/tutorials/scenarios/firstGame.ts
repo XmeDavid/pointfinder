@@ -38,6 +38,14 @@ function firstChallengeId(s: TourState): string {
 }
 
 /** When a step completed, falling back to the start of the run. */
+/** A game in setup that did not exist when the run started, and whose workspace is open. */
+function createdNewGame(s: TourState): boolean {
+  const id = s.routeGameId
+  if (!id || s.gamesAtStart.includes(id)) return false
+  const game = s.games.find((g) => g.id === id) ?? (s.game?.id === id ? s.game : null)
+  return game?.status === 'setup'
+}
+
 function since(s: TourState, stepId: string): number {
   return s.stepCompletedAt[stepId] ?? s.startedAt
 }
@@ -65,16 +73,17 @@ const steps: Step[] = [
     id: 'create-game',
     route: 'dashboard',
     anchor: 'create-game-btn',
-    done: {
-      kind: 'predicate',
-      test: (s) => {
-        const id = s.routeGameId
-        if (!id || s.gamesAtStart.includes(id)) return false
-        const game = s.games.find((g) => g.id === id) ?? (s.game?.id === id ? s.game : null)
-        return game?.status === 'setup'
-      },
-    },
+    // The tap opens the create dialog and the tour follows it in; a game
+    // created some other way (Import, another tab) completes it as well.
+    done: { kind: 'predicate', test: (s) => s.clickedSteps.has('create-game') || createdNewGame(s) },
     copy: copyFor('create-game'),
+  },
+  {
+    id: 'name-game',
+    route: 'dashboard',
+    anchor: 'game-name-input',
+    done: { kind: 'predicate', test: createdNewGame },
+    copy: copyFor('name-game'),
   },
   {
     id: 'orient',

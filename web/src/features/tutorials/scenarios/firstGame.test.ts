@@ -12,7 +12,7 @@ import { firstGame, pressedAnswerType } from './firstGame'
 import { SCENARIOS } from './index'
 
 const STEP_IDS = [
-  'create-game', 'orient', 'place-base', 'base-name', 'base-description', 'base-coords',
+  'create-game', 'name-game', 'orient', 'place-base', 'base-name', 'base-description', 'base-coords',
   'base-method', 'base-radius', 'base-visibility', 'base-link', 'base-save', 'base-qr',
   'base-nfc', 'second-base', 'new-challenge', 'challenge-title', 'challenge-type',
   'challenge-content', 'challenge-description', 'challenge-autovalidate', 'challenge-answer',
@@ -63,7 +63,7 @@ describe('first-game scenario definition', () => {
 
   it('marks every workspace step with its route so Resume can navigate back', () => {
     for (const step of firstGame.steps) {
-      if (step.id === 'create-game') expect(step.route).toBe('dashboard')
+      if (step.id === 'create-game' || step.id === 'name-game') expect(step.route).toBe('dashboard')
       else if (step.id === 'finish') expect(step.route).toBeUndefined()
       else expect(step.route, step.id).toBe('workspace')
     }
@@ -180,6 +180,11 @@ describe('first-game advance', () => {
       name: 'a fresh run starts on the create-game button',
       state: state(),
       expected: 'create-game',
+    },
+    {
+      name: 'tapping New Game follows the operator into the dialog',
+      state: state({ clickedSteps: new Set(['create-game']) }),
+      expected: 'name-game',
     },
     {
       name: 'creating a game moves on to the readiness pill',

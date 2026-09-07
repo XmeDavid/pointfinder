@@ -137,6 +137,13 @@ describe('CoachBubble', () => {
     expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-side', 'bottom')
   })
 
+  it('keeps the phone sheet off a dialog the anchor lives in', () => {
+    // The anchor is high up, but the dialog around it reaches into the bottom sheet's space.
+    const dialog = { top: 300, left: 0, right: 390, bottom: 700, width: 390, height: 400, x: 0, y: 300, toJSON: () => ({}) } as DOMRect
+    renderBubble({ anchorRect: { top: 320, left: 20, right: 300, bottom: 360, width: 280, height: 40, x: 20, y: 320, toJSON: () => ({}) } as DOMRect, avoidRect: dialog })
+    expect(screen.getByTestId('tour-bubble')).toHaveAttribute('data-side', 'top')
+  })
+
   it('moves the phone sheet to the top when the anchor sits low or fills the screen', () => {
     const low = { top: window.innerHeight - 60, left: 0, width: 200, height: 40 } as DOMRect
     renderBubble({ anchorRect: low })

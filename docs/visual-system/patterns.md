@@ -304,8 +304,11 @@ re-runs the step's prepare to bring the anchor back. Anchors are tracked through
 DOM mutations and for a short settle window after any trigger, so a drawer that
 springs open is followed, not guessed.
 
-On phones the bubble is a bottom sheet above the 56 px tab bar, capped in height
-with internal scroll, so the longest German step copy scrolls instead of clipping
-its buttons; on desktop it floats beside the anchor and flips against the
-viewport and the safe-area insets. Both live on the `z-[70]` tutorial layer:
+On phones the bubble is a sheet above the 56 px tab bar, capped in height with
+internal scroll, so the longest German step copy scrolls instead of clipping its
+buttons. It takes the edge that leaves the anchor uncovered, or the dialog the
+anchor lives in (a create form's buttons must stay reachable), moving to the top
+when only the top edge clears it or when the anchor fills most of the screen; on
+desktop it floats beside the anchor and flips against the viewport and the
+safe-area insets. Both live on the `z-[70]` tutorial layer:
 above drawers and menus, below toasts.

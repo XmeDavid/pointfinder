@@ -81,6 +81,7 @@ test.describe('Guided first-game tutorial', { tag: '@smoke' }, () => {
     await expectStep(page, 'create-game');
     const gameName = `E2E tutorial ${Date.now()}`;
     await page.locator('[data-testid="create-game-btn"]:visible').click();
+    await expectStep(page, 'name-game');
     await page.getByTestId('game-name-input').fill(gameName);
     await page.getByTestId('game-save-btn').click();
     await page.waitForURL(/\/game\/[0-9a-f-]{36}/, { timeout: 20_000 });

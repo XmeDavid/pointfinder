@@ -7,7 +7,7 @@ import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { Button } from '@/components/ui/button'
 import { useMediaQuery } from '@/hooks/ui/useMediaQuery'
 import { cn } from '@/lib/utils'
-import { placeBubble, readSafeInsets, type Placement } from './placement'
+import { placeBubble, readSafeInsets, type Placement, sheetGoesOnTop } from './placement'
 
 const BUBBLE_WIDTH = 320
 const FALLBACK_HEIGHT = 200
@@ -29,6 +29,8 @@ export interface CoachBubbleProps {
   onClose: () => void
   /** Null centres the bubble on desktop and renders no spotlight. */
   anchorRect: DOMRect | null
+  /** Region a phone sheet must not cover; defaults to the anchor. A dialog the anchor lives in, typically. */
+  avoidRect?: DOMRect | null
   isLast?: boolean
   /** Extra controls under the body, e.g. keep/delete for a practice game. */
   footer?: ReactNode
@@ -46,6 +48,7 @@ export function CoachBubble({
   onLater,
   onClose,
   anchorRect,
+  avoidRect,
   isLast = false,
   inline = false,
   footer,
@@ -93,13 +96,25 @@ export function CoachBubble({
   }, [onClose])
 
   const sheet = !inline && !isDesktop
-  // On a phone the workspace keeps its controls at the bottom, so a sheet that
-  // would cover the anchor — or the whole map — moves to the top instead.
+  // The sheet's own height decides which edge keeps the anchor (or the
+  // dialog it lives in) uncovered; measured after layout, estimated before.
+  const [sheetHeight, setSheetHeight] = useState(FALLBACK_HEIGHT)
+  useLayoutEffect(() => {
+    if (!sheet || !ref.current) return
+    const height = ref.current.getBoundingClientRect().height
+    if (height) setSheetHeight(height)
+  }, [sheet, body, title, aside, footer])
+  const avoid = avoidRect ?? anchorRect
   const sheetOnTop =
     sheet &&
-    !!anchorRect &&
+    !!avoid &&
     typeof window !== 'undefined' &&
-    (anchorRect.top + anchorRect.height / 2 > window.innerHeight / 2 || anchorRect.height > window.innerHeight / 2)
+    sheetGoesOnTop(
+      { top: avoid.top, left: avoid.left, width: avoid.width, height: avoid.height },
+      sheetHeight,
+      window.innerHeight,
+      readSafeInsets(),
+    )
 
   const content = (
     <motion.div

@@ -1681,7 +1681,11 @@
     "firstGame": {
       "create-game": {
         "title": "Start with a game",
-        "body": "Every event lives inside a game, and a new game always begins in setup. Give it a name and create it — renaming, dates and importing a finished game all live on this screen too."
+        "body": "Every event lives inside a game, and a new game always begins in setup. Tap New Game to start one — renaming, dates and importing a finished game all live on this screen too."
+      },
+      "name-game": {
+        "title": "Name it and create it",
+        "body": "Name it after the event; the description is optional and can wait. Create opens the game in its workspace, still in setup."
       },
       "orient": {
         "title": "Your readiness checklist",

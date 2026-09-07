@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { placeBubble, readSafeInsets, type Insets } from './placement'
+import { sheetGoesOnTop, placeBubble, readSafeInsets, type Insets } from './placement'
 
 const noInsets: Insets = { top: 0, right: 0, bottom: 0, left: 0 }
 const viewport = { width: 1280, height: 800 }
@@ -45,5 +45,30 @@ describe('placeBubble', () => {
 describe('readSafeInsets', () => {
   it('returns zeroes when the CSS variables are unset', () => {
     expect(readSafeInsets()).toEqual({ top: 0, right: 0, bottom: 0, left: 0 })
+  })
+})
+
+describe('sheetGoesOnTop', () => {
+  const insets = { top: 40, right: 0, bottom: 30, left: 0 }
+  const viewport = 800
+
+  it('stays at the bottom when the bottom edge leaves the region clear', () => {
+    expect(sheetGoesOnTop({ top: 100, left: 0, width: 300, height: 40 }, 300, viewport, insets)).toBe(false)
+  })
+
+  it('moves to the top when only the top edge leaves the region clear', () => {
+    // A dialog that reaches down into where a bottom sheet would sit.
+    expect(sheetGoesOnTop({ top: 360, left: 0, width: 300, height: 300 }, 300, viewport, insets)).toBe(true)
+  })
+
+  it('goes to the top for a region that fills most of the screen', () => {
+    expect(sheetGoesOnTop({ top: 0, left: 0, width: 300, height: 700 }, 300, viewport, insets)).toBe(true)
+  })
+
+  it('covers less of the region when neither edge clears it, top on a tie', () => {
+    // 340..720: a bottom sheet (starting at 414) covers 306 px, a top sheet (ending at 340) covers 0.
+    expect(sheetGoesOnTop({ top: 340, left: 0, width: 300, height: 380 }, 300, viewport, insets)).toBe(true)
+    // 150..500: bottom overlaps 86, top overlaps 190 → bottom.
+    expect(sheetGoesOnTop({ top: 150, left: 0, width: 300, height: 350 }, 300, viewport, insets)).toBe(false)
   })
 })

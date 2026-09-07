@@ -87,3 +87,30 @@ export function readSafeInsets(): Insets {
     left: readVar(style, '--safe-left'),
   }
 }
+
+/** Height of the phone tab bar a bottom sheet sits above. */
+export const PHONE_TAB_BAR = 56
+
+/**
+ * Which edge a phone sheet takes so it does not cover `avoid` (the anchor, or
+ * the dialog the anchor lives in). Bottom is the default; top when only the
+ * top leaves the region clear, or when the region fills most of the screen
+ * (a map), so the workspace's bottom controls stay free. When neither edge
+ * clears it, the edge that covers less of it wins, top on a tie.
+ */
+export function sheetGoesOnTop(
+  avoid: Rect,
+  sheetHeight: number,
+  viewportHeight: number,
+  insets: Insets,
+): boolean {
+  if (avoid.height > viewportHeight / 2) return true
+  const bottomSheetTop = viewportHeight - insets.bottom - PHONE_TAB_BAR - sheetHeight
+  const topSheetBottom = insets.top + sheetHeight
+  const avoidBottom = avoid.top + avoid.height
+  if (avoidBottom <= bottomSheetTop) return false
+  if (avoid.top >= topSheetBottom) return true
+  const overlapBottom = Math.max(0, avoidBottom - bottomSheetTop)
+  const overlapTop = Math.max(0, topSheetBottom - avoid.top)
+  return overlapTop <= overlapBottom
+}

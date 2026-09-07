@@ -115,7 +115,7 @@ describe('operator tutorial vocabulary', () => {
   })
 
   const firstGameSteps = [
-    'create-game', 'orient', 'place-base', 'base-name', 'base-description', 'base-coords',
+    'create-game', 'name-game', 'orient', 'place-base', 'base-name', 'base-description', 'base-coords',
     'base-method', 'base-radius', 'base-visibility', 'base-link', 'base-save', 'base-qr',
     'base-nfc', 'second-base', 'new-challenge', 'challenge-title', 'challenge-type',
     'challenge-content', 'challenge-description', 'challenge-autovalidate', 'challenge-answer',

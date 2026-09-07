@@ -1681,7 +1681,11 @@
     "firstGame": {
       "create-game": {
         "title": "Fang mit einem Spiel an",
-        "body": "Jede Veranstaltung lebt in einem Spiel, und ein neues Spiel beginnt immer in der Einrichtung. Gib ihm einen Namen und lege es an – umbenennen, Termine setzen und fertige Spiele importieren geht ebenfalls hier."
+        "body": "Jedes Ereignis lebt in einem Spiel, und ein neues Spiel beginnt immer in der Einrichtung. Tippe auf Neues Spiel, um eines zu starten — umbenennen, Termine setzen und ein fertiges Spiel importieren geht ebenfalls auf diesem Bildschirm."
+      },
+      "name-game": {
+        "title": "Benenne es und erstelle es",
+        "body": "Benenne es nach dem Ereignis; die Beschreibung ist optional und kann warten. Erstellen öffnet das Spiel in seinem Arbeitsbereich, noch in der Einrichtung."
       },
       "orient": {
         "title": "Deine Startbereitschaft",
