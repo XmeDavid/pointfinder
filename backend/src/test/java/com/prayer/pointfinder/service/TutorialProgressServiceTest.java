@@ -193,7 +193,7 @@ class TutorialProgressServiceTest extends IntegrationTestBase {
                     tutorialProgressService.upsertForCurrentUser(scenarioId, body("in_progress", null, null))
                             .scenarioId());
         }
-        assertEquals(3, tutorialProgressService.listForCurrentUser().size());
+        assertEquals(TutorialProgressService.KNOWN_SCENARIOS.size(), tutorialProgressService.listForCurrentUser().size());
     }
 
     @Test

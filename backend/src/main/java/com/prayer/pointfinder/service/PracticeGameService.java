@@ -42,14 +42,15 @@ import java.util.UUID;
 public class PracticeGameService {
 
     /** Scenarios whose practice game the server creates and seeds. */
-    public static final Set<String> SEEDED_SCENARIOS = Set.of("fixed-route", "exploration");
+    public static final Set<String> SEEDED_SCENARIOS = Set.of(
+            "fixed-route", "exploration", "unlock-chain", "different-path", "variable-outcome");
 
     /** Where seeded bases go when the client sends no centre. */
     static final double FALLBACK_LAT = 38.7223;
     static final double FALLBACK_LNG = -9.1393;
 
     /** Roughly 170 m steps, so the seeded bases read as a short walk apart. */
-    private static final double[][] OFFSETS = {{0.0, 0.0}, {0.0015, 0.002}, {-0.0012, 0.0021}};
+    private static final double[][] OFFSETS = {{0.0, 0.0}, {0.0015, 0.002}, {-0.0012, 0.0021}, {0.0028, 0.0035}, {0.0006, 0.0048}, {0.0038, 0.0012}};
 
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
@@ -128,6 +129,12 @@ public class PracticeGameService {
     private void seed(UUID gameId, String scenarioId, Double lat, Double lng) {
         double centreLat = lat != null && lng != null ? lat : FALLBACK_LAT;
         double centreLng = lat != null && lng != null ? lng : FALLBACK_LNG;
+        switch (scenarioId) {
+            case "unlock-chain" -> { seedUnlockChain(gameId, centreLat, centreLng); return; }
+            case "different-path" -> { seedDifferentPath(gameId, centreLat, centreLng); return; }
+            case "variable-outcome" -> { seedVariableOutcome(gameId, centreLat, centreLng); return; }
+            default -> { }
+        }
 
         List<String> baseNames = List.of("Old mill", "Chapel steps", "Lookout");
         List<UUID> baseIds = new ArrayList<>();
@@ -172,5 +179,116 @@ public class PracticeGameService {
         CreateTeamRequest team = new CreateTeamRequest();
         team.setName("Scouts");
         teamService.createTeam(gameId, team);
+    }
+
+    private UUID base(UUID gameId, String name, double lat, double lng, boolean hidden) {
+        CreateBaseRequest base = new CreateBaseRequest();
+        base.setName(name);
+        base.setLat(lat);
+        base.setLng(lng);
+        base.setHidden(hidden);
+        base.setCheckInMethod(CheckInMethod.QR.name());
+        return baseService.createBase(gameId, base).id();
+    }
+
+    private UUID challenge(UUID gameId, String title, String content, String completion) {
+        return challenge(gameId, title, content, completion, null, List.of());
+    }
+
+    /**
+     * A challenge, optionally pinned to a base and location bound (both are
+     * what unlock targets require) with the hidden bases it reveals.
+     */
+    private UUID challenge(UUID gameId, String title, String content, String completion, UUID pinnedBaseId, List<UUID> unlocks) {
+        CreateChallengeRequest challenge = new CreateChallengeRequest();
+        challenge.setTitle(title);
+        challenge.setContent(content);
+        challenge.setCompletionContent(completion != null ? completion : "");
+        challenge.setAnswerType("text");
+        challenge.setPoints(10);
+        if (pinnedBaseId != null) {
+            challenge.setFixedBaseId(pinnedBaseId);
+            challenge.setLocationBound(true);
+            challenge.setUnlocksBaseIds(unlocks);
+        }
+        return challengeService.createChallenge(gameId, challenge).id();
+    }
+
+    private void assign(UUID gameId, List<UUID[]> pairs, List<UUID[]> perTeam) {
+        List<CreateAssignmentRequest> rows = new ArrayList<>();
+        for (UUID[] pair : pairs) {
+            CreateAssignmentRequest row = new CreateAssignmentRequest();
+            row.setBaseId(pair[0]);
+            row.setChallengeId(pair[1]);
+            rows.add(row);
+        }
+        for (UUID[] triple : perTeam) {
+            CreateAssignmentRequest row = new CreateAssignmentRequest();
+            row.setBaseId(triple[0]);
+            row.setChallengeId(triple[1]);
+            row.setTeamId(triple[2]);
+            rows.add(row);
+        }
+        assignmentService.bulkSetAssignments(gameId, rows);
+    }
+
+    private UUID team(UUID gameId, String name) {
+        CreateTeamRequest team = new CreateTeamRequest();
+        team.setName(name);
+        return teamService.createTeam(gameId, team).id();
+    }
+
+    /**
+     * Unlock chain: one visible trailhead; completing its challenge reveals the
+     * bridge; the bridge reveals a fork (tower and ford); the tower reveals a
+     * bonus cache back down the trail, the ford reveals the summit. The first
+     * link (trailhead → bridge) is left for the tutorial to set.
+     */
+    private void seedUnlockChain(UUID gameId, double lat, double lng) {
+        UUID trailhead = base(gameId, "Trailhead", lat + OFFSETS[0][0], lng + OFFSETS[0][1], false);
+        UUID bridge = base(gameId, "Old bridge", lat + OFFSETS[1][0], lng + OFFSETS[1][1], true);
+        UUID tower = base(gameId, "Ruined tower", lat + OFFSETS[2][0], lng + OFFSETS[2][1], true);
+        UUID ford = base(gameId, "River ford", lat + OFFSETS[3][0], lng + OFFSETS[3][1], true);
+        UUID cache = base(gameId, "Bonus cache", lat - OFFSETS[1][0], lng + OFFSETS[1][1] / 2, true);
+        UUID summit = base(gameId, "Summit", lat + OFFSETS[4][0], lng + OFFSETS[4][1], true);
+
+        challenge(gameId, "Read the trail sign", "<p>The sign at the trailhead lists a distance. Write it down in metres.</p>", "<p>Well read. Something has just appeared on your map — head there.</p>", trailhead, List.of());
+        challenge(gameId, "Count the bridge arches", "<p>How many arches carry the old bridge?</p>", "<p>Two paths open from here. Choose as a team.</p>", bridge, List.of(tower, ford));
+        challenge(gameId, "Sketch the tower", "<p>Draw the tower's outline and photograph the drawing with the tower behind it.</p>", "<p>A cache is marked back down the trail — worth the detour?</p>", tower, List.of(cache));
+        challenge(gameId, "Cross the ford", "<p>Photograph your whole team on the far bank.</p>", "<p>The summit is now on your map.</p>", ford, List.of(summit));
+        challenge(gameId, "Open the cache", "<p>The cache holds a word. What is it?</p>", "<p>Bonus banked.</p>", cache, List.of());
+        challenge(gameId, "Summit photo", "<p>A photo of the team at the summit marker.</p>", "<p>Route complete.</p>", summit, List.of());
+        team(gameId, "Scouts");
+    }
+
+    /**
+     * A different path: three bases in a triangle, three challenges, two teams.
+     * Nothing assigned yet: the tutorial builds the two routes in the grid.
+     */
+    private void seedDifferentPath(UUID gameId, double lat, double lng) {
+        base(gameId, "Base A · Old mill", lat + OFFSETS[0][0], lng + OFFSETS[0][1], false);
+        base(gameId, "Base B · Chapel steps", lat + OFFSETS[1][0], lng + OFFSETS[1][1], false);
+        base(gameId, "Base C · Lookout", lat + OFFSETS[2][0], lng + OFFSETS[2][1], false);
+        challenge(gameId, "1 · Count the arches", "<p>How many arches does the old mill have?</p>", null);
+        challenge(gameId, "2 · Photograph the bell", "<p>Take a photo of the chapel bell with your whole team in it.</p>", null);
+        challenge(gameId, "3 · Name the peak", "<p>From the lookout, which peak is furthest away?</p>", null);
+        team(gameId, "Falcons");
+        team(gameId, "Lions");
+    }
+
+    /**
+     * A variable outcome: a complete game whose first challenge is pinned to
+     * its base, ready for a completion text that sends each team somewhere else.
+     */
+    private void seedVariableOutcome(UUID gameId, double lat, double lng) {
+        UUID mill = base(gameId, "Old mill", lat + OFFSETS[0][0], lng + OFFSETS[0][1], false);
+        UUID chapel = base(gameId, "Chapel steps", lat + OFFSETS[1][0], lng + OFFSETS[1][1], false);
+        UUID lookout = base(gameId, "Lookout", lat + OFFSETS[2][0], lng + OFFSETS[2][1], false);
+        challenge(gameId, "Count the arches", "<p>How many arches does the old mill have?</p>", "<p>Good work. Your next stop is written on the sheet you were given.</p>", mill, List.of());
+        UUID c2 = challenge(gameId, "Photograph the bell", "<p>Take a photo of the chapel bell with your whole team in it.</p>", "<p>One to go.</p>");
+        UUID c3 = challenge(gameId, "Name the peak", "<p>From the lookout, which peak is furthest away?</p>", "<p>Route complete.</p>");
+        assign(gameId, List.of(new UUID[]{chapel, c2}, new UUID[]{lookout, c3}), List.of());
+        team(gameId, "Falcons");
+        team(gameId, "Lions");
     }
 }

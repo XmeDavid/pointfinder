@@ -38,7 +38,8 @@ import java.util.UUID;
 public class TutorialProgressService {
 
     /** Scenario ids the client may report progress for. Grows with each new scenario file. */
-    public static final Set<String> KNOWN_SCENARIOS = Set.of("first-game", "fixed-route", "exploration");
+    public static final Set<String> KNOWN_SCENARIOS = Set.of(
+            "first-game", "fixed-route", "exploration", "unlock-chain", "different-path", "variable-outcome");
 
     private final UserTutorialProgressRepository progressRepository;
     private final GameAccessService gameAccessService;

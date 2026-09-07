@@ -245,4 +245,34 @@ class PracticeGameEndpointTest extends IntegrationTestBase {
         // Ended, so the slot is free again.
         assertEquals(HttpStatus.CREATED, practice(operator, "exploration", practiceBody("After")).getStatusCode());
     }
+
+    @Test
+    void theThreeAdvancedScenariosSeedTheirOwnPracticeGames() {
+        User chain = createOperator("practice-chain@test.com", "password");
+        GameResponse unlock = practice(chain, "unlock-chain", practiceBody("Chain")).getBody();
+        assertNotNull(unlock);
+        assertEquals(6, count("bases", unlock.id()));
+        assertEquals(6, count("challenges", unlock.id()));
+        Long hidden = jdbcTemplate.queryForObject("SELECT count(*) FROM bases WHERE game_id = ? AND hidden = true", Long.class, unlock.id());
+        assertEquals(5L, hidden);
+        Long links = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM challenge_unlocks_bases cub JOIN challenges c ON c.id = cub.challenge_id WHERE c.game_id = ?", Long.class, unlock.id());
+        assertEquals(4L, links); // bridge→tower, bridge→ford, tower→cache, ford→summit; trailhead→bridge is the lesson
+
+        User path = createOperator("practice-path@test.com", "password");
+        GameResponse different = practice(path, "different-path", practiceBody("Paths")).getBody();
+        assertNotNull(different);
+        assertEquals(3, count("bases", different.id()));
+        assertEquals(3, count("challenges", different.id()));
+        assertEquals(2, count("teams", different.id()));
+        assertEquals(0, count("assignments", different.id()));
+
+        User variable = createOperator("practice-variable@test.com", "password");
+        GameResponse outcome = practice(variable, "variable-outcome", practiceBody("Variables")).getBody();
+        assertNotNull(outcome);
+        assertEquals(3, count("bases", outcome.id()));
+        assertEquals(2, count("assignments", outcome.id()));
+        Long pinned = jdbcTemplate.queryForObject("SELECT count(*) FROM bases WHERE game_id = ? AND fixed_challenge_id IS NOT NULL", Long.class, outcome.id());
+        assertEquals(1L, pinned);
+    }
 }
