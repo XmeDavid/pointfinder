@@ -144,7 +144,8 @@ describe('TourHost', () => {
       useTourStore.getState().start('first-game', { gameId: 'game-1', stepId: 'read-this' })
     })
 
-    expect(await screen.findByTestId('tour-pill')).toHaveTextContent('step 2 of 3')
+    expect(await screen.findByTestId('tour-pill')).toHaveTextContent('Tutorial')
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2')
     expect(screen.queryByTestId('tour-bubble')).not.toBeInTheDocument()
   })
 

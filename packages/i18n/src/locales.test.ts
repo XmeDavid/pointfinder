@@ -67,13 +67,13 @@ describe('check-in method vocabulary', () => {
 
 describe('tutorial chrome vocabulary', () => {
   const contractKeys = [
-    'tutorials.common.stepOf',
+    'tutorials.common.progress',
     'tutorials.common.next',
     'tutorials.common.gotIt',
     'tutorials.common.later',
     'tutorials.common.close',
     'tutorials.common.resume',
-    'tutorials.common.pillLabel',
+    'tutorials.common.pill',
   ]
 
   it.each(['en', 'pt', 'de'] as const)('%s carries every tutorial chrome key', (lang) => {
@@ -83,10 +83,8 @@ describe('tutorial chrome vocabulary', () => {
 
   it.each(['en', 'pt', 'de'] as const)('%s interpolates the step counter', (lang) => {
     const bundle = resources[lang].translation as unknown as { tutorials: { common: Record<string, string> } }
-    expect(bundle.tutorials.common.stepOf).toContain('{{n}}')
-    expect(bundle.tutorials.common.stepOf).toContain('{{total}}')
-    expect(bundle.tutorials.common.pillLabel).toContain('{{n}}')
-    expect(bundle.tutorials.common.pillLabel).toContain('{{total}}')
+    expect(bundle.tutorials.common.progress).toContain('{{n}}')
+    expect(bundle.tutorials.common.progress).toContain('{{total}}')
   })
 })
 
@@ -97,7 +95,7 @@ describe('operator tutorial vocabulary', () => {
     'tutorials.scenarios.firstGame.title',
     'tutorials.scenarios.fixedRoute.title',
     'tutorials.scenarios.exploration.title',
-    'tutorials.library.practice.replaceTitle',
+    'tutorials.library.practice.replacing',
     'tutorials.library.practice.gameName.fixedRoute',
     'tutorials.library.practice.gameName.exploration',
     'tutorials.practice.badge',
@@ -121,7 +119,7 @@ describe('operator tutorial vocabulary', () => {
     'challenge-content', 'challenge-description', 'challenge-autovalidate', 'challenge-answer',
     'challenge-points', 'challenge-completion', 'challenge-location-bound', 'challenge-notes',
     'challenge-save', 'more-challenges', 'assign', 'new-team', 'team-code', 'go-live', 'modes',
-    'revert', 'edit', 'go-live-again', 'finish',
+    'revert', 'revert-choice', 'edit', 'edit-location-bound', 'edit-save', 'go-live-again', 'finish',
   ]
 
   it.each(['en', 'pt', 'de'] as const)('%s carries a title and body for every first-game step', (lang) => {

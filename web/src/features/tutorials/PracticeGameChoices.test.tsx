@@ -52,7 +52,7 @@ describe('PracticeGameChoices', () => {
     expect(onDone).not.toHaveBeenCalled()
   })
 
-  it('deletes only after confirming, then returns to the dashboard', async () => {
+  it('deletes at once, no confirmation, then returns to the dashboard', async () => {
     const deleted: string[] = []
     server.use(http.delete('/api/games/:id', ({ params }) => {
       deleted.push(String(params.id))
@@ -62,10 +62,6 @@ describe('PracticeGameChoices', () => {
     const onDone = renderChoices()
 
     await user.click(screen.getByTestId('practice-delete-btn'))
-    expect(await screen.findByText('Delete this practice game?')).toBeInTheDocument()
-    expect(deleted).toEqual([])
-
-    await user.click(screen.getByTestId('confirm-action-btn'))
 
     await waitFor(() => expect(deleted).toEqual(['practice-1']))
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboard'))
@@ -78,7 +74,6 @@ describe('PracticeGameChoices', () => {
     const onDone = renderChoices()
 
     await user.click(screen.getByTestId('practice-delete-btn'))
-    await user.click(screen.getByTestId('confirm-action-btn'))
 
     expect(await screen.findByTestId('practice-game-message')).toBeInTheDocument()
     expect(onDone).not.toHaveBeenCalled()

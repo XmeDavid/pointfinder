@@ -156,7 +156,17 @@ export function CoachBubble({
       >
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1" aria-live="polite" data-testid="tour-bubble-live">
-            <p className="text-xs text-muted-foreground">{t('tutorials.common.stepOf', { n: step, total })}</p>
+            <div
+              role="progressbar"
+              aria-label={t('tutorials.common.progress', { n: step, total })}
+              aria-valuemin={1}
+              aria-valuemax={total}
+              aria-valuenow={step}
+              data-testid="tour-progress"
+              className="mb-2 h-1 w-full overflow-hidden rounded-full bg-muted"
+            >
+              <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${Math.round((step / Math.max(total, 1)) * 100)}%` }} />
+            </div>
             <h2 id={titleId} data-testid="tour-bubble-title" className="text-sm font-semibold text-foreground">
               {title}
             </h2>

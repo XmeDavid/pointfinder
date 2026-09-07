@@ -24,11 +24,13 @@ afterEach(() => {
 })
 
 describe('CoachBubble', () => {
-  it('renders the step counter, title and body', () => {
+  it('renders a progress bar instead of a counter, with the title and body', () => {
     renderBubble()
     expect(screen.getByTestId('tour-bubble-title')).toHaveTextContent('Place your first base')
     expect(screen.getByTestId('tour-bubble-body')).toHaveTextContent('Tap the map where players should go.')
-    expect(screen.getByTestId('tour-bubble')).toHaveTextContent('Step 3 of 12')
+    expect(screen.getByTestId('tour-bubble')).not.toHaveTextContent('Step 3 of 12')
+    expect(screen.getByTestId('tour-progress')).toHaveAttribute('aria-valuenow', '3')
+    expect(screen.getByTestId('tour-progress')).toHaveAttribute('aria-valuemax', '12')
   })
 
   it('renders the aside only when there is one', () => {

@@ -18,7 +18,7 @@ const STEP_IDS = [
   'challenge-content', 'challenge-description', 'challenge-autovalidate', 'challenge-answer',
   'challenge-points', 'challenge-completion', 'challenge-location-bound', 'challenge-notes',
   'challenge-save', 'more-challenges', 'assign', 'new-team', 'team-code', 'go-live', 'modes',
-  'revert', 'edit', 'go-live-again', 'finish',
+  'revert', 'revert-choice', 'edit', 'edit-location-bound', 'edit-save', 'go-live-again', 'finish',
 ]
 
 const state = (over: TourStateOverrides = {}) => makeTourState({ startedAt: 100, isDashboard: true, ...over })
@@ -312,15 +312,53 @@ describe('first-game advance', () => {
       expected: 'edit',
     },
     {
-      name: 'a challenge saved after the revert moves on to the second go-live',
+      name: 'opening a challenge after the revert moves on to the location-bound toggle',
       state: state({
         ...inWorkspace,
         challenges: [createMockChallenge({ id: 'c1' })],
-        stepCompletedAt: { revert: 500 },
+        selectedChallengeId: 'c1',
+        stepCompletedAt: { revert: 500, 'revert-choice': 600 },
+      }),
+      from: 'edit',
+      expected: 'edit-location-bound',
+    },
+    {
+      name: 'turning location bound on moves on to saving',
+      state: state({
+        ...inWorkspace,
+        challenges: [createMockChallenge({ id: 'c1' })],
+        selectedChallengeId: 'c1',
+        stepCompletedAt: { revert: 500, 'revert-choice': 600 },
+        fields: { 'location-bound-toggle': { present: true, pressed: true } },
+      }),
+      from: 'edit',
+      expected: 'edit-save',
+    },
+    {
+      name: 'a challenge saved after the revert choice moves on to the second go-live',
+      state: state({
+        ...inWorkspace,
+        challenges: [createMockChallenge({ id: 'c1' })],
+        selectedChallengeId: 'c1',
+        stepCompletedAt: { revert: 500, 'revert-choice': 600 },
+        fields: { 'location-bound-toggle': { present: true, pressed: true } },
         lastSuccess: { 'challenge:update': 900 },
       }),
       from: 'edit',
       expected: 'go-live-again',
+    },
+    {
+      name: 'a save from before the revert choice does not count',
+      state: state({
+        ...inWorkspace,
+        challenges: [createMockChallenge({ id: 'c1' })],
+        selectedChallengeId: 'c1',
+        stepCompletedAt: { revert: 500, 'revert-choice': 950 },
+        fields: { 'location-bound-toggle': { present: true, pressed: true } },
+        lastSuccess: { 'challenge:update': 900 },
+      }),
+      from: 'edit',
+      expected: 'edit-save',
     },
     {
       name: 'the closing card waits for Got it',

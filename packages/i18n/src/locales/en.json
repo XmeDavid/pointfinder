@@ -1667,13 +1667,13 @@
       "skip": "Skip for now"
     },
     "common": {
-      "stepOf": "Step {{n}} of {{total}}",
       "next": "Next",
       "gotIt": "Got it",
       "later": "I'll do it later",
       "close": "Close tutorial",
       "resume": "Resume",
-      "pillLabel": "Tutorial · step {{n}} of {{total}}"
+      "progress": "Tutorial progress: step {{n}} of {{total}}",
+      "pill": "Tutorial"
     },
     "library": {
       "title": "Tutorials",
@@ -1691,16 +1691,17 @@
         "skipped": "Skipped"
       },
       "practice": {
-        "replaceTitle": "Replace your practice game?",
-        "replaceBody": "You already have a practice game, “{{name}}”. Starting this tutorial deletes it and sets up a fresh one for the lesson.",
-        "replaceConfirm": "Delete and start",
         "creating": "Setting up your practice game…",
         "createFailed": "We could not set up the practice game.",
         "gameName": {
           "fixedRoute": "Practice: fixed route",
           "exploration": "Practice: exploration",
-          "generic": "Practice game"
-        }
+          "generic": "Practice game",
+          "unlockChain": "Practice: unlock chain",
+          "differentPath": "Practice: a different path",
+          "variableOutcome": "Practice: a variable outcome"
+        },
+        "replacing": "Replacing your practice game…"
       }
     },
     "scenarios": {
@@ -1860,11 +1861,23 @@
       },
       "revert": {
         "title": "Back to setup",
-        "body": "Need a change mid-event? Revert to setup. Keep progress and everything teams did stays; erase it and their submissions, check-ins and events are archived aside, never removed."
+        "body": "Need a change after going live? Back to setup reopens the game for editing. Tap it — the next question is what to do with the progress so far."
+      },
+      "revert-choice": {
+        "title": "Keep or erase progress",
+        "body": "Keep keeps every check-in and submission so teams carry on where they were; erase starts the event over. History is archived either way. Choose, then confirm."
       },
       "edit": {
         "title": "Edit anything",
-        "body": "In setup everything is editable again — open this challenge and change its points, its text, anything at all. Save it and the change is ready for the next go-live."
+        "body": "In setup everything is editable again. Open the first challenge to change it."
+      },
+      "edit-location-bound": {
+        "title": "Make it location bound",
+        "body": "Location bound means the challenge can only be answered at its base, not from anywhere once unlocked. Turn it on for this one."
+      },
+      "edit-save": {
+        "title": "Save the change",
+        "body": "Save. The change waits in setup until you go live again."
       },
       "go-live-again": {
         "title": "Go live again",
@@ -1941,8 +1954,6 @@
       "ended": "Practice game · ended",
       "keep": "Keep as a real game",
       "delete": "Delete practice game",
-      "deleteTitle": "Delete this practice game?",
-      "deleteBody": "Everything in it goes away. Your real games are not affected.",
       "kept": "This is now a normal game.",
       "settingsTitle": "Practice game",
       "settingsBody": "A tutorial created this game. It takes one player and ends itself in {{hours}} h. Keep it to turn it into a normal game, or delete it.",

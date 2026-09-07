@@ -20,6 +20,7 @@ export const KNOWN_ANCHORS: readonly string[] = [
   'mode-results',
   'settings-btn',
   'revert-to-setup-btn',
+  'progress-keep-btn',
   'enforce-base-order-switch',
   // drawer
   'tab-bases',

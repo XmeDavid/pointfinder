@@ -1667,13 +1667,13 @@
       "skip": "Agora não"
     },
     "common": {
-      "stepOf": "Passo {{n}} de {{total}}",
       "next": "Seguinte",
       "gotIt": "Percebi",
       "later": "Faço isto mais tarde",
       "close": "Fechar tutorial",
       "resume": "Retomar",
-      "pillLabel": "Tutorial · passo {{n}} de {{total}}"
+      "progress": "Progresso do tutorial: passo {{n}} de {{total}}",
+      "pill": "Tutorial"
     },
     "library": {
       "title": "Tutoriais",
@@ -1691,16 +1691,17 @@
         "skipped": "Ignorado"
       },
       "practice": {
-        "replaceTitle": "Substituir o teu jogo de treino?",
-        "replaceBody": "Já tens um jogo de treino, “{{name}}”. Começar este tutorial apaga-o e prepara um novo para a lição.",
-        "replaceConfirm": "Apagar e começar",
         "creating": "A preparar o teu jogo de treino…",
         "createFailed": "Não foi possível preparar o jogo de treino.",
         "gameName": {
           "fixedRoute": "Treino: percurso fixo",
           "exploration": "Treino: exploração",
-          "generic": "Jogo de treino"
-        }
+          "generic": "Jogo de treino",
+          "unlockChain": "Treino: cadeia de desbloqueios",
+          "differentPath": "Treino: um percurso diferente",
+          "variableOutcome": "Treino: um desfecho variável"
+        },
+        "replacing": "A substituir o teu jogo de treino…"
       }
     },
     "scenarios": {
@@ -1860,11 +1861,23 @@
       },
       "revert": {
         "title": "Voltar à configuração",
-        "body": "Precisas de mudar algo a meio do evento? Volta à configuração. Se mantiveres o progresso, fica tudo; se o apagares, submissões, check-ins e eventos são arquivados de lado, nunca desaparecem."
+        "body": "Precisas de mudar algo depois de ir ao vivo? Voltar à configuração reabre o jogo para edição. Toca — a pergunta seguinte é o que fazer com o progresso até agora."
+      },
+      "revert-choice": {
+        "title": "Manter ou apagar o progresso",
+        "body": "Manter guarda todos os check-ins e submissões para as equipas continuarem onde estavam; apagar recomeça o evento. O histórico fica arquivado de qualquer forma. Escolhe e confirma."
       },
       "edit": {
         "title": "Edita o que quiseres",
-        "body": "Em configuração volta tudo a ser editável — abre este desafio e muda os pontos, o texto, o que for. Guarda e a alteração fica pronta para o próximo arranque."
+        "body": "Em configuração tudo volta a ser editável. Abre o primeiro desafio para o alterar."
+      },
+      "edit-location-bound": {
+        "title": "Torna-o preso ao local",
+        "body": "Preso ao local significa que o desafio só pode ser respondido na sua base, e não de qualquer sítio depois de desbloqueado. Liga-o neste."
+      },
+      "edit-save": {
+        "title": "Guarda a alteração",
+        "body": "Guarda. A alteração espera em configuração até voltares a ir ao vivo."
       },
       "go-live-again": {
         "title": "Arranca outra vez",
@@ -1941,8 +1954,6 @@
       "ended": "Jogo de treino · terminado",
       "keep": "Manter como jogo real",
       "delete": "Apagar jogo de treino",
-      "deleteTitle": "Apagar este jogo de treino?",
-      "deleteBody": "Tudo o que está nele desaparece. Os teus jogos reais não são afetados.",
       "kept": "Este é agora um jogo normal.",
       "settingsTitle": "Jogo de treino",
       "settingsBody": "Um tutorial criou este jogo. Aceita um jogador e termina sozinho dentro de {{hours}} h. Mantém-no para o tornar um jogo normal, ou apaga-o.",

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useGames } from '@/hooks/queries/useGames'
 import { useTutorialProgress } from '@/hooks/queries/useTutorialProgress'
@@ -19,6 +18,9 @@ import type { Scenario, ScenarioId, TutorialProgress } from './types'
 const PRACTICE_NAME_KEY: Partial<Record<ScenarioId, string>> = {
   'fixed-route': 'tutorials.library.practice.gameName.fixedRoute',
   exploration: 'tutorials.library.practice.gameName.exploration',
+  'unlock-chain': 'tutorials.library.practice.gameName.unlockChain',
+  'different-path': 'tutorials.library.practice.gameName.differentPath',
+  'variable-outcome': 'tutorials.library.practice.gameName.variableOutcome',
 }
 
 /**
@@ -38,7 +40,6 @@ export function TutorialsPage() {
   const deleteGame = useDeleteGame()
   const start = useTourStore((s) => s.start)
 
-  const [replacing, setReplacing] = useState<{ scenario: Scenario; resumeStepId: string | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const scenarios = scenarioList()
@@ -62,7 +63,7 @@ export function TutorialsPage() {
     navigate('/dashboard')
   }
 
-  async function createAndStart(scenario: Scenario) {
+  async function createAndStart(scenario: Scenario, afterReplace = false) {
     setError(null)
     try {
       const centre = await readPracticeCentre()
@@ -73,12 +74,15 @@ export function TutorialsPage() {
       start(scenario.id, { gameId: game.id, stepId: null })
       navigate(`/game/${game.id}`)
     } catch (err) {
-      if (getApiErrorCode(err) === 'TUTORIAL_PRACTICE_GAME_EXISTS') {
-        // The games list was stale (another tab or device made one): show
-        // the replace question instead of a dead end.
+      if (getApiErrorCode(err) === 'TUTORIAL_PRACTICE_GAME_EXISTS' && !afterReplace) {
+        // The games list was stale (another tab or device made one): refresh
+        // it and replace that game instead of a dead end. Once only: a second
+        // refusal is shown, not retried.
         const fresh = await refetchGames()
-        if (activePracticeGame(fresh.data)) {
-          setReplacing({ scenario, resumeStepId: null })
+        const stale = activePracticeGame(fresh.data)
+        if (stale) {
+          await deleteGame.mutateAsync(stale.id)
+          await createAndStart(scenario, true)
           return
         }
       }
@@ -86,10 +90,13 @@ export function TutorialsPage() {
     }
   }
 
-  /** Fresh start: a practice game is created unless one must be replaced first. */
+  /**
+   * Fresh start. A practice game is disposable by definition, so an existing
+   * one is replaced without asking.
+   */
   function fresh(scenario: Scenario, resumeStepId: string | null) {
     if (practiceGame) {
-      setReplacing({ scenario, resumeStepId })
+      void replaceAndStart(scenario, resumeStepId)
       return
     }
     if (scenario.entry === 'new-game') startNewGameScenario(scenario, resumeStepId)
@@ -134,10 +141,8 @@ export function TutorialsPage() {
       .then(() => fresh(scenario, null))
   }
 
-  async function confirmReplace() {
-    const target = replacing
-    setReplacing(null)
-    if (!target || !practiceGame) return
+  async function replaceAndStart(scenario: Scenario, resumeStepId: string | null) {
+    if (!practiceGame) return
     setError(null)
     try {
       await deleteGame.mutateAsync(practiceGame.id)
@@ -145,8 +150,8 @@ export function TutorialsPage() {
       setError(getApiErrorMessage(err, t('tutorials.library.practice.createFailed')))
       return
     }
-    if (target.scenario.entry === 'new-game') startNewGameScenario(target.scenario, target.resumeStepId)
-    else await createAndStart(target.scenario)
+    if (scenario.entry === 'new-game') startNewGameScenario(scenario, resumeStepId)
+    else await createAndStart(scenario)
   }
 
   const busy = createPractice.isPending || deleteGame.isPending
@@ -161,7 +166,7 @@ export function TutorialsPage() {
 
         {busy && (
           <p className="text-sm text-muted-foreground" role="status" data-testid="tutorials-practice-busy">
-            {t('tutorials.library.practice.creating')}
+            {deleteGame.isPending ? t('tutorials.library.practice.replacing') : t('tutorials.library.practice.creating')}
           </p>
         )}
         {error && (
@@ -203,14 +208,6 @@ export function TutorialsPage() {
         )}
       </div>
 
-      <ConfirmDeleteDialog
-        open={replacing !== null}
-        onCancel={() => setReplacing(null)}
-        onConfirm={() => void confirmReplace()}
-        title={t('tutorials.library.practice.replaceTitle')}
-        description={t('tutorials.library.practice.replaceBody', { name: practiceGame?.name ?? '' })}
-        confirmLabel={t('tutorials.library.practice.replaceConfirm')}
-      />
     </div>
   )
 }

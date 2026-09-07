@@ -151,7 +151,7 @@ describe('TutorialsPage', () => {
     expect(tutorialProgressStore.practiceGames()).toHaveLength(0)
   })
 
-  it('asks before replacing an existing practice game, then deletes it and creates the new one', async () => {
+  it('replaces an existing practice game without asking: deletes it and creates the new one', async () => {
     const deleted: string[] = []
     server.use(
       http.get('/api/games', () => HttpResponse.json([
@@ -168,10 +168,6 @@ describe('TutorialsPage', () => {
     await waitFor(() => expect(screen.getByTestId('tutorial-card-exploration')).toBeInTheDocument())
 
     await user.click(screen.getByTestId('tutorial-start-exploration'))
-    expect(await screen.findByText('Replace your practice game?')).toBeInTheDocument()
-    expect(tutorialProgressStore.practiceGames()).toHaveLength(0)
-
-    await user.click(screen.getByTestId('confirm-action-btn'))
 
     await waitFor(() => expect(deleted).toEqual(['practice-old']))
     await waitFor(() => expect(tutorialProgressStore.practiceGames()).toHaveLength(1))
@@ -197,8 +193,10 @@ describe('TutorialsPage', () => {
     expect(useTourStore.getState().currentStepId).toBeNull()
   })
 
-  it('offers to replace when the server says a practice game exists that the stale list did not show', async () => {
+  it('replaces the practice game the server knows about when the list was stale', async () => {
     let listCalls = 0
+    let createCalls = 0
+    const deleted: string[] = []
     server.use(
       http.get('/api/games', () => {
         listCalls += 1
@@ -207,9 +205,21 @@ describe('TutorialsPage', () => {
           { ...createMockGame({ id: 'practice-elsewhere', name: 'Made on the phone', status: 'setup' }), tutorialScenario: 'fixed-route', tutorialExpiresAt: '2026-09-08T09:00:00Z' },
         ])
       }),
-      http.post('/api/users/me/tutorials/:scenarioId/practice-game', () =>
-        HttpResponse.json({ status: 409, message: 'exists', code: 'TUTORIAL_PRACTICE_GAME_EXISTS' }, { status: 409 }),
-      ),
+      http.post('/api/users/me/tutorials/:scenarioId/practice-game', async ({ params, request }) => {
+        createCalls += 1
+        if (createCalls === 1) {
+          return HttpResponse.json({ status: 409, message: 'exists', code: 'TUTORIAL_PRACTICE_GAME_EXISTS' }, { status: 409 })
+        }
+        const body = (await request.json()) as { name: string }
+        return HttpResponse.json(
+          { ...createMockGame({ id: `practice-${String(params.scenarioId)}`, name: body.name, status: 'setup' }), tutorialScenario: String(params.scenarioId), tutorialExpiresAt: '2026-09-08T09:00:00Z' },
+          { status: 201 },
+        )
+      }),
+      http.delete('/api/games/:id', ({ params }) => {
+        deleted.push(String(params.id))
+        return new HttpResponse(null, { status: 204 })
+      }),
     )
     const user = userEvent.setup()
     renderPage()
@@ -217,7 +227,9 @@ describe('TutorialsPage', () => {
 
     await user.click(screen.getByTestId('tutorial-start-exploration'))
 
-    expect(await screen.findByText('Replace your practice game?')).toBeInTheDocument()
+    await waitFor(() => expect(deleted).toEqual(['practice-elsewhere']))
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/game/practice-exploration'))
+    expect(createCalls).toBe(2)
     expect(screen.queryByTestId('tutorials-practice-error')).not.toBeInTheDocument()
   })
 
@@ -233,5 +245,25 @@ describe('TutorialsPage', () => {
 
     expect(await screen.findByTestId('tutorials-practice-error')).toBeInTheDocument()
     expect(useTourStore.getState().activeScenario).toBeNull()
+  })
+
+  it('shows the reason when the server refuses even after the stale game was replaced', async () => {
+    server.use(
+      http.get('/api/games', () => HttpResponse.json([
+        { ...createMockGame({ id: 'practice-elsewhere', status: 'setup' }), tutorialScenario: 'fixed-route', tutorialExpiresAt: '2026-09-08T09:00:00Z' },
+      ])),
+      http.post('/api/users/me/tutorials/:scenarioId/practice-game', () =>
+        HttpResponse.json({ status: 409, message: 'exists', code: 'TUTORIAL_PRACTICE_GAME_EXISTS' }, { status: 409 }),
+      ),
+      http.delete('/api/games/:id', () => new HttpResponse(null, { status: 204 })),
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tutorial-start-exploration')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTestId('tutorial-card-exploration')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('tutorial-start-exploration'))
+
+    expect(await screen.findByTestId('tutorials-practice-error')).toHaveTextContent('You already have a practice game. Delete or keep it first.')
   })
 })

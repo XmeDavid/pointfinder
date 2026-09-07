@@ -36,7 +36,19 @@ export function TourPill({ step, total, onResume, inline = false }: TourPillProp
     >
       <OverlayPanel padding="sm" shape="pill" className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">
-          {t('tutorials.common.pillLabel', { n: step, total })}
+          <span className="inline-flex items-center gap-2">
+            {t('tutorials.common.pill')}
+            <span
+              role="progressbar"
+              aria-label={t('tutorials.common.progress', { n: step, total })}
+              aria-valuemin={1}
+              aria-valuemax={total}
+              aria-valuenow={step}
+              className="inline-block h-1 w-16 overflow-hidden rounded-full bg-muted"
+            >
+              <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.round((step / Math.max(total, 1)) * 100)}%` }} />
+            </span>
+          </span>
         </span>
         <Button size="sm" variant="ghost" onClick={onResume} data-testid="tour-pill-resume" className="h-auto min-h-8">
           {t('tutorials.common.resume')}

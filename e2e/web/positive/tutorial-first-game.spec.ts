@@ -198,14 +198,17 @@ test.describe('Guided first-game tutorial', { tag: '@smoke' }, () => {
     // ── 13. revert, keeping progress ──────────────────────────────────
     await expect(page.getByTestId('revert-to-setup-btn')).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('revert-to-setup-btn').click();
+    // The tap is acknowledged; the choice is its own step.
+    await expectStep(page, 'revert-choice');
     await page.getByTestId('progress-keep-btn').click();
     await page.getByTestId('confirm-state-change-btn').click();
 
     // ── 14. edit a challenge ──────────────────────────────────────────
     await expectStep(page, 'edit');
     await page.locator('[data-testid^="challenge-item-"]').first().click();
-    await expect(page.getByTestId('points-input')).toBeVisible({ timeout: 20_000 });
-    await page.getByTestId('points-input').fill('25');
+    await expectStep(page, 'edit-location-bound');
+    await page.getByTestId('location-bound-toggle').click();
+    await expectStep(page, 'edit-save');
     await page.getByTestId('save-challenge').click();
 
     // ── 15. go live again → 16. finish ────────────────────────────────
@@ -216,7 +219,6 @@ test.describe('Guided first-game tutorial', { tag: '@smoke' }, () => {
     await expectStep(page, 'finish');
     await expect(page.getByTestId('practice-game-badge')).toBeVisible();
     await page.getByTestId('practice-delete-btn').click();
-    await page.getByTestId('confirm-action-btn').click();
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
     await expect(page.getByTestId('tour-bubble')).toHaveCount(0, { timeout: 15_000 });
     await expect(page.locator(`[data-testid="game-card-${gameId}"]`)).toHaveCount(0, { timeout: 15_000 });

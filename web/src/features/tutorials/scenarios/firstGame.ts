@@ -386,8 +386,20 @@ const steps: Step[] = [
       a.closeDrawer()
       a.setSettingsPanelOpen(true)
     },
-    done: { kind: 'predicate', test: (s) => s.game?.status === 'setup' },
+    // The tap opens the keep-or-erase choice; a game already back in setup completes it too.
+    done: { kind: 'predicate', test: (s) => s.clickedSteps.has('revert') || s.game?.status === 'setup' },
     copy: copyFor('revert'),
+  },
+  {
+    id: 'revert-choice',
+    route: 'workspace',
+    anchor: 'progress-keep-btn',
+    prepare: (a) => {
+      a.closeDrawer()
+      a.setSettingsPanelOpen(true)
+    },
+    done: { kind: 'predicate', test: (s) => s.game?.status === 'setup' },
+    copy: copyFor('revert-choice'),
   },
   {
     id: 'edit',
@@ -396,13 +408,39 @@ const steps: Step[] = [
     prepare: (a, s) => {
       a.setSettingsPanelOpen(false)
       ensureBuild(a, s)
+      a.selectChallenge(null)
       a.openDrawer('challenges')
+    },
+    // Opening the challenge is the step; the form comes next.
+    done: { kind: 'predicate', test: (s) => s.clickedSteps.has('edit') || s.selectedChallengeId !== null },
+    copy: copyFor('edit'),
+  },
+  {
+    id: 'edit-location-bound',
+    route: 'workspace',
+    anchor: 'location-bound-toggle',
+    prepare: (a, s) => {
+      ensureBuild(a, s)
+      a.openDrawer('challenges')
+      a.selectChallenge(s.selectedChallengeId ?? firstChallengeId(s))
+    },
+    done: { kind: 'predicate', test: (s) => s.field('location-bound-toggle').pressed === true },
+    copy: copyFor('edit-location-bound'),
+  },
+  {
+    id: 'edit-save',
+    route: 'workspace',
+    anchor: 'save-challenge',
+    prepare: (a, s) => {
+      ensureBuild(a, s)
+      a.openDrawer('challenges')
+      a.selectChallenge(s.selectedChallengeId ?? firstChallengeId(s))
     },
     done: {
       kind: 'predicate',
-      test: (s) => (s.lastSuccess['challenge:update'] ?? 0) > since(s, 'revert'),
+      test: (s) => (s.lastSuccess['challenge:update'] ?? 0) > since(s, 'revert-choice'),
     },
-    copy: copyFor('edit'),
+    copy: copyFor('edit-save'),
   },
   {
     id: 'go-live-again',

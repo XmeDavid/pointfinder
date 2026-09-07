@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { useDeleteGame, useKeepGame } from '@/hooks/mutations/useGameMutations'
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/api/errors'
 
@@ -26,7 +25,6 @@ export function PracticeGameChoices({
   const navigate = useNavigate()
   const keep = useKeepGame()
   const remove = useDeleteGame()
-  const [confirming, setConfirming] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const size = compact ? 'sm' : 'default'
 
@@ -47,8 +45,8 @@ export function PracticeGameChoices({
     })
   }
 
+  // A practice game is disposable by definition: no confirmation.
   function handleDelete() {
-    setConfirming(false)
     setMessage(null)
     remove.mutate(gameId, {
       onSuccess: () => {
@@ -76,7 +74,7 @@ export function PracticeGameChoices({
           type="button"
           size={size}
           variant="outline"
-          onClick={() => setConfirming(true)}
+          onClick={handleDelete}
           disabled={keep.isPending || remove.isPending}
           data-testid="practice-delete-btn"
           className="h-auto min-h-9 whitespace-normal"
@@ -89,14 +87,6 @@ export function PracticeGameChoices({
           {message}
         </p>
       )}
-      <ConfirmDeleteDialog
-        open={confirming}
-        onCancel={() => setConfirming(false)}
-        onConfirm={handleDelete}
-        title={t('tutorials.practice.deleteTitle')}
-        description={t('tutorials.practice.deleteBody')}
-        confirmLabel={t('tutorials.practice.delete')}
-      />
     </div>
   )
 }

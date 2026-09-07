@@ -1667,13 +1667,13 @@
       "skip": "Später"
     },
     "common": {
-      "stepOf": "Schritt {{n}} von {{total}}",
       "next": "Weiter",
       "gotIt": "Verstanden",
       "later": "Mache ich später",
       "close": "Tutorial schließen",
       "resume": "Fortsetzen",
-      "pillLabel": "Tutorial · Schritt {{n}} von {{total}}"
+      "progress": "Tutorial-Fortschritt: Schritt {{n}} von {{total}}",
+      "pill": "Tutorial"
     },
     "library": {
       "title": "Tutorials",
@@ -1691,16 +1691,17 @@
         "skipped": "Übersprungen"
       },
       "practice": {
-        "replaceTitle": "Übungsspiel ersetzen?",
-        "replaceBody": "Du hast bereits ein Übungsspiel, „{{name}}“. Dieses Tutorial löscht es und richtet ein neues für die Lektion ein.",
-        "replaceConfirm": "Löschen und starten",
         "creating": "Dein Übungsspiel wird eingerichtet …",
         "createFailed": "Das Übungsspiel konnte nicht eingerichtet werden.",
         "gameName": {
           "fixedRoute": "Übung: feste Route",
           "exploration": "Übung: Erkundung",
-          "generic": "Übungsspiel"
-        }
+          "generic": "Übungsspiel",
+          "unlockChain": "Übung: Freischaltkette",
+          "differentPath": "Übung: ein anderer Weg",
+          "variableOutcome": "Übung: ein variabler Ausgang"
+        },
+        "replacing": "Dein Übungsspiel wird ersetzt …"
       }
     },
     "scenarios": {
@@ -1859,12 +1860,24 @@
         "body": "Bauen kennst du jetzt. Kommando verfolgt die Teams live auf der Karte, Prüfen bearbeitet wartende Einreichungen, und Ergebnisse hält Wertung und Export bereit."
       },
       "revert": {
-        "title": "Zurück in die Einrichtung",
-        "body": "Mitten im Event etwas ändern? Geh zurück in die Einrichtung. Mit behaltenem Fortschritt bleibt alles; beim Löschen werden Einreichungen, Check-ins und Ereignisse archiviert, nie entfernt."
+        "title": "Zurück zur Einrichtung",
+        "body": "Nach dem Livegang noch etwas ändern? Zurück zur Einrichtung öffnet das Spiel wieder zum Bearbeiten. Tippe darauf — die nächste Frage ist, was mit dem bisherigen Fortschritt passiert."
+      },
+      "revert-choice": {
+        "title": "Fortschritt behalten oder löschen",
+        "body": "Behalten bewahrt alle Check-ins und Einreichungen, damit Teams dort weitermachen, wo sie waren; Löschen startet das Ereignis neu. Der Verlauf wird so oder so archiviert. Wähle und bestätige."
       },
       "edit": {
-        "title": "Ändere, was du willst",
-        "body": "In der Einrichtung ist wieder alles änderbar – öffne diese Challenge und ändere ihre Punkte, ihren Text, was auch immer. Speichern, und die Änderung steht beim nächsten Start bereit."
+        "title": "Bearbeite, was du willst",
+        "body": "In der Einrichtung ist wieder alles bearbeitbar. Öffne die erste Challenge, um sie zu ändern."
+      },
+      "edit-location-bound": {
+        "title": "Mache sie ortsgebunden",
+        "body": "Ortsgebunden heißt, die Challenge lässt sich nur an ihrer Station beantworten, nicht von überall, sobald sie freigeschaltet ist. Schalte es für diese ein."
+      },
+      "edit-save": {
+        "title": "Speichere die Änderung",
+        "body": "Speichern. Die Änderung wartet in der Einrichtung, bis du wieder live gehst."
       },
       "go-live-again": {
         "title": "Noch einmal live",
@@ -1941,8 +1954,6 @@
       "ended": "Übungsspiel · beendet",
       "keep": "Als echtes Spiel behalten",
       "delete": "Übungsspiel löschen",
-      "deleteTitle": "Dieses Übungsspiel löschen?",
-      "deleteBody": "Alles darin geht verloren. Deine echten Spiele sind nicht betroffen.",
       "kept": "Das ist jetzt ein normales Spiel.",
       "settingsTitle": "Übungsspiel",
       "settingsBody": "Ein Tutorial hat dieses Spiel erstellt. Es nimmt eine Person auf und endet von selbst in {{hours}} h. Behalte es, um es zu einem normalen Spiel zu machen, oder lösche es.",
