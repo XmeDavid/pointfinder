@@ -1189,6 +1189,14 @@
     "importBtn": "Import"
   },
   "build": {
+    "filters": {
+      "label": "Quick filters",
+      "stage": "Stage",
+      "tags": "Tags",
+      "all": "All",
+      "noStage": "No stage",
+      "clear": "Clear filters"
+    },
     "openContent": "Open Content Panel",
     "mapLoading": "Loading map…",
     "mapUnavailable": "The map could not load. Check your connection and try again.",

@@ -8,6 +8,8 @@ import { useTeams } from '@/hooks/queries/useTeams'
 import { useBases } from '@/hooks/queries/useBases'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { SearchInput } from '@/components/data/SearchInput'
+import { QuickFilters } from '@/components/data/QuickFilters'
+import { useTags } from '@/hooks/queries/useTags'
 import { Spinner } from '@/components/feedback/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { ChallengeDetail } from './ChallengeDetail'
@@ -140,15 +142,18 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
   const selectedChallengeId = useWorkspaceStore((s) => s.selectedChallengeId)
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
 
+  const { data: tags = [] } = useTags(gameId)
+  const [tagFilter, setTagFilter] = useState<string[]>([])
+  const tagOptions = useMemo(() => tags.map((tag) => ({ id: tag.id, label: tag.label, color: tag.color })), [tags])
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return challenges
-    const q = search.toLowerCase()
-    return challenges.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q),
-    )
-  }, [challenges, search])
+    const q = search.trim().toLowerCase()
+    return challenges.filter((c) => {
+      if (q && !c.title.toLowerCase().includes(q) && !c.description.toLowerCase().includes(q)) return false
+      if (tagFilter.length > 0 && !tagFilter.some((id) => c.tagIds?.includes(id))) return false
+      return true
+    })
+  }, [challenges, search, tagFilter])
 
   return (
     <ListDetailLayout data-testid="challenges-tab" selected={!!selectedChallengeId} onBack={() => selectChallenge(null)} list={<>
@@ -159,6 +164,10 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
             value={search}
             onChange={setSearch}
             placeholder={t('build.searchChallenges')}
+          />
+          <QuickFilters
+            className="mt-2"
+            groups={[{ id: 'tag', label: t('build.filters.tags'), mode: 'multi', options: tagOptions, value: tagFilter, onChange: setTagFilter }]}
           />
         </div>
 
@@ -189,9 +198,11 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
           ))}
           {!isLoading && !isError && filtered.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-              {search
-                ? t('build.searchChallengesEmpty')
-                : t('build.noChallengesYet')}
+              {tagFilter.length > 0
+                ? t('challenges.noResults')
+                : search
+                  ? t('build.searchChallengesEmpty')
+                  : t('build.noChallengesYet')}
             </div>
           )}
         </div>

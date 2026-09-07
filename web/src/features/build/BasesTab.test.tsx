@@ -6,6 +6,8 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockGame } from '@/test/factories/game'
 import { createMockBase } from '@/test/factories/base'
+import { createMockStage } from '@/test/factories/stage'
+import { createMockTag } from '@/test/factories/tag'
 import { BasesTab } from './BasesTab'
 
 // Mock workspace store
@@ -189,5 +191,89 @@ describe('ordered bases', () => {
     renderBasesTab()
     expect(await screen.findByRole('button', { name: 'Arrange route' })).toBeDisabled()
     expect(screen.getByText('Base order can only be changed during setup.')).toBeInTheDocument()
+  })
+})
+
+describe('BasesTab quick filters', () => {
+  beforeEach(() => {
+    mockStore.selectedBaseId = null
+    mockStore.selectBase.mockClear()
+  })
+
+  function stagedFixture() {
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({ id: 'base-1', name: 'Base Alpha', stageId: 'stage-1', tagIds: ['tag-1'] }),
+          createMockBase({ id: 'base-2', name: 'Base Beta', stageId: 'stage-2', tagIds: ['tag-1', 'tag-2'] }),
+          createMockBase({ id: 'base-3', name: 'Base Gamma', stageId: null }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/stages', () =>
+        HttpResponse.json([
+          createMockStage({ id: 'stage-2', name: 'Afternoon', orderIndex: 1 }),
+          createMockStage({ id: 'stage-1', name: 'Morning', orderIndex: 0 }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/tags', () =>
+        HttpResponse.json([createMockTag({ id: 'tag-1', label: 'Outdoor', color: '#16a34a' }), createMockTag({ id: 'tag-2', label: 'Photo', color: '#eab308' })]),
+      ),
+    )
+  }
+
+  it('offers the stages in order plus "No stage" when a base has none, and narrows the list', async () => {
+    const user = userEvent.setup()
+    stagedFixture()
+    renderBasesTab()
+    await waitFor(() => expect(screen.getByText('Base Alpha')).toBeInTheDocument())
+
+    const chips = screen.getByRole('group', { name: 'Stage' })
+    expect(chips.textContent).toContain('All')
+    expect(chips.textContent?.indexOf('Morning')).toBeLessThan(chips.textContent?.indexOf('Afternoon') ?? -1)
+    expect(screen.getByTestId('filter-stage-none')).toBeInTheDocument()
+
+    await user.click(screen.getByTestId('filter-stage-stage-2'))
+    expect(screen.queryByText('Base Alpha')).not.toBeInTheDocument()
+    expect(screen.getByText('Base Beta')).toBeInTheDocument()
+    expect(screen.queryByText('Base Gamma')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('filter-stage-none'))
+    expect(screen.getByText('Base Gamma')).toBeInTheDocument()
+    expect(screen.queryByText('Base Beta')).not.toBeInTheDocument()
+  })
+
+  it('filters by any of the chosen tags and combines with the stage filter', async () => {
+    const user = userEvent.setup()
+    stagedFixture()
+    renderBasesTab()
+    await waitFor(() => expect(screen.getByText('Base Alpha')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('filter-tag-tag-2'))
+    expect(screen.getByText('Base Beta')).toBeInTheDocument()
+    expect(screen.queryByText('Base Alpha')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('filter-tag-tag-1'))
+    expect(screen.getByText('Base Alpha')).toBeInTheDocument()
+    expect(screen.getByText('Base Beta')).toBeInTheDocument()
+    expect(screen.queryByText('Base Gamma')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('filter-stage-stage-1'))
+    expect(screen.getByText('Base Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Base Beta')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('filter-stage-none'))
+    expect(screen.getByText('No bases match the current filters — try clearing a filter.')).toBeInTheDocument()
+    await user.click(screen.getByTestId('quick-filters-clear'))
+    expect(screen.getByText('Base Gamma')).toBeInTheDocument()
+  })
+
+  it('shows no stage chips when the game has no stages, and no tag chips without tags', async () => {
+    server.use(
+      http.get('/api/games/:gameId/stages', () => HttpResponse.json([])),
+      http.get('/api/games/:gameId/tags', () => HttpResponse.json([])),
+    )
+    renderBasesTab()
+    await waitFor(() => expect(screen.getByText('Base Alpha')).toBeInTheDocument())
+    expect(screen.queryByTestId('quick-filters')).not.toBeInTheDocument()
   })
 })

@@ -10,6 +10,9 @@ import { BaseRouteEditor } from './BaseRouteEditor'
 import { AssignmentGrid } from './assignments/AssignmentGrid'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { SearchInput } from '@/components/data/SearchInput'
+import { QuickFilters } from '@/components/data/QuickFilters'
+import { useStages } from '@/hooks/queries/useStages'
+import { useTags } from '@/hooks/queries/useTags'
 import { Spinner } from '@/components/feedback/Spinner'
 import { BaseDetail } from './BaseDetail'
 import type { Base, Assignment } from '@/types'
@@ -83,16 +86,43 @@ export function BasesTab({ gameId }: BasesTabProps) {
   const { data: assignments = [] } = useAssignments(gameId)
 
   const [search, setSearch] = useState('')
+  const { data: stages = [] } = useStages(gameId)
+  const { data: tags = [] } = useTags(gameId)
+  // Quick filters: one stage (or "no stage") and any of the chosen tags.
+  const [stageFilter, setStageFilter] = useState<string[]>([])
+  const [tagFilter, setTagFilter] = useState<string[]>([])
 
   const orderedBases = useMemo(() => game?.enforceBaseOrder
     ? [...bases].sort((a, b) => (a.sequenceNumber ?? Number.MAX_SAFE_INTEGER) - (b.sequenceNumber ?? Number.MAX_SAFE_INTEGER))
     : bases, [bases, game?.enforceBaseOrder])
 
+  // A base belongs to a stage through its own stageId or the stage's base list.
+  const stageOf = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const stage of stages) for (const id of stage.baseIds) map.set(id, stage.id)
+    for (const base of bases) if (base.stageId) map.set(base.id, base.stageId)
+    return map
+  }, [stages, bases])
+  const stageOptions = useMemo(() => {
+    if (stages.length === 0) return []
+    const ordered = [...stages].sort((a, b) => a.orderIndex - b.orderIndex).map((s) => ({ id: s.id, label: s.name }))
+    const unstaged = bases.some((b) => !stageOf.has(b.id))
+    return unstaged ? [...ordered, { id: 'none', label: t('build.filters.noStage') }] : ordered
+  }, [stages, bases, stageOf, t])
+  const tagOptions = useMemo(() => tags.map((tag) => ({ id: tag.id, label: tag.label, color: tag.color })), [tags])
+  const filtersActive = stageFilter.length > 0 || tagFilter.length > 0
+
   const filteredBases = useMemo(() => {
-    if (!search.trim()) return orderedBases
-    const q = search.toLowerCase()
-    return orderedBases.filter((b) => b.name.toLowerCase().includes(q))
-  }, [orderedBases, search])
+    const q = search.trim().toLowerCase()
+    const stage = stageFilter[0]
+    return orderedBases.filter((b) => {
+      if (q && !b.name.toLowerCase().includes(q)) return false
+      if (stage === 'none' && stageOf.has(b.id)) return false
+      if (stage && stage !== 'none' && stageOf.get(b.id) !== stage) return false
+      if (tagFilter.length > 0 && !tagFilter.some((id) => b.tagIds?.includes(id))) return false
+      return true
+    })
+  }, [orderedBases, search, stageFilter, stageOf, tagFilter])
 
   const routeEditorOpen = arranging && !!game?.enforceBaseOrder
 
@@ -130,6 +160,13 @@ export function BasesTab({ gameId }: BasesTabProps) {
             placeholder={t('build.searchBases')}
             debounceMs={150}
           />
+          <QuickFilters
+            className="mt-2"
+            groups={[
+              { id: 'stage', label: t('build.filters.stage'), mode: 'single', options: stageOptions, value: stageFilter, onChange: setStageFilter },
+              { id: 'tag', label: t('build.filters.tags'), mode: 'multi', options: tagOptions, value: tagFilter, onChange: setTagFilter },
+            ]}
+          />
         </div>
 
         {/* List */}
@@ -158,7 +195,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
           ))}
           {!isLoading && !isError && filteredBases.length === 0 && (
             <div className="px-3 py-6 text-xs text-muted-foreground text-center">
-              {search ? t('build.searchBasesEmpty') : t('build.noBasesYet')}
+              {filtersActive ? t('bases.noResults') : search ? t('build.searchBasesEmpty') : t('build.noBasesYet')}
             </div>
           )}
         </div>

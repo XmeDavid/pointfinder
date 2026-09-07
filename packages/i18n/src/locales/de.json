@@ -1189,6 +1189,14 @@
     "importBtn": "Importieren"
   },
   "build": {
+    "filters": {
+      "label": "Schnellfilter",
+      "stage": "Phase",
+      "tags": "Tags",
+      "all": "Alle",
+      "noStage": "Ohne Phase",
+      "clear": "Filter zurücksetzen"
+    },
     "openContent": "Inhaltsbereich öffnen",
     "mapLoading": "Karte wird geladen…",
     "mapUnavailable": "Die Karte konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",

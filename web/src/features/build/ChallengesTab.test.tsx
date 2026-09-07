@@ -9,6 +9,7 @@ import { createMockChallenge, resetChallengeCounter } from '@/test/factories/cha
 import { resetAssignmentCounter } from '@/test/factories/assignment'
 import { resetBaseCounter } from '@/test/factories/base'
 import { resetTeamCounter } from '@/test/factories/team'
+import { createMockTag } from '@/test/factories/tag'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { ChallengesTab } from './ChallengesTab'
 
@@ -179,5 +180,55 @@ describe('ChallengesTab', () => {
     // Should show badge labels
     expect(screen.getByText('Text')).toBeInTheDocument()
     expect(screen.getByText('File')).toBeInTheDocument()
+  })
+})
+
+describe('ChallengesTab tag filter', () => {
+  beforeEach(() => {
+    resetChallengeCounter()
+    useWorkspaceStore.getState().reset()
+  })
+
+  it('narrows the list to challenges carrying any chosen tag', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/games/:gameId/challenges', () =>
+        HttpResponse.json([
+          createMockChallenge({ id: 'ch-1', title: 'Riddle', tagIds: ['tag-1'] }),
+          createMockChallenge({ id: 'ch-2', title: 'Photo hunt', tagIds: ['tag-2'] }),
+          createMockChallenge({ id: 'ch-3', title: 'Untagged' }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/tags', () =>
+        HttpResponse.json([createMockTag({ id: 'tag-1', label: 'Important' }), createMockTag({ id: 'tag-2', label: 'Outdoor' })]),
+      ),
+    )
+    render(createElement(ChallengesTab, { gameId }), { wrapper: createWrapper() })
+    await waitFor(() => expect(screen.getByText('Riddle')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('filter-tag-tag-2'))
+    expect(screen.getByText('Photo hunt')).toBeInTheDocument()
+    expect(screen.queryByText('Riddle')).not.toBeInTheDocument()
+    expect(screen.queryByText('Untagged')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('filter-tag-tag-1'))
+    expect(screen.getByText('Riddle')).toBeInTheDocument()
+    expect(screen.getByText('Photo hunt')).toBeInTheDocument()
+  })
+
+  it('says which filter emptied the list, and hides the chips when the game has no tags', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => HttpResponse.json([createMockChallenge({ id: 'ch-1', title: 'Riddle' })])),
+    )
+    render(createElement(ChallengesTab, { gameId }), { wrapper: createWrapper() })
+    await waitFor(() => expect(screen.getByText('Riddle')).toBeInTheDocument())
+    await user.click(screen.getByTestId('filter-tag-tag-1'))
+    expect(screen.getByText('No challenges match the current filters — try clearing a filter.')).toBeInTheDocument()
+
+    server.use(http.get('/api/games/:gameId/tags', () => HttpResponse.json([])))
+    const { container } = render(createElement(ChallengesTab, { gameId: 'game-2' }), { wrapper: createWrapper() })
+    await waitFor(() => expect(container.textContent).toContain('Riddle'))
+    expect(container.querySelector('[data-testid="quick-filters"]')).toBeNull()
   })
 })

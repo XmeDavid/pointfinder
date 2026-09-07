@@ -1189,6 +1189,14 @@
     "importBtn": "Importar"
   },
   "build": {
+    "filters": {
+      "label": "Filtros rápidos",
+      "stage": "Etapa",
+      "tags": "Etiquetas",
+      "all": "Todas",
+      "noStage": "Sem etapa",
+      "clear": "Limpar filtros"
+    },
     "openContent": "Abrir painel de conteúdo",
     "mapLoading": "A carregar o mapa…",
     "mapUnavailable": "Não foi possível carregar o mapa. Verifica a ligação e tenta novamente.",

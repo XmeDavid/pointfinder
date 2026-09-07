@@ -384,6 +384,22 @@ Notes: Mirrors the backend rule that unlock targets need a pinned, location-boun
 challenge and hidden target bases; the challenge's own base is never offered. Test ids:
 `unlocks-bases`, `unlocks-base-{baseId}`, `unlocks-hint`.
 
+Component: QuickFilters
+Status: canonical
+Location: `web/src/components/data/QuickFilters.tsx`
+Modes: Operator Build (Bases and Challenges drawer tabs)
+States: no groups with options (renders nothing), single-select group with an
+"All" chip, multi-select group, coloured tag chips (tag colour with readable
+text when pressed), nothing chosen (no Clear), something chosen (Clear resets
+every group), long labels (chips truncate), no matches (the tab shows
+`bases.noResults` / `challenges.noResults`)
+Notes: Bases offers a Stage group only when the game has stages (ordered by
+`orderIndex`, plus "No stage" when a base belongs to none) and a Tags group when
+the game has tags; Challenges offers Tags. Tag filters match any chosen tag;
+the stage filter and the search combine with them. Test ids: `quick-filters`,
+`filter-{group}-all`, `filter-{group}-{optionId}`, `filter-stage-none`,
+`quick-filters-clear`. Storybook: `Data/QuickFilters`.
+
 Component: AssignmentGrid
 Status: canonical
 Location: `web/src/features/build/assignments/AssignmentGrid.tsx`
