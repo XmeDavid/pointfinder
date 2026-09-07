@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTourStore } from '@/features/tutorials/store'
 import { useCreateGame } from '@/hooks/mutations/useGameMutations'
 import type { Game } from '@/types'
 
@@ -18,6 +19,7 @@ export function CreateGameDialog({
 }) {
   const navigate = useNavigate()
   const createGame = useCreateGame()
+  const firstGameRun = useTourStore((s) => s.activeScenario === 'first-game')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
 
@@ -29,6 +31,9 @@ export function CreateGameDialog({
     const game = await createGame.mutateAsync({
       name: name.trim(),
       description: description.trim(),
+      // Inside the first-game tutorial the server marks this as a practice
+      // game; outside a run the flag is simply ignored.
+      ...(firstGameRun ? { tutorialScenario: 'first-game' } : {}),
     })
     onClose()
     if (onCreated) {

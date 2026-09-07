@@ -19,7 +19,7 @@ function clueChallengeId(s: TourState): string | null {
 
 export const exploration: Scenario = {
   id: 'exploration',
-  entry: 'setup-game',
+  entry: 'practice-game',
   title: 'tutorials.scenarios.exploration.title',
   blurb: 'tutorials.scenarios.exploration.blurb',
   steps: [
@@ -109,6 +109,18 @@ export const exploration: Scenario = {
       copy: {
         title: 'tutorials.exploration.readiness.title',
         body: 'tutorials.exploration.readiness.body',
+      },
+    },
+    {
+      // No anchor: the closing card is centred. On a practice game it also
+      // offers Keep and Delete.
+      id: 'finish',
+      route: 'workspace',
+      anchor: '',
+      done: { kind: 'ack' },
+      copy: {
+        title: 'tutorials.exploration.finish.title',
+        body: 'tutorials.exploration.finish.body',
       },
     },
   ],

@@ -30,4 +30,8 @@ export interface Game {
   orgName?: string | null
   defaultCheckInMethod: CheckInMethod
   defaultCheckInRadiusM: number
+  /** Scenario id when this is a tutorial's practice game; null or absent for a normal game. */
+  tutorialScenario?: string | null
+  /** When the server ends a practice game; null or absent for a normal game. */
+  tutorialExpiresAt?: string | null
 }

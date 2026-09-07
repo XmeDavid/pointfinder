@@ -262,9 +262,15 @@ the native NFC button; a browser-only live-game fixture misses these states.
 
 ## Guided Tutorial
 
-Tutorials teach by doing, on the operator's own game, not in a sandbox. A
-scenario is an ordered list of steps; each step spotlights one existing element
-by its `data-testid` and explains what it does and what else the screen offers.
+Tutorials teach by doing, in the real operator UI, on a **practice game** the
+operator can keep or delete at the end. A tutorial never touches a game made
+for a real event: the first-game tutorial has the operator create its practice
+game through the real dialog, and the advanced scenarios get one created and
+seeded by the server on Start. Practice games carry a "Practice" badge in the
+top bar and on the dashboard card, and the closing coach mark offers Keep and
+Delete. A scenario is an ordered list of steps; each step spotlights one
+existing element by its `data-testid` and explains what it does and what else
+the screen offers.
 
 Non-blocking is the rule. The scrim dims with the lighter tour scrim token, it
 never intercepts a click, and the operator can ignore the bubble, wander to

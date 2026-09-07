@@ -1288,7 +1288,8 @@
       "scanUnavailable": "Ler códigos QR precisa da app no telemóvel. Escreve o código.",
       "openSettings": "Abrir definições",
       "orEnterCode": "Ou introduz o código manualmente",
-      "cameraDisabled": "O acesso à câmara está desligado. Ativa-o nas definições para ler códigos."
+      "cameraDisabled": "O acesso à câmara está desligado. Ativa-o nas definições para ler códigos.",
+      "practiceFull": "Este jogo de treino já tem o seu único jogador."
     },
     "login": {
       "title": "Entrar como operador",
@@ -1634,7 +1635,7 @@
     },
     "library": {
       "title": "Tutoriais",
-      "subtitle": "Percursos guiados que corres no teu próprio jogo. Nada é criado nem alterado automaticamente.",
+      "subtitle": "Percursos guiados num jogo de treino só teu. Os teus jogos reais nunca são tocados.",
       "stepCount": "{{count}} passos",
       "start": "Começar",
       "resume": "Retomar",
@@ -1647,10 +1648,17 @@
         "completed": "Concluído",
         "skipped": "Ignorado"
       },
-      "pickGame": {
-        "title": "Escolhe um jogo em configuração",
-        "create": "Criar um novo jogo",
-        "empty": "Não há jogos em configuração. Cria um para correr este tutorial."
+      "practice": {
+        "replaceTitle": "Substituir o teu jogo de treino?",
+        "replaceBody": "Já tens um jogo de treino, “{{name}}”. Começar este tutorial apaga-o e prepara um novo para a lição.",
+        "replaceConfirm": "Apagar e começar",
+        "creating": "A preparar o teu jogo de treino…",
+        "createFailed": "Não foi possível preparar o jogo de treino.",
+        "gameName": {
+          "fixedRoute": "Treino: percurso fixo",
+          "exploration": "Treino: exploração",
+          "generic": "Jogo de treino"
+        }
       }
     },
     "scenarios": {
@@ -1818,7 +1826,7 @@
       },
       "finish": {
         "title": "O teu primeiro jogo está feito",
-        "body": "Construíste um jogo, puseste-o a correr, mudaste-o e voltaste a pô-lo a correr. Há mais dois tutoriais: percursos fixos, com bases a desbloquear uma a uma, e jogos de exploração com bases escondidas."
+        "body": "Construíste um jogo, puseste-o a correr, mudaste-o e voltaste a pô-lo a correr. Há mais dois tutoriais: percursos fixos, com bases a desbloquear uma a uma, e jogos de exploração com bases escondidas. Este é um jogo de treino: mantém-no como o teu jogo real, ou apaga-o."
       }
     },
     "fixedRoute": {
@@ -1845,6 +1853,10 @@
       "readiness": {
         "title": "Antes de arrancares",
         "body": "O percurso não tem verificação aqui: cada base é numerada automaticamente. Esta pastilha continua a vigiar bases, desafios, equipas, atribuições e métodos de check-in. Abre-a quando quiseres para ver o que falta."
+      },
+      "finish": {
+        "title": "Percurso pronto",
+        "body": "As bases desbloqueiam agora por ordem. Mantém este jogo de treino ou apaga-o — os teus jogos não foram tocados."
       }
     },
     "exploration": {
@@ -1871,7 +1883,24 @@
       "readiness": {
         "title": "As bases escondidas contam",
         "body": "A prontidão trata uma base escondida como qualquer outra: precisa de um método de check-in válido e, se for NFC, de uma etiqueta ligada. Abre a pastilha para veres a lista antes de arrancares."
+      },
+      "finish": {
+        "title": "Escondida e com pista",
+        "body": "Os jogadores vão encontrar essa base pela pista, não pelo mapa. Mantém este jogo de treino ou apaga-o — os teus jogos não foram tocados."
       }
+    },
+    "practice": {
+      "badge": "Treino",
+      "endsIn": "Jogo de treino · termina em {{hours}} h",
+      "ended": "Jogo de treino · terminado",
+      "keep": "Manter como jogo real",
+      "delete": "Apagar jogo de treino",
+      "deleteTitle": "Apagar este jogo de treino?",
+      "deleteBody": "Tudo o que está nele desaparece. Os teus jogos reais não são afetados.",
+      "kept": "Este é agora um jogo normal.",
+      "settingsTitle": "Jogo de treino",
+      "settingsBody": "Um tutorial criou este jogo. Aceita um jogador e termina sozinho dentro de {{hours}} h. Mantém-no para o tornar um jogo normal, ou apaga-o.",
+      "settingsBodyEnded": "Um tutorial criou este jogo e ele já terminou. Mantém-no para o tornar um jogo normal, ou apaga-o."
     }
   }
 }

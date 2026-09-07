@@ -17,6 +17,12 @@ describe('GameCard', () => {
     expect(screen.getByText('live')).toBeInTheDocument()
   })
 
+  it('badges a practice game', () => {
+    const game = { ...createMockGame({ id: 'p1' }), tutorialScenario: 'exploration' }
+    render(<GameCard game={game} onClick={() => {}} />)
+    expect(screen.getByTestId('practice-badge-p1')).toHaveTextContent('Practice')
+  })
+
   it('shows description when present', () => {
     const game = createMockGame({ description: 'A fun game' })
     render(<GameCard game={game} onClick={() => {}} />)

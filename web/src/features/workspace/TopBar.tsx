@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import { FloatingBar } from '@/components/layout/FloatingBar'
+import { Badge } from '@/components/ui/badge'
+import { isPracticeGame, practiceHoursLeft } from '@/features/tutorials/practiceGame'
 import { GameStatusBadge } from '@/components/status'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
 import { useWorkspaceStore, type GameMode } from '@/stores/workspace'
@@ -20,6 +23,7 @@ export interface TopBarProps {
 }
 
 export function TopBar({ game, stages }: TopBarProps) {
+  const { t } = useTranslation()
   const elapsed = useElapsedTimer(game.status === 'live' ? game.startDate : null)
   const selectedStageId = useWorkspaceStore((s) => s.selectedStageId)
   const selectStage = useWorkspaceStore((s) => s.selectStage)
@@ -49,6 +53,15 @@ export function TopBar({ game, stages }: TopBarProps) {
             elapsed={elapsed}
             labelCase="upper"
           />
+          {isPracticeGame(game) && (
+            <Badge
+              variant="info"
+              data-testid="practice-game-badge"
+              title={game.status === 'ended' ? t('tutorials.practice.ended') : t('tutorials.practice.endsIn', { hours: practiceHoursLeft(game.tutorialExpiresAt) })}
+            >
+              {t('tutorials.practice.badge')}
+            </Badge>
+          )}
         </div>
 
         {/* Divider — only when stage strip is visible */}

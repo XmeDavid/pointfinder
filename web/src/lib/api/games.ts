@@ -22,6 +22,8 @@ export interface CreateGameDto {
   unlockTrigger?: string;
   defaultCheckInMethod?: CheckInMethod;
   defaultCheckInRadiusM?: number;
+  /** `first-game` while that tutorial runs: the server marks the game as a practice game. */
+  tutorialScenario?: string;
 }
 
 export interface GameImportData {
@@ -198,6 +200,12 @@ export const gamesApi = {
 
   updateStatus: async (id: string, status: GameStatus, resetProgress = false): Promise<Game> => {
     const { data } = await apiClient.patch(`/games/${id}/status`, { status, resetProgress });
+    return data;
+  },
+
+  /** Turns a practice game into a normal game, under the normal active-game quota. */
+  keep: async (id: string): Promise<Game> => {
+    const { data } = await apiClient.post(`/games/${id}/keep`);
     return data;
   },
 

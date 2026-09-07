@@ -74,6 +74,10 @@ export interface Game {
   defaultCheckInMethod: CheckInMethod;
   /** Fallback radius for LOCATION bases that do not override it. */
   defaultCheckInRadiusM: number;
+  /** Scenario id when this is a tutorial's practice game; null or absent for a normal game. */
+  tutorialScenario?: string | null
+  /** When the server ends a practice game; null or absent for a normal game. */
+  tutorialExpiresAt?: string | null
 }
 
 export interface Base {

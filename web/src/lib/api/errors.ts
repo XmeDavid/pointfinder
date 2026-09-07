@@ -27,6 +27,13 @@ const ERROR_CODE_I18N_KEYS: Record<string, string> = {
   TAG_IN_USE: "errors.TAG_IN_USE",
 };
 
+/** The backend `code` of a failed request, or null when there is none. */
+export function getApiErrorCode(error: unknown): string | null {
+  const maybeError = error as { response?: { data?: { code?: unknown } } } | null;
+  const code = maybeError?.response?.data?.code;
+  return typeof code === "string" ? code : null;
+}
+
 export function getApiErrorMessage(error: unknown, fallback?: string): string {
   if (typeof error === "object" && error !== null) {
     const maybeError = error as ApiErrorLike;

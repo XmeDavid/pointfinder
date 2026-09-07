@@ -36,6 +36,10 @@ export const gamesHandlers = [
     )
   }),
 
+  http.post('/api/games/:id/keep', ({ params }) =>
+    HttpResponse.json({ ...createMockGame({ id: String(params.id) }), tutorialScenario: null, tutorialExpiresAt: null }),
+  ),
+
   http.put('/api/games/:id', async ({ params, request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const { id } = params

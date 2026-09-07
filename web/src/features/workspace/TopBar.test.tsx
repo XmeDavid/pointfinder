@@ -83,6 +83,18 @@ describe('TopBar', () => {
     expect(screen.getByText('ENDED')).toBeDefined()
   })
 
+  it('badges a practice game with the hours it has left', () => {
+    render(<TopBar game={makeGame({ tutorialScenario: 'fixed-route', tutorialExpiresAt: new Date(Date.now() + 5 * 3_600_000).toISOString() })} stages={[]} />)
+    const badge = screen.getByTestId('practice-game-badge')
+    expect(badge).toHaveTextContent('Practice')
+    expect(badge).toHaveAttribute('title', 'Practice game · ends in 5 h')
+  })
+
+  it('shows no practice badge on a normal game', () => {
+    render(<TopBar game={makeGame()} stages={[]} />)
+    expect(screen.queryByTestId('practice-game-badge')).not.toBeInTheDocument()
+  })
+
   it('shows elapsed timer when game is live', () => {
     render(
       <TopBar

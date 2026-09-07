@@ -2,7 +2,11 @@ import type { Assignment, Base, Challenge, Game, Team } from '@/types'
 import type { DrawerTab, GameMode } from '@/stores/workspace'
 
 export type ScenarioId = 'first-game' | 'fixed-route' | 'exploration'
-export type ScenarioEntry = 'new-game' | 'setup-game'
+/**
+ * `new-game`: the operator creates the practice game through the real dialog
+ * (the first lesson). `practice-game`: the server creates and seeds one on Start.
+ */
+export type ScenarioEntry = 'new-game' | 'practice-game'
 export type TutorialStatus = 'in_progress' | 'completed' | 'skipped'
 
 export interface TutorialProgress {

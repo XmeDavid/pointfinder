@@ -97,6 +97,16 @@ describe('operator tutorial vocabulary', () => {
     'tutorials.scenarios.firstGame.title',
     'tutorials.scenarios.fixedRoute.title',
     'tutorials.scenarios.exploration.title',
+    'tutorials.library.practice.replaceTitle',
+    'tutorials.library.practice.gameName.fixedRoute',
+    'tutorials.library.practice.gameName.exploration',
+    'tutorials.practice.badge',
+    'tutorials.practice.keep',
+    'tutorials.practice.delete',
+    'tutorials.practice.settingsBody',
+    'tutorials.fixedRoute.finish.title',
+    'tutorials.exploration.finish.title',
+    'playerApp.join.practiceFull',
   ]
 
   it.each(['en', 'pt', 'de'] as const)('%s carries every tutorial contract key', (lang) => {

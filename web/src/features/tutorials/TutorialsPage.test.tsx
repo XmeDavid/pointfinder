@@ -116,21 +116,27 @@ describe('TutorialsPage', () => {
     expect(useTourStore.getState().currentStepId).toBeNull()
   })
 
-  it('a setup-game scenario opens the picker when no game is bound', async () => {
+  it('Start on a practice-game scenario creates a seeded practice game and walks into it', async () => {
     const user = userEvent.setup()
     renderPage()
     await waitFor(() => expect(screen.getByTestId('tutorial-start-fixed-route')).toBeInTheDocument())
 
     await user.click(screen.getByTestId('tutorial-start-fixed-route'))
 
-    await waitFor(() => expect(screen.getByTestId('setup-game-picker')).toBeInTheDocument())
-    expect(useTourStore.getState().activeScenario).toBeNull()
+    await waitFor(() => expect(tutorialProgressStore.practiceGames()).toHaveLength(1))
+    expect(tutorialProgressStore.practiceGames()[0]).toMatchObject({ name: 'Practice: fixed route', tutorialScenario: 'fixed-route' })
+    await waitFor(() => expect(useTourStore.getState().activeScenario).toBe('fixed-route'))
+    expect(useTourStore.getState().gameId).toBe('practice-fixed-route')
+    expect(useTourStore.getState().currentStepId).toBeNull()
+    expect(mockNavigate).toHaveBeenCalledWith('/game/practice-fixed-route')
   })
 
-  it('a setup-game scenario resumes straight into its bound game when it is still in setup', async () => {
-    server.use(http.get('/api/games', () => HttpResponse.json([createMockGame({ id: 'game-setup', status: 'setup' })])))
+  it('Resume walks straight back into the bound practice game while it is still there', async () => {
+    server.use(http.get('/api/games', () => HttpResponse.json([
+      { ...createMockGame({ id: 'practice-1', status: 'setup' }), tutorialScenario: 'fixed-route', tutorialExpiresAt: '2026-09-08T09:00:00Z' },
+    ])))
     tutorialProgressStore.seed([
-      { scenarioId: 'fixed-route', status: 'in_progress', currentStep: 'arrange', gameId: 'game-setup', startedAt: '2026-09-06T09:00:00.000Z', completedAt: null },
+      { scenarioId: 'fixed-route', status: 'in_progress', currentStep: 'arrange', gameId: 'practice-1', startedAt: '2026-09-06T09:00:00.000Z', completedAt: null },
     ])
     const user = userEvent.setup()
     renderPage()
@@ -139,15 +145,46 @@ describe('TutorialsPage', () => {
 
     await user.click(screen.getByTestId('tutorial-resume-fixed-route'))
 
-    await waitFor(() => expect(useTourStore.getState().gameId).toBe('game-setup'))
+    await waitFor(() => expect(useTourStore.getState().gameId).toBe('practice-1'))
     expect(useTourStore.getState().currentStepId).toBe('arrange')
-    expect(mockNavigate).toHaveBeenCalledWith('/game/game-setup')
+    expect(mockNavigate).toHaveBeenCalledWith('/game/practice-1')
+    expect(tutorialProgressStore.practiceGames()).toHaveLength(0)
   })
 
-  it('falls back to the picker when the bound game is no longer in setup', async () => {
-    server.use(http.get('/api/games', () => HttpResponse.json([createMockGame({ id: 'game-setup', status: 'live' })])))
+  it('asks before replacing an existing practice game, then deletes it and creates the new one', async () => {
+    const deleted: string[] = []
+    server.use(
+      http.get('/api/games', () => HttpResponse.json([
+        { ...createMockGame({ id: 'practice-old', name: 'Old practice', status: 'setup' }), tutorialScenario: 'fixed-route', tutorialExpiresAt: '2026-09-08T09:00:00Z' },
+      ])),
+      http.delete('/api/games/:id', ({ params }) => {
+        deleted.push(String(params.id))
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tutorial-start-exploration')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTestId('tutorial-card-exploration')).toBeInTheDocument())
+
+    await user.click(screen.getByTestId('tutorial-start-exploration'))
+    expect(await screen.findByText('Replace your practice game?')).toBeInTheDocument()
+    expect(tutorialProgressStore.practiceGames()).toHaveLength(0)
+
+    await user.click(screen.getByTestId('confirm-action-btn'))
+
+    await waitFor(() => expect(deleted).toEqual(['practice-old']))
+    await waitFor(() => expect(tutorialProgressStore.practiceGames()).toHaveLength(1))
+    expect(tutorialProgressStore.practiceGames()[0].tutorialScenario).toBe('exploration')
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/game/practice-exploration'))
+  })
+
+  it('a bound practice game that has ended is not resumed into', async () => {
+    server.use(http.get('/api/games', () => HttpResponse.json([
+      { ...createMockGame({ id: 'practice-done', status: 'ended' }), tutorialScenario: 'fixed-route', tutorialExpiresAt: '2026-09-05T09:00:00Z' },
+    ])))
     tutorialProgressStore.seed([
-      { scenarioId: 'fixed-route', status: 'in_progress', currentStep: 'arrange', gameId: 'game-setup', startedAt: '2026-09-06T09:00:00.000Z', completedAt: null },
+      { scenarioId: 'fixed-route', status: 'in_progress', currentStep: 'arrange', gameId: 'practice-done', startedAt: '2026-09-06T09:00:00.000Z', completedAt: null },
     ])
     const user = userEvent.setup()
     renderPage()
@@ -155,7 +192,8 @@ describe('TutorialsPage', () => {
 
     await user.click(screen.getByTestId('tutorial-resume-fixed-route'))
 
-    await waitFor(() => expect(screen.getByTestId('setup-game-picker')).toBeInTheDocument())
-    expect(mockNavigate).not.toHaveBeenCalled()
+    await waitFor(() => expect(tutorialProgressStore.practiceGames()).toHaveLength(1))
+    expect(useTourStore.getState().gameId).toBe('practice-fixed-route')
+    expect(useTourStore.getState().currentStepId).toBeNull()
   })
 })

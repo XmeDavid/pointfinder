@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
@@ -30,6 +30,8 @@ export interface CoachBubbleProps {
   /** Null centres the bubble on desktop and renders no spotlight. */
   anchorRect: DOMRect | null
   isLast?: boolean
+  /** Extra controls under the body, e.g. keep/delete for a practice game. */
+  footer?: ReactNode
   /** Render in flow instead of portalling — for stories and the visual harness. */
   inline?: boolean
 }
@@ -46,6 +48,7 @@ export function CoachBubble({
   anchorRect,
   isLast = false,
   inline = false,
+  footer,
 }: CoachBubbleProps) {
   const { t } = useTranslation()
   const reduced = useReducedMotion()
@@ -162,6 +165,8 @@ export function CoachBubble({
             {aside}
           </p>
         )}
+
+        {footer && <div className="mt-3">{footer}</div>}
 
         {(onLater || onAck) && (
           <div className="mt-3 flex flex-wrap items-center justify-end gap-2">

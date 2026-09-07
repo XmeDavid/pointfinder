@@ -14,6 +14,10 @@ describe('describeError', () => {
     expect(describeError(apiError('CHECK_IN_METHOD_MISMATCH'), t)).toBe('This base uses a different way to check in.')
   })
 
+  it('explains that a practice game already has its one player', () => {
+    expect(describeError(apiError('TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT'), t)).toBe('This practice game already has its one player.')
+  })
+
   it('explains an invalid token', () => {
     expect(describeError(apiError('CHECK_IN_TOKEN_INVALID'), t)).toBe("That code doesn't belong to this base.")
   })

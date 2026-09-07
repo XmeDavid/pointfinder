@@ -102,6 +102,11 @@ describe('CoachBubble', () => {
     expect(document.activeElement).toBe(bubble)
   })
 
+  it('renders a footer above the actions when given one', () => {
+    renderBubble({ footer: <button type="button" data-testid="footer-btn">Keep</button> })
+    expect(screen.getByTestId('footer-btn')).toBeInTheDocument()
+  })
+
   it('leaves focus on a control the operator just pressed', () => {
     const button = document.createElement('button')
     button.textContent = 'Visible'

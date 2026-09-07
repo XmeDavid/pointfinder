@@ -12,10 +12,10 @@ const NO_CLICKS: ReadonlySet<string> = new Set<string>()
 const TWO_BASES = [createMockBase({ id: 'b1' }), createMockBase({ id: 'b2' })]
 
 describe('exploration scenario definition', () => {
-  it('is a setup-game scenario with its step ids in order', () => {
+  it('is a practice-game scenario with its step ids in order', () => {
     expect(exploration.id).toBe('exploration')
-    expect(exploration.entry).toBe('setup-game')
-    expect(exploration.steps.map((s) => s.id)).toEqual(['place-first', 'pick-base', 'hide', 'hide-save', 'clue', 'readiness'])
+    expect(exploration.entry).toBe('practice-game')
+    expect(exploration.steps.map((s) => s.id)).toEqual(['place-first', 'pick-base', 'hide', 'hide-save', 'clue', 'readiness', 'finish'])
     expect(new Set(exploration.steps.map((s) => s.id)).size).toBe(exploration.steps.length)
   })
 
@@ -41,7 +41,9 @@ describe('exploration scenario definition', () => {
   it('anchors only test ids the app is known to render', () => {
     const state = makeTourState({ bases: TWO_BASES, challenges: [createMockChallenge({ id: 'c1' })] })
     for (const step of exploration.steps) {
-      expect(isKnownAnchor(resolveAnchor(step, state)), `${step.id} anchor`).toBe(true)
+      const anchor = resolveAnchor(step, state)
+      if (anchor === '') continue // the closing card is centred and spotlights nothing
+      expect(isKnownAnchor(anchor), `${step.id} anchor`).toBe(true)
       expect(step.route, step.id).toBe('workspace')
     }
   })
@@ -170,12 +172,23 @@ describe('exploration advance()', () => {
       expectId: 'readiness',
     },
     {
-      name: 'readiness acked → finished',
+      name: 'readiness acked → the closing card',
       state: {
         bases: hiddenSaved,
         selectedBaseId: 'b1',
         challenges: [createMockChallenge({ id: 'c1' })],
         ackedSteps: new Set(['clue', 'readiness']),
+        fields: { 'visibility-hidden': { present: true, pressed: true } },
+      },
+      expectId: 'finish',
+    },
+    {
+      name: 'everything acked → finished',
+      state: {
+        bases: hiddenSaved,
+        selectedBaseId: 'b1',
+        challenges: [createMockChallenge({ id: 'c1' })],
+        ackedSteps: new Set(['clue', 'readiness', 'finish']),
         fields: { 'visibility-hidden': { present: true, pressed: true } },
       },
       expectId: null,

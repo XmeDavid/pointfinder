@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { tutorialsApi } from '@/lib/api/tutorials'
-import type { UpdateTutorialProgressDto } from '@/lib/api/tutorials'
+import type { PracticeGameDto, UpdateTutorialProgressDto } from '@/lib/api/tutorials'
 import type { ScenarioId } from '@/features/tutorials/types'
 
 export type UpdateTutorialProgressVariables = UpdateTutorialProgressDto & {
@@ -20,6 +20,20 @@ export function useUpdateTutorialProgress() {
       tutorialsApi.update(scenarioId, body),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['tutorials', 'me'] })
+    },
+  })
+}
+
+/** Creates a practice game for a `practice-game` scenario; the games list refetches. */
+export function useCreatePracticeGame() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['tutorial', 'practice-game'],
+    mutationFn: ({ scenarioId, body }: { scenarioId: ScenarioId; body: PracticeGameDto }) =>
+      tutorialsApi.createPracticeGame(scenarioId, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['games'] })
+      qc.invalidateQueries({ queryKey: ['tutorials', 'me'] })
     },
   })
 }

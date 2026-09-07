@@ -1,4 +1,5 @@
 import type { ScenarioId, TutorialProgress, TutorialStatus } from '@/features/tutorials/types'
+import type { Game } from '@/types/game'
 import apiClient from './client'
 
 export interface UpdateTutorialProgressDto {
@@ -9,7 +10,21 @@ export interface UpdateTutorialProgressDto {
   gameId?: string | null
 }
 
+export interface PracticeGameDto {
+  /** Localized game name, shown wherever the game is listed. */
+  name: string
+  /** Where the seeded bases go (the operator's map centre). Both or neither. */
+  lat?: number
+  lng?: number
+}
+
 export const tutorialsApi = {
+  /** Creates, seeds and binds a practice game for a `practice-game` scenario. */
+  createPracticeGame: async (scenarioId: ScenarioId, body: PracticeGameDto): Promise<Game> => {
+    const { data } = await apiClient.post(`/users/me/tutorials/${scenarioId}/practice-game`, body)
+    return data
+  },
+
   list: async (): Promise<TutorialProgress[]> => {
     const { data } = await apiClient.get('/users/me/tutorials')
     return data

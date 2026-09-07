@@ -44,6 +44,20 @@ export function useUpdateGame(gameId: string) {
   })
 }
 
+/** Keep a practice game as a normal game. Invalidates the game and the list. */
+export function useKeepGame() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['game', 'keep'],
+    mutationFn: (id: string) => gamesApi.keep(id),
+    onSuccess: (game) => {
+      qc.setQueryData(['game', game.id], game)
+      qc.invalidateQueries({ queryKey: ['games'] })
+      qc.invalidateQueries({ queryKey: ['game', game.id] })
+    },
+  })
+}
+
 export function useDeleteGame() {
   const qc = useQueryClient()
   return useMutation({

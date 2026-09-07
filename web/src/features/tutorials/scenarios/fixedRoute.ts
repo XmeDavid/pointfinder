@@ -11,7 +11,7 @@ function ensureBuild(a: TourActions, s: TourState): void {
 
 export const fixedRoute: Scenario = {
   id: 'fixed-route',
-  entry: 'setup-game',
+  entry: 'practice-game',
   title: 'tutorials.scenarios.fixedRoute.title',
   blurb: 'tutorials.scenarios.fixedRoute.blurb',
   steps: [
@@ -103,6 +103,18 @@ export const fixedRoute: Scenario = {
       copy: {
         title: 'tutorials.fixedRoute.readiness.title',
         body: 'tutorials.fixedRoute.readiness.body',
+      },
+    },
+    {
+      // No anchor: the closing card is centred. On a practice game it also
+      // offers Keep and Delete.
+      id: 'finish',
+      route: 'workspace',
+      anchor: '',
+      done: { kind: 'ack' },
+      copy: {
+        title: 'tutorials.fixedRoute.finish.title',
+        body: 'tutorials.fixedRoute.finish.body',
       },
     },
   ],

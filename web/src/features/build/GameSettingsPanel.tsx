@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom'
 import { SlideDrawer } from '@/components/layout/SlideDrawer'
 import { useGame } from '@/hooks/queries/useGames'
 import { useUpdateGame, useUpdateGameStatus, useDeleteGame } from '@/hooks/mutations/useGameMutations'
+import { isPracticeGame, practiceHoursLeft } from '@/features/tutorials/practiceGame'
+import { PracticeGameChoices } from '@/features/tutorials/PracticeGameChoices'
 import { useGameOperators, useGameInvites } from '@/hooks/queries/useOperators'
 import { useInviteOperator, useRevokeInvite, useRemoveOperator } from '@/hooks/mutations/useOperatorMutations'
 import { useAuthStore } from '@/hooks/useAuth'
@@ -834,6 +836,22 @@ export default function GameSettingsPanel({
                   </div>
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {isPracticeGame(game) && (
+          <section className="space-y-3" data-testid="practice-game-section">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {t('tutorials.practice.settingsTitle')}
+            </h3>
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {game.status === 'ended'
+                  ? t('tutorials.practice.settingsBodyEnded')
+                  : t('tutorials.practice.settingsBody', { hours: practiceHoursLeft(game.tutorialExpiresAt) })}
+              </p>
+              <PracticeGameChoices gameId={gameId} />
             </div>
           </section>
         )}

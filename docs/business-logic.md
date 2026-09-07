@@ -1263,10 +1263,35 @@ allowlist (`first-game`, `fixed-route`, `exploration`).
 Tutorial progress is UI preference. It touches no game, team, submission, or
 score, so it writes no activity event and never appears in the audit export.
 
+### Practice games: a tutorial is a safe place
+
+A tutorial never runs on a game the operator made for a real event. It runs on a
+**practice game**, and the operator keeps or deletes it at the end.
+
+- `games.tutorial_scenario` marks a practice game with the scenario that created it;
+  `games.tutorial_expires_at` is when `GameSchedulerService.expirePracticeGames` ends it
+  (24 hours after creation, if still in setup or live). Both come back on `GameResponse`.
+- Practice games are excluded from the personal active-game count and from
+  `enforceActiveGameLimit`, so a free-tier operator at their limit can still do every
+  tutorial. They take **one player** (`TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT` on the second
+  join) so the operator can open the player app and see that side, and nothing more. Redoing
+  a tutorial is never punished: there is no cooldown, only one practice game at a time
+  (`TUTORIAL_PRACTICE_GAME_EXISTS`).
+- `first-game` has the operator create the practice game through the real dialog; the client
+  sends `tutorialScenario: "first-game"` and `GameService.createGame` honours it only while the
+  caller's `first-game` row is `in_progress`. `fixed-route` and `exploration` get theirs from
+  `POST /api/users/me/tutorials/{scenarioId}/practice-game`, seeded by `PracticeGameService`
+  with three QR bases, one text challenge per base (two for exploration) and a team, placed
+  around the centre the client passes.
+- **Keep** (`POST /api/games/{id}/keep`) clears the marker under the normal active-game quota;
+  at the limit the web client sends the operator to billing. **Delete** is the normal delete.
+  Restart from the library replaces the current practice game after a confirm. A kept game has
+  no marker, so restart and expiry never touch it.
+
 ### The other bundled scenarios
 
-- **`fixed-route`** — a `setup-game` scenario that turns on `enforceBaseOrder`, explains the game-wide `unlockTrigger`, and opens the route editor. It teaches no new rule: every base already carries an `orderIndex` from creation, so `BaseOrderService.sequenceNumbers` always numbers the whole route and readiness has nothing to check.
-- **`exploration`** — a `setup-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. `Challenge.unlocksBaseIds` has no operator control in the web app yet, so the copy teaches the clue text, not an unlock mechanism.
+- **`fixed-route`** — a `practice-game` scenario that turns on `enforceBaseOrder`, explains the game-wide `unlockTrigger`, and opens the route editor. It teaches no new rule: every base already carries an `orderIndex` from creation, so `BaseOrderService.sequenceNumbers` always numbers the whole route and readiness has nothing to check.
+- **`exploration`** — a `practice-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. `Challenge.unlocksBaseIds` has no operator control in the web app yet, so the copy teaches the clue text, not an unlock mechanism.
 
 ---
 

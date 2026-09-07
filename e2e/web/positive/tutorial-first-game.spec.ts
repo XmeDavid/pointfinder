@@ -87,6 +87,8 @@ test.describe('Guided first-game tutorial', { tag: '@smoke' }, () => {
     gameId = page.url().match(/\/game\/([0-9a-f-]{36})/)![1];
     appendCreatedGameId(gameId);
     await expect(page.getByTestId('map-wrapper')).toBeVisible({ timeout: 20_000 });
+    // Created inside the first-game run, so the server marked it as a practice game.
+    await expect(page.getByTestId('practice-game-badge')).toBeVisible({ timeout: 10_000 });
 
     // ── 2. orient (ack) → 3. place-base ───────────────────────────────
     await ackStep(page, 'orient', 'place-base');
@@ -209,9 +211,16 @@ test.describe('Guided first-game tutorial', { tag: '@smoke' }, () => {
     await expectStep(page, 'go-live-again');
     await expandReadinessAndGoLive(page);
 
+    // ── 16. finish: a practice game, deleted from the closing card ─────
     await expectStep(page, 'finish');
-    await page.getByTestId('tour-next').click();
+    await expect(page.getByTestId('practice-game-badge')).toBeVisible();
+    await page.getByTestId('practice-delete-btn').click();
+    await page.getByTestId('confirm-action-btn').click();
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
     await expect(page.getByTestId('tour-bubble')).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.locator(`[data-testid="game-card-${gameId}"]`)).toHaveCount(0, { timeout: 15_000 });
+    const deletedId = gameId;
+    gameId = '';
 
     // ── The server row ends completed ─────────────────────────────────
     await expect
@@ -224,5 +233,6 @@ test.describe('Guided first-game tutorial', { tag: '@smoke' }, () => {
         { timeout: 20_000, message: 'first-game must end completed on the server' },
       )
       .toBe('completed');
+    expect(deletedId).toBeTruthy();
   });
 });

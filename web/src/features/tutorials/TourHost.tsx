@@ -7,6 +7,8 @@ import { useAnchorRect } from '@/components/tour/useAnchorRect'
 import { useAuthStore } from '@/lib/auth/store'
 import { advance, effectiveSteps, isStepDone, resolveAnchor, resolveBody, stepIndexOf } from './engine'
 import { getScenario } from './scenarios'
+import { isPracticeGame } from './practiceGame'
+import { PracticeGameChoices } from './PracticeGameChoices'
 import { useTourStore } from './store'
 import { useTourActions } from './useTourActions'
 import { useTourState } from './useTourState'
@@ -229,6 +231,11 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
       total={total}
       anchorRect={anchorRect}
       isLast={index === total - 1}
+      footer={
+        index === total - 1 && state.game && isPracticeGame(state.game) ? (
+          <PracticeGameChoices gameId={state.game.id} onDone={complete} compact />
+        ) : undefined
+      }
       onAck={step.done.kind === 'ack' ? () => ack(step.id) : undefined}
       onLater={step.copy.later ? () => later(step.id) : undefined}
       onClose={handleClose}

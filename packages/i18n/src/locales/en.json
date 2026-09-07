@@ -1288,7 +1288,8 @@
       "scanUnavailable": "QR scanning needs the phone app. Type the code instead.",
       "openSettings": "Open settings",
       "orEnterCode": "Or enter the code manually",
-      "cameraDisabled": "Camera access is off. Enable it in settings to scan codes."
+      "cameraDisabled": "Camera access is off. Enable it in settings to scan codes.",
+      "practiceFull": "This practice game already has its one player."
     },
     "login": {
       "title": "Operator sign in",
@@ -1634,7 +1635,7 @@
     },
     "library": {
       "title": "Tutorials",
-      "subtitle": "Guided walkthroughs you run on your own game. Nothing is created or changed for you.",
+      "subtitle": "Guided walkthroughs on a practice game of your own. Your real games are never touched.",
       "stepCount": "{{count}} steps",
       "start": "Start",
       "resume": "Resume",
@@ -1647,10 +1648,17 @@
         "completed": "Completed",
         "skipped": "Skipped"
       },
-      "pickGame": {
-        "title": "Pick a game in setup",
-        "create": "Create a new game",
-        "empty": "No games in setup. Create one to run this tutorial."
+      "practice": {
+        "replaceTitle": "Replace your practice game?",
+        "replaceBody": "You already have a practice game, “{{name}}”. Starting this tutorial deletes it and sets up a fresh one for the lesson.",
+        "replaceConfirm": "Delete and start",
+        "creating": "Setting up your practice game…",
+        "createFailed": "We could not set up the practice game.",
+        "gameName": {
+          "fixedRoute": "Practice: fixed route",
+          "exploration": "Practice: exploration",
+          "generic": "Practice game"
+        }
       }
     },
     "scenarios": {
@@ -1818,7 +1826,7 @@
       },
       "finish": {
         "title": "That is your first game",
-        "body": "You built a game, ran it, changed it and ran it again. Two more tutorials cover fixed routes, where bases unlock one at a time, and exploration games with hidden bases."
+        "body": "You built a game, ran it, changed it and ran it again. Two more tutorials cover fixed routes, where bases unlock one at a time, and exploration games with hidden bases. This is a practice game: keep it as your real game, or delete it."
       }
     },
     "fixedRoute": {
@@ -1845,6 +1853,10 @@
       "readiness": {
         "title": "Before you go live",
         "body": "The route itself has no check here: every base is numbered automatically. This pill still guards bases, challenges, teams, assignments and check-in methods. Expand it any time to see what is missing."
+      },
+      "finish": {
+        "title": "Route done",
+        "body": "Bases now unlock in order. Keep this practice game or delete it — your own games were not touched."
       }
     },
     "exploration": {
@@ -1871,7 +1883,24 @@
       "readiness": {
         "title": "Hidden bases still count",
         "body": "Readiness treats a hidden base like any other: it needs a working check-in method, and an NFC one needs a linked tag. Expand the pill for the full checklist before going live."
+      },
+      "finish": {
+        "title": "Hidden and clued",
+        "body": "Players will find that base from the clue, not the map. Keep this practice game or delete it — your own games were not touched."
       }
+    },
+    "practice": {
+      "badge": "Practice",
+      "endsIn": "Practice game · ends in {{hours}} h",
+      "ended": "Practice game · ended",
+      "keep": "Keep as a real game",
+      "delete": "Delete practice game",
+      "deleteTitle": "Delete this practice game?",
+      "deleteBody": "Everything in it goes away. Your real games are not affected.",
+      "kept": "This is now a normal game.",
+      "settingsTitle": "Practice game",
+      "settingsBody": "A tutorial created this game. It takes one player and ends itself in {{hours}} h. Keep it to turn it into a normal game, or delete it.",
+      "settingsBodyEnded": "A tutorial created this game and it has ended. Keep it to turn it into a normal game, or delete it."
     }
   }
 }

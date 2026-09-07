@@ -33,6 +33,8 @@ export function describeError(err: unknown, t: TFunction): string {
         return t('join.gameNotActive')
       case 'DEVICE_IN_OTHER_TEAM':
         return t('join.deviceInOtherTeam')
+      case 'TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT':
+        return t('join.practiceFull')
       case 'INVALID_CREDENTIALS':
         return t('login.invalid')
     }

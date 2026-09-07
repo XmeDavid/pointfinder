@@ -167,9 +167,13 @@ const oneChallenge = [{
   completionContent: '', answerType: 'text', autoValidate: false, points: 10, locationBound: false, requirePresenceToSubmit: false,
 }]
 
-/** A setup game with two bases and one challenge, served to a library-launched scenario. */
-async function mockSetupGameApi(page: Page, state: { game: Record<string, unknown>; bases: ReturnType<typeof twoBases> }) {
+/**
+ * The practice game a library-launched scenario runs on: created by the
+ * practice endpoint, then served with two bases and one challenge.
+ */
+async function mockPracticeGameApi(page: Page, state: { game: Record<string, unknown>; bases: ReturnType<typeof twoBases> }) {
   const progress: unknown[] = []
+  let practiceCreated = false
   await page.route('**/api/**', async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
@@ -178,6 +182,13 @@ async function mockSetupGameApi(page: Page, state: { game: Record<string, unknow
     if (path === '/api/workspaces') return route.fulfill({ json: { personal: { tier: 'free', status: 'active', activeGames: 1 }, organizations: [] } })
     if (path.startsWith('/api/quota/')) return route.fulfill({ json: { limits: { maxActiveGames: 10 }, usage: { currentActiveGames: 1 } } })
     if (path === '/api/users/me/tutorials') return route.fulfill({ json: progress })
+    if (path.endsWith('/practice-game') && method === 'POST') {
+      const body = request.postDataJSON() as { name: string }
+      practiceCreated = true
+      state.game = { ...state.game, name: body.name, tutorialScenario: path.split('/').at(-2), tutorialExpiresAt: '2026-09-08T09:00:00Z' }
+      progress.splice(0, progress.length, { scenarioId: path.split('/').at(-2), status: 'in_progress', currentStep: null, gameId: 'g', startedAt: '2026-09-06T09:00:00Z', completedAt: null })
+      return route.fulfill({ status: 201, json: state.game })
+    }
     if (path.startsWith('/api/users/me/tutorials/')) {
       const body = request.postDataJSON() as { status: string; currentStep: string | null; gameId: string | null }
       const row = { scenarioId: path.split('/').pop()!, ...body, startedAt: '2026-09-06T09:00:00Z', completedAt: null }
@@ -188,7 +199,8 @@ async function mockSetupGameApi(page: Page, state: { game: Record<string, unknow
       if (method === 'PUT') state.game = { ...state.game, ...(request.postDataJSON() as Record<string, unknown>) }
       return route.fulfill({ json: state.game })
     }
-    if (path === '/api/games') return route.fulfill({ json: [state.game] })
+    // The library sees no games until the practice game exists, so Start creates one.
+    if (path === '/api/games') return route.fulfill({ json: practiceCreated ? [state.game] : [] })
     if (path === '/api/games/g/bases/b1' && method === 'PUT') {
       const body = request.postDataJSON() as { hidden?: boolean }
       state.bases = state.bases.map((b) => (b.id === 'b1' ? { ...b, ...body } : b))
@@ -205,13 +217,14 @@ async function mockSetupGameApi(page: Page, state: { game: Record<string, unknow
 
 test('the fixed-route tutorial walks from the library to the route editor', async ({ page }) => {
   const state = { game: { ...setupGame } as Record<string, unknown>, bases: twoBases() }
-  await mockSetupGameApi(page, state)
+  await mockPracticeGameApi(page, state)
   await login(page)
 
   await page.goto('/tutorials')
   await expect(page.getByTestId('tutorials-page')).toBeVisible()
   await page.getByTestId('tutorial-start-fixed-route').click()
-  await page.getByTestId('setup-game-option-g').click()
+  await expect(page).toHaveURL(/\/game\/g/)
+  await expect(page.getByTestId('practice-game-badge')).toBeVisible()
 
   const title = page.getByTestId('tour-bubble-title')
   await expect(title).toHaveText('Turn on the route')
@@ -231,12 +244,11 @@ test('the fixed-route tutorial walks from the library to the route editor', asyn
 
 test('the exploration tutorial walks from the library to the saved hidden base', async ({ page }) => {
   const state = { game: { ...setupGame, name: 'Hidden ruins' } as Record<string, unknown>, bases: twoBases() }
-  await mockSetupGameApi(page, state)
+  await mockPracticeGameApi(page, state)
   await login(page)
 
   await page.goto('/tutorials')
   await page.getByTestId('tutorial-start-exploration').click()
-  await page.getByTestId('setup-game-option-g').click()
 
   const title = page.getByTestId('tour-bubble-title')
   await expect(title).toHaveText('Pick a base to hide')

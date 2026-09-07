@@ -11,17 +11,19 @@ const NO_CLICKS: ReadonlySet<string> = new Set<string>()
 const TWO_BASES = [{ id: 'b1' }, { id: 'b2' }] as never
 
 describe('fixed-route scenario definition', () => {
-  it('is a setup-game scenario with the contract step ids in order', () => {
+  it('is a practice-game scenario with the contract step ids in order', () => {
     expect(fixedRoute.id).toBe('fixed-route')
-    expect(fixedRoute.entry).toBe('setup-game')
-    expect(fixedRoute.steps.map((s) => s.id)).toEqual(['enable-order', 'unlock-trigger', 'add-bases', 'arrange', 'route', 'readiness'])
+    expect(fixedRoute.entry).toBe('practice-game')
+    expect(fixedRoute.steps.map((s) => s.id)).toEqual(['enable-order', 'unlock-trigger', 'add-bases', 'arrange', 'route', 'readiness', 'finish'])
     expect(new Set(fixedRoute.steps.map((s) => s.id)).size).toBe(fixedRoute.steps.length)
   })
 
   it('anchors only test ids the app is known to render', () => {
     const state = makeTourState({ game: createMockGame({ unlockTrigger: 'SUBMISSION' }) })
     for (const step of fixedRoute.steps) {
-      expect(isKnownAnchor(resolveAnchor(step, state)), `${step.id} anchor`).toBe(true)
+      const anchor = resolveAnchor(step, state)
+      if (anchor === '') continue // the closing card is centred and spotlights nothing
+      expect(isKnownAnchor(anchor), `${step.id} anchor`).toBe(true)
       expect(step.route, step.id).toBe('workspace')
     }
   })
@@ -111,11 +113,22 @@ describe('fixed-route advance()', () => {
       expectId: 'readiness',
     },
     {
-      name: 'everything acked → finished',
+      name: 'readiness acked → the closing card',
       state: {
         bases: TWO_BASES,
         game: createMockGame({ enforceBaseOrder: true }),
         ackedSteps: new Set(['unlock-trigger', 'route', 'readiness']),
+        fields: { 'base-route-editor': { present: true } },
+      },
+      from: null,
+      expectId: 'finish',
+    },
+    {
+      name: 'everything acked → finished',
+      state: {
+        bases: TWO_BASES,
+        game: createMockGame({ enforceBaseOrder: true }),
+        ackedSteps: new Set(['unlock-trigger', 'route', 'readiness', 'finish']),
         fields: { 'base-route-editor': { present: true } },
       },
       from: null,
