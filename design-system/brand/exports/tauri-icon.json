@@ -1,0 +1,8 @@
+{
+  "default": "pointfinder-app-icon-1024.png",
+  "bg_color": "#174a32",
+  "android_bg": "pointfinder-android-background-1024.png",
+  "android_fg": "pointfinder-android-foreground-1024.png",
+  "android_fg_scale": 100,
+  "android_monochrome": "pointfinder-android-foreground-1024.png"
+}

@@ -21,6 +21,7 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useWorkspaceContext } from "@/stores/workspaceContext";
 import { useAuthStore } from "@/lib/auth/store";
 import { UserAvatarMenu } from "./UserAvatarMenu";
+import { BrandMark } from "@/components/brand";
 
 const THEME_KEY = "pointfinder-theme";
 
@@ -115,6 +116,9 @@ export function IconRail({ showModes }: IconRailProps) {
         className="operator-rail hidden md:flex w-12 bg-card border-r border-border flex-col items-center py-3 gap-2 shrink-0 z-40"
         data-testid="icon-rail-desktop"
       >
+        {/* Stable brand placement; not a control */}
+        <BrandMark size={24} className="mb-1" data-testid="rail-brand" />
+
         {/* Workspace Switcher (includes personal + org buttons + create) */}
         <WorkspaceSwitcher />
 

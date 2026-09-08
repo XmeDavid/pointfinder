@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { androidAdaptiveIconXml, androidForegroundVector, brandMarkModule, faviconSvg, readMaster, verifyRasterExports } from './brand.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const ds = resolve(root, 'design-system')
@@ -70,13 +71,24 @@ const kotlinColors = themeLeaves('light').map(([path]) => {
   return `    val ${name}Light = Color(0x${light})\n    val ${name}Dark = Color(0x${dark})`
 }).join('\n')
 const ktDims = (group) => leaves(tokens[group]).map(([path, value]) => `    val ${kotlinName(path)} = ${value.value}.dp`).join('\n')
-outputs.set('android-app/app/src/main/res/values/generated_design_colors.xml', `<!-- Generated from design-system/tokens.json. Do not edit. -->\n<resources>\n    <color name="pf_seed">${tokens.color.light.action.primary.$value}</color>\n</resources>\n`)
+outputs.set('android-app/app/src/main/res/values/generated_design_colors.xml', `<!-- Generated from design-system/tokens.json. Do not edit. -->\n<resources>\n    <color name="pf_seed">${tokens.color.light.action.primary.$value}</color>\n    <color name="pf_brand_tile">${tokens.color.light.brand.tile.$value}</color>\n    <color name="pf_brand_on_tile">${tokens.color.light.brand.onTile.$value}</color>\n</resources>\n`)
 outputs.set('android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/GeneratedDesignTokens.kt', `${header('tokens.json')}package com.prayer.pointfinder.ui.theme\n\nimport androidx.compose.animation.core.CubicBezierEasing\nimport androidx.compose.ui.graphics.Color\nimport androidx.compose.ui.unit.dp\nimport androidx.compose.ui.unit.sp\n\nobject PFColors {\n${kotlinColors}\n}\n\nobject PFSpacingToken {\n${ktDims('space')}\n}\n\nobject PFDimensionToken {\n${ktDims('dimension')}\n}\n\nobject PFRadiusToken {\n${ktDims('radius')}\n}\n\nobject PFTypographyToken {\n    val Meta = 12.sp\n    val Label = 14.sp\n    val Body = 16.sp\n    val Section = 18.sp\n    val Title = 24.sp\n}\n\nobject PFMotionToken {\n    const val FastMillis = 120\n    const val StandardMillis = 200\n    const val DeliberateMillis = 320\n    val StandardEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)\n}\n\nobject PFBreakpointToken {\n    val Tablet = 768.dp\n    val Desktop = 1024.dp\n    val Wide = 1440.dp\n}\n\nobject PFMapToken {\n    val BaseMarker = 32.dp\n    val SelectedBaseMarker = 40.dp\n    val TeamMarker = 28.dp\n    const val StaleAfterSeconds = 120\n}\n\ndata class PFShadowToken(val color: Color, val blurDp: Float, val xDp: Float, val yDp: Float) {\n    companion object {\n        val Panel = PFShadowToken(Color.Black.copy(alpha = 0.06f), 2f, 0f, 1f)\n        val Overlay = PFShadowToken(Color.Black.copy(alpha = 0.24f), 32f, 0f, 12f)\n    }\n}\n\nobject PFComponentStyle {\n    val MinimumTouchTarget = PFDimensionToken.TouchTarget\n    val PanelRadius = PFRadiusToken.Md\n    val SheetRadius = PFRadiusToken.Lg\n}\n`)
 const kotlinColorValueMembers = (entries, indent = '    ') => entries.map(([path, value]) => `${indent}const val ${kotlinName(path.replace('color.', ''))} = "${value}"`).join('\n')
 outputs.set('android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/GeneratedColorValues.kt', `${header('tokens.json')}package com.prayer.pointfinder.ui.theme\n\nobject PFDataColorToken {\n${kotlinColorValueMembers(leaves(tokens.dataColor))}\n}\n\nobject PFColorHexToken {\n    object Light {\n${kotlinColorValueMembers(themeLeaves('light'), '        ')}\n    }\n    object Dark {\n${kotlinColorValueMembers(themeLeaves('dark'), '        ')}\n    }\n}\n`)
 outputs.set('android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/GeneratedIconCatalog.kt', `${header('icons.json')}package com.prayer.pointfinder.ui.theme\n\nenum class PFSemanticIcon(val materialName: String) {\n${concepts.map((v) => `    ${v.replace(/([A-Z])/g, '_$1').toUpperCase()}("${iconCatalog.icons[v].material}")`).join(',\n')}\n}\n`)
 outputs.set('android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/GeneratedPreviewScenarios.kt', `${header('scenarios.json')}package com.prayer.pointfinder.ui.theme\n\nenum class PFPreviewScenario {\n${scenarios.scenarios.map((v) => `    ${v.id.replace(/([A-Z])/g, '_$1').toUpperCase()}`).join(',\n')}\n}\n`)
 
+// Brand: every checked-in derivation of the master mark is generated here (text) or pinned by hash (rasters).
+const master = await readMaster(root)
+const brandTokens = Object.fromEntries(['light', 'dark'].map((theme) => [theme, Object.fromEntries(Object.entries(tokens.color[theme].brand).map(([role, token]) => [role, token.$value]))]))
+outputs.set('web/src/generated/brandMark.ts', brandMarkModule(master, brandTokens))
+outputs.set('web/public/favicon.svg', faviconSvg(master, brandTokens))
+const legacyAdaptive = androidAdaptiveIconXml({ background: '@color/pf_brand_tile', foreground: '@drawable/ic_launcher_foreground', monochrome: '@drawable/ic_launcher_foreground' })
+outputs.set('android-app/app/src/main/res/drawable/ic_launcher_foreground.xml', androidForegroundVector(master, '@color/pf_brand_on_tile'))
+outputs.set('android-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml', legacyAdaptive)
+outputs.set('android-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml', legacyAdaptive)
+// Tauri desktop/iOS/Android sets are produced by `bun run tauri icon design-system/brand/exports/tauri-icon.json`
+// from the pinned exports; that command owns mobile/src-tauri/icons and the gen/ Android and Apple icon sets.
 let stale = false
 for (const [declaredRelative, declaredContent] of outputs) {
   const relative = declaredRelative
@@ -93,5 +105,8 @@ for (const [declaredRelative, declaredContent] of outputs) {
     await writeFile(target, content)
     console.log(`generated ${relative}`)
   }
+}
+if (check) {
+  for (const problem of await verifyRasterExports(root, master, brandTokens)) { console.error(`stale: ${problem}`); stale = true }
 }
 if (stale) process.exitCode = 1

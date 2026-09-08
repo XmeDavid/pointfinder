@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { BrandMark } from "@/components/brand";
 import { useNavigate } from 'react-router-dom'
 import { useGames } from '@/hooks/queries/useGames'
 import { SearchInput } from '@/components/data/SearchInput'
@@ -60,7 +61,7 @@ export function DashboardPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">PointFinder</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground"><BrandMark size={28} decorative />PointFinder</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('dashboard.yourGames')}</p>
         </div>
         <div className="flex gap-2">

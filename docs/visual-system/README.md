@@ -34,6 +34,7 @@ All browser and Tauri UI lives in `web/`. Canonical primitives: `web/src/compone
 
 ## Foundation Documents
 
+- [Brand](brand.md): approved logo, meaning, usage rules, and integration status.
 - [Principles](principles.md): core design principles and quality bar.
 - [Product Modes](product-modes.md): the visual and UX rules for each major area.
 - [Tokens](tokens.md): semantic color, spacing, radius, type, elevation, and motion.

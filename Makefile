@@ -7,7 +7,7 @@ IOS_DESTINATION ?= platform=iOS Simulator,name=iPhone 17
 ANDROID_PROJECT ?= android-app
 ANDROID_GRADLEW ?= android-app/gradlew
 
-.PHONY: help check-docker check-xcode check-android-gradle design-system-generate design-system-check design-system-audit test-backend-docker test-frontend-docker test-docker test-ios test-android test-all
+.PHONY: help check-docker check-xcode check-android-gradle design-system-generate design-system-check design-system-audit brand-export test-backend-docker test-frontend-docker test-docker test-ios test-android test-all
 
 help:
 	@echo "Available targets:"
@@ -20,6 +20,7 @@ help:
 	@echo "  design-system-generate Generate checked-in web/iOS/Android adapters"
 	@echo "  design-system-check  Validate JSON and generated adapter freshness"
 	@echo "  design-system-audit  Report advisory migration findings"
+	@echo "  brand-export         Render brand bitmaps from the master mark and rebuild Tauri icon sets"
 
 design-system-generate:
 	@node design-system/scripts/generate.mjs
@@ -29,6 +30,10 @@ design-system-check:
 
 design-system-audit:
 	@node design-system/scripts/audit.mjs
+
+brand-export:
+	@python3 design-system/scripts/brand-raster.py
+	@node design-system/scripts/brand-tauri.mjs
 
 check-docker:
 	@command -v docker >/dev/null 2>&1 || { echo "docker is required for Docker-based tests."; exit 1; }

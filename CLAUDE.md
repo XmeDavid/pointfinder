@@ -4,6 +4,8 @@ PointFinder is one product with native platform behavior: player UI is touch-fir
 
 Before UI work, read `docs/visual-system/README.md`, `agent-checklist.md`, `component-inventory.md`, and `preview-matrix.md`. Identify the product mode. Reuse canonical components and generated semantic tokens; preserve test identifiers, permissions, localization, offline/realtime behavior, and audit boundaries.
 
+For branding or app icons, also read `docs/visual-system/brand.md`. The canonical logo is `design-system/brand/pointfinder-mark.svg`; preserve its geometry and derive platform assets from this source.
+
 ## Architecture
 
 - `design-system/`: canonical DTCG tokens, icon meanings, preview scenarios, generators, and audits.

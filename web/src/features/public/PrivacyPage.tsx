@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Compass } from "lucide-react";
+import { BrandMark } from "@/components/brand";
 
 export function PrivacyPage() {
   const { t } = useTranslation();
@@ -11,7 +11,7 @@ export function PrivacyPage() {
       <header className="border-b border-white/10 px-6 py-4">
         <div className="mx-auto max-w-3xl flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-primary transition-colors hover:text-primary/80">
-            <Compass className="h-5 w-5" />
+            <BrandMark size={22} tone="current" decorative />
             <span className="font-bold text-lg">PointFinder</span>
           </Link>
           <Link to="/" className="text-sm text-white/50 hover:text-white transition-colors">

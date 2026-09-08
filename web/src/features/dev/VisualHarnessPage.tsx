@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { BrandLockup, BrandMark, BrandTile } from '@/components/brand'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingState } from '@/components/feedback/LoadingState'
@@ -229,6 +230,29 @@ export function VisualHarnessPage() {
           </HarnessSection>
           <HarnessSection title="Phone list and detail navigation">
             <ListDetailPreview />
+          </HarnessSection>
+          <HarnessSection title="Brand mark, lockup, tile and small sizes">
+            <div className="space-y-4" data-testid="harness-brand">
+              <div className="flex flex-wrap items-end gap-5">
+                {[16, 24, 32, 48, 96].map((size) => (
+                  <figure key={size} className="flex flex-col items-center gap-1">
+                    <BrandMark size={size} />
+                    <figcaption className="text-xs text-muted-foreground">{size}px</figcaption>
+                  </figure>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-6">
+                <BrandLockup />
+                <BrandTile size={48} className="rounded-xl" />
+                <span className="inline-flex items-center gap-4 rounded-lg bg-foreground px-4 py-3 text-background">
+                  <BrandMark size={32} tone="current" />
+                  <BrandLockup size={24} tone="current" />
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Positive treatment on light, reversed on dark; the tile matches the launcher exports. Inspect 16 and 32 px against the favicon.
+              </p>
+            </div>
           </HarnessSection>
           <HarnessSection title="Buttons">
             <div className="flex flex-wrap items-center gap-2">

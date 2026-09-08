@@ -1,8 +1,9 @@
-import { Menu, Moon, Navigation, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { BrandMark } from "@/components/brand";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { setThemePreference } from "@/lib/theme";
@@ -76,7 +77,7 @@ export function LandingHeader({ sections, getStartedHref, onGetStarted, onPreloa
           aria-label="PointFinder"
           onClick={() => close()}
         >
-          <BrandMark />
+          <BrandMark size={28} tone="current" decorative />
           <span className="truncate text-base font-semibold tracking-tight">PointFinder</span>
         </Link>
 
@@ -167,14 +168,6 @@ export function LandingHeader({ sections, getStartedHref, onGetStarted, onPreloa
         </nav>
       </div>
     </header>
-  );
-}
-
-export function BrandMark({ className }: { className?: string }) {
-  return (
-    <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground", className)}>
-      <Navigation className="h-5 w-5" aria-hidden="true" />
-    </span>
   );
 }
 

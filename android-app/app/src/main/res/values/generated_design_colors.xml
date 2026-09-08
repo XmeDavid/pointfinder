@@ -1,4 +1,6 @@
 <!-- Generated from design-system/tokens.json. Do not edit. -->
 <resources>
     <color name="pf_seed">#16733a</color>
+    <color name="pf_brand_tile">#174a32</color>
+    <color name="pf_brand_on_tile">#ffffff</color>
 </resources>

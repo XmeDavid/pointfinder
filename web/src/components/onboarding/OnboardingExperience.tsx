@@ -2,6 +2,7 @@ import { Component, useCallback, useEffect, useRef, useState, type ReactNode } f
 import { ArrowLeft, ArrowRight, Compass, Pause, Play, RotateCcw, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { BrandLockup } from '@/components/brand'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 import { useMediaQuery } from '@/hooks/ui/useMediaQuery'
@@ -283,7 +284,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
         )}
       </div>
       <header className="onboarding-header">
-        <span className="text-base font-semibold tracking-tight">{t('app.name')}</span>
+        <BrandLockup size={24} tone="current" textClassName="text-base" />
         <label className="flex min-w-0 items-center gap-2 text-sm">
           <span className="sr-only">{t('onboarding.language')}</span>
           <select aria-label={t('onboarding.language')} value={language} onChange={(event) => void i18n.changeLanguage(event.target.value)} className="min-h-11 max-w-full rounded-md border border-border bg-background px-3 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">

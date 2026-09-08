@@ -8,6 +8,7 @@ import { describeError } from '@/app/player/errors'
 import { Alert, Button, Input, Label } from '@/components'
 import { isNative, kv } from '@/platform'
 import { openScannerSettings, qrAvailable, scanQr } from '@/platform/qr'
+import { BrandLockup } from '@/components/brand'
 import { Screen } from '@/features/player/components/Screen'
 import { PermissionDisclosure } from '@/features/player/components/PermissionDisclosure'
 import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
@@ -93,6 +94,7 @@ export default function Join() {
   return (
     <Screen>
       <Link className="text-sm text-muted-foreground" to="/">{t('common.back')}</Link>
+      <BrandLockup size={22} className="text-sm" />
       <h1 className="text-2xl font-semibold leading-tight text-balance">{t('join.title')}</h1>
       <p className="text-muted-foreground">{t('join.subtitle')}</p>
       {qrAvailable() && (

@@ -18,6 +18,8 @@ This checklist is for AI agents and humans touching visual code.
 4. Check platform equivalents if the concept exists on another platform.
 5. Confirm whether the data is player-facing or operator-only.
 6. For web UI, read `web-tailwind.md` and use semantic Tailwind classes only.
+7. For brand placements or app icons, read `brand.md` and use the canonical
+   `design-system/brand/pointfinder-mark.svg`; do not redraw or vary its geometry.
 
 ## While Implementing
 

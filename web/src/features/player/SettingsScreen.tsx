@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BrandLockup } from '@/components/brand'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
@@ -157,6 +158,7 @@ export default function SettingsScreen() {
         <Button variant="ghost" size="lg" className="text-destructive" onClick={() => setDeleting(true)} disabled={busy}>
           {busy ? t('settings.deletingAccount') : t('settings.deleteAccount')}
         </Button>
+        <BrandLockup size={20} className="mx-auto pt-2 text-sm text-muted-foreground" textClassName="font-medium" />
       </div>
 
       <ConfirmDeleteDialog

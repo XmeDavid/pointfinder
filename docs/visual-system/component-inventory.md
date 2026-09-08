@@ -119,6 +119,23 @@ chapters lead back to the game. Settings keeps the story under Help
 (`settings-how-it-works`). Test ids: `player-intro-prompt`,
 `player-intro-prompt-open`, `player-intro-prompt-dismiss`.
 
+Component: BrandMark / BrandLockup / BrandTile
+Status: canonical
+Location: `web/src/components/brand/BrandMark.tsx`
+Modes: All. Public website, auth, welcome world, operator shell, player settings.
+States: mark alone (16–96 px), mark with the localized wordmark, reversed mark
+on the brand tile, `tone="brand"` (theme-aware positive/reversed one-color) and
+`tone="current"` (inherits the surrounding text color), informative (`role="img"`,
+named “PointFinder”) or `decorative` (hidden when adjacent text names the brand),
+both themes.
+Notes: Path data comes only from the generated `web/src/generated/brandMark.ts`
+(source `design-system/brand/pointfinder-mark.svg`); screens must not carry
+their own copy, and `make design-system-check` flags drift. Never use it for
+pins, headings, scan actions or loading/sync state; functional compass and map
+icons keep their meanings. Emits no ids, titles or descriptions. Storybook
+`Brand/BrandMark`; harness section “Brand mark, lockup, tile and small sizes”.
+See `brand.md` for placement rules and the export pipeline.
+
 Component: WelcomeCompass
 Status: canonical
 Location: `web/src/components/compass/WelcomeCompass.tsx`

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Compass, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { BrandTile } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -100,9 +101,7 @@ export function RegisterPage() {
         <div className="register-atlas-screen__backdrop" aria-hidden="true" />
         <Card className="register-atlas-card w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-              <Compass className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <BrandTile size={48} className="mx-auto mb-2 rounded-xl" />
             <CardTitle className="text-2xl">{t("auth.createAccount")}</CardTitle>
             <CardDescription>{t("auth.registerDescription")}</CardDescription>
           </CardHeader>
@@ -149,9 +148,7 @@ export function RegisterPage() {
       <div className="register-atlas-screen__backdrop" aria-hidden="true" />
       <Card className="register-atlas-card w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Compass className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <BrandTile size={48} className="mx-auto mb-2 rounded-xl" />
           <CardTitle className="text-2xl">{t("auth.joinTitle")}</CardTitle>
           <CardDescription>{t("auth.joinDescription")}</CardDescription>
         </CardHeader>

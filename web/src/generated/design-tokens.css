@@ -23,6 +23,9 @@
   --pf-color-border-subtle: #e5e9e4;
   --pf-color-border-strong: #849188;
   --pf-color-focus-ring: #16733a;
+  --pf-color-brand-mark: #174a32;
+  --pf-color-brand-tile: #174a32;
+  --pf-color-brand-onTile: #ffffff;
   --pf-color-status-live: #16733a;
   --pf-color-status-completed: #16733a;
   --pf-color-status-checkedIn: #2563c5;
@@ -156,6 +159,9 @@
   --pf-color-border-subtle: #28322c;
   --pf-color-border-strong: #68786d;
   --pf-color-focus-ring: #63e58d;
+  --pf-color-brand-mark: #eef4ef;
+  --pf-color-brand-tile: #174a32;
+  --pf-color-brand-onTile: #ffffff;
   --pf-color-status-live: #45d475;
   --pf-color-status-completed: #45d475;
   --pf-color-status-checkedIn: #72a7ff;

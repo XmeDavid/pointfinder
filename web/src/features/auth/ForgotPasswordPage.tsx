@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Compass } from "lucide-react";
+import { BrandTile } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form-label";
@@ -36,9 +36,7 @@ export function ForgotPasswordPage() {
     <div className="safe-page flex min-h-dvh items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Compass className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <BrandTile size={48} className="mx-auto mb-2 rounded-xl" />
           <CardTitle className="text-2xl">{t("auth.forgotPasswordTitle")}</CardTitle>
           <CardDescription>{t("auth.forgotPasswordDescription")}</CardDescription>
         </CardHeader>

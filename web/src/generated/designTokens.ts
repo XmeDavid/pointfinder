@@ -94,6 +94,17 @@ export const designTokens = {
           "$value": "#16733a"
         }
       },
+      "brand": {
+        "mark": {
+          "$value": "#174a32"
+        },
+        "tile": {
+          "$value": "#174a32"
+        },
+        "onTile": {
+          "$value": "#ffffff"
+        }
+      },
       "status": {
         "live": {
           "$value": "#16733a"
@@ -251,6 +262,17 @@ export const designTokens = {
       "focus": {
         "ring": {
           "$value": "#63e58d"
+        }
+      },
+      "brand": {
+        "mark": {
+          "$value": "#eef4ef"
+        },
+        "tile": {
+          "$value": "#174a32"
+        },
+        "onTile": {
+          "$value": "#ffffff"
         }
       },
       "status": {
@@ -799,6 +821,9 @@ export const tokenPaths = [
   "color.border.subtle",
   "color.border.strong",
   "color.focus.ring",
+  "color.brand.mark",
+  "color.brand.tile",
+  "color.brand.onTile",
   "color.status.live",
   "color.status.completed",
   "color.status.checkedIn",

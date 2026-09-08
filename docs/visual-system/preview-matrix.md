@@ -14,6 +14,7 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Full-screen welcome world: role choice, organizer account gate and signed-in tour offer, participant and organizer chapters, landing per audience (visitor: native Join / browser iOS and Android downloads, operator with first-game hand-off, player), three languages, reduced motion and graphics fallback | yes (opt-in `?onboarding=choice`, `?onboarding=gate`, `?onboarding=1`–`7`, `&role=organizer`, `&mode=operator|player`) | n/a | n/a |
 | Account introduction touchpoints: tutorials library "How PointFinder works" card (not watched / watched / skipped), player map prompt after joining, Settings Help row | pending | n/a | n/a |
 | Welcome compass: animated/static, idle fallback, light/dark, reduced motion | yes | n/a | n/a |
+| Brand mark alone (16–96 px), mark with wordmark, reversed on the brand tile and on an inverse surface, both themes; favicon at 16/32 px | yes (also Storybook `Brand/BrandMark`) | n/a (launcher assets only) | n/a (launcher assets only) |
 | Player location check-in panel: locating, denied, far, near, arrived, claim gating | pending | n/a | n/a |
 | Player arrival notice: named base, hidden base found, queued offline | pending | n/a | n/a |
 | Player map check-in radius rings and method-aware scan control | pending | n/a | n/a |

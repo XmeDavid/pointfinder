@@ -32,6 +32,9 @@
   --color-info-foreground: var(--pf-color-action-onPrimary);
   --color-override: var(--pf-color-status-operatorOverride);
   --color-override-foreground: var(--pf-color-action-onPrimary);
+  --color-brand: var(--pf-color-brand-mark);
+  --color-brand-tile: var(--pf-color-brand-tile);
+  --color-brand-tile-foreground: var(--pf-color-brand-onTile);
   --color-chart-1: var(--pf-color-visualization-chart1);
   --color-chart-2: var(--pf-color-visualization-chart2);
   --color-chart-3: var(--pf-color-visualization-chart3);
@@ -79,6 +82,9 @@
   --color-info-foreground: var(--pf-color-surface-canvas);
   --color-override: var(--pf-color-status-operatorOverride);
   --color-override-foreground: var(--pf-color-surface-canvas);
+  --color-brand: var(--pf-color-brand-mark);
+  --color-brand-tile: var(--pf-color-brand-tile);
+  --color-brand-tile-foreground: var(--pf-color-brand-onTile);
   --color-chart-1: var(--pf-color-visualization-chart1);
   --color-chart-2: var(--pf-color-visualization-chart2);
   --color-chart-3: var(--pf-color-visualization-chart3);

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Compass, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { BrandTile } from "@/components/brand";
 
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -122,9 +123,7 @@ function Navbar() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
-            <Compass className="h-4 w-4 text-primary" />
-          </div>
+          <BrandTile size={32} decorative />
           <span className="font-semibold tracking-tight text-white">PointFinder</span>
         </Link>
 
@@ -146,9 +145,7 @@ function Footer() {
     <footer className="border-t border-white/[0.04] px-6 py-12">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
-            <Compass className="h-4 w-4 text-primary" />
-          </div>
+          <BrandTile size={32} decorative />
           <div>
             <span className="block text-sm font-semibold text-white">PointFinder</span>
             <span className="block text-xs text-white/25">{t("landing.footer.tagline")}</span>

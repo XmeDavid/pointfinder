@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { appStoreUrl, GOOGLE_PLAY_URL } from "@/lib/appDownloads";
 import { cn } from "@/lib/utils";
 import { Artwork } from "./landing/Artwork";
-import { BrandMark, LandingHeader } from "./landing/LandingHeader";
+import { BrandMark, BrandTile } from "@/components/brand";
+import { LandingHeader } from "./landing/LandingHeader";
 
 const CONTACT_EMAIL = "info@pointfinder.pt";
 const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("PointFinder club deal")}`;
@@ -205,7 +206,7 @@ export function LandingPage() {
                 </a>
               </div>
               <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-                <BrandMark className="h-6 w-6 rounded-md [&>svg]:h-3.5 [&>svg]:w-3.5" />
+                <BrandTile size={24} decorative className="rounded-md" />
                 {t("landing.hero.note")}
               </p>
             </div>
@@ -403,7 +404,7 @@ export function LandingPage() {
             <footer className="mt-24 w-full border-t border-border/60 pt-6 text-sm text-muted-foreground lg:mt-32">
               <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3 text-left">
-                  <BrandMark />
+                  <BrandMark size={28} tone="current" decorative className="text-foreground" />
                   <span className="font-semibold text-foreground">PointFinder</span>
                   <span>{t("landing.footer.tagline")}</span>
                 </div>

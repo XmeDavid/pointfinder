@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { buttonVariants, cn } from '@/components'
+import { BrandMark } from '@/components/brand'
 import { Screen } from '@/features/player/components/Screen'
 import { lazy, Suspense } from 'react'
 
@@ -16,6 +17,7 @@ export function WelcomeLoading() {
   return (
     <Screen className="justify-center">
       <div className="my-auto flex flex-col items-center gap-6 py-8 text-center">
+        <BrandMark size={56} />
         <div>
           <h1 className="text-4xl font-semibold tracking-tight">{t('welcome.title')}</h1>
           <p className="mt-2 max-w-[34ch] text-muted-foreground">{t('welcome.subtitle')}</p>
