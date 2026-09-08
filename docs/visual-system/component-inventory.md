@@ -9,14 +9,15 @@ visitors, signed-in `operator`, joined `player`. The public website itself is
 unchanged; its Get started fades into the role choice (no map pan or zoom) and pricing opens the organizer gate (`?role=organizer`).
 States: role choice (participant left, organizer right); organizer gate
 (anonymous: Create an account / Sign in / See how it works first; operator:
-Take a quick tour / Go to my dashboard); six manually advanced chapters per
-role; landing per audience (participant: Join in the native app, iOS / Android downloads on the website; anonymous organizer: Create an
+Take a quick tour / Go to my dashboard); six chapters per role that play on
+their own with a Pause / Resume auto-play toggle, or advance manually; landing per audience (participant: Join in the native app, iOS / Android downloads on the website; anonymous organizer: Create an
 account + Sign in; operator: Create my first game when the dashboard is empty
 and no `first-game` row exists, else Go to my dashboard; player: Back to your
 game); Back to the choice from the first chapter and Change role (anonymous
 only), Skip from any chapter, replay, language changes in place, loading and
 failed graphics per branch, retry, static reduced motion, unavailable
-preference storage, long German copy, both themes and safe-area-aware phone /
+preference storage, auto-play paused (after Back or the toggle), backgrounded
+mid-pause, long German copy, both themes and safe-area-aware phone /
 landscape layout.
 Notes: The decorative 3D world fills the viewport. Localized DOM copy and canonical
 buttons sit over the world on semantic canvas scrims; no text is baked into the
@@ -48,15 +49,29 @@ failed renderer a fresh attempt. Stills: `role-choice.webp`, `step-1..6.webp`,
 `onboarding-gate-watch`, `onboarding-tour-start`, `onboarding-tour-skip`,
 `onboarding-landing-create-account`, `onboarding-first-game`,
 `onboarding-dashboard`, `onboarding-dashboard-link`, `onboarding-player-back`,
-plus the existing back / next / skip / replay ids; `data-mode` and `data-step`
-(`choice`, `gate`, chapter ids, `compass`) on the root.
+`onboarding-autoplay` (`aria-pressed` true while chapters play on their own,
+false while paused), plus the existing back / next / skip / replay ids;
+`data-mode` and `data-step` (`choice`, `gate`, chapter ids, `compass`) on the root.
+Auto-play (`useChapterAutoplay.ts`): with live animation, a chapter advances
+to the next one 2.5 s after the renderer reports that its hold pose has been
+drawn (`onSettled(frame)` from `sceneRuntime.ts` through `OnboardingScene`;
+reports for any other frame, branch or renderer attempt are ignored, and the
+hold drawn on the organizer gate counts for the first chapter that shares its
+frame). It only ever moves chapter → chapter → landing: it never chooses a
+role, leaves the gate, presses a landing action or changes a route. Back
+pauses so the reader can reread; the toggle, choosing a role, Change role and
+replay set it playing again; manual Next stays available and restarts the
+wait; a language change restarts the wait for the new copy; backgrounding
+(`platform/lifecycle`) cancels the wait and returning starts a full fresh one.
+Reduced motion, previews, loading and failed renderers stay manual and hide
+the toggle.
 The world uses skinned characters from the reusable Blender asset library;
 loading and reduced motion use matching rendered stills. Bone textures are
 disposed on scene exit.
-Motion policy (`sceneMath.ts`, `sceneMotion.ts`): chapter hops use twice the
-authored 24 fps with a duration capped at 1.8 s of story time, eased in and out so every hold
-pose is reached gently; the same plan runs forwards, backwards and for Skip,
-which still only fades the scene on screen. Story time follows rendered wall
+Motion policy (`sceneMath.ts`, `sceneMotion.ts`): chapter hops use three times the
+authored 24 fps with a duration capped at 1.2 s of story time, eased in and out so every hold
+pose is reached gently; the same plan runs forwards, backwards, for the compass
+handoff and for Skip, which still only fades the scene on screen. Story time follows rendered wall
 time but advances at most 0.25 s per drawn frame, so a slow renderer stretches a
 hop rather than skipping its gestures. Runtime policy (`scenePerformance.ts`,
 `sceneRuntime.ts`): drawing is paced at 30 fps; world materials stay opaque and

@@ -15,11 +15,13 @@ describe('onboarding scene motion', () => {
     expect(compassAmount(849)).toBe(1)
     expect(worldOpacity(798)).toBeCloseTo(.5)
   })
-  it('bounds every chapter hop and plays short hops at twice the authored speed', () => {
-    // Real chapter hops (70 to 185 frames) and the first approach (1 to 125).
+  it('bounds every chapter hop to 1.2 s and plays short hops at three times the authored speed', () => {
+    expect(TRANSITION_SPEED).toBe(3)
+    expect(TRANSITION_MAX_SECONDS).toBe(1.2)
+    // Real chapter hops (70 to 185 frames), the first approach (1 to 125) and the handoff.
     for (const [from, to] of [[1, 125], [125, 301], [301, 371], [371, 465], [465, 580], [580, 765], [782, 864]]) {
       const { duration } = planTransition(from, to)
-      expect(duration).toBeGreaterThanOrEqual(1.4)
+      expect(duration).toBeGreaterThanOrEqual(.9)
       expect(duration).toBeLessThanOrEqual(TRANSITION_MAX_SECONDS)
     }
     expect(planTransition(301, 371).duration).toBeCloseTo(70 / (AUTHORED_FPS * TRANSITION_SPEED))

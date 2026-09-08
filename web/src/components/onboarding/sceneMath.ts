@@ -26,15 +26,16 @@ export const compassAmount = (frame: number) => smoothStep((frame - 800) / 49)
  */
 export const unwrapHeading = (previousDegrees: number, heading: number) => nearestAngle(previousDegrees, heading)
 
-/** Transition policy: chapter hops play at twice the authored speed and always finish
- * within TRANSITION_MAX_SECONDS of story time, eased in and out (smoothstep, peak rate
- * 1.5x the average) so every hold pose is reached gently. The same plan runs forwards
- * and backwards. Story time advances by rendered wall time, but never more than
- * TRANSITION_MAX_STEP_SECONDS per drawn frame, so a slow renderer stretches a hop
- * instead of skipping its gestures: at least ceil(duration / step) poses are drawn.
+/** Transition policy: chapter hops play at three times the authored speed and always
+ * finish within TRANSITION_MAX_SECONDS of story time, eased in and out (smoothstep, peak
+ * rate 1.5x the average) so every hold pose is reached gently. The same plan runs
+ * forwards, backwards and for the compass handoff. Story time advances by rendered wall
+ * time, but never more than TRANSITION_MAX_STEP_SECONDS per drawn frame, so a slow
+ * renderer stretches a hop instead of skipping its gestures: at least
+ * ceil(duration / step) poses are drawn.
  */
-export const TRANSITION_SPEED = 2
-export const TRANSITION_MAX_SECONDS = 1.8
+export const TRANSITION_SPEED = 3
+export const TRANSITION_MAX_SECONDS = 1.2
 export const TRANSITION_MAX_STEP_SECONDS = .25
 
 export interface FrameTransition { readonly from: number; readonly to: number; readonly duration: number }

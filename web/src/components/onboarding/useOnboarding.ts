@@ -64,7 +64,7 @@ function startPosition(start: OnboardingStart | undefined): Position {
 }
 
 /** Preferences never gate joining, and late reads cannot undo a user's choice.
- * The choice, the gate and every chapter are held until the user moves; nothing auto-advances. */
+ * The experience controls chapter timing; role and account choices remain manual. */
 export function useOnboarding(options: OnboardingOptions = {}) {
   const { preview, start, roleChoice = true, resume = false, remember = false, onFinish } = options
   const previewing = preview !== undefined && (preview.role !== undefined || preview.step !== undefined || preview.gate === true)

@@ -57,6 +57,8 @@ test('native onboarding renders the participant GLBs for the participant story, 
   await page.getByTestId('onboarding-role-participant').click()
   await expect(page.getByTestId('onboarding-experience')).toHaveAttribute('data-role', 'participant')
   await ready(page, 'participant')
+  await page.getByTestId('onboarding-autoplay').click()
+  await expect(page.getByTestId('onboarding-autoplay')).toHaveAttribute('aria-pressed', 'false')
   await at(page, 125)
   await page.getByTestId('onboarding-next').click()
   await at(page, 301)
@@ -125,6 +127,8 @@ test('native onboarding renders the organizer world behind the account gate only
   await at(page, 125)
   await page.screenshot({ path: 'test-results/live-onboarding-organizer-gate.png' })
   await page.getByTestId('onboarding-gate-watch').click()
+  await page.getByTestId('onboarding-autoplay').click()
+  await expect(page.getByTestId('onboarding-autoplay')).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByTestId('onboarding-experience')).toHaveAttribute('data-step', 'plan')
   await at(page, 125)
   await page.getByTestId('onboarding-next').click()
@@ -173,4 +177,54 @@ test('native onboarding renders the organizer world behind the account gate only
   await page.locator('a[href="/login"]').click()
   await expect(page).toHaveURL(/\/login$/)
   await expect(page.locator('[data-testid="onboarding-scene"] canvas')).toHaveCount(0)
+})
+
+test('the story automatically advances after each animation, can pause for rereading, and stops at its landing', async ({ page }, info) => {
+  test.setTimeout(120_000)
+  const organizer = info.project.name === 'native-shell'
+  const branch = organizer ? 'organizer' : 'participant'
+  const chapters = organizer ? ['plan', 'bases', 'challenges', 'teams', 'live', 'review'] : ['join', 'map', 'checkin', 'challenge', 'submit', 'explore']
+  const experience = page.getByTestId('onboarding-experience')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('/welcome')
+  await ready(page, 'choice')
+  await at(page, 125)
+  await page.waitForTimeout(3000)
+  await expect(experience).toHaveAttribute('data-step', 'choice')
+  await page.getByTestId(`onboarding-role-${branch}`).click()
+  await ready(page, branch)
+  if (organizer) {
+    await at(page, 125)
+    await page.waitForTimeout(3000)
+    await expect(experience).toHaveAttribute('data-step', 'gate')
+    await page.getByTestId('onboarding-gate-watch').click()
+  }
+  await expect(page.getByTestId('onboarding-autoplay')).toHaveAttribute('aria-pressed', 'true')
+  await expect(experience).toHaveAttribute('data-step', chapters[1], { timeout: 20_000 })
+  await page.getByTestId('onboarding-back').click()
+  await at(page, 125)
+  await expect(page.getByTestId('onboarding-autoplay')).toHaveAttribute('aria-pressed', 'false')
+  await page.waitForTimeout(3000)
+  await expect(experience).toHaveAttribute('data-step', chapters[0])
+  // The extra control must remain reachable with long copy and compact phones.
+  await page.setViewportSize({ width: 320, height: 568 })
+  for (const language of ['en', 'pt', 'de']) {
+    await page.getByRole('combobox').selectOption(language)
+    for (const dark of [false, true]) {
+      await page.evaluate((value) => document.documentElement.classList.toggle('dark', value), dark)
+      await expect(page.getByTestId('onboarding-autoplay')).toBeInViewport({ ratio: 1 })
+      await expect(page.getByTestId('onboarding-next')).toBeInViewport({ ratio: 1 })
+    }
+  }
+  await page.screenshot({ path: `test-results/onboarding-autoplay-${branch}.png` })
+  await page.getByTestId('onboarding-autoplay').click()
+  for (const chapter of chapters.slice(1)) {
+    await expect(experience).toHaveAttribute('data-step', chapter, { timeout: 20_000 })
+  }
+  await expect(experience).toHaveAttribute('data-step', 'compass', { timeout: 20_000 })
+  await at(page, 864)
+  await page.waitForTimeout(3000)
+  await expect(page).toHaveURL(/\/welcome$/)
+  await expect(experience).toHaveAttribute('data-step', 'compass')
+  await expect(page.getByTestId(organizer ? 'onboarding-landing-create-account' : 'onboarding-download-ios')).toBeVisible()
 })

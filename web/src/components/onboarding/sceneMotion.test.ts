@@ -23,10 +23,10 @@ describe('onboarding scene motion policy', () => {
       const { seconds } = run(motion, frameMs)
       expect(motion.frame).toBe(125)
       expect(seconds).toBeLessThanOrEqual(TRANSITION_MAX_SECONDS + frameMs / 1000)
-      expect(seconds).toBeGreaterThan(1)
+      expect(seconds).toBeGreaterThan(.9)
     }
   })
-  it('finishes every chapter hop in one to two seconds of wall time and stops exactly on the hold', () => {
+  it('finishes every chapter hop in about a second of wall time and stops exactly on the hold', () => {
     const motion = createSceneMotion(125, false)
     run(motion, 1000 / 60)
     const steps = [301, 371, 465, 580, 765, 864]
@@ -34,11 +34,12 @@ describe('onboarding scene motion policy', () => {
       motion.setTarget(step, false)
       const { seconds } = run(motion, 1000 / 60)
       expect(motion.frame).toBe(step)
-      expect(seconds).toBeGreaterThanOrEqual(1)
+      expect(seconds).toBeGreaterThanOrEqual(.9)
       expect(seconds).toBeLessThanOrEqual(TRANSITION_MAX_SECONDS + 1 / 60)
     }
   })
-  it('stretches rather than skips on a slow renderer: at most one step of story per drawn frame', () => {
+  it('stretches rather than skips on a slow renderer: at most a quarter second of story per drawn frame', () => {
+    expect(TRANSITION_MAX_STEP_SECONDS).toBe(.25)
     const motion = createSceneMotion(125, false)
     run(motion, 1000 / 60)
     motion.setTarget(301, false)

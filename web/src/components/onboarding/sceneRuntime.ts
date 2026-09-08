@@ -13,7 +13,15 @@ import { createResolutionGovernor, drawDue } from './scenePerformance'
 
 type CameraFrame = { position: [number, number, number]; target: [number, number, number]; width: number }
 type Timeline = { fps: number; frameStart: number; frameEnd: number; camera: CameraFrame[] }
-type Options = { branch?: 'choice' | 'participant' | 'organizer'; targetFrame: number; reducedMotion: boolean; onReady: () => void; onError: () => void }
+type Options = {
+  branch?: 'choice' | 'participant' | 'organizer'
+  targetFrame: number
+  reducedMotion: boolean
+  onReady: () => void
+  onError: () => void
+  /** The target hold has been drawn. Reports the frame so listeners can reject a stale target. */
+  onSettled?: (frame: number) => void
+}
 export interface SceneRuntime { setTarget: (frame: number, reducedMotion: boolean) => void; dispose: () => void }
 const assets = `${import.meta.env.BASE_URL}onboarding/`
 const scratch = new Vector3()
@@ -107,6 +115,8 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   let previous = 0
   let previousRender = 0
   let previousDrewWorld = false
+  /** Target already reported through onSettled; each requested target is reported once. */
+  let settledReported: number | undefined
   const motion = createSceneMotion(options.targetFrame, options.reducedMotion)
   let timeline: Timeline | undefined
   let world: Object3D | undefined
@@ -336,6 +346,10 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
       renderer.render(scene, camera)
       previousRender = now
       previousDrewWorld = !!world?.visible
+      if (motion.settled && settledReported !== motion.target) {
+        settledReported = motion.target
+        options.onSettled?.(motion.target)
+      }
     }
     if (!draw || !motion.settled || (motion.frame >= SENSOR_FRAME && !motion.reduced)) raf = requestAnimationFrame(tick)
   }
@@ -406,6 +420,8 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   return {
     setTarget(next, reducedMotion) {
       motion.setTarget(next, reducedMotion)
+      // Every request is answered once its hold is drawn, even a repeat of the current target.
+      settledReported = undefined
       if (motion.target < HANDOFF_FRAME && !worldRequest) void loadWorld().catch(fail)
       sensors()
       resize()

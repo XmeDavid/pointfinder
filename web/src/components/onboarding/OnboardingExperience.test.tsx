@@ -1,17 +1,30 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { OnboardingExperience, type OnboardingExperienceProps } from './OnboardingExperience'
 import { ONBOARDING_SEEN_KEY } from './useOnboarding'
+import { AUTOPLAY_READING_PAUSE_MS } from './useChapterAutoplay'
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), renders: vi.fn(), native: vi.fn() }))
+const lifecycle = vi.hoisted(() => ({ foreground: true, listeners: new Set<(active: boolean) => void>() }))
 vi.mock('@/platform/runtime', () => ({ isNativeEntry: mocks.native }))
 vi.mock('@/platform', () => ({ kv: { get: mocks.get, set: mocks.set } }))
+vi.mock('@/platform/lifecycle', () => ({
+  isForeground: () => lifecycle.foreground,
+  onAppVisibility: (handler: (active: boolean) => void) => { lifecycle.listeners.add(handler); return () => lifecycle.listeners.delete(handler) },
+}))
 vi.mock('./OnboardingScene', () => ({
-  OnboardingScene: (props: { branch: string; targetFrame: number; className?: string; onReady: () => void; onError: () => void }) => {
+  OnboardingScene: (props: { branch: string; targetFrame: number; className?: string; onReady: () => void; onError: () => void; onSettled?: (frame: number) => void }) => {
     mocks.renders(props)
-    return <div data-testid="scene-mock" className={props.className} data-branch={props.branch} data-frame={props.targetFrame}><button onClick={props.onReady}>scene ready</button><button onClick={props.onError}>scene error</button></div>
+    return (
+      <div data-testid="scene-mock" className={props.className} data-branch={props.branch} data-frame={props.targetFrame}>
+        <button onClick={props.onReady}>scene ready</button>
+        <button onClick={props.onError}>scene error</button>
+        <button onClick={() => props.onSettled?.(props.targetFrame)}>scene settled</button>
+        <button onClick={() => props.onSettled?.(props.targetFrame - 1)}>scene settled elsewhere</button>
+      </div>
+    )
   },
 }))
 
@@ -27,6 +40,8 @@ const links = () => screen.getAllByRole('link').map((link) => link.getAttribute(
 const finishChapters = () => { for (let i = 0; i < 6; i++) fireEvent.click(screen.getByTestId('onboarding-next')) }
 beforeEach(async () => {
   vi.clearAllMocks()
+  lifecycle.foreground = true
+  lifecycle.listeners.clear()
   mocks.native.mockReturnValue(true)
   mocks.get.mockResolvedValue(null)
   mocks.set.mockResolvedValue(undefined)
@@ -381,3 +396,202 @@ for (const native of [false, true]) {
     }
   })
 }
+
+describe('automatic chapter progression', () => {
+  const step = () => experience().getAttribute('data-step')
+  const toggle = () => screen.getByTestId('onboarding-autoplay')
+  const sceneReady = () => fireEvent.click(screen.getByText('scene ready'))
+  const settled = () => fireEvent.click(screen.getByText('scene settled'))
+  const wait = (ms: number) => act(() => { vi.advanceTimersByTime(ms) })
+  const readingPause = () => wait(AUTOPLAY_READING_PAUSE_MS)
+  const setForeground = (active: boolean) => act(() => { lifecycle.foreground = active; lifecycle.listeners.forEach((listener) => listener(active)) })
+  /** The mocked renderer module resolves through microtasks only; fake timers never block it. */
+  const openScene = async (props: OnboardingExperienceProps) => { mount(props); await act(async () => {}); return screen.getByTestId('scene-mock') }
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }) })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('advances each chapter after its hold is drawn and read, then stops on the landing', async () => {
+    const onFinish = vi.fn()
+    await openScene({ play: 'participant', onFinish })
+    sceneReady()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+    expect(toggle()).toHaveTextContent('Pause auto-play')
+    const chapters = ['join', 'map', 'checkin', 'challenge', 'submit', 'explore']
+    for (const [index, id] of chapters.entries()) {
+      expect(step()).toBe(id)
+      expect(scene()).toHaveAttribute('data-frame', String([125, 301, 371, 465, 580, 765][index]))
+      // Nothing moves until the renderer reports the hold, and not before the reading pause is over.
+      wait(AUTOPLAY_READING_PAUSE_MS * 2)
+      expect(step()).toBe(id)
+      settled()
+      wait(AUTOPLAY_READING_PAUSE_MS - 1)
+      expect(step()).toBe(id)
+      wait(1)
+    }
+    expect(step()).toBe('compass')
+    expect(screen.queryByTestId('onboarding-autoplay')).not.toBeInTheDocument()
+    // The landing is held: no CTA is pressed and no route changes on its own.
+    settled()
+    wait(AUTOPLAY_READING_PAUSE_MS * 4)
+    expect(step()).toBe('compass')
+    expect(screen.getByTestId('location')).toHaveTextContent('/welcome')
+    expect(onFinish).toHaveBeenCalledExactlyOnceWith('participant', 'completed')
+    expect(mocks.set).toHaveBeenCalledExactlyOnceWith(ONBOARDING_SEEN_KEY, completed('participant'))
+  })
+
+  it('rejects holds for other frames and lets a manual step restart the wait', async () => {
+    await openScene({ play: 'participant' })
+    sceneReady()
+    fireEvent.click(screen.getByText('scene settled elsewhere'))
+    wait(AUTOPLAY_READING_PAUSE_MS * 2)
+    expect(step()).toBe('join')
+    settled()
+    wait(AUTOPLAY_READING_PAUSE_MS - 500)
+    fireEvent.click(screen.getByTestId('onboarding-next'))
+    expect(step()).toBe('map')
+    // The old wait died with the old chapter; the new one needs its own hold first.
+    wait(AUTOPLAY_READING_PAUSE_MS * 2)
+    expect(step()).toBe('map')
+    settled()
+    readingPause()
+    expect(step()).toBe('checkin')
+  })
+
+  it('never chooses a role or leaves the gate, but a hold drawn on the gate counts for the shared first chapter', async () => {
+    await openScene({})
+    sceneReady()
+    settled()
+    wait(AUTOPLAY_READING_PAUSE_MS * 2)
+    expect(step()).toBe('choice')
+    expect(screen.queryByTestId('onboarding-autoplay')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('onboarding-role-organizer'))
+    // The organizer world is a new renderer: its choice-world hold is worthless.
+    sceneReady()
+    wait(AUTOPLAY_READING_PAUSE_MS * 2)
+    expect(step()).toBe('gate')
+    settled()
+    wait(AUTOPLAY_READING_PAUSE_MS * 2)
+    expect(step()).toBe('gate')
+    fireEvent.click(screen.getByTestId('onboarding-gate-watch'))
+    expect(step()).toBe('plan')
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+    readingPause()
+    expect(step()).toBe('bases')
+  })
+
+  it('pauses on Back, resumes with a fresh pause, and plays again for a new story', async () => {
+    await openScene({ play: 'participant' })
+    sceneReady()
+    settled()
+    readingPause()
+    expect(step()).toBe('map')
+    settled()
+    wait(1000)
+    fireEvent.click(screen.getByTestId('onboarding-back'))
+    expect(step()).toBe('join')
+    expect(toggle()).toHaveAttribute('aria-pressed', 'false')
+    expect(toggle()).toHaveTextContent('Resume auto-play')
+    settled()
+    wait(AUTOPLAY_READING_PAUSE_MS * 3)
+    expect(step()).toBe('join')
+    fireEvent.click(toggle())
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+    wait(AUTOPLAY_READING_PAUSE_MS - 1)
+    expect(step()).toBe('join')
+    wait(1)
+    expect(step()).toBe('map')
+    // Pausing keeps manual Next usable; changing the role starts the next story playing.
+    fireEvent.click(toggle())
+    fireEvent.click(screen.getByTestId('onboarding-next'))
+    expect(step()).toBe('checkin')
+    fireEvent.click(screen.getByTestId('onboarding-change-role'))
+    fireEvent.click(screen.getByTestId('onboarding-role-participant'))
+    expect(screen.queryByTestId('onboarding-autoplay')).not.toBeInTheDocument()
+    sceneReady()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(toggle())
+    fireEvent.click(screen.getByTestId('onboarding-skip'))
+    fireEvent.click(screen.getByTestId('onboarding-replay'))
+    fireEvent.click(screen.getByTestId('onboarding-role-participant'))
+    sceneReady()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('suspends the wait in the background and starts it over on return', async () => {
+    await openScene({ play: 'participant' })
+    sceneReady()
+    settled()
+    wait(2000)
+    setForeground(false)
+    wait(AUTOPLAY_READING_PAUSE_MS * 3)
+    expect(step()).toBe('join')
+    setForeground(true)
+    wait(AUTOPLAY_READING_PAUSE_MS - 1)
+    expect(step()).toBe('join')
+    wait(1)
+    expect(step()).toBe('map')
+  })
+
+  it('gives new copy its full reading time after a language change', async () => {
+    await openScene({ play: 'participant' })
+    sceneReady()
+    settled()
+    wait(2000)
+    await act(async () => { await i18n.changeLanguage('de') })
+    expect(toggle()).toHaveTextContent('Autoplay pausieren')
+    wait(AUTOPLAY_READING_PAUSE_MS - 1)
+    expect(step()).toBe('join')
+    wait(1)
+    expect(step()).toBe('map')
+  })
+
+  it('stays manual for reduced motion, previews and a failed renderer, and forgets holds across a retry', async () => {
+    const original = window.matchMedia
+    window.matchMedia = (query) => ({ ...original(query), matches: true })
+    try {
+      const reduced = mount({ play: 'participant' })
+      await act(async () => {})
+      expect(screen.queryByTestId('onboarding-autoplay')).not.toBeInTheDocument()
+      wait(AUTOPLAY_READING_PAUSE_MS * 3)
+      expect(step()).toBe('join')
+      reduced.unmount()
+    } finally { window.matchMedia = original }
+    const preview = await openScene({ previewStep: 1 })
+    expect(preview).toBeInTheDocument()
+    sceneReady()
+    settled()
+    expect(screen.queryByTestId('onboarding-autoplay')).not.toBeInTheDocument()
+    wait(AUTOPLAY_READING_PAUSE_MS * 3)
+    expect(step()).toBe('map')
+    cleanup()
+    await openScene({ play: 'participant' })
+    sceneReady()
+    settled()
+    wait(1000)
+    fireEvent.click(screen.getByText('scene error'))
+    expect(screen.queryByTestId('onboarding-autoplay')).not.toBeInTheDocument()
+    wait(AUTOPLAY_READING_PAUSE_MS * 3)
+    expect(step()).toBe('join')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry animation' }))
+    await act(async () => {})
+    sceneReady()
+    // The retried renderer has drawn nothing yet: the earlier hold does not count.
+    wait(AUTOPLAY_READING_PAUSE_MS * 3)
+    expect(step()).toBe('join')
+    settled()
+    readingPause()
+    expect(step()).toBe('map')
+  })
+
+  it('drops a pending wait when unmounted mid-pause', async () => {
+    const onFinish = vi.fn()
+    const view = await openScene({ play: 'participant', onFinish })
+    expect(view).toBeInTheDocument()
+    sceneReady()
+    settled()
+    cleanup()
+    wait(AUTOPLAY_READING_PAUSE_MS * 3)
+    expect(onFinish).not.toHaveBeenCalled()
+    expect(mocks.set).not.toHaveBeenCalled()
+  })
+})

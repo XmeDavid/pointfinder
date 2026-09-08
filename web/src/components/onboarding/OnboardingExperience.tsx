@@ -1,5 +1,5 @@
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Compass, RotateCcw, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Compass, Pause, Play, RotateCcw, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import {
   type OnboardingBranch, type OnboardingOptions, type OnboardingOutcome, type OnboardingRole,
 } from './useOnboarding'
 import type { OnboardingScene } from './OnboardingScene'
+import { useChapterAutoplay } from './useChapterAutoplay'
 import { isNativeEntry } from '@/platform/runtime'
 import { appStoreUrl, GOOGLE_PLAY_URL } from '@/lib/appDownloads'
 import './onboarding.css'
@@ -69,7 +70,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
   const { mode = 'anonymous', operator } = props
   const { t, i18n } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const native = isNativeEntry()
-  const { branch, step, stage, loaded, chooseRole, changeRole, openChapters, go, skip } = useOnboarding(hookOptions(props))
+  const { branch, step, stage, loaded, preview, chooseRole, changeRole, openChapters, go, skip } = useOnboarding(hookOptions(props))
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [attempt, setAttempt] = useState(0)
@@ -116,6 +117,25 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
   }, [layout])
   const staticWorld = reducedMotion || status !== 'ready'
   const language = i18n.resolvedLanguage?.split('-')[0] ?? 'en'
+
+  // Chapters advance on their own once the live renderer has drawn the hold and the reader had
+  // a moment with it. Back pauses so the reader can reread; a new story starts playing again.
+  // Roles, the gate, the landing and every route stay the reader's own decision.
+  const [autoplay, setAutoplay] = useState(true)
+  const autoplayOffered = stage === 'chapter' && !reducedMotion && !preview && status === 'ready'
+  // Settled reports arrive from animation frames, after the commit that updated this.
+  const sceneIdentity = useRef({ branch, attempt })
+  useEffect(() => { sceneIdentity.current = { branch, attempt } }, [branch, attempt])
+  const { settle } = useChapterAutoplay({
+    scene: `${branch}:${attempt}:${targetFrame}`,
+    active: autoplayOffered && status === 'ready',
+    playing: autoplay,
+    restartKey: language,
+    onAdvance: () => go(step + 1),
+  })
+  const settled = useCallback((frame: number) => settle(`${sceneIdentity.current.branch}:${sceneIdentity.current.attempt}:${frame}`), [settle])
+  const back = () => { setAutoplay(false); go(step - 1) }
+  const restart = (open: () => void) => { setAutoplay(true); open() }
   const nextLabel = step === COMPASS_STEP - 1 ? t('onboarding.finish') : branch === 'organizer' ? copy('next') : t('onboarding.next')
   const anonymous = mode === 'anonymous'
 
@@ -162,7 +182,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
         <>
           <span aria-hidden="true">·</span>
           <span>{t(`onboarding.roles.${branch}.short`)}</span>
-          <Button variant="link" size="sm" className="onboarding-inline-action" onClick={changeRole} data-testid="onboarding-change-role">{t('onboarding.changeRole')}</Button>
+          <Button variant="link" size="sm" className="onboarding-inline-action" onClick={() => restart(changeRole)} data-testid="onboarding-change-role">{t('onboarding.changeRole')}</Button>
         </>
       )}
     </>
@@ -177,8 +197,8 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
     controls = (
       <>
         <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label={t('onboarding.choice.title')}>
-          {roleButton('participant', <Users size={22} />, () => chooseRole('participant'))}
-          {roleButton('organizer', <Compass size={22} />, () => chooseRole('organizer', { gate: true }))}
+          {roleButton('participant', <Users size={22} />, () => restart(() => chooseRole('participant')))}
+          {roleButton('organizer', <Compass size={22} />, () => restart(() => chooseRole('organizer', { gate: true })))}
         </div>
         <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-1">
           {native && joinLink('link')}
@@ -225,7 +245,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
       <div className="mt-5 grid gap-3">
         {primary}
         {secondary}
-        <Button variant="ghost" size="lg" className="onboarding-action" onClick={changeRole} data-testid="onboarding-replay"><RotateCcw aria-hidden="true" size={16} />{t('onboarding.replay')}</Button>
+        <Button variant="ghost" size="lg" className="onboarding-action" onClick={() => restart(changeRole)} data-testid="onboarding-replay"><RotateCcw aria-hidden="true" size={16} />{t('onboarding.replay')}</Button>
       </div>
     )
   } else {
@@ -233,10 +253,18 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
     controls = (
       <>
         <div className={cn('mt-5 grid gap-3', canGoBack && 'grid-cols-2')}>
-          {canGoBack && <Button variant="outline" size="lg" className="onboarding-action" onClick={() => go(step - 1)} data-testid="onboarding-back"><ArrowLeft aria-hidden="true" size={18} />{t('onboarding.back')}</Button>}
+          {canGoBack && <Button variant="outline" size="lg" className="onboarding-action" onClick={back} data-testid="onboarding-back"><ArrowLeft aria-hidden="true" size={18} />{t('onboarding.back')}</Button>}
           <Button size="lg" className="onboarding-action" onClick={() => go(step + 1)} data-testid="onboarding-next">{nextLabel}<ArrowRight aria-hidden="true" size={18} /></Button>
         </div>
-        <Button variant="ghost" size="lg" className="onboarding-action mt-1 w-full" onClick={skip} data-testid="onboarding-skip">{t('onboarding.skip')}</Button>
+        <div className={cn('mt-1 grid gap-3', autoplayOffered && 'grid-cols-2')}>
+          {autoplayOffered && (
+            <Button variant="ghost" size="lg" className="onboarding-action px-2 text-foreground" onClick={() => setAutoplay((value) => !value)} aria-pressed={autoplay} data-testid="onboarding-autoplay">
+              {autoplay ? <Pause aria-hidden="true" size={16} className="shrink-0" /> : <Play aria-hidden="true" size={16} className="shrink-0" />}
+              {t(autoplay ? 'onboarding.autoplay.pause' : 'onboarding.autoplay.resume')}
+            </Button>
+          )}
+          <Button variant="ghost" size="lg" className="onboarding-action px-2 text-foreground" onClick={skip} data-testid="onboarding-skip">{t('onboarding.skip')}</Button>
+        </div>
         {escapeRow}
       </>
     )
@@ -248,7 +276,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
         {staticWorld && <img className="onboarding-still" src={stillFor(branch, step)} alt="" />}
         {loaded && Scene && !reducedMotion && status !== 'error' && (
           <SceneBoundary key={attempt} onError={failed}>
-            <Scene branch={branch} targetFrame={targetFrame} reducedMotion={reducedMotion} className={cn('onboarding-scene', status !== 'ready' && 'invisible')} onReady={ready} onError={failed} />
+            <Scene branch={branch} targetFrame={targetFrame} reducedMotion={reducedMotion} className={cn('onboarding-scene', status !== 'ready' && 'invisible')} onReady={ready} onError={failed} onSettled={settled} />
           </SceneBoundary>
         )}
       </div>
