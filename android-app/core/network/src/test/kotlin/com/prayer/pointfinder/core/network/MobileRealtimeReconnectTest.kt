@@ -8,7 +8,7 @@ import org.junit.Test
  * Tests for the reconnection backoff logic extracted from [MobileRealtimeClient].
  * Audit finding 9.5: MobileRealtimeClient reconnection tests.
  *
- * The backoff follows capped exponential growth: 1s, 2s, 4s, 8s, 16s, 32s, 30s (capped).
+ * The backoff follows capped exponential growth: 1s, 2s, 4s, 8s, 16s, 30s (capped).
  * The cap prevents unbounded delays that would make the app feel unresponsive.
  */
 class MobileRealtimeReconnectTest {
@@ -19,17 +19,18 @@ class MobileRealtimeReconnectTest {
     }
 
     @Test
-    fun `backoff doubles with each attempt`() {
+    fun `backoff doubles until reaching the cap`() {
         assertEquals(1L, computeReconnectBackoffSeconds(attempt = 0))
         assertEquals(2L, computeReconnectBackoffSeconds(attempt = 1))
         assertEquals(4L, computeReconnectBackoffSeconds(attempt = 2))
         assertEquals(8L, computeReconnectBackoffSeconds(attempt = 3))
         assertEquals(16L, computeReconnectBackoffSeconds(attempt = 4))
-        assertEquals(32L, computeReconnectBackoffSeconds(attempt = 5))
+        assertEquals(30L, computeReconnectBackoffSeconds(attempt = 5))
     }
 
     @Test
     fun `backoff is capped at 30 seconds by default`() {
+        assertEquals(30L, computeReconnectBackoffSeconds(attempt = 5))
         assertEquals(30L, computeReconnectBackoffSeconds(attempt = 6))
         assertEquals(30L, computeReconnectBackoffSeconds(attempt = 10))
         assertEquals(30L, computeReconnectBackoffSeconds(attempt = 100))
