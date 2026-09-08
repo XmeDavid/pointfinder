@@ -5,7 +5,8 @@ import i18n from '@/i18n'
 import { OnboardingExperience, type OnboardingExperienceProps } from './OnboardingExperience'
 import { ONBOARDING_SEEN_KEY } from './useOnboarding'
 
-const mocks = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), renders: vi.fn() }))
+const mocks = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), renders: vi.fn(), native: vi.fn() }))
+vi.mock('@/platform/runtime', () => ({ isNativeEntry: mocks.native }))
 vi.mock('@/platform', () => ({ kv: { get: mocks.get, set: mocks.set } }))
 vi.mock('./OnboardingScene', () => ({
   OnboardingScene: (props: { branch: string; targetFrame: number; className?: string; onReady: () => void; onError: () => void }) => {
@@ -26,6 +27,7 @@ const links = () => screen.getAllByRole('link').map((link) => link.getAttribute(
 const finishChapters = () => { for (let i = 0; i < 6; i++) fireEvent.click(screen.getByTestId('onboarding-next')) }
 beforeEach(async () => {
   vi.clearAllMocks()
+  mocks.native.mockReturnValue(true)
   mocks.get.mockResolvedValue(null)
   mocks.set.mockResolvedValue(undefined)
   await i18n.changeLanguage('en')
@@ -54,11 +56,14 @@ it('opens on the role choice with both stories, and joining or signing in one ta
   expect(mocks.set).not.toHaveBeenCalled()
 })
 
-it('takes a participant straight to joining a game without remembering anything', async () => {
+it('starts the participant animation from the role choice without remembering anything', async () => {
   mount()
   await screen.findByTestId('scene-mock')
   fireEvent.click(screen.getByTestId('onboarding-role-participant'))
-  expect(screen.getByTestId('location')).toHaveTextContent('/join')
+  expect(screen.getByTestId('location')).toHaveTextContent('/welcome')
+  expect(experience()).toHaveAttribute('data-step', 'join')
+  expect(experience()).toHaveAttribute('data-role', 'participant')
+  await waitFor(() => expect(scene()).toHaveAttribute('data-branch', 'participant'))
   expect(mocks.set).not.toHaveBeenCalled()
 })
 
@@ -357,3 +362,22 @@ it('previews any branch, chapter or gate without touching preferences', async ()
   expect(mocks.get).not.toHaveBeenCalled()
   expect(mocks.set).not.toHaveBeenCalled()
 })
+
+for (const native of [false, true]) {
+  it(`finishes the participant story with ${native ? 'native joining' : 'website downloads'}`, async () => {
+    mocks.native.mockReturnValue(native)
+    mount()
+    await screen.findByTestId('scene-mock')
+    fireEvent.click(screen.getByTestId('onboarding-role-participant'))
+    finishChapters()
+    expect(experience()).toHaveAttribute('data-step', 'compass')
+    if (native) {
+      expect(screen.getByRole('link', { name: 'Join a game' })).toHaveAttribute('href', '/join')
+      expect(screen.queryByTestId('onboarding-download-ios')).not.toBeInTheDocument()
+    } else {
+      expect(screen.getByTestId('onboarding-download-ios')).toHaveAttribute('href', 'https://apps.apple.com/app/pointfinder/id6759060734')
+      expect(screen.getByTestId('onboarding-download-android')).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=com.prayer.pointfinder')
+      expect(links()).not.toContain('/join')
+    }
+  })
+}

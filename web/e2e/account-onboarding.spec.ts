@@ -198,3 +198,16 @@ test('the library replays the introduction without downgrading a watched one, an
   await signIn(page)
   await expect(page).toHaveURL(/\/dashboard$/)
 })
+
+ test('Get started fades without moving the map and reveals the welcome world', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.route('**/onboarding/*.glb', (route) => route.abort())
+  await page.goto('/')
+  await expect(page.locator('.landing-page')).toHaveCSS('transition-property', 'opacity')
+  await page.getByRole('link', { name: 'Get started' }).first().click()
+  await expect(page.locator('.topo-register-transition')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/welcome$/)
+  await expect(experience(page)).toHaveCSS('animation-name', 'onboarding-arrive')
+  await expect(experience(page)).toHaveCSS('transform', 'none')
+  await expect(page.getByTestId('onboarding-role-participant')).toBeVisible()
+})

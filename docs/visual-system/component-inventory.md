@@ -6,12 +6,11 @@ Location: `web/src/components/onboarding/OnboardingExperience.tsx`
 Modes: Auth / Onboarding. One welcome world at `/welcome` (browser and native;
 also the native anonymous home), in three audiences (`mode`): `anonymous`
 visitors, signed-in `operator`, joined `player`. The public website itself is
-unchanged; its Get started walks the map into the role choice (no register-card
-ghost) and pricing opens the organizer gate (`?role=organizer`).
+unchanged; its Get started fades into the role choice (no map pan or zoom) and pricing opens the organizer gate (`?role=organizer`).
 States: role choice (participant left, organizer right); organizer gate
 (anonymous: Create an account / Sign in / See how it works first; operator:
 Take a quick tour / Go to my dashboard); six manually advanced chapters per
-role; landing per audience (participant: Join; anonymous organizer: Create an
+role; landing per audience (participant: Join in the native app, iOS / Android downloads on the website; anonymous organizer: Create an
 account + Sign in; operator: Create my first game when the dashboard is empty
 and no `first-game` row exists, else Go to my dashboard; player: Back to your
 game); Back to the choice from the first chapter and Change role (anonymous
@@ -21,8 +20,10 @@ preference storage, long German copy, both themes and safe-area-aware phone /
 landscape layout.
 Notes: The decorative 3D world fills the viewport. Localized DOM copy and canonical
 buttons sit over the world on semantic canvas scrims; no text is baked into the
-scene. Choosing "participating" goes straight to `/join` (the map offers the
-participant story once after joining; Settings keeps it under Help); choosing
+scene. Choosing "participating" opens the participant animation before the platform-specific
+landing. Native builds offer `/join`; browser visitors get App Store and Google Play
+links, including phone browsers. Joined players retain Back to your game. Settings
+keeps the story under Help; choosing
 "organizing" opens the gate on the organizer world's first frame, so nobody has
 to register before watching. The choice only picks which story is told
 (`branch` prop on the scene: `choice`, `participant`, `organizer`); it never

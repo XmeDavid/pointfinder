@@ -1639,6 +1639,11 @@
       "unknownRoute": "Liga-te à internet para atualizar a ordem das bases antes de fazer check-in."
     },
     "onboarding": {
+      "download": {
+        "body": "Leva a aventura contigo. Descarrega o PointFinder no telemóvel e entra no teu jogo.",
+        "ios": "Descarregar para iOS",
+        "android": "Descarregar para Android"
+      },
       "next": "Continuar",
       "back": "Anterior",
       "replay": "Explorar de novo",

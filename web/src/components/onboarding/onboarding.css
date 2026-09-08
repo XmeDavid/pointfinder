@@ -92,3 +92,11 @@
   .onboarding-overlay::before { inset: -1rem 0 -1rem -2rem; background: linear-gradient(to right, transparent, var(--pf-color-surface-canvas) 2rem); }
   .onboarding-still, [data-role='choice'] .onboarding-still { width: 50%; height: 90%; top: 10%; }
 }
+
+@keyframes onboarding-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .onboarding-experience { animation: onboarding-arrive 240ms ease both; }
+}

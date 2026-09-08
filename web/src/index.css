@@ -136,22 +136,11 @@ body {
   contain: layout paint style;
 }
 
-/* ---------- Landing → Register cinematic transition ----------
-   Stays inside the brand's dark + green topographic world end to end:
-   landing content recedes, the contour terrain comes alive and we dive into
-   it, then the register page's arrival veil (the same zoomed terrain)
-   dissolves to reveal the form. No white flash, no blackout. */
-
-.landing-transition-fade {
-  transition:
-    opacity 0.4s ease,
-    transform 0.52s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.landing-page-transitioning .landing-transition-fade {
-  opacity: 0;
-  transform: translateY(-10px) scale(0.985);
+/* Fade the page into the app canvas; the welcome scene fades in after routing. */
+.landing-page { transition: opacity 220ms ease; }
+.landing-page-transitioning { opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .landing-page { transition: none; }
 }
 
 /* Shared topographic-map framing. The landing hero, the walk transition, and the
@@ -196,202 +185,6 @@ body {
   transform-origin: 50% 50%;
 }
 
-/* "Walk the map" transition: the landing chrome fades while this fixed overlay —
-   already showing the same dark-map crop as the hero — pans across the map to the
-   register crop, inverting dark→light (bright-green-on-dark → faint-green-on-white)
-   so the overlay's final frame is identical to register's backdrop. */
-.topo-register-transition {
-  --topo-walk-duration: 1.5s;
-
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  pointer-events: none;
-  overflow: hidden;
-  contain: strict;
-}
-
-/* solid dark base under the dark terrain — matches the landing's dark field, then
-   gives way to the white wash during the inversion */
-.topo-register-transition__field {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    radial-gradient(circle at 50% 45%, var(--pf-dataColor-atlasDark1) 0%, var(--pf-dataColor-atlasDark2) 58%, var(--pf-dataColor-atlasDark3) 100%),
-    var(--pf-dataColor-atlasDark3);
-  opacity: 1;
-  will-change: opacity;
-  animation: topoWalkField var(--topo-walk-duration) ease-out forwards;
-}
-
-/* light destination wash — fades in late as the world inverts. The landing renders
-   inside a `.dark` scope but register is the light theme, so the wash's final color
-   is pinned to register's literal white backdrop (not the inherited dark vars),
-   otherwise the last frame would stay dark and flash against the light page. */
-.topo-register-transition__wash {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    radial-gradient(120% 90% at 50% -15%, rgb(21 128 61 / 0.06), transparent 55%),
-    radial-gradient(130% 120% at 50% 42%, transparent 58%, rgb(2 6 4 / 0.04)),
-    linear-gradient(to bottom, var(--pf-dataColor-white), var(--pf-dataColor-white));
-  opacity: 0;
-  will-change: opacity;
-  animation: topoWalkWash var(--topo-walk-duration) ease-out forwards;
-}
-
-/* the panning "camera": one promoted layer holding both terrain textures, so the
-   transform composites the cached bitmaps (no re-raster). Pans through the valley
-   waypoints from the landing crop to the register crop. */
-.topo-register-transition__walk {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  transform: var(--map-from);
-  transform-origin: 50% 50%;
-  will-change: transform;
-  /* linear timing: the slow→fast→slow cadence and the curve are baked into the
-     densely-sampled keyframes below, so motion stays smooth with no per-waypoint
-     stutter (a single ease would restart at every keyframe and cause kinks) */
-  animation: topoWalkPan var(--topo-walk-duration) linear forwards;
-}
-
-.topo-register-transition__terrain {
-  will-change: opacity;
-}
-
-/* bright green terrain on the dark field — the landing look; fades out as we invert */
-.topo-register-transition__terrain--dark {
-  background-image: url("/landing/topo-terrain-dark.webp");
-  opacity: 1;
-  animation: topoWalkDark var(--topo-walk-duration) ease-out forwards;
-}
-
-/* faint terrain matching register — fades in to its final (page) opacity */
-.topo-register-transition__terrain--light {
-  background-image: url("/landing/topo-terrain-light.webp");
-  opacity: 0;
-  animation: topoWalkLight var(--topo-walk-duration) ease-out forwards;
-}
-
-/* soft arrival bloom where the register card will sit */
-.topo-register-transition__glow {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgb(34 197 94 / 0.3) 0%,
-    rgb(34 197 94 / 0.08) 18%,
-    transparent 42%
-  );
-  opacity: 0;
-  will-change: opacity;
-  animation: topoWalkGlow var(--topo-walk-duration) ease-out forwards;
-}
-
-/* Valley walk: a smooth quadratic curve from the lower-left crop to the upper-right
-   crop that dips down into the valley around the first third before rising to the
-   register frame. Sampled every 10% along the curve, with the camera's progress
-   eased (slow→fast→slow) by the sampling cadence, so the motion reads as a single
-   continuous walk with no corners. Scale held at 1.9 throughout (a pan, not a zoom). */
-@keyframes topoWalkPan {
-  0% {
-    transform: translate(22%, -12%) scale(1.9);
-  }
-  10% {
-    transform: translate(21.8%, -12.1%) scale(1.9);
-  }
-  20% {
-    transform: translate(20.6%, -12.6%) scale(1.9);
-  }
-  30% {
-    transform: translate(17.3%, -13.7%) scale(1.9);
-  }
-  40% {
-    transform: translate(10.7%, -14.2%) scale(1.9);
-  }
-  50% {
-    transform: translate(0%, -11%) scale(1.9);
-  }
-  60% {
-    transform: translate(-10.7%, -2.5%) scale(1.9);
-  }
-  70% {
-    transform: translate(-17.3%, 5.2%) scale(1.9);
-  }
-  80% {
-    transform: translate(-20.6%, 9.9%) scale(1.9);
-  }
-  90% {
-    transform: translate(-21.8%, 11.7%) scale(1.9);
-  }
-  100% {
-    transform: translate(-22%, 12%) scale(1.9);
-  }
-}
-
-/* dark field holds until the inversion, then yields to the white wash */
-@keyframes topoWalkField {
-  0%,
-  60% {
-    opacity: 1;
-  }
-  92%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes topoWalkWash {
-  0%,
-  52% {
-    opacity: 0;
-  }
-  90%,
-  100% {
-    opacity: 1;
-  }
-}
-
-/* dark terrain stays strong through most of the pan so the map never goes blank,
-   then fades out as the light terrain + white wash arrive */
-@keyframes topoWalkDark {
-  0%,
-  58% {
-    opacity: 1;
-  }
-  90%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes topoWalkLight {
-  0%,
-  58% {
-    opacity: 0;
-  }
-  100% {
-    opacity: var(--map-light-opacity);
-  }
-}
-
-@keyframes topoWalkGlow {
-  0%,
-  58% {
-    opacity: 0;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.35;
-  }
-}
-
 .register-atlas-screen {
   position: relative;
   overflow: hidden;
@@ -428,12 +221,7 @@ body {
   .contour-breathe,
   .landing-rotate-slow,
   .landing-ping,
-  .route-draw,
-  .topo-register-transition__field,
-  .topo-register-transition__wash,
-  .topo-register-transition__walk,
-  .topo-register-transition__terrain,
-  .topo-register-transition__glow {
+  .route-draw {
     animation: none;
   }
 }

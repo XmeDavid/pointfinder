@@ -1639,6 +1639,11 @@
       "unknownRoute": "Verbinde dich mit dem Internet, um die Reihenfolge der Basen vor dem Check-in zu aktualisieren."
     },
     "onboarding": {
+      "download": {
+        "body": "Nimm das Abenteuer mit. Lade PointFinder auf dein Smartphone und tritt deinem Spiel bei.",
+        "ios": "Für iOS herunterladen",
+        "android": "Für Android herunterladen"
+      },
       "next": "Weiter",
       "back": "Zurück",
       "replay": "Erneut entdecken",

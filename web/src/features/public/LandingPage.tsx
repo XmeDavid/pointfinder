@@ -1,3 +1,4 @@
+import { appStoreUrl, GOOGLE_PLAY_URL } from "@/lib/appDownloads";
 import {
   ArrowRight,
   Check,
@@ -25,26 +26,8 @@ const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
   "PointFinder club deal",
 )}`;
 
-const APP_STORE_COUNTRY: Record<string, string> = {
-  "pointfinder.pt": "pt",
-  "pointfinder.ch": "ch",
-};
-
-function appStoreUrl() {
-  if (typeof window === "undefined") {
-    return "https://apps.apple.com/app/pointfinder/id6759060734";
-  }
-  const country = APP_STORE_COUNTRY[window.location.hostname.toLowerCase()];
-  const prefix = country ? `/${country}` : "";
-  return `https://apps.apple.com${prefix}/app/pointfinder/id6759060734`;
-}
-
 const workflowIcons = [MapPinned, ScanLine, RadioTower];
 const featureIcons = [MapPinned, ScanLine, MessageSquare, ShieldCheck];
-const REGISTER_TERRAIN_TEXTURES = [
-  "/landing/topo-terrain-dark.webp",
-  "/landing/topo-terrain-light.webp",
-];
 const WELCOME_STILL = "/onboarding/role-choice.webp";
 const WELCOME_ROUTE = "/welcome";
 const ORGANIZER_GATE_ROUTE = "/welcome?role=organizer";
@@ -54,7 +37,7 @@ export function LandingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
-  const [isRegisterTransitionActive, setIsRegisterTransitionActive] = useState(false);
+  const [isWelcomeTransitionActive, setIsWelcomeTransitionActive] = useState(false);
   const transitionTimer = useRef<number | null>(null);
   const preloadedRef = useRef(false);
 
@@ -67,26 +50,26 @@ export function LandingPage() {
     [],
   );
 
-  // Warm the welcome route, its first still and both walk textures so first paint of the transition is instant.
+  // Warm the welcome route and first still before fading into the scene.
   const preloadWelcome = useCallback(() => {
     if (preloadedRef.current || typeof window === "undefined") {
       return;
     }
     preloadedRef.current = true;
     void import("@/features/introduction/WelcomePage");
-    for (const src of [...REGISTER_TERRAIN_TEXTURES, WELCOME_STILL]) {
+    for (const src of [WELCOME_STILL]) {
       const img = new Image();
       img.src = src;
     }
   }, []);
 
-  // Preload on idle even without hover, so slow networks still have textures ready.
+  // Preload on idle even without hover.
   useEffect(() => {
     const idle = window.setTimeout(preloadWelcome, 1500);
     return () => window.clearTimeout(idle);
   }, [preloadWelcome]);
 
-  // "Get started" walks the map into the welcome world, where the visitor picks
+  // "Get started" fades into the welcome world, where the visitor picks
   // a role before anyone mentions an account. Pricing goes straight to the
   // organizer's account choice.
   const startWelcomeTransition = useCallback(
@@ -104,7 +87,7 @@ export function LandingPage() {
       }
 
       event?.preventDefault();
-      if (isRegisterTransitionActive) {
+      if (isWelcomeTransitionActive) {
         return;
       }
 
@@ -117,12 +100,13 @@ export function LandingPage() {
         return;
       }
 
-      setIsRegisterTransitionActive(true);
+      preloadWelcome();
+      setIsWelcomeTransitionActive(true);
       transitionTimer.current = window.setTimeout(() => {
         navigate(to);
-      }, 1500);
+      }, 220);
     },
-    [isRegisterTransitionActive, navigate],
+    [isWelcomeTransitionActive, navigate, preloadWelcome],
   );
   const startFromHero = useCallback((event?: MouseEvent<HTMLElement>) => startWelcomeTransition(WELCOME_ROUTE, event), [startWelcomeTransition]);
   const startFromPricing = useCallback((event?: MouseEvent<HTMLElement>) => startWelcomeTransition(ORGANIZER_GATE_ROUTE, event), [startWelcomeTransition]);
@@ -194,12 +178,11 @@ export function LandingPage() {
   return (
     <div
       className={cn(
-        "dark min-h-screen bg-background text-foreground",
-        isRegisterTransitionActive && "landing-page-transitioning",
+        "landing-page dark min-h-screen bg-background text-foreground",
+        isWelcomeTransitionActive && "landing-page-transitioning",
       )}
     >
-      <TopoRegisterTransition active={isRegisterTransitionActive} />
-      <header className="landing-transition-fade sticky top-0 z-40 border-b border-border/70 bg-card/95 shadow-sm">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-card/95 shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3" aria-label="PointFinder">
             <BrandMark />
@@ -238,7 +221,7 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main className="landing-transition-fade">
+      <main>
         <section className="relative overflow-hidden border-b border-border bg-card">
           <HeroBackdrop />
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-24">
@@ -268,7 +251,7 @@ export function LandingPage() {
                   <AppStoreBadge className="h-11 w-auto" />
                 </a>
                 <a
-                  href="https://play.google.com/store/apps/details?id=com.prayer.pointfinder"
+                  href={GOOGLE_PLAY_URL}
                   className="inline-flex"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -427,7 +410,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="landing-transition-fade border-t border-border px-4 py-8 sm:px-6 lg:px-8">
+      <footer className="border-t border-border px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3 text-foreground">
             <BrandMark />
@@ -476,24 +459,6 @@ function HeroBackdrop() {
 /* "Walk the map" into the welcome world. There is no card ghost any more: the
    destination is a role choice, and nothing may suggest an account is needed
    before the visitor has picked one. */
-function TopoRegisterTransition({ active }: { active: boolean }) {
-  if (!active) {
-    return null;
-  }
-
-  return (
-    <div className="topo-register-transition" aria-hidden="true">
-      <div className="topo-register-transition__field" />
-      <div className="topo-register-transition__wash" />
-      <div className="topo-register-transition__walk">
-        <div className="topo-map-layer topo-register-transition__terrain topo-register-transition__terrain--dark" />
-        <div className="topo-map-layer topo-register-transition__terrain topo-register-transition__terrain--light" />
-      </div>
-      <div className="topo-register-transition__glow" />
-    </div>
-  );
-}
-
 function SectionHeading({
   eyebrow,
   title,

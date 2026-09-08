@@ -52,12 +52,9 @@ test('native onboarding renders the participant GLBs for the participant story, 
   await ready(page, 'choice')
   await at(page, 125)
   expect(worlds).toEqual(['role-choice.glb'])
-  // Participating goes straight to joining; the story is played on request (the map offers it after joining).
-  await page.getByTestId('onboarding-role-participant').click()
-  await expect(page).toHaveURL(/\/join$/)
-  await expect(page.locator('[data-testid="onboarding-scene"] canvas')).toHaveCount(0)
+  // Role selection starts the real participant world without leaving onboarding.
   worlds.length = 0
-  await page.goto('/welcome?play=participant')
+  await page.getByTestId('onboarding-role-participant').click()
   await expect(page.getByTestId('onboarding-experience')).toHaveAttribute('data-role', 'participant')
   await ready(page, 'participant')
   await at(page, 125)

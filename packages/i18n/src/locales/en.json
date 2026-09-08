@@ -1639,6 +1639,11 @@
       "unknownRoute": "Connect to refresh the base order before checking in."
     },
     "onboarding": {
+      "download": {
+        "body": "Take the adventure with you. Download PointFinder on your phone, then join your game.",
+        "ios": "Download for iOS",
+        "android": "Download for Android"
+      },
       "next": "Continue",
       "back": "Back",
       "replay": "Explore again",

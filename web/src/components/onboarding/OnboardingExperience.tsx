@@ -1,7 +1,7 @@
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight, Compass, RotateCcw, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 import { useMediaQuery } from '@/hooks/ui/useMediaQuery'
@@ -10,6 +10,8 @@ import {
   type OnboardingBranch, type OnboardingOptions, type OnboardingOutcome, type OnboardingRole,
 } from './useOnboarding'
 import type { OnboardingScene } from './OnboardingScene'
+import { isNativeEntry } from '@/platform/runtime'
+import { appStoreUrl, GOOGLE_PLAY_URL } from '@/lib/appDownloads'
 import './onboarding.css'
 
 class SceneBoundary extends Component<{ children: ReactNode; onError: () => void }, { failed: boolean }> {
@@ -66,7 +68,7 @@ function hookOptions({ previewStep, previewRole, previewGate, mode, play, organi
 export function OnboardingExperience(props: OnboardingExperienceProps) {
   const { mode = 'anonymous', operator } = props
   const { t, i18n } = useTranslation(undefined, { keyPrefix: 'playerApp' })
-  const navigate = useNavigate()
+  const native = isNativeEntry()
   const { branch, step, stage, loaded, chooseRole, changeRole, openChapters, go, skip } = useOnboarding(hookOptions(props))
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -140,7 +142,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
   /** The quiet way out under the chapters: joining or signing in, back to the game, or the dashboard. */
   const escapeRow = anonymous ? (
     <div className="flex flex-wrap justify-center gap-x-5 gap-y-1">
-      {joinLink('link')}
+      {native && joinLink('link')}
       {loginLink('link')}
     </div>
   ) : (
@@ -167,18 +169,19 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
   )
   const title = choice ? t('onboarding.choice.title') : gate ? t(anonymous ? 'onboarding.gate.title' : 'onboarding.account.title') : copy('title')
   const body = choice ? t('onboarding.choice.body') : gate ? t(anonymous ? 'onboarding.gate.body' : 'onboarding.account.body')
-    : landing && mode === 'operator' ? t('onboarding.account.landingBody') : copy('body')
+    : landing && mode === 'operator' ? t('onboarding.account.landingBody')
+    : landing && anonymous && branch === 'participant' && !native ? t('onboarding.download.body') : copy('body')
 
   let controls: ReactNode
   if (choice) {
     controls = (
       <>
         <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label={t('onboarding.choice.title')}>
-          {roleButton('participant', <Users size={22} />, () => navigate('/join'))}
+          {roleButton('participant', <Users size={22} />, () => chooseRole('participant'))}
           {roleButton('organizer', <Compass size={22} />, () => chooseRole('organizer', { gate: true }))}
         </div>
         <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-1">
-          {joinLink('link')}
+          {native && joinLink('link')}
           {loginLink('link')}
         </div>
       </>
@@ -211,6 +214,9 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
     } else if (branch === 'organizer') {
       primary = registerLink('default', 'onboarding-landing-create-account')
       secondary = loginLink('outline', t('onboarding.gate.signIn'))
+    } else if (!native) {
+      primary = <a href={appStoreUrl()} className={action('default')} data-testid="onboarding-download-ios">{t('onboarding.download.ios')}</a>
+      secondary = <a href={GOOGLE_PLAY_URL} className={action('outline')} data-testid="onboarding-download-android">{t('onboarding.download.android')}</a>
     } else {
       primary = joinLink('default')
       secondary = loginLink('outline')

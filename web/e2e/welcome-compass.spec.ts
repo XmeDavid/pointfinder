@@ -5,7 +5,7 @@ const register = (page: Page) => page.locator('.onboarding-overlay a[href="/regi
 const login = (page: Page) => page.locator('.onboarding-overlay a[href="/login"]')
 const join = (page: Page) => page.locator('.onboarding-overlay a[href="/join"]')
 
-test('native welcome opens on a role choice, sends participants to join, gates organizers on an account and remembers the completed story', async ({ page }, info) => {
+test('native welcome opens on a role choice, plays the participant story before joining, gates organizers on an account and remembers the completed story', async ({ page }, info) => {
   test.skip(info.project.name !== 'native-shell', 'The browser home remains the public website')
   // Static fallback checks do not depend on the CI graphics driver.
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -22,8 +22,10 @@ test('native welcome opens on a role choice, sends participants to join, gates o
   await expect(login(page)).toBeVisible()
   await expect(page.getByTestId('onboarding-skip')).toHaveCount(0)
 
-  // Participating means joining a game; the explanation waits until they are in one.
+  // Participating starts the story; joining remains an explicit action.
   await page.getByTestId('onboarding-role-participant').click()
+  await expect(experience(page)).toHaveAttribute('data-step', 'join')
+  await join(page).click()
   await expect(page).toHaveURL(/\/join$/)
   await expect(experience(page)).toHaveCount(0)
   await page.goto('/')
@@ -169,5 +171,32 @@ test('native introduction stays usable when the 3D assets fail', async ({ page }
   await expect(login(page)).toBeVisible()
   await page.getByTestId('onboarding-replay').click()
   await page.getByTestId('onboarding-role-participant').click()
+  await expect(experience(page)).toHaveAttribute('data-step', 'join')
+  await join(page).click()
   await expect(page).toHaveURL(/\/join$/)
+})
+
+ test('participant role plays the story and ends with platform-specific actions', async ({ page }, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/welcome')
+  await page.getByTestId('onboarding-role-participant').click()
+  await expect(experience(page)).toHaveAttribute('data-step', 'join')
+  for (let chapter = 0; chapter < 6; chapter++) await page.getByTestId('onboarding-next').click()
+  await expect(experience(page)).toHaveAttribute('data-step', 'compass')
+  if (info.project.name === 'native-shell') {
+    await expect(join(page)).toHaveAttribute('href', '/join')
+    await expect(page.getByTestId('onboarding-download-ios')).toHaveCount(0)
+  } else {
+    for (const viewport of [{ width: 320, height: 568 }, { width: 740, height: 360 }, { width: 1280, height: 800 }]) {
+      await page.setViewportSize(viewport)
+      for (const language of ['en', 'pt', 'de']) {
+        await page.getByRole('combobox').selectOption(language)
+        await expect(page.getByTestId('onboarding-download-ios')).toBeInViewport({ ratio: 1 })
+        await expect(page.getByTestId('onboarding-download-android')).toBeInViewport({ ratio: 1 })
+      }
+    }
+    await expect(page.getByTestId('onboarding-download-ios')).toHaveAttribute('href', 'https://apps.apple.com/app/pointfinder/id6759060734')
+    await expect(page.getByTestId('onboarding-download-android')).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=com.prayer.pointfinder')
+    await expect(join(page)).toHaveCount(0)
+  }
 })

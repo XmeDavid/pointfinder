@@ -15,7 +15,7 @@ import { useIntroductionProgress } from './useIntroductionProgress'
 /**
  * `/welcome`, the one welcome world for everyone:
  *
- * - visitors choose a role; participating leads to joining, organizing to the
+ * - visitors choose a role; participating opens its story, organizing opens the
  *   account gate (create an account, sign in, or watch first). What an
  *   organizer watches or skips here is handed to the account they make next;
  * - a signed-in operator gets the tour offer, or the story itself with
