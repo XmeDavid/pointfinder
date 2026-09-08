@@ -191,7 +191,7 @@ export function LandingPage() {
         {/* 1. Full-bleed forest hero: live copy on the dark left, the whole scene on the right. */}
         <section className="landing-hero landing-dark" aria-labelledby="landing-hero-title">
           <div className="landing-hero-copy landing-reveal mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md lg:max-w-[27rem]">
+            <div className="max-w-md md:w-[46%] lg:w-full lg:max-w-[27rem]">
               <h1 id="landing-hero-title" className="text-[clamp(2.25rem,5.2vw,4rem)] font-bold leading-[1.05] tracking-tight text-balance">
                 {t("landing.hero.title")}
               </h1>
