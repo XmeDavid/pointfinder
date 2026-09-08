@@ -17,6 +17,7 @@ import com.prayer.pointfinder.core.data.repo.SessionStore
 import com.prayer.pointfinder.core.network.ApiFactory
 import com.prayer.pointfinder.core.network.AuthInterceptor
 import com.prayer.pointfinder.core.network.AuthTokenProvider
+import com.prayer.pointfinder.core.network.CertificatePinning
 import com.prayer.pointfinder.core.network.CompanionApi
 import com.prayer.pointfinder.core.network.MobileRealtimeClient
 import com.prayer.pointfinder.core.network.TokenAuthenticator
@@ -52,6 +53,7 @@ object AppModule {
     @javax.inject.Named("refresh")
     fun provideRefreshOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
+            .certificatePinner(CertificatePinning.pinner)
             .apply {
                 if (BuildConfig.DEBUG) {
                     val logger = HttpLoggingInterceptor().apply {
@@ -77,6 +79,7 @@ object AppModule {
         tokenRefresher: TokenRefresher,
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .certificatePinner(CertificatePinning.pinner)
             .addInterceptor(AuthInterceptor(tokenProvider))
             .authenticator(TokenAuthenticator(tokenRefresher))
             .apply {

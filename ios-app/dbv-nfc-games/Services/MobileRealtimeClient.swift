@@ -20,7 +20,7 @@ final class MobileRealtimeClient {
     /// The caller should prompt the user to re-login instead of retrying silently.
     var onAuthDenied: (() -> Void)?
 
-    private let urlSession = URLSession(configuration: .default)
+    private let urlSession = CertificatePinningDelegate.makePinnedSession()
     private var socketTask: URLSessionWebSocketTask?
     private var receiveTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?

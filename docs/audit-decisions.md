@@ -242,18 +242,37 @@ Design decisions made while resolving findings from `docs/full-codebase-audit-20
 
 ## Finding 12.2 -- Certificate pinning (2026-08-31)
 
-**Decision:** Defer. Requires infrastructure planning for pin rotation.
+**Decision:** Implemented. Both platforms now pin to Let's Encrypt root CA SPKI hashes.
 
-**Rationale:** Certificate pinning without a rotation strategy risks bricking deployed apps when certificates renew. Let's Encrypt certificates renew every 90 days. Implementation requires: (1) pinning to intermediate CA SPKI hash (more stable than leaf); (2) including backup pins; (3) coordinating app releases with certificate changes; (4) a kill-switch mechanism for emergency pin updates. The current transport security (HTTPS everywhere, no custom trust anchors, HttpOnly cookies for session tokens) provides the baseline. Pinning should be a dedicated security sprint with DevOps coordination.
+**Implementation:**
+- Android: `CertificatePinning.kt` provides an OkHttp `CertificatePinner` applied to all three `OkHttpClient` instances (refresh, authenticated, WebSocket). `network_security_config.xml` adds declarative pin-set entries.
+- iOS: `CertificatePinningDelegate.swift` implements `URLSessionDelegate` with SPKI hash extraction using Security framework + CryptoKit. Applied to `APIClient` and `MobileRealtimeClient` via `makePinnedSession()`.
+- Both platforms pin ISRG Root X1 (RSA, expires 2035) and ISRG Root X2 (ECDSA, expires 2040).
+- Pinning is only enforced for `pointfinder.pt` and subdomains; localhost/staging traffic passes through.
+
+**Pin rotation strategy:** Root CA pins are stable for 10-15+ years (unlike leaf/intermediate pins that rotate every 90 days). When a root approaches end-of-life, add the new root's SPKI hash in an app update before removing the old one. Always maintain at least two pins. The backup ISRG Root X2 pin ensures continuity if Let's Encrypt migrates from X1.
+
+**Alternatives considered:**
+- Pinning to leaf/intermediate certificates (rejected: rotates every 90 days with Let's Encrypt, high bricking risk)
+- TrustKit (iOS) or third-party library (rejected: unnecessary complexity for root CA pinning)
+- Remote pin config / kill-switch (deferred: root CA stability makes this lower priority; can be added if threat model changes)
 
 ---
 
 ## Findings 9.3, 9.4, 9.5, 9.6, 9.7 -- Mobile test coverage gaps (2026-09-02)
 
-**Decision:** Defer to a dedicated test sprint. Current coverage is acceptable given Maestro E2E mitigation.
+**Decision (updated 2026-09-08):** 9.3 and 9.5 resolved. 9.4, 9.6, 9.7 remain deferred.
+
+**9.3 -- Android ViewModel tests: Resolved.**
+Created `PlayerViewModelTest.kt` with 11 tests covering initial state, refresh success/error, base selection, failed action detection, realtime connection state, and error clearing. Added `mockk` and `kotlinx-coroutines-test` dependencies to app module. Uses `UnconfinedTestDispatcher` + `mockkStatic(Log::class)` pattern.
+
+**9.5 -- MobileRealtimeClient reconnection tests: Resolved.**
+Extracted `computeReconnectBackoffSeconds()` as a testable top-level function. Created `MobileRealtimeReconnectTest.kt` with 8 tests covering exponential backoff (1/2/4/8/16/32s), cap at 30s, configurable cap, state machine shape, initial state, disabled client behavior, and auth callback defaults. Combined with existing `MobileRealtimeTokenProviderTest` (6 tests) and `RealtimeEnvelopeParsingTest` (5 tests), the client now has 19 unit tests.
+
+**9.4, 9.6, 9.7 -- Still deferred.**
 
 **Alternatives considered:**
-- Write stub ViewModel tests for all Android/iOS ViewModels in this audit pass
-- Require tests before any new feature merges (gate CI)
+- Write stub ViewModel tests for all Android/iOS ViewModels (rejected: iOS requires test architecture with @Observable fakes that doesn't exist yet)
+- Require tests before any new feature merges (deferred: would block velocity without clear ROI)
 
-**Rationale:** The audit identified gaps in mobile ViewModel tests (9.3 Android, 9.6 iOS), instrumentation tests (9.4), MobileRealtimeClient reconnection tests (9.5), and E2E parity (9.7). Since the audit, significant progress has been made on the higher-priority gaps: backend services now have 217 tests across 6 previously-untested files (9.1 resolved), and frontend features have 24 component tests (9.2 resolved). The remaining mobile gaps are mitigated by 33 Maestro E2E specs covering the critical user flows. Writing meaningful ViewModel tests requires establishing a test architecture (fake repositories, test dispatchers, state assertion patterns) that warrants a dedicated sprint rather than ad-hoc additions. The risk of shallow "coverage for coverage's sake" tests outweighs the benefit.
+**Rationale for remaining deferrals:** 9.4 (instrumentation tests) and 9.6 (iOS View/ViewModel tests) require platform-specific test infrastructure (Compose test rules, SwiftUI ViewInspector or similar) that would need a dedicated sprint. 9.7 (E2E parity) is incremental by nature. All mitigated by 33 Maestro E2E specs.

@@ -41,9 +41,9 @@ actor APIClient {
     private var isRefreshing = false
     private var refreshWaiters: [CheckedContinuation<String, any Error>] = []
 
-    init(baseURL: String = AppConfiguration.apiBaseURL, session: URLSession = .shared) {
+    init(baseURL: String = AppConfiguration.apiBaseURL, session: URLSession? = nil) {
         self.baseURL = baseURL
-        self.session = session
+        self.session = session ?? CertificatePinningDelegate.makePinnedSession()
         self.decoder = JSONDecoder()
         self.encoder = JSONEncoder()
     }

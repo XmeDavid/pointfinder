@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network security configuration for PointFinder (audit finding 12.2).
+    Enforces HTTPS for the production domain. Clear-text traffic is denied
+    by default; the debug build variant overrides this via its own manifest
+    entry if needed for local development.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">pointfinder.pt</domain>
+        <domain includeSubdomains="true">pointfinder.ch</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+        <pin-set expiration="2035-06-04">
+            <!-- ISRG Root X1 (Let's Encrypt RSA root CA) -->
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+            <!-- ISRG Root X2 (Let's Encrypt ECDSA root CA) -->
+            <pin digest="SHA-256">diGVwiVYbubAI3RW4hB9xU8e/CH2GnkuvVFZE8zmgzI=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>

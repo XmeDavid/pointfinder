@@ -25,6 +25,15 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
+/**
+ * Computes the reconnection backoff delay in seconds using capped exponential backoff.
+ * Delay doubles with each attempt (1, 2, 4, 8, 16, 32) and caps at [maxBackoffSeconds].
+ * Extracted for testability (audit finding 9.5).
+ */
+internal fun computeReconnectBackoffSeconds(attempt: Int, maxBackoffSeconds: Long = 30L): Long {
+    return minOf(maxBackoffSeconds, 1L shl minOf(attempt, 5))
+}
+
 internal fun buildMobileRealtimeUrl(apiBaseUrl: String, gameId: String, token: String): HttpUrl {
     val base = apiBaseUrl.toHttpUrlOrNull()
         ?: throw IllegalArgumentException("Invalid API base URL: $apiBaseUrl")
@@ -109,6 +118,7 @@ class MobileRealtimeClient(
     private val scope = CoroutineScope(SupervisorJob() + singleThread)
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; explicitNulls = false }
     private val okHttpClient = OkHttpClient.Builder()
+        .certificatePinner(CertificatePinning.pinner)
         .pingInterval(20, TimeUnit.SECONDS)
         .build()
 
@@ -279,7 +289,7 @@ class MobileRealtimeClient(
 
         reconnectJob = scope.launch {
             reconnectAttempt += 1
-            val backoffSeconds = minOf(30L, 1L shl minOf(reconnectAttempt, 5))
+            val backoffSeconds = computeReconnectBackoffSeconds(reconnectAttempt)
             updateState(RealtimeConnectionState.Reconnecting(reconnectAttempt))
             delay(backoffSeconds * 1000L)
             if (desiredSession != null) {
