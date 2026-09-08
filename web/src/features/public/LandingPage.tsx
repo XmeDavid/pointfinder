@@ -1,36 +1,41 @@
-import { appStoreUrl, GOOGLE_PLAY_URL } from "@/lib/appDownloads";
-import {
-  ArrowRight,
-  Check,
-  Gift,
-  MapPinned,
-  MessageSquare,
-  Navigation,
-  RadioTower,
-  ScanLine,
-  ShieldCheck,
-  Smartphone,
-  Users,
-} from "lucide-react";
+import { Check, Gift, Smartphone, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { appStoreUrl, GOOGLE_PLAY_URL } from "@/lib/appDownloads";
 import { cn } from "@/lib/utils";
+import { Artwork } from "./landing/Artwork";
+import { BrandMark, LandingHeader } from "./landing/LandingHeader";
 
 const CONTACT_EMAIL = "info@pointfinder.pt";
-const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
-  "PointFinder club deal",
-)}`;
+const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("PointFinder club deal")}`;
 
-const workflowIcons = [MapPinned, ScanLine, RadioTower];
-const featureIcons = [MapPinned, ScanLine, MessageSquare, ShieldCheck];
 const WELCOME_STILL = "/onboarding/role-choice.webp";
 const WELCOME_ROUTE = "/welcome";
 const ORGANIZER_GATE_ROUTE = "/welcome?role=organizer";
+
+// Illustrations are owned by artifacts/landing-illustrated-v1 and imported as
+// independent layers: the hero scene, the empty forest, the guide cutout, the
+// three step dioramas and the (separately replaceable) workspace screenshot.
+const ART = {
+  hero: { src: "/landing/illustrated/hero.webp", width: 1536, height: 1024 },
+  forest: { src: "/landing/illustrated/forest-footer.webp", width: 1536, height: 1024 },
+  guide: { src: "/landing/illustrated/guide-pointing.webp", width: 800, height: 1200 },
+  workspace: { src: "/landing/illustrated/workspace-preview.webp", width: 1440, height: 900 },
+  steps: [
+    { src: "/landing/illustrated/step-plan.webp", width: 800, height: 800 },
+    { src: "/landing/illustrated/step-explore.webp", width: 800, height: 800 },
+    { src: "/landing/illustrated/step-checkin.webp", width: 800, height: 800 },
+  ],
+} as const;
+
+const OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
+const CARTO_ATTRIBUTION_URL = "https://carto.com/attributions";
+
 type BillingCycle = "yearly" | "monthly";
 
 export function LandingPage() {
@@ -57,10 +62,8 @@ export function LandingPage() {
     }
     preloadedRef.current = true;
     void import("@/features/introduction/WelcomePage");
-    for (const src of [WELCOME_STILL]) {
-      const img = new Image();
-      img.src = src;
-    }
+    const img = new Image();
+    img.src = WELCOME_STILL;
   }, []);
 
   // Preload on idle even without hover.
@@ -69,9 +72,9 @@ export function LandingPage() {
     return () => window.clearTimeout(idle);
   }, [preloadWelcome]);
 
-  // "Get started" fades into the welcome world, where the visitor picks
-  // a role before anyone mentions an account. Pricing goes straight to the
-  // organizer's account choice.
+  // "Get started" fades into the welcome world, where the visitor picks a role
+  // before anyone mentions an account. Pricing goes straight to the organizer's
+  // account choice.
   const startWelcomeTransition = useCallback(
     (to: string, event?: MouseEvent<HTMLElement>) => {
       if (
@@ -108,47 +111,25 @@ export function LandingPage() {
     },
     [isWelcomeTransitionActive, navigate, preloadWelcome],
   );
-  const startFromHero = useCallback((event?: MouseEvent<HTMLElement>) => startWelcomeTransition(WELCOME_ROUTE, event), [startWelcomeTransition]);
-  const startFromPricing = useCallback((event?: MouseEvent<HTMLElement>) => startWelcomeTransition(ORGANIZER_GATE_ROUTE, event), [startWelcomeTransition]);
+  const startFromHero = useCallback(
+    (event?: MouseEvent<HTMLElement>) => startWelcomeTransition(WELCOME_ROUTE, event),
+    [startWelcomeTransition],
+  );
+  const startFromPricing = useCallback(
+    (event?: MouseEvent<HTMLElement>) => startWelcomeTransition(ORGANIZER_GATE_ROUTE, event),
+    [startWelcomeTransition],
+  );
 
-  const workflow = [
-    {
-      title: t("landing.workflow.planTitle"),
-      body: t("landing.workflow.planBody"),
-    },
-    {
-      title: t("landing.workflow.playTitle"),
-      body: t("landing.workflow.playBody"),
-    },
-    {
-      title: t("landing.workflow.runTitle"),
-      body: t("landing.workflow.runBody"),
-    },
+  const sections = [
+    { id: "how-it-works", label: t("landing.nav.howItWorks") },
+    { id: "organizers", label: t("landing.nav.forOrganizers") },
+    { id: "pricing", label: t("landing.nav.pricing") },
   ];
 
-  const features = [
-    {
-      title: t("landing.features.mapTitle"),
-      body: t("landing.features.mapBody"),
-    },
-    {
-      title: t("landing.features.nfcTitle"),
-      body: t("landing.features.nfcBody"),
-    },
-    {
-      title: t("landing.features.reviewTitle"),
-      body: t("landing.features.reviewBody"),
-    },
-    {
-      title: t("landing.features.recoveryTitle"),
-      body: t("landing.features.recoveryBody"),
-    },
-  ];
-
-  const monthlyFeatures = [
-    t("landing.pricing.personalFeatureGames"),
-    t("landing.pricing.personalFeatureOperator"),
-    t("landing.pricing.personalFeatureUploads"),
+  const steps = [
+    { title: t("landing.steps.planTitle"), body: t("landing.steps.planBody"), alt: t("landing.steps.planAlt") },
+    { title: t("landing.steps.exploreTitle"), body: t("landing.steps.exploreBody"), alt: t("landing.steps.exploreAlt") },
+    { title: t("landing.steps.checkInTitle"), body: t("landing.steps.checkInBody"), alt: t("landing.steps.checkInAlt") },
   ];
 
   const freeFeatures = [
@@ -156,186 +137,178 @@ export function LandingPage() {
     t("landing.pricing.freeFeatureBases"),
     t("landing.pricing.freeFeatureSolo"),
   ];
-
+  const monthlyFeatures = [
+    t("landing.pricing.personalFeatureGames"),
+    t("landing.pricing.personalFeatureOperator"),
+    t("landing.pricing.personalFeatureUploads"),
+  ];
   const annualFeatures = [
     t("landing.pricing.yearlyFeatureSavings"),
     t("landing.pricing.yearlyFeatureEquivalent"),
     t("landing.pricing.personalFeatureUploads"),
   ];
-  const personalFeatures = billingCycle === "yearly" ? annualFeatures : monthlyFeatures;
-  const personalPrice = billingCycle === "yearly" ? "€30" : "€3.99";
-  const personalSuffix =
-    billingCycle === "yearly" ? t("landing.pricing.perYear") : t("landing.pricing.perMonth");
-  const personalCta =
-    billingCycle === "yearly" ? t("landing.pricing.startYearly") : t("landing.pricing.startPersonal");
-
+  const yearly = billingCycle === "yearly";
   const clubFeatures = [
     t("landing.pricing.clubFeatureBundle"),
     t("landing.pricing.clubFeatureVolume"),
     t("landing.pricing.clubFeatureNoJuggling"),
   ];
 
+  const getStartedLink = (className?: string) => (
+    <Link
+      to={WELCOME_ROUTE}
+      className={cn(buttonVariants({ size: "lg" }), "font-semibold", className)}
+      onClick={startFromHero}
+      onMouseEnter={preloadWelcome}
+      onFocus={preloadWelcome}
+    >
+      {t("landing.nav.getStarted")}
+    </Link>
+  );
+
   return (
     <div
       className={cn(
-        "landing-page dark min-h-screen bg-background text-foreground",
+        "landing-page font-ui min-h-screen bg-background text-foreground",
         isWelcomeTransitionActive && "landing-page-transitioning",
       )}
     >
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-card/95 shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-3" aria-label="PointFinder">
-            <BrandMark />
-            <span className="text-base font-semibold">PointFinder</span>
-          </Link>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+      >
+        {t("landing.nav.skipToContent")}
+      </a>
 
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#how-it-works" className="hover:text-foreground">
-              {t("landing.nav.howItWorks")}
-            </a>
-            <a href="#pricing" className="hover:text-foreground">
-              {t("landing.nav.pricing")}
-            </a>
-            <a href="#clubs" className="hover:text-foreground">
-              {t("landing.nav.clubs")}
-            </a>
-          </nav>
+      <LandingHeader
+        sections={sections}
+        getStartedHref={WELCOME_ROUTE}
+        onGetStarted={startFromHero}
+        onPreloadGetStarted={preloadWelcome}
+      />
 
-          <div className="flex items-center gap-2">
-            <Link
-              to="/login"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-            >
-              {t("landing.nav.operatorLogin")}
-            </Link>
-            <Link
-              to={WELCOME_ROUTE}
-              className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}
-              onClick={startFromHero}
-              onMouseEnter={preloadWelcome}
-              onFocus={preloadWelcome}
-            >
-              {t("landing.nav.getStarted")}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main>
-        <section className="relative overflow-hidden border-b border-border bg-card">
-          <HeroBackdrop />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-24">
-            <div className="max-w-2xl">
-              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
+      <main id="main" tabIndex={-1} className="focus:outline-none">
+        {/* 1. Full-bleed forest hero: live copy on the dark left, the whole scene on the right. */}
+        <section className="landing-hero landing-dark" aria-labelledby="landing-hero-title">
+          <div className="landing-hero-copy landing-reveal mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md lg:max-w-[27rem]">
+              <h1 id="landing-hero-title" className="text-[clamp(2.25rem,5.2vw,4rem)] font-bold leading-[1.05] tracking-tight text-balance">
                 {t("landing.hero.title")}
               </h1>
-              <p className="mt-5 text-lg leading-8 text-muted-foreground">
+              <p className="mt-4 max-w-prose text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
                 {t("landing.hero.tagline")}
               </p>
-
-              <div className="mt-8">
-                <Link
-                  to={WELCOME_ROUTE}
-                  className={cn(buttonVariants({ size: "lg" }))}
-                  onClick={startFromHero}
-                  onMouseEnter={preloadWelcome}
-                  onFocus={preloadWelcome}
-                >
-                  {t("landing.nav.getStarted")}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <a href={appStoreUrl()} className="inline-flex" rel="noopener noreferrer" target="_blank">
-                  <AppStoreBadge className="h-11 w-auto" />
-                </a>
-                <a
-                  href={GOOGLE_PLAY_URL}
-                  className="inline-flex"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <GooglePlayBadge className="h-11 w-auto" />
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                {getStartedLink()}
+                <a href="#how-it-works" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
+                  {t("landing.hero.secondaryCta")}
                 </a>
               </div>
-
+              <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
+                <BrandMark className="h-6 w-6 rounded-md [&>svg]:h-3.5 [&>svg]:w-3.5" />
+                {t("landing.hero.note")}
+              </p>
             </div>
-
-            <CompassHero />
           </div>
+          <figure className="landing-hero-media landing-reveal landing-reveal-late">
+            <Artwork
+              src={ART.hero.src}
+              alt={t("landing.hero.sceneAlt")}
+              loading="eager"
+              fetchPriority="high"
+              width={ART.hero.width}
+              height={ART.hero.height}
+              className="landing-hero-image"
+              fallbackClassName="landing-hero-image rounded-none border-0 bg-transparent"
+            />
+            <div aria-hidden="true" className="landing-hero-scrim" />
+          </figure>
         </section>
 
-        <section id="how-it-works" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading
-              eyebrow={t("landing.workflow.label")}
-              title={t("landing.workflow.title")}
-              body={t("landing.workflow.body")}
-            />
-
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {workflow.map((item, index) => {
-                const Icon = workflowIcons[index];
-                return (
-                  <article
-                    key={item.title}
-                    className="rounded-lg border border-border bg-card p-6 shadow-panel"
-                  >
-                    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <p className="text-sm font-medium text-primary">
+        {/* 2. Cream explanation: three steps, illustrations under the copy, no boxes. */}
+        <section id="how-it-works" className="landing-cream scroll-mt-16 px-4 py-14 sm:px-6 lg:px-8 lg:py-20" aria-labelledby="landing-steps-title">
+          <div className="mx-auto max-w-6xl">
+            <h2 id="landing-steps-title" className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+              {t("landing.steps.title")}
+            </h2>
+            <ol className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+              {steps.map((step, index) => (
+                <li key={step.title} className="flex flex-col">
+                  <div className="flex gap-4">
+                    <span aria-hidden="true" className="text-2xl font-bold leading-none text-primary sm:text-3xl">
                       {String(index + 1).padStart(2, "0")}
-                    </p>
-                    <h3 className="mt-2 text-xl font-semibold">{item.title}</h3>
-                    <p className="mt-3 leading-7 text-muted-foreground">{item.body}</p>
-                  </article>
-                );
-              })}
-            </div>
+                    </span>
+                    <div className="max-w-prose">
+                      <h3 className="text-xl font-bold leading-tight sm:text-2xl">{step.title}</h3>
+                      <p className="mt-2 leading-7 text-muted-foreground">{step.body}</p>
+                    </div>
+                  </div>
+                  <Artwork
+                    src={ART.steps[index].src}
+                    alt={step.alt}
+                    width={ART.steps[index].width}
+                    height={ART.steps[index].height}
+                    className="mt-6 h-auto w-full max-w-sm self-center md:self-start"
+                    fallbackClassName="mt-6 aspect-square max-w-sm self-center md:self-start"
+                  />
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
-        <section className="border-y border-border bg-muted/50 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
-            <div>
-              <SectionHeading
-                eyebrow={t("landing.features.label")}
-                title={t("landing.features.title")}
-                body={t("landing.features.body")}
-              />
+        {/* 3. Organizers: an independent evergreen background, the guide cutout and the real workspace. */}
+        <section id="organizers" className="landing-dark scroll-mt-16 px-4 py-14 sm:px-6 lg:px-8 lg:py-20" aria-labelledby="landing-organizers-title">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] lg:gap-12">
+            <div className="max-w-md">
+              <h2 id="landing-organizers-title" className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl text-balance">
+                {t("landing.organizers.title")}
+              </h2>
+              <p className="mt-4 leading-7 text-muted-foreground sm:text-lg sm:leading-8">{t("landing.organizers.body")}</p>
+              <div className="mt-7">{getStartedLink()}</div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {features.map((feature, index) => {
-                const Icon = featureIcons[index];
-                return (
-                  <article
-                    key={feature.title}
-                    className="rounded-lg border border-border bg-card p-5 shadow-panel"
-                  >
-                    <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                    <h3 className="mt-4 font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {feature.body}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
+            <figure className="landing-workspace">
+              <div className="landing-workspace-stage">
+                <div className="landing-workspace-screen">
+                  <Artwork
+                    src={ART.workspace.src}
+                    alt={t("landing.organizers.screenshotAlt")}
+                    unavailableLabel={t("landing.organizers.imageUnavailable")}
+                    width={ART.workspace.width}
+                    height={ART.workspace.height}
+                    className="block h-auto w-full"
+                    fallbackClassName="aspect-[16/10] rounded-none border-0"
+                  />
+                </div>
+                <Artwork
+                  src={ART.guide.src}
+                  alt={t("landing.organizers.guideAlt")}
+                  width={ART.guide.width}
+                  height={ART.guide.height}
+                  className="landing-workspace-guide"
+                  fallbackClassName="landing-workspace-guide sr-only"
+                />
+              </div>
+              <figcaption className="landing-workspace-caption text-xs leading-5 text-muted-foreground">
+                {t("landing.organizers.caption")}{" "}
+                <MapAttribution />
+              </figcaption>
+            </figure>
           </div>
         </section>
 
-        <section id="pricing" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading
-              eyebrow={t("landing.pricing.label")}
-              title={t("landing.pricing.title")}
-              body={t("landing.pricing.description")}
-            />
+        {/* 4. Pricing, compact, ahead of the final call to action. */}
+        <section id="pricing" className="scroll-mt-16 px-4 py-14 sm:px-6 lg:px-8 lg:py-20" aria-labelledby="landing-pricing-title">
+          <div className="mx-auto max-w-6xl">
+            <div className="max-w-2xl">
+              <h2 id="landing-pricing-title" className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                {t("landing.pricing.title")}
+              </h2>
+              <p className="mt-3 leading-7 text-muted-foreground">{t("landing.pricing.description")}</p>
+            </div>
 
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
               <PricingCard
                 icon={Gift}
                 title={t("landing.pricing.free")}
@@ -347,29 +320,29 @@ export function LandingPage() {
                 href={ORGANIZER_GATE_ROUTE}
                 onStartClick={startFromPricing}
               />
-              <PersonalPricingCard
+              <PricingCard
                 icon={Smartphone}
                 title={t("landing.pricing.personal")}
-                description={
-                  billingCycle === "yearly"
-                    ? t("landing.pricing.yearlyDesc")
-                    : t("landing.pricing.monthlyDesc")
-                }
-                price={personalPrice}
-                suffix={personalSuffix}
-                savings={billingCycle === "yearly" ? t("landing.pricing.yearlySavings") : undefined}
-                features={personalFeatures}
-                cta={personalCta}
+                description={yearly ? t("landing.pricing.yearlyDesc") : t("landing.pricing.monthlyDesc")}
+                price={yearly ? "€30" : "€3.99"}
+                suffix={yearly ? t("landing.pricing.perYear") : t("landing.pricing.perMonth")}
+                savings={yearly ? t("landing.pricing.yearlySavings") : undefined}
+                features={yearly ? annualFeatures : monthlyFeatures}
+                cta={yearly ? t("landing.pricing.startYearly") : t("landing.pricing.startPersonal")}
                 href={ORGANIZER_GATE_ROUTE}
                 onStartClick={startFromPricing}
-                billingCycle={billingCycle}
-                onBillingCycleChange={setBillingCycle}
-                monthlyLabel={t("landing.pricing.monthlyToggle")}
-                yearlyLabel={t("landing.pricing.yearlyToggle")}
                 highlighted
+                headerAction={
+                  <BillingToggle
+                    value={billingCycle}
+                    onChange={setBillingCycle}
+                    label={t("landing.pricing.billingCycle")}
+                    monthlyLabel={t("landing.pricing.monthlyToggle")}
+                    yearlyLabel={t("landing.pricing.yearlyToggle")}
+                  />
+                }
               />
               <PricingCard
-                id="clubs"
                 icon={Users}
                 title={t("landing.pricing.clubs")}
                 description={t("landing.pricing.clubsDesc")}
@@ -385,229 +358,147 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
-          <div className="mx-auto max-w-7xl overflow-hidden rounded-lg border border-border bg-card shadow-panel">
-            <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="border-b border-border p-6 sm:p-8 lg:border-b-0 lg:border-r">
-                <p className="text-sm font-medium text-primary">{t("landing.club.label")}</p>
-                <h2 className="mt-3 text-3xl font-semibold">{t("landing.club.title")}</h2>
-                <p className="mt-4 leading-7 text-muted-foreground">{t("landing.club.body")}</p>
-                <a
-                  href={CONTACT_HREF}
-                  className={cn(buttonVariants({ size: "lg" }), "mt-6")}
-                >
-                  {t("landing.club.cta")}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </a>
+        {/* 5. Final call to action in the empty forest, with the footer at its feet. */}
+        <section className="landing-dark landing-forest" aria-labelledby="landing-cta-title">
+          <Artwork
+            src={ART.forest.src}
+            alt=""
+            width={ART.forest.width}
+            height={ART.forest.height}
+            className="landing-forest-image"
+            fallbackClassName="hidden"
+          />
+          <div aria-hidden="true" className="landing-forest-scrim" />
+          <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 pb-8 pt-20 text-center sm:px-6 lg:px-8 lg:pt-28">
+            <h2 id="landing-cta-title" className="max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl text-balance">
+              {t("landing.cta.title")}
+            </h2>
+            <div className="mt-7">{getStartedLink()}</div>
+            <p className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-2">
+                <Smartphone className="h-4 w-4" aria-hidden="true" />
+                {t("landing.cta.getApp")}
+              </span>
+              <a
+                href={appStoreUrl()}
+                className="font-semibold text-foreground underline-offset-4 hover:underline"
+                rel="noopener noreferrer"
+                target="_blank"
+                data-testid="landing-download-ios"
+              >
+                {t("landing.cta.ios")}
+              </a>
+              <span aria-hidden="true">·</span>
+              <a
+                href={GOOGLE_PLAY_URL}
+                className="font-semibold text-foreground underline-offset-4 hover:underline"
+                rel="noopener noreferrer"
+                target="_blank"
+                data-testid="landing-download-android"
+              >
+                {t("landing.cta.android")}
+              </a>
+            </p>
+
+            <footer className="mt-24 w-full border-t border-border/60 pt-6 text-sm text-muted-foreground lg:mt-32">
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3 text-left">
+                  <BrandMark />
+                  <span className="font-semibold text-foreground">PointFinder</span>
+                  <span>{t("landing.footer.tagline")}</span>
+                </div>
+                <nav aria-label={t("landing.footer.tagline")} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 md:justify-end">
+                  <a href="#pricing" className="hover:text-foreground">
+                    {t("landing.nav.pricing")}
+                  </a>
+                  <Link to="/faq" className="hover:text-foreground">
+                    {t("faq.label")}
+                  </Link>
+                  <Link to="/privacy" className="hover:text-foreground">
+                    {t("landing.footer.privacyPolicy")}
+                  </Link>
+                  <Link to="/login" className="hover:text-foreground">
+                    {t("landing.footer.operatorLogin")}
+                  </Link>
+                </nav>
               </div>
-              <div className="grid gap-0 sm:grid-cols-3">
-                <ClubMetric value={t("landing.club.metricOneValue")} label={t("landing.club.metricOneLabel")} />
-                <ClubMetric value={t("landing.club.metricTwoValue")} label={t("landing.club.metricTwoLabel")} />
-                <ClubMetric value={t("landing.club.metricThreeValue")} label={t("landing.club.metricThreeLabel")} />
-              </div>
-            </div>
+              <p className="mt-5 text-xs">{t("landing.footer.copyright", { year: new Date().getFullYear() })}</p>
+            </footer>
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-border px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3 text-foreground">
-            <BrandMark />
-            <span className="font-semibold">PointFinder</span>
-            <span className="text-muted-foreground">{t("landing.footer.tagline")}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link to="/faq" className="hover:text-foreground">
-              {t("faq.label")}
-            </Link>
-            <Link to="/privacy" className="hover:text-foreground">
-              {t("landing.footer.privacyPolicy")}
-            </Link>
-            <Link to="/login" className="hover:text-foreground">
-              {t("landing.footer.operatorLogin")}
-            </Link>
-            <span>{t("landing.footer.copyright", { year: new Date().getFullYear() })}</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
 
-function BrandMark() {
+/** "Map data © OpenStreetMap contributors, © CARTO", with the names linked, in any language. */
+function MapAttribution() {
+  const { t } = useTranslation();
+  const OSM = "[[osm]]";
+  const CARTO = "[[carto]]";
+  const text = t("landing.organizers.attribution", { osm: OSM, carto: CARTO });
+  const parts = text.split(/(\[\[osm\]\]|\[\[carto\]\])/);
   return (
-    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-      <Navigation className="h-5 w-5" aria-hidden="true" />
+    <span data-testid="landing-map-attribution">
+      {parts.map((part, index) => {
+        if (part === OSM) {
+          return (
+            <a key={index} href={OSM_COPYRIGHT_URL} className="underline underline-offset-2 hover:text-foreground" rel="noopener noreferrer" target="_blank">
+              OpenStreetMap
+            </a>
+          );
+        }
+        if (part === CARTO) {
+          return (
+            <a key={index} href={CARTO_ATTRIBUTION_URL} className="underline underline-offset-2 hover:text-foreground" rel="noopener noreferrer" target="_blank">
+              CARTO
+            </a>
+          );
+        }
+        return <Fragment key={index}>{part}</Fragment>;
+      })}
     </span>
   );
 }
 
-function HeroBackdrop() {
-  // The hero shows the same dark-map crop the walk transition opens on, in a
-  // viewport-anchored layer (see .landing-hero-map) so that when the chrome fades
-  // the hero map simply becomes fullscreen instead of a second map appearing.
-  return (
-    <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,var(--pf-dataColor-atlasDark1)_0%,var(--pf-dataColor-atlasDark2)_58%,var(--pf-dataColor-atlasDark3)_100%)]" />
-      <div className="landing-hero-map" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_52%,var(--color-background)_100%)]" />
-    </div>
-  );
-}
-
-/* "Walk the map" into the welcome world. There is no card ghost any more: the
-   destination is a role choice, and nothing may suggest an account is needed
-   before the visitor has picked one. */
-function SectionHeading({
-  eyebrow,
-  title,
-  body,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="max-w-3xl">
-      <p className="text-sm font-medium text-primary">{eyebrow}</p>
-      <h2 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-lg leading-8 text-muted-foreground">{body}</p>
-    </div>
-  );
-}
-
-function CompassHero() {
-  return (
-    <div className="relative mx-auto hidden min-h-[520px] w-full max-w-[600px] items-center justify-center lg:flex lg:min-h-[600px]">
-      <div className="absolute h-[130%] w-[130%] rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute h-[116%] w-[116%] rounded-full bg-primary/10 blur-2xl" />
-      <div className="absolute h-[84%] w-[84%] rounded-full border border-primary/15 bg-[radial-gradient(circle_at_50%_42%,var(--color-card)_0%,var(--color-muted)_58%,var(--color-background)_100%)] opacity-90 shadow-[0_0_80px_rgba(34,197,94,0.18)]" />
-      <div className="landing-ping absolute h-[72%] w-[72%] rounded-full border border-primary/20" />
-      <div
-        className="landing-ping absolute h-[95%] w-[95%] rounded-full border border-primary/15"
-        style={{ animationDelay: "1.2s" }}
-      />
-      <div
-        className="landing-ping absolute h-[118%] w-[118%] rounded-full border border-primary/10"
-        style={{ animationDelay: "2.4s" }}
-      />
-
-      <div className="relative aspect-square w-[min(520px,42vw)]">
-        <CompassRose />
-        <div className="pointer-events-none absolute inset-0 font-bold text-primary">
-          <span className="absolute left-1/2 top-[14%] -translate-x-1/2 text-[clamp(1rem,1.8vw,1.45rem)] opacity-80">
-            N
-          </span>
-          <span className="absolute right-[15.5%] top-1/2 -translate-y-1/2 text-[clamp(1rem,1.8vw,1.45rem)] opacity-45">
-            E
-          </span>
-          <span className="absolute bottom-[13%] left-1/2 -translate-x-1/2 text-[clamp(1rem,1.8vw,1.45rem)] opacity-45">
-            S
-          </span>
-          <span className="absolute left-[15.5%] top-1/2 -translate-y-1/2 text-[clamp(1rem,1.8vw,1.45rem)] opacity-45">
-            W
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CompassRose() {
-  const ticks = Array.from({ length: 36 }, (_, i) => {
-    const angle = (i * 10 * Math.PI) / 180;
-    const isMajor = i % 9 === 0;
-    const isMinor = i % 3 === 0 && !isMajor;
-    const r1 = 90;
-    const r2 = isMajor ? 78 : isMinor ? 83 : 86;
-    return (
-      <line
-        key={i}
-        x1={100 + r1 * Math.sin(angle)}
-        y1={100 - r1 * Math.cos(angle)}
-        x2={100 + r2 * Math.sin(angle)}
-        y2={100 - r2 * Math.cos(angle)}
-        stroke="currentColor"
-        strokeWidth={isMajor ? 1.6 : isMinor ? 0.8 : 0.4}
-        opacity={isMajor ? 0.6 : isMinor ? 0.3 : 0.15}
-      />
-    );
-  });
-
-  return (
-    <svg
-      className="landing-rotate-slow h-full w-full text-primary"
-      viewBox="0 0 200 200"
-      aria-hidden="true"
-    >
-      <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.15" />
-      <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" strokeWidth="0.4" opacity="0.1" />
-      {ticks}
-      <polygon points="100,58 76,100 100,142 124,100" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1" />
-      <polygon points="100,48 93,100 107,100" fill="currentColor" opacity="0.85" />
-      <polygon points="100,48 100,100 93,100" fill="currentColor" opacity="0.6" />
-      <polygon points="100,152 93,100 107,100" fill="currentColor" opacity="0.3" />
-      <polygon points="100,152 100,100 107,100" fill="currentColor" opacity="0.2" />
-      <polygon points="152,100 100,93 100,107" fill="currentColor" opacity="0.3" />
-      <polygon points="152,100 100,100 100,93" fill="currentColor" opacity="0.2" />
-      <polygon points="48,100 100,93 100,107" fill="currentColor" opacity="0.3" />
-      <polygon points="48,100 100,100 100,107" fill="currentColor" opacity="0.2" />
-      <circle cx="100" cy="100" r="5" fill="currentColor" opacity="0.8" />
-      <circle cx="100" cy="100" r="2.5" fill="var(--color-background)" />
-    </svg>
-  );
-}
-
-function PersonalPricingCard({
-  billingCycle,
-  onBillingCycleChange,
+function BillingToggle({
+  value,
+  onChange,
+  label,
   monthlyLabel,
   yearlyLabel,
-  ...cardProps
 }: {
-  billingCycle: BillingCycle;
-  onBillingCycleChange: (billingCycle: BillingCycle) => void;
+  value: BillingCycle;
+  onChange: (value: BillingCycle) => void;
+  label: string;
   monthlyLabel: string;
   yearlyLabel: string;
-} & PricingCardProps) {
+}) {
+  const options: { value: BillingCycle; label: string }[] = [
+    { value: "yearly", label: yearlyLabel },
+    { value: "monthly", label: monthlyLabel },
+  ];
   return (
-    <PricingCard
-      {...cardProps}
-      headerAction={
-        <div className="grid w-fit grid-cols-2 rounded-md border border-border bg-muted p-0.5 text-xs">
-          <button
-            type="button"
-            className={cn(
-              "rounded-sm px-2.5 py-1 font-medium transition-colors",
-              billingCycle === "yearly"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            onClick={() => onBillingCycleChange("yearly")}
-          >
-            {yearlyLabel}
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "rounded-sm px-2.5 py-1 font-medium transition-colors",
-              billingCycle === "monthly"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            onClick={() => onBillingCycleChange("monthly")}
-          >
-            {monthlyLabel}
-          </button>
-        </div>
-      }
-    />
+    <div role="group" aria-label={label} className="grid w-fit grid-cols-2 rounded-md border border-border bg-muted p-0.5 text-xs">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          className={cn(
+            "rounded-sm px-2.5 py-1 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            value === option.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
 type PricingCardProps = {
-  id?: string;
   icon: LucideIcon;
   title: string;
   description: string;
@@ -624,7 +515,6 @@ type PricingCardProps = {
 };
 
 function PricingCard({
-  id,
   icon: Icon,
   title,
   description,
@@ -639,45 +529,38 @@ function PricingCard({
   headerAction,
   onStartClick,
 }: PricingCardProps) {
-  const body = (
-    <>
-      <div className="flex h-8 items-start justify-between gap-3">
-        <Icon className="mt-1 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-        {headerAction}
-      </div>
-      <h3 className="mt-5 text-xl font-semibold">{title}</h3>
-      <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">{description}</p>
-      <div className="mt-6 flex items-end gap-2">
-        <span className="text-4xl font-semibold">{price}</span>
-        {suffix && <span className="pb-1 text-sm text-muted-foreground">{suffix}</span>}
-      </div>
-      {savings && (
-        <Badge variant={highlighted ? "success" : "secondary"} className="mt-4 w-fit rounded-md">
-          {savings}
-        </Badge>
-      )}
-      <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
-        {features.map((feature) => (
-          <li key={feature} className="flex gap-2">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-
   return (
     <article
-      id={id}
       className={cn(
-        "flex h-full rounded-lg border bg-card p-6 shadow-panel",
+        "flex h-full rounded-lg border bg-card p-5",
         highlighted ? "border-primary ring-2 ring-primary/20" : "border-border",
       )}
     >
       <div className="flex w-full flex-col">
-        {body}
-        <div className="mt-auto pt-8">
+        <div className="flex min-h-8 flex-wrap items-start justify-between gap-3">
+          <Icon className="mt-1 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+          {headerAction}
+        </div>
+        <h3 className="mt-4 text-lg font-bold">{title}</h3>
+        <p className="mt-1.5 min-h-12 text-sm leading-6 text-muted-foreground">{description}</p>
+        <p className="mt-4 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-3xl font-bold tracking-tight">{price}</span>
+          {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+        </p>
+        {savings && (
+          <Badge variant={highlighted ? "success" : "secondary"} className="mt-3 w-fit rounded-md">
+            {savings}
+          </Badge>
+        )}
+        <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+          {features.map((feature) => (
+            <li key={feature} className="flex gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-auto pt-6">
           {external ? (
             <a href={href} className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}>
               {cta}
@@ -686,7 +569,7 @@ function PricingCard({
             <Link
               to={href}
               className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}
-              onClick={href.startsWith(WELCOME_ROUTE) ? onStartClick : undefined}
+              onClick={onStartClick}
             >
               {cta}
             </Link>
@@ -694,47 +577,5 @@ function PricingCard({
         </div>
       </div>
     </article>
-  );
-}
-
-function ClubMetric({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="border-b border-border p-6 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <p className="text-3xl font-semibold text-primary">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-function AppStoreBadge({ className = "h-[54px] w-auto" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 180 60" role="img" aria-label="Download on the App Store" className={className}>
-      <rect x="0.75" y="0.75" width="178.5" height="58.5" rx="10.5" fill="#000" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.5" />
-      <g transform="translate(18 13)" fill="#fff">
-        <path d="M27.03 17.98c-.02-3.74 3.05-5.53 3.19-5.62-1.73-2.54-4.43-2.88-5.39-2.92-2.29-.23-4.48 1.35-5.64 1.35-1.18 0-2.96-1.32-4.88-1.28-2.5.04-4.82 1.45-6.1 3.69-2.6 4.5-.66 11.14 1.86 14.78 1.25 1.78 2.73 3.77 4.66 3.7 1.87-.07 2.58-1.21 4.85-1.21 2.25 0 2.9 1.21 4.89 1.17 2.02-.03 3.3-1.8 4.52-3.59 1.42-2.06 2-4.06 2.03-4.16-.04-.02-3.89-1.49-3.93-5.91zM23.34 7.05c1.03-1.25 1.73-2.98 1.54-4.72-1.49.06-3.3 1-4.37 2.25-.95 1.1-1.8 2.88-1.57 4.57 1.66.13 3.36-.84 4.4-2.1z" />
-      </g>
-      <g fill="#fff" fontFamily="-apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif">
-        <text x="52" y="24" fontSize="10">Download on the</text>
-        <text x="52" y="44" fontSize="19" fontWeight="600">App Store</text>
-      </g>
-    </svg>
-  );
-}
-
-function GooglePlayBadge({ className = "h-[54px] w-auto" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 180 60" role="img" aria-label="Get it on Google Play" className={className}>
-      <rect x="0.75" y="0.75" width="178.5" height="58.5" rx="10.5" fill="#000" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.5" />
-      <g transform="translate(14 13)">
-        <path d="M0.5 1.2v31.6c0 .6.3 1.1.7 1.4L18 17 1.2 0.2c-.4.3-.7.6-.7 1z" fill="var(--pf-dataColor-googlePlayBlue)" />
-        <path d="M23.3 11.7L19.3 14 18 17l1.3 3 4 2.3 7-4c.9-.5.9-1.9 0-2.4l-7-3.2z" fill="var(--pf-dataColor-googlePlayYellow)" />
-        <path d="M1.2 33.8c.5.4 1.2.4 1.9.1l20.2-11.6-4-4L1.2 33.8z" fill="var(--pf-dataColor-googlePlayGreen)" />
-        <path d="M3.1.1C2.4-.2 1.7-.2 1.2.2L19.3 20l4-4L3.1.1z" fill="var(--pf-dataColor-googlePlayRed)" />
-      </g>
-      <g fill="#fff" fontFamily="Inter, Roboto, system-ui, sans-serif">
-        <text x="54" y="24" fontSize="10">GET IT ON</text>
-        <text x="54" y="44" fontSize="19" fontWeight="500">Google Play</text>
-      </g>
-    </svg>
   );
 }

@@ -702,43 +702,50 @@
     "nav": {
       "operatorLogin": "Login",
       "getStarted": "Loslegen",
-      "howItWorks": "Ablauf",
+      "howItWorks": "So funktioniert es",
+      "forOrganizers": "Für Organisatoren",
       "pricing": "Preise",
-      "clubs": "Vereine"
+      "primary": "Hauptnavigation",
+      "openMenu": "Menü öffnen",
+      "closeMenu": "Menü schließen",
+      "language": "Sprache",
+      "themeToDark": "Zum dunklen Design wechseln",
+      "themeToLight": "Zum hellen Design wechseln",
+      "skipToContent": "Zum Inhalt springen"
     },
     "hero": {
-      "kicker": "NFC-Feldspiele für Pfadfinderorganisationen",
-      "title": "Erstellt echte Spiele, die eure Teams draußen spielen können.",
-      "tagline": "PointFinder verbindet Stationen, NFC-Tags, Team-Challenges und Live-Monitoring in einer ruhigen Plattform für Outdoor-Events.",
-      "primaryCta": "Persönlichen Plan starten",
-      "clubCta": "Vereinspreise besprechen",
-      "proofMap": "Kartenbasierte Planung",
-      "proofNfc": "NFC-Check-ins",
-      "proofLive": "Live-Betrieb"
+      "title": "Mach jeden Ort zum Abenteuer.",
+      "tagline": "Erstelle Outdoor-Spiele. Erkundet gemeinsam. Macht jeden Halt zum Erlebnis.",
+      "secondaryCta": "So funktioniert es",
+      "note": "Gemacht für echtes Spielen draußen",
+      "sceneAlt": "Drei Pfadfinder auf einem Waldpfad: zwei lesen eine Karte und zeigen nach vorn, einer scannt einen QR-Code an einem Holzpfosten, grüne Kartenpins markieren die Route."
     },
-    "workflow": {
-      "label": "Ablauf",
-      "title": "Von der Routenplanung bis zur Live-Hilfe.",
-      "body": "Erstellt das Spiel im Web-Admin, schickt Teams mit der mobilen App ins Feld und behaltet während des Events die Kontrolle.",
-      "planTitle": "Feld planen",
-      "planBody": "Stationen auf der Karte platzieren, NFC-Tags verknüpfen, Challenges zuweisen, Teams organisieren und die Bereitschaft prüfen.",
-      "playTitle": "Teams scannen und lösen",
-      "playBody": "Spieler finden physische Stationen, scannen Tags, schalten Challenges frei, reichen Antworten ein und machen auch bei schwachem Empfang weiter.",
-      "runTitle": "Operatoren bleiben ruhig",
-      "runBody": "Standorte überwachen, Einreichungen prüfen, Nachrichten senden und Rettungsaktionen nutzen, wenn ein Team Hilfe braucht."
+    "steps": {
+      "title": "Ein bisschen Planung. Ganz viel Abenteuer.",
+      "planTitle": "Baue dein Spiel",
+      "planBody": "Setze Posten und füge in Minuten Aufgaben auf einer Karte hinzu.",
+      "planAlt": "Eine Leiterin kniet über einer Karte und setzt einen grünen Pin.",
+      "exploreTitle": "Erkundet gemeinsam",
+      "exploreBody": "Geht raus, folgt der Karte und löst Aufgaben als Team.",
+      "exploreAlt": "Zwei Pfadfinder gehen mit einem Handy durch den Wald, ein Kartenpin liegt vor ihnen.",
+      "checkInTitle": "Macht jeden Halt zum Erlebnis",
+      "checkInBody": "Scannt Posten, schaltet Aufgaben frei und schafft bleibende Erinnerungen.",
+      "checkInAlt": "Ein Pfadfinder hält sein Handy an den QR-Code eines Holzpfostens, eine neue Aufgabenkarte erscheint."
     },
-    "features": {
-      "label": "Plattform",
-      "title": "Gemacht für die echte Unordnung von Feldspielen.",
-      "body": "PointFinder hält das Abenteuer draußen und die Organisation unter Kontrolle.",
-      "mapTitle": "Kartenbasierte Kontrolle",
-      "mapBody": "Stationen, Team-Standorte, Phasen und Status liegen rund um die Karte statt in einer Tabelle.",
-      "nfcTitle": "Physischer NFC-Nachweis",
-      "nfcBody": "Jede Station kann mit einem Tag verbunden werden, damit Teams den echten Ort nachweisen, bevor sie lösen.",
-      "reviewTitle": "Einreichungen prüfen",
-      "reviewBody": "Operatoren können Fotos genehmigen, schwache Antworten ablehnen, Punkte vergeben und eine Historie behalten.",
-      "recoveryTitle": "Live-Hilfe",
-      "recoveryBody": "Manueller Check-in, Abschluss-Hilfe und Freischaltungen halten Events am Laufen, wenn Gerät oder Empfang scheitern."
+    "organizers": {
+      "title": "Draußen im Gelände. Immer im Bild.",
+      "body": "Setze Posten, verknüpfe Aufgaben und verfolge deine Teams aus einem Arbeitsbereich.",
+      "guideAlt": "Ein Pfadfinderguide mit Rucksack zeigt auf den Arbeitsbereich.",
+      "screenshotAlt": "Der PointFinder-Command-Arbeitsbereich: eine Live-Karte von Costa de Lavos mit vier nummerierten Posten, Team-Statistiken, einem Live-Aktivitätsfeed und einer Rangliste.",
+      "caption": "Der Live-Command-Arbeitsbereich mit einem fiktiven Spiel in Costa de Lavos, Portugal.",
+      "attribution": "Kartendaten © {{osm}}-Mitwirkende, © {{carto}}",
+      "imageUnavailable": "Screenshot nicht verfügbar"
+    },
+    "cta": {
+      "title": "Dein nächstes Abenteuer beginnt hier.",
+      "getApp": "Spielst du heute? Hol dir die App",
+      "ios": "iOS",
+      "android": "Android"
     },
     "pricing": {
       "label": "Preise",
@@ -774,22 +781,11 @@
       "freeFeatureGame": "Erstes Spiel erstellen",
       "freeFeatureBases": "Kleines Set an Stationen und Teams",
       "freeFeatureSolo": "Karte, NFC und Prüfablauf kennenlernen",
-      "startFree": "Kostenlos starten"
-    },
-    "club": {
-      "label": "Vereinspreise",
-      "title": "Vereine sollten nicht wie Einzelpersonen zahlen.",
-      "body": "Wenn ein Verein mehrere Leiter, Gruppen oder wiederkehrende Events hat, können wir Operatoren bündeln und das Angebot an die tatsächliche Nutzung von PointFinder anpassen. Das ist günstiger und einfacher als ein Abo pro Person.",
-      "cta": "Kontakt aufnehmen",
-      "metricOneValue": "Viele",
-      "metricOneLabel": "Operatoren können in einem Vereinsvertrag gebündelt werden.",
-      "metricTwoValue": "Ein",
-      "metricTwoLabel": "gemeinsames Abrechnungsgespräch statt verstreuter persönlicher Pläne.",
-      "metricThreeValue": "Weniger",
-      "metricThreeLabel": "Kosten pro Operator, wenn der Verein gemeinsam kauft."
+      "startFree": "Kostenlos starten",
+      "billingCycle": "Abrechnungszeitraum"
     },
     "footer": {
-      "tagline": "Feldtaugliche Pfadfinderspiele",
+      "tagline": "Gemeinsam mehr entdecken.",
       "privacyPolicy": "Datenschutzerklärung",
       "operatorLogin": "Operator-Login",
       "copyright": "© {{year}} PointFinder. Alle Rechte vorbehalten."

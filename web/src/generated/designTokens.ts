@@ -425,6 +425,27 @@ export const designTokens = {
     "atlasDark3": {
       "$value": "#050806"
     },
+    "atlasCream": {
+      "$value": "#f4f1e6"
+    },
+    "atlasCreamDeep": {
+      "$value": "#e7e3d3"
+    },
+    "atlasEvergreen": {
+      "$value": "#102419"
+    },
+    "atlasEvergreenDeep": {
+      "$value": "#0a1811"
+    },
+    "atlasInk": {
+      "$value": "#14261b"
+    },
+    "atlasMist": {
+      "$value": "#e6ece0"
+    },
+    "atlasMint": {
+      "$value": "#63d98a"
+    },
     "registerBorder": {
       "$value": "#e5e5e5"
     },
@@ -832,6 +853,13 @@ export const tokenPaths = [
   "dataColor.atlasDark1",
   "dataColor.atlasDark2",
   "dataColor.atlasDark3",
+  "dataColor.atlasCream",
+  "dataColor.atlasCreamDeep",
+  "dataColor.atlasEvergreen",
+  "dataColor.atlasEvergreenDeep",
+  "dataColor.atlasInk",
+  "dataColor.atlasMist",
+  "dataColor.atlasMint",
   "dataColor.registerBorder",
   "dataColor.registerText",
   "dataColor.registerMuted",

@@ -719,3 +719,55 @@ Resuming navigates back to the step's screen if the operator wandered, then
 re-runs the step's `prepare`, which is what brings the anchor back. Test ids
 `tour-pill`, `tour-pill-resume`. Preview: Storybook `Tutorials/TourPill` and
 `/dev/visual-system`.
+
+## Public homepage (2026-09-08)
+
+Mode: Public / Marketing. Route `/` on the browser build (native builds open
+the welcome world instead). Source: `web/src/features/public/LandingPage.tsx`
+with `web/src/features/public/landing/`. Scoped styles live in the "Public
+website" block of `web/src/index.css`.
+
+Component: LandingHeader
+Status: canonical (public site only)
+Location: `web/src/features/public/landing/LandingHeader.tsx`
+Modes: Public / Marketing
+States: desktop nav, phone menu (closed / open, Escape returns focus to the
+toggle, closes on link click and when the viewport crosses `md`), language
+select, theme toggle (writes the same `pointfinder-theme` preference as the
+app), login, Get started
+Notes: Always evergreen so it sits on the forest hero. Test ids
+`landing-menu-toggle`, `landing-menu`, `landing-language`,
+`landing-theme-toggle`. Exports `BrandMark`, `LanguageSelect`, `ThemeToggle`.
+
+Component: Artwork
+Status: canonical (public site only)
+Location: `web/src/features/public/landing/Artwork.tsx`
+Modes: Public / Marketing
+States: loaded, failed (the description replaces the picture as text, test id
+`landing-artwork-fallback`, optional "Screenshot unavailable" label)
+Notes: Every homepage picture goes through it with explicit dimensions and a
+usable alt. Only the hero is eager / high priority; the rest is lazy.
+
+Page structure and palette:
+
+- Five bands: forest hero (`.landing-dark`), cream three-step explanation
+  (`.landing-cream`), evergreen organizer band with the pointing guide and the
+  real Command workspace as independent layers, compact pricing (theme-aware),
+  and the forest call to action whose feet hold the footer.
+- `.landing-page` re-maps the semantic surface tokens to the marketing palette
+  (`dataColor.atlasCream*`, `atlasEvergreen*`, `atlasInk`, `atlasMist`,
+  `atlasMint`) so canonical buttons, badges and cards keep their shape. The
+  evergreen and cream bands are the same in both themes; only the pricing band
+  follows the app theme. See `design-system/decisions.md`.
+- Artwork is owned by `artifacts/landing-illustrated-v1/` and imported to
+  `web/public/landing/illustrated/`. The workspace screenshot shows a fictional
+  game in Costa de Lavos, Portugal, and carries an OpenStreetMap / CARTO
+  attribution caption (test id `landing-map-attribution`).
+- Get started keeps the 220 ms fade into `/welcome` (immediate under reduced
+  motion, modified clicks untouched); pricing goes to `/welcome?role=organizer`;
+  the club card, login, store, FAQ and privacy routes are unchanged.
+- Coverage: `web/src/features/public/LandingPage.test.tsx` and
+  `web/e2e/homepage.spec.ts` (phone menu from the keyboard, three languages,
+  both themes, 320–1600 px without horizontal overflow, reduced motion, images
+  blocked, hero crop keeps the whole scene, every illustration is the imported
+  file).

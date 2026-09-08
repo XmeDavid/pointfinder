@@ -703,42 +703,49 @@
       "operatorLogin": "Login",
       "getStarted": "Get started",
       "howItWorks": "How it works",
+      "forOrganizers": "For organizers",
       "pricing": "Pricing",
-      "clubs": "Clubs"
+      "primary": "Main navigation",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "language": "Language",
+      "themeToDark": "Switch to the dark theme",
+      "themeToLight": "Switch to the light theme",
+      "skipToContent": "Skip to content"
     },
     "hero": {
-      "kicker": "NFC field games for scouting organizations",
-      "title": "Build real-world games your teams can actually run.",
-      "tagline": "PointFinder turns bases, NFC tags, team challenges, and live operator monitoring into one calm platform for outdoor events.",
-      "primaryCta": "Start a personal plan",
-      "clubCta": "Talk club pricing",
-      "proofMap": "Map-first setup",
-      "proofNfc": "NFC check-ins",
-      "proofLive": "Live operations"
+      "title": "Turn any place into an adventure.",
+      "tagline": "Create outdoor games. Explore together. Make every stop count.",
+      "secondaryCta": "See how it works",
+      "note": "Built for real-world play",
+      "sceneAlt": "Three scouts on a forest trail: two reading a map and pointing ahead, one scanning a QR code on a wooden post, with green map pins marking the route."
     },
-    "workflow": {
-      "label": "How it works",
-      "title": "From route planning to live recovery.",
-      "body": "Create the game in the web admin, send teams into the field with the mobile app, and keep operators in control when the event is live.",
-      "planTitle": "Design the field",
-      "planBody": "Place bases on a map, link NFC tags, assign challenges, organize teams, and check readiness before launch.",
-      "playTitle": "Teams scan and solve",
-      "playBody": "Players find physical bases, scan tags, unlock challenges, submit answers, and keep going even with rough signal.",
-      "runTitle": "Operators stay calm",
-      "runBody": "Monitor locations, review submissions, send notifications, and use rescue actions when a team needs help."
+    "steps": {
+      "title": "A little planning. A lot of adventure.",
+      "planTitle": "Build your game",
+      "planBody": "Place bases and add challenges on a map in minutes.",
+      "planAlt": "A scout leader kneeling over a map and placing a green pin.",
+      "exploreTitle": "Explore together",
+      "exploreBody": "Get outside, follow the map and complete challenges as a team.",
+      "exploreAlt": "Two scouts walking through the forest with a phone and a map pin ahead.",
+      "checkInTitle": "Make every stop count",
+      "checkInBody": "Scan bases, unlock challenges and create lasting memories.",
+      "checkInAlt": "A scout holding a phone up to the QR code on a wooden base post, with a new challenge card appearing."
     },
-    "features": {
-      "label": "Platform",
-      "title": "Designed for the real messiness of field games.",
-      "body": "PointFinder keeps the exciting parts outside and the operational parts under control.",
-      "mapTitle": "Map-first control",
-      "mapBody": "Bases, team locations, stages, and status all live around the map instead of a spreadsheet.",
-      "nfcTitle": "Physical NFC proof",
-      "nfcBody": "Each base can be tied to a tag so teams prove they reached the real location before solving.",
-      "reviewTitle": "Submission review",
-      "reviewBody": "Operators can approve photos, reject weak answers, award points, and keep an audit trail.",
-      "recoveryTitle": "Live rescue actions",
-      "recoveryBody": "Manual check-in, completion overrides, and unlock controls help events continue when devices or signal fail."
+    "organizers": {
+      "title": "Out in the field. Always in the loop.",
+      "body": "Place bases, connect challenges and follow your teams from one workspace.",
+      "guideAlt": "A scout guide with a backpack pointing at the workspace.",
+      "screenshotAlt": "The PointFinder Command workspace: a live map of Costa de Lavos with four numbered bases, team stats, a live activity feed and a leaderboard.",
+      "caption": "The live Command workspace with a fictional game in Costa de Lavos, Portugal.",
+      "attribution": "Map data © {{osm}} contributors, © {{carto}}",
+      "imageUnavailable": "Screenshot unavailable"
+    },
+    "cta": {
+      "title": "Your next adventure starts here.",
+      "getApp": "Playing today? Get the app",
+      "ios": "iOS",
+      "android": "Android"
     },
     "pricing": {
       "label": "Pricing",
@@ -774,22 +781,11 @@
       "freeFeatureGame": "Create your first game",
       "freeFeatureBases": "A small set of bases and teams",
       "freeFeatureSolo": "Learn the map, NFC, and review workflow",
-      "startFree": "Start free"
-    },
-    "club": {
-      "label": "Club pricing",
-      "title": "Clubs should not pay like isolated individuals.",
-      "body": "If a club has multiple leaders, groups, or recurring events, we can package operators together and tune the deal around how you actually use PointFinder. That keeps the platform cheaper and easier to manage than one subscription per person.",
-      "cta": "Contact us",
-      "metricOneValue": "Many",
-      "metricOneLabel": "operators can be bundled into one club agreement.",
-      "metricTwoValue": "One",
-      "metricTwoLabel": "shared billing conversation instead of scattered personal plans.",
-      "metricThreeValue": "Less",
-      "metricThreeLabel": "cost per operator when the club buys as a group."
+      "startFree": "Start free",
+      "billingCycle": "Billing cycle"
     },
     "footer": {
-      "tagline": "Field-ready scouting games",
+      "tagline": "Explore more together.",
       "privacyPolicy": "Privacy Policy",
       "operatorLogin": "Operator Login",
       "copyright": "© {{year}} PointFinder. All rights reserved."

@@ -703,42 +703,49 @@
       "operatorLogin": "Entrar",
       "getStarted": "Começar",
       "howItWorks": "Como funciona",
+      "forOrganizers": "Para organizadores",
       "pricing": "Preços",
-      "clubs": "Clubes"
+      "primary": "Navegação principal",
+      "openMenu": "Abrir menu",
+      "closeMenu": "Fechar menu",
+      "language": "Idioma",
+      "themeToDark": "Mudar para o tema escuro",
+      "themeToLight": "Mudar para o tema claro",
+      "skipToContent": "Saltar para o conteúdo"
     },
     "hero": {
-      "kicker": "Jogos de campo com NFC para organizações escutistas",
-      "title": "Crie jogos reais que as suas equipas conseguem executar.",
-      "tagline": "O PointFinder junta bases, tags NFC, desafios de equipa e monitorização ao vivo numa plataforma calma para eventos ao ar livre.",
-      "primaryCta": "Começar plano pessoal",
-      "clubCta": "Falar de preço para clubes",
-      "proofMap": "Configuração no mapa",
-      "proofNfc": "Check-in por NFC",
-      "proofLive": "Operação ao vivo"
+      "title": "Transforma qualquer lugar numa aventura.",
+      "tagline": "Cria jogos ao ar livre. Explora em equipa. Faz cada paragem contar.",
+      "secondaryCta": "Ver como funciona",
+      "note": "Feito para jogar no mundo real",
+      "sceneAlt": "Três escuteiros num trilho na floresta: dois a ler um mapa e a apontar em frente, um a ler um código QR num poste de madeira, com pinos verdes a marcar o percurso."
     },
-    "workflow": {
-      "label": "Como funciona",
-      "title": "Do planeamento da rota à operação ao vivo.",
-      "body": "Crie o jogo no admin web, envie equipas para o terreno com a app móvel e mantenha os operadores no controlo durante o evento.",
-      "planTitle": "Desenhe o campo",
-      "planBody": "Coloque bases no mapa, ligue tags NFC, atribua desafios, organize equipas e valide a preparação antes de iniciar.",
-      "playTitle": "Equipas leem e resolvem",
-      "playBody": "Jogadores encontram bases físicas, leem tags, desbloqueiam desafios, submetem respostas e continuam mesmo com sinal fraco.",
-      "runTitle": "Operadores mantêm o controlo",
-      "runBody": "Monitorize localizações, reveja submissões, envie notificações e use ações de resgate quando uma equipa precisa de ajuda."
+    "steps": {
+      "title": "Um pouco de planeamento. Muita aventura.",
+      "planTitle": "Constrói o teu jogo",
+      "planBody": "Coloca bases e adiciona desafios num mapa em minutos.",
+      "planAlt": "Um dirigente ajoelhado sobre um mapa a colocar um pino verde.",
+      "exploreTitle": "Explorem juntos",
+      "exploreBody": "Saiam para a rua, sigam o mapa e completem desafios em equipa.",
+      "exploreAlt": "Dois escuteiros a caminhar pela floresta com um telemóvel e um pino no mapa mais à frente.",
+      "checkInTitle": "Faz cada paragem contar",
+      "checkInBody": "Lê as bases, desbloqueia desafios e cria memórias que ficam.",
+      "checkInAlt": "Um escuteiro a encostar o telemóvel ao código QR de um poste de base, com um novo cartão de desafio a aparecer."
     },
-    "features": {
-      "label": "Plataforma",
-      "title": "Feito para a realidade dos jogos no terreno.",
-      "body": "O PointFinder mantém a aventura lá fora e a operação sob controlo.",
-      "mapTitle": "Controlo centrado no mapa",
-      "mapBody": "Bases, localizações das equipas, etapas e estados vivem à volta do mapa, não numa folha de cálculo.",
-      "nfcTitle": "Prova física por NFC",
-      "nfcBody": "Cada base pode estar ligada a uma tag para provar que a equipa chegou ao local real antes de resolver.",
-      "reviewTitle": "Revisão de submissões",
-      "reviewBody": "Operadores podem aprovar fotos, rejeitar respostas fracas, atribuir pontos e manter um registo de auditoria.",
-      "recoveryTitle": "Ações de resgate ao vivo",
-      "recoveryBody": "Check-in manual, conclusão assistida e desbloqueios ajudam o evento a continuar quando há falhas de dispositivo ou sinal."
+    "organizers": {
+      "title": "No terreno. Sempre a par.",
+      "body": "Coloca bases, liga desafios e acompanha as tuas equipas a partir de um único espaço de trabalho.",
+      "guideAlt": "Um guia escuteiro com mochila a apontar para o espaço de trabalho.",
+      "screenshotAlt": "O espaço de trabalho Command do PointFinder: um mapa em direto da Costa de Lavos com quatro bases numeradas, estatísticas das equipas, um feed de atividade em direto e uma classificação.",
+      "caption": "O espaço de trabalho Command em direto, com um jogo fictício na Costa de Lavos, Portugal.",
+      "attribution": "Dados do mapa © colaboradores do {{osm}}, © {{carto}}",
+      "imageUnavailable": "Captura de ecrã indisponível"
+    },
+    "cta": {
+      "title": "A tua próxima aventura começa aqui.",
+      "getApp": "Vais jogar hoje? Instala a app",
+      "ios": "iOS",
+      "android": "Android"
     },
     "pricing": {
       "label": "Preços",
@@ -774,22 +781,11 @@
       "freeFeatureGame": "Criar o primeiro jogo",
       "freeFeatureBases": "Um conjunto pequeno de bases e equipas",
       "freeFeatureSolo": "Conhecer o mapa, NFC e fluxo de revisão",
-      "startFree": "Começar grátis"
-    },
-    "club": {
-      "label": "Preço para clubes",
-      "title": "Clubes não devem pagar como pessoas isoladas.",
-      "body": "Se um clube tem vários dirigentes, grupos ou eventos recorrentes, podemos agrupar operadores e ajustar o acordo à forma real como usam o PointFinder. Assim fica mais barato e mais simples do que uma subscrição por pessoa.",
-      "cta": "Contacte-nos",
-      "metricOneValue": "Vários",
-      "metricOneLabel": "operadores podem entrar num único acordo do clube.",
-      "metricTwoValue": "Uma",
-      "metricTwoLabel": "conversa de faturação em vez de planos pessoais dispersos.",
-      "metricThreeValue": "Menos",
-      "metricThreeLabel": "custo por operador quando o clube compra em grupo."
+      "startFree": "Começar grátis",
+      "billingCycle": "Periodicidade"
     },
     "footer": {
-      "tagline": "Jogos escutistas prontos para o terreno",
+      "tagline": "Explorem mais juntos.",
       "privacyPolicy": "Política de Privacidade",
       "operatorLogin": "Entrar",
       "copyright": "© {{year}} PointFinder. Todos os direitos reservados."
