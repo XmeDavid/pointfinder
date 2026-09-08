@@ -129,10 +129,13 @@ test('the hero keeps the whole scene in view and every illustration is the impor
   const hero = page.getByRole('img', { name: /Three scouts on a forest trail/ })
   await expect(hero).toHaveAttribute('src', '/landing/illustrated/hero.webp')
   await expect(hero).toHaveJSProperty('naturalWidth', 1536)
-  for (const width of [390, 1280, 1600]) {
+  for (const width of [320, 390, 639, 640, 768, 1000, 1024, 1280, 1600]) {
     await page.setViewportSize({ width, height: 900 })
     const box = await hero.boundingBox()
     expect(box, `${width}px hero`).not.toBeNull()
+    expect(box!.x, `${width}px left edge`).toBe(0)
+    expect(box!.width, `${width}px full-width scene`).toBe(width)
+    await expect(hero).toHaveCSS('object-position', '0% 78%')
     // The scene is 3:2; the visible crop never gets so wide that the characters would be cut.
     expect(box!.width / box!.height, `${width}px hero aspect`).toBeLessThanOrEqual(2.05)
     expect(await overflowFree(page)).toBe(true)

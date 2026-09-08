@@ -109,12 +109,14 @@ body {
 /* Fade the page into the app canvas; the welcome scene fades in after routing. */
 .landing-page-transitioning { opacity: 0; pointer-events: none; }
 
-/* Hero. Phones: copy on the evergreen, then the right-hand side of the scene.
+/* Hero. Phones: copy on the evergreen, then the scene anchored at its left edge.
    From lg the scene is the section's full-bleed background; its dark left 43%
    carries the copy, and the section aspect keeps the whole characters in view. */
 .landing-hero {
   position: relative;
   display: grid;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
 }
 .landing-hero-copy {
@@ -126,25 +128,23 @@ body {
 .landing-hero-media {
   position: relative;
   margin: 0;
-  aspect-ratio: 1 / 1;
-  max-height: 440px;
+  width: 100%;
+  min-width: 0;
+  height: min(66.6667vw, 520px);
+  overflow: hidden;
 }
 .landing-hero-image {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 100% 100%;
+  object-position: left 78%;
 }
 .landing-hero-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(to bottom, var(--pf-dataColor-atlasEvergreen) 0%, transparent 22%);
-}
-@media (min-width: 640px) {
-  .landing-hero-media { aspect-ratio: 4 / 3; max-height: 520px; }
-  .landing-hero-image { object-position: 60% 100%; }
 }
 @media (min-width: 1024px) {
   .landing-hero {
@@ -160,10 +160,8 @@ body {
   .landing-hero-media {
     position: absolute;
     inset: 0;
-    aspect-ratio: auto;
-    max-height: none;
+    height: 100%;
   }
-  .landing-hero-image { object-position: center 78%; }
   .landing-hero-scrim {
     background: linear-gradient(to right, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 85%, transparent) 0%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 60%, transparent) 32%, transparent 56%);
   }
