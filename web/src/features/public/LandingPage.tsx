@@ -42,7 +42,7 @@ type BillingCycle = "yearly" | "monthly";
 export function LandingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [isWelcomeTransitionActive, setIsWelcomeTransitionActive] = useState(false);
   const transitionTimer = useRef<number | null>(null);
   const preloadedRef = useRef(false);
@@ -327,7 +327,7 @@ export function LandingPage() {
                 description={yearly ? t("landing.pricing.yearlyDesc") : t("landing.pricing.monthlyDesc")}
                 price={yearly ? "€30" : "€3.99"}
                 suffix={yearly ? t("landing.pricing.perYear") : t("landing.pricing.perMonth")}
-                savings={yearly ? t("landing.pricing.yearlySavings") : undefined}
+                savings={yearly ? t("landing.pricing.yearlySavings") : t("landing.pricing.yearlyOfferSavings")}
                 features={yearly ? annualFeatures : monthlyFeatures}
                 cta={yearly ? t("landing.pricing.startYearly") : t("landing.pricing.startPersonal")}
                 href={ORGANIZER_GATE_ROUTE}
@@ -476,8 +476,8 @@ function BillingToggle({
   yearlyLabel: string;
 }) {
   const options: { value: BillingCycle; label: string }[] = [
-    { value: "yearly", label: yearlyLabel },
     { value: "monthly", label: monthlyLabel },
+    { value: "yearly", label: yearlyLabel },
   ];
   return (
     <div role="group" aria-label={label} className="grid w-fit grid-cols-2 rounded-md border border-border bg-muted p-0.5 text-xs">

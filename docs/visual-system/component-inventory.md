@@ -767,6 +767,9 @@ usable alt. Only the hero is eager / high priority; the rest is lazy.
 
 Page structure and palette:
 
+- Personal pricing opens on Monthly (€3.99/month), with Monthly first in the
+  billing toggle and an annual-savings offer. Selecting Yearly shows €30/year
+  and the saving against twelve monthly payments; all copy is localized.
 - Five bands: forest hero (`.landing-dark`), cream three-step explanation
   (`.landing-cream`), evergreen organizer band with the pointing guide and the
   real Command workspace as independent layers, compact pricing (theme-aware),
