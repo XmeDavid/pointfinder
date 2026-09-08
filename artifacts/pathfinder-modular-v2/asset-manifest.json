@@ -1,0 +1,97 @@
+{
+  "version": 2,
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "neck",
+      "head",
+      "upper_arm.L",
+      "forearm.L",
+      "hand.L",
+      "upper_arm.R",
+      "forearm.R",
+      "hand.R",
+      "thigh.L",
+      "shin.L",
+      "foot.L",
+      "thigh.R",
+      "shin.R",
+      "foot.R"
+    ],
+    "forward": "glTF +Z",
+    "up": "glTF +Y"
+  },
+  "library": "modular-character.glb",
+  "default": {
+    "hair": "short",
+    "hat": "none",
+    "backpack": "none",
+    "scarf": "gold"
+  },
+  "items": [
+    {
+      "slot": "hair",
+      "id": "ponytail",
+      "file": "items/hair-ponytail.glb",
+      "vertices": 16974
+    },
+    {
+      "slot": "hair",
+      "id": "short-hat",
+      "file": "items/hair-short-hat.glb",
+      "vertices": 6744
+    },
+    {
+      "slot": "hat",
+      "id": "ranger",
+      "file": "items/hat-ranger.glb",
+      "vertices": 1948
+    },
+    {
+      "slot": "backpack",
+      "id": "canvas",
+      "file": "items/backpack-canvas.glb",
+      "vertices": 7082
+    },
+    {
+      "slot": "scarf",
+      "id": "tricolor",
+      "file": "items/scarf-tricolor.glb",
+      "vertices": 8608
+    },
+    {
+      "slot": "hair",
+      "id": "ponytail-hat",
+      "file": "items/hair-ponytail-hat.glb",
+      "vertices": 16974
+    },
+    {
+      "slot": "hair",
+      "id": "short",
+      "file": "items/hair-short.glb",
+      "vertices": 6744
+    },
+    {
+      "slot": "scarf",
+      "id": "gold",
+      "file": "items/scarf-gold.glb",
+      "vertices": 7948
+    },
+    {
+      "slot": "base",
+      "id": "uniform",
+      "file": "items/base-uniform.glb",
+      "vertices": 24258
+    }
+  ],
+  "poses": [
+    "idle",
+    "wave",
+    "point",
+    "celebrate",
+    "phone",
+    "walk"
+  ]
+}
