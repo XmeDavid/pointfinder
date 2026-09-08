@@ -1,8 +1,12 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { useAuthStore } from "./useAuth";
+import { disconnectWebSocket } from "@/lib/api/websocket";
+
+vi.mock("@/lib/api/websocket", () => ({ disconnectWebSocket: vi.fn() }));
 
 describe("useAuthStore", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     localStorage.clear();
     // Reset store state between tests
     useAuthStore.setState({
@@ -41,7 +45,7 @@ describe("useAuthStore", () => {
     expect(state.isAuthenticated).toBe(true);
   });
 
-  it("handleAuthFailure resets all auth state", () => {
+  it("handleAuthFailure resets all auth state", async () => {
     const user = { id: "1", email: "a@b.com", name: "A", role: "operator" as const, createdAt: "" };
     useAuthStore.getState().setTokens("access", user);
     useAuthStore.getState().handleAuthFailure();
@@ -50,6 +54,7 @@ describe("useAuthStore", () => {
     expect(state.isAuthenticated).toBe(false);
     expect(state.user).toBeNull();
     expect(state.accessToken).toBeNull();
+    await vi.waitFor(() => expect(disconnectWebSocket).toHaveBeenCalledTimes(1));
   });
 
   it("handleAuthFailure does not loop when already unauthenticated", () => {
@@ -119,4 +124,3 @@ describe("useAuthStore", () => {
     expect(state.accessToken).toBeNull();
   });
 });
-

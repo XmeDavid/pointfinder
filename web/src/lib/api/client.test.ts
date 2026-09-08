@@ -1,6 +1,9 @@
 import { describe, expect, it, beforeEach, vi, type Mock } from "vitest";
 import axios from "axios";
 import { useAuthStore } from "@/hooks/useAuth";
+import { disconnectWebSocket } from "./websocket";
+
+vi.mock("./websocket", () => ({ disconnectWebSocket: vi.fn() }));
 
 // We need to test getValidAccessToken which is exported from client.ts.
 // The module also sets up interceptors on an axios instance, but those are
@@ -221,6 +224,9 @@ describe("getValidAccessToken", () => {
 
     const token = await getValidAccessToken();
     expect(token).toBeNull();
+    // Auth failure disconnects through a lazy import; await that side effect
+    // before the test environment can be torn down.
+    await vi.waitFor(() => expect(disconnectWebSocket).toHaveBeenCalledTimes(1));
   });
 
   it("throws on transient refresh failure so callers can retry", async () => {
