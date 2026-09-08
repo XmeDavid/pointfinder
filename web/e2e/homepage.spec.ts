@@ -135,11 +135,10 @@ test('the hero keeps the whole scene in view and every illustration is the impor
     expect(box, `${width}px hero`).not.toBeNull()
     expect(box!.x, `${width}px left edge`).toBe(0)
     expect(box!.width, `${width}px full-width scene`).toBe(width)
-    await expect(hero).toHaveCSS('object-position', '0% 78%')
-    if (width >= 768) {
-      const section = await page.locator('.landing-hero').boundingBox()
-      expect(box!.y, `${width}px image starts at hero top`).toBeCloseTo(section!.y, 0)
-    }
+    await expect(hero).toHaveCSS('object-position', width >= 768 ? '0% 78%' : '75% 78%')
+    const section = await page.locator('.landing-hero').boundingBox()
+    expect(box!.y, `${width}px image starts at hero top`).toBeCloseTo(section!.y, 0)
+    expect(box!.height, `${width}px image covers hero height`).toBeCloseTo(section!.height, 0)
     // The scene is 3:2; the visible crop never gets so wide that the characters would be cut.
     expect(box!.width / box!.height, `${width}px hero aspect`).toBeLessThanOrEqual(2.05)
     expect(await overflowFree(page)).toBe(true)

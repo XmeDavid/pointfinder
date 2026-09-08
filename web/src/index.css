@@ -109,28 +109,29 @@ body {
 /* Fade the page into the app canvas; the welcome scene fades in after routing. */
 .landing-page-transitioning { opacity: 0; pointer-events: none; }
 
-/* Hero. Phones: copy on the evergreen, then the scene anchored at its left edge.
-   From tablet widths the scene is the section's full-bleed background; its dark left 43%
-   carries the copy, and the section aspect keeps the whole characters in view. */
+/* One full-bleed hero at every width. The portrait crop follows the scouts;
+   CSS scrims keep live copy readable without a separate image row. */
 .landing-hero {
   position: relative;
   display: grid;
   width: 100%;
   min-width: 0;
+  min-height: 600px;
   overflow: hidden;
 }
 .landing-hero-copy {
   position: relative;
   z-index: 1;
   padding-top: 2.5rem;
-  padding-bottom: 1.5rem;
+  padding-bottom: 14rem;
 }
 .landing-hero-media {
-  position: relative;
+  position: absolute;
+  inset: 0;
   margin: 0;
   width: 100%;
   min-width: 0;
-  height: min(66.6667vw, 520px);
+  height: 100%;
   overflow: hidden;
 }
 .landing-hero-image {
@@ -138,13 +139,13 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: left 78%;
+  object-position: 75% 78%;
 }
 .landing-hero-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(to bottom, var(--pf-dataColor-atlasEvergreen) 0%, transparent 22%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 92%, transparent) 0%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 82%, transparent) 42%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 25%, transparent) 72%, transparent 100%);
 }
 @media (min-width: 768px) {
   .landing-hero {
@@ -157,11 +158,7 @@ body {
     padding-top: 3rem;
     padding-bottom: 3rem;
   }
-  .landing-hero-media {
-    position: absolute;
-    inset: 0;
-    height: 100%;
-  }
+  .landing-hero-image { object-position: left 78%; }
   .landing-hero-scrim {
     background: linear-gradient(to right, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 85%, transparent) 0%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 60%, transparent) 32%, transparent 56%);
   }
