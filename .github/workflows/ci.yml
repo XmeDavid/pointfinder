@@ -6,6 +6,13 @@ on:
   push:
     branches: [master]
 
+# A newer push to the same PR supersedes that PR's running checks. Every other
+# event (pushes to master) gets a unique group, so master runs stay independent
+# and are never cancelled or replaced while pending.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   actions: read
   contents: read
@@ -36,8 +43,10 @@ jobs:
         working-directory: backend
         run: ./gradlew test --no-daemon
 
-  frontend:
-    name: Frontend Lint & Tests
+  # Static checks and unit tests for the Bun workspace. Nothing here needs a
+  # browser or a production bundle, so it runs alongside the e2e shards.
+  web-checks:
+    name: Web Lint, Typecheck & Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,20 +56,87 @@ jobs:
           bun-version: latest
 
       - run: bun install --frozen-lockfile
-      - run: cd web && bun run lint
-      - run: cd web && bun run typecheck
-      - run: cd web && bun run test
-      - run: bun run build
-      - run: bun run build:native
+      - run: bun run --cwd web lint
+      - run: bun run --cwd web typecheck
       - run: bun run --filter "@pointfinder/*" typecheck
       - run: make design-system-check
-      - run: bun run --cwd web build-storybook
-      - run: cd web && bun x playwright install --with-deps chromium
-      - run: bun run --cwd web test:e2e
+      - run: bun run --cwd web test
       - run: bun run --cwd packages/api test
       - run: bun run --cwd packages/game-core test
       - run: bun run --cwd packages/i18n test
+      - run: bun run --cwd web build-storybook
+
+  # Playwright suite (browser + native-shell projects, including the WebGL
+  # onboarding scenes) split into a bounded number of shards. Each shard builds
+  # both bundles itself: a rebuild is ~40s, cheaper and simpler than passing
+  # dist/ and dist-native/ through artifacts and a serial build job.
+  web-e2e:
+    name: Web E2E (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run build:native
+      - run: cd web && bun x playwright install --with-deps chromium
+
+      - name: Run Playwright shard
+        # The divisor must equal the number of entries in matrix.shard above.
+        run: cd web && bun run test:e2e --shard=${{ matrix.shard }}/4
+
+      - name: Upload Playwright traces and screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-shard-${{ matrix.shard }}
+          path: |
+            web/test-results/
+            web/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Proves the production web image still builds from the workspace.
+  web-docker:
+    name: Web Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - run: docker build -f web/Dockerfile -t pointfinder-web:ci .
+
+  # Aggregate of the web jobs above. Keeps the original job id and check name
+  # so branch protection, the deploy gate and external status consumers keep
+  # working. Fails unless every web job succeeded (skipped/cancelled count as
+  # failure).
+  frontend:
+    name: Frontend Lint & Tests
+    runs-on: ubuntu-latest
+    needs: [web-checks, web-e2e, web-docker]
+    if: always()
+    steps:
+      - name: Check web job results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          failed=0
+          for result in $(echo "$RESULTS" | jq -r '.[].result'); do
+            if [ "$result" != "success" ]; then
+              failed=1
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more web jobs did not succeed."
+            exit 1
+          fi
 
   android:
     name: Android Checks

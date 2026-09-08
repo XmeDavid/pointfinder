@@ -249,24 +249,56 @@ Before first `docker-compose up`, obtain certificates with certbot in standalone
 ## 5. CI/CD Pipeline
 
 Source: `.github/workflows/ci.yml`
-Triggers: push to `main`, pull request targeting `main`
+Triggers: push to `master`, pull request targeting `master`
 
 ### Jobs
 
-Four jobs run in parallel; E2E waits on Backend and Frontend.
+Eight check jobs run in parallel. The six web jobs roll up into the
+`frontend` aggregate (check name "Frontend Lint & Tests"), which is what branch
+protection and Deploy look at. The wall-clock time of a run is the slowest
+single job, so the frontend work is split so that no job carries the whole
+Playwright suite.
 
 ```
-Backend ──┬──→ E2E Smoke
-Frontend ─┘
-Android    (independent)
+Backend ──────────────────────────────────────────┐
+Web checks ──────────┐                            │
+Web E2E (shard 1/4) ─┤                            │
+Web E2E (shard 2/4) ─┼──→ Frontend Lint & Tests ──┼──→ Deploy (push to master only)
+Web E2E (shard 3/4) ─┤    (aggregate, fails if    │
+Web E2E (shard 4/4) ─┤     any web job did not     │
+Web Docker image ────┘     succeed)                │
+Android ──────────────────────────────────────────┘
 ```
 
 | Job | Runner | Key steps |
 |-----|--------|-----------|
 | **Backend** | ubuntu-latest, Java 21 | `./gradlew test` |
-| **Frontend** | ubuntu-latest, Node 22 | `npm ci && npm run lint && npm run test` |
-| **Android** | ubuntu-latest, Java 21 | `./gradlew test && ./gradlew :app:assembleDebug` |
-| **E2E Smoke** | ubuntu-latest | Full local stack → setup → API smoke → Web smoke → cleanup → stack down |
+| **Web checks** | ubuntu-latest, Bun | lint, typecheck (web + packages), `make design-system-check`, Vitest for web and packages, Storybook build |
+| **Web E2E (4 shards)** | ubuntu-latest, Bun, Chromium | `bun run build`, `bun run build:native`, `playwright test --shard=N/4` over both Playwright projects (`browser` and `native-shell`, WebGL onboarding scenes included) |
+| **Web Docker image** | ubuntu-latest | `docker build -f web/Dockerfile .` |
+| **Frontend Lint & Tests** | ubuntu-latest | Aggregate only: reads the results of the web-checks, web-e2e and web-docker jobs and fails unless all succeeded |
+| **Android** | ubuntu-latest, Java 21 | `gradlew :core:*:test :app:assembleDebug` |
+| **Deploy** | reusable `deploy.yml` | Triggers the Dokploy relay for backend and frontend |
+
+Sharding notes:
+
+- Playwright assigns whole file×project groups to shards by contiguous test
+  count, not by duration. The native-shell `onboarding-scene.spec.ts` group
+  (software-rendered WebGL) takes about 2.5 minutes on its own and is the floor
+  for the slowest shard; four shards is where the slowest shard reaches that
+  floor. More shards only add duplicated setup (install, both bundles,
+  Chromium: roughly 1.5 minutes per shard).
+- The shard divisor is written literally in the workflow next to the matrix
+  list. Change both together.
+- Failed shards upload `web/test-results/` (traces, screenshots) as a
+  `playwright-shard-N` artifact for seven days.
+- A new push to a pull request cancels that PR's in-flight run. Runs for
+  pushes to `master` each get their own concurrency group, so they are never
+  cancelled, queued behind each other, or replaced while pending.
+
+The E2E smoke job against the full local Docker stack is currently disabled
+(see the comment in the workflow); the Playwright suite in `web/e2e/` runs
+against the static Vite preview with mocked APIs instead.
 
 ### E2E local stack
 
@@ -287,9 +319,9 @@ E2E smoke uses `docker-compose.e2e-local.yml` (see section 6). Credentials are h
 | Service | Image | Command |
 |---------|-------|---------|
 | `backend-test` | `eclipse-temurin:21-jdk` | `./gradlew test --no-daemon` |
-| `frontend-test` | `node:22-alpine` | `npm ci && npm run test` |
+| `frontend-test` | `oven/bun:1-alpine` | `bun install --frozen-lockfile && bun run --cwd web test` |
 
-Uses named volumes `gradle-cache` and `npm-cache` to avoid re-downloading dependencies on repeated runs.
+Uses named volumes (`gradle-cache`, `bun-cache`, and per-workspace `node_modules` volumes) to avoid re-downloading dependencies on repeated runs.
 
 ---
 

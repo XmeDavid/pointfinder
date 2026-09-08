@@ -167,7 +167,7 @@ See [`e2e/README.md`](e2e/README.md) for setup and the full command table.
 
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs backend, web, and Android checks on every push / PR to `main`.
+GitHub Actions (`.github/workflows/ci.yml`) runs backend, web (lint/unit, sharded Playwright E2E, Docker image), and Android checks in parallel on every push / PR to `master`. See [`docs/infrastructure.md`](docs/infrastructure.md#5-cicd-pipeline) for the job layout.
 
 ## Configuration
 
