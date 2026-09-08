@@ -7,7 +7,9 @@ import {
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js'
 import { isForeground, onAppVisibility } from '@/platform/lifecycle'
 import { watchDeviceOrientation } from '@/platform/orientation'
-import { clampFrame, compassAmount, stepTowardFrame, unwrapHeading, worldOpacity } from './sceneMath'
+import { AUTHORED_FPS, compassAmount, HANDOFF_FRAME, SENSOR_FRAME, unwrapHeading, worldOpacity } from './sceneMath'
+import { createSceneMotion } from './sceneMotion'
+import { createResolutionGovernor, drawDue } from './scenePerformance'
 
 type CameraFrame = { position: [number, number, number]; target: [number, number, number]; width: number }
 type Timeline = { fps: number; frameStart: number; frameEnd: number; camera: CameraFrame[] }
@@ -15,6 +17,8 @@ type Options = { branch?: 'choice' | 'participant' | 'organizer'; targetFrame: n
 export interface SceneRuntime { setTarget: (frame: number, reducedMotion: boolean) => void; dispose: () => void }
 const assets = `${import.meta.env.BASE_URL}onboarding/`
 const scratch = new Vector3()
+const cameraPosition = new Vector3()
+const cameraTarget = new Vector3()
 
 function disposeModel(root: Object3D) {
   const geometries = new Set<Mesh['geometry']>()
@@ -48,7 +52,8 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   const worldFile = branch === 'choice' ? 'role-choice.glb' : branch === 'organizer' ? 'organizer-world.glb' : 'world.glb'
   const timelineFile = branch === 'choice' ? 'role-choice-timeline.json' : branch === 'organizer' ? 'organizer-timeline.json' : 'timeline.json'
   const renderer = new WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
+  const governor = createResolutionGovernor(window.devicePixelRatio || 1)
+  renderer.setPixelRatio(governor.pixelRatio)
   renderer.outputColorSpace = SRGBColorSpace
   renderer.toneMapping = AgXToneMapping
   renderer.toneMappingExposure = 1
@@ -101,10 +106,8 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   let raf = 0
   let previous = 0
   let previousRender = 0
-  let targetFrame = clampFrame(options.targetFrame)
-  let frame = targetFrame >= 784 || options.reducedMotion ? targetFrame : 1
-  let handoffSnapshot: number | undefined
-  let reduced = options.reducedMotion
+  let previousDrewWorld = false
+  const motion = createSceneMotion(options.targetFrame, options.reducedMotion)
   let timeline: Timeline | undefined
   let world: Object3D | undefined
   let compass: Object3D | undefined
@@ -113,6 +116,9 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   let action: AnimationAction | undefined
   let worldRequest: Promise<void> | undefined
   const worldMaterials: MeshStandardMaterial[] = []
+  let worldTransparent = false
+  let worldOpacityApplied = 1
+  let mixerTime = -1
   const animatedScaleNodes: Object3D[] = []
   let stopSensors: (() => void) | undefined
   let measuredHeading = 0
@@ -171,7 +177,11 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
         object.receiveShadow = true
         for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
           if (!(material instanceof MeshStandardMaterial) || worldMaterials.includes(material)) continue
-          material.transparent = true
+          // Every authored material is double sided. Transparent double-sided materials render
+          // twice per mesh in three.js unless forced to one pass, and transparency itself is only
+          // needed while the world fades; setWorldTransparency toggles it around that window.
+          material.transparent = false
+          material.forceSinglePass = true
           worldMaterials.push(material)
         }
       })
@@ -189,13 +199,39 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
         action.play()
       }
       scene.add(world)
+      // Worlds loaded after the first paint (role choice to a story) warm their shaders here.
+      if (ready) warmWorldPrograms()
       wake()
     })
     return worldRequest
   }
 
+  /** Switching transparency changes the shader program; both variants are compiled once
+   * at load (see warmWorldPrograms), so later toggles only look them up. */
+  function setWorldTransparency(transparent: boolean) {
+    if (worldTransparent === transparent) return
+    worldTransparent = transparent
+    for (const material of worldMaterials) {
+      material.transparent = transparent
+      material.needsUpdate = true
+    }
+  }
+
+  function warmWorldPrograms() {
+    if (!world || !worldMaterials.length) return
+    setWorldTransparency(true)
+    // Warming is an optimization only: without it the fade compiles its shaders on first use.
+    try { renderer.compile(scene, camera) } catch { /* fall back to lazy compilation */ }
+    setWorldTransparency(false)
+  }
+
+  function applyPixelRatio(ratio: number) {
+    renderer.setPixelRatio(ratio)
+    host.dataset.pixelRatio = ratio.toFixed(2)
+  }
+
   function sensors() {
-    const active = ready && !reduced && isForeground() && frame >= 830 && targetFrame >= 784
+    const active = ready && !motion.reduced && isForeground() && motion.frame >= SENSOR_FRAME && motion.towardCompass
     if (active && !stopSensors) {
       stopSensors = watchDeviceOrientation((pose) => {
         if (pose.heading !== null) measuredHeading = unwrapHeading(measuredHeading, pose.heading)
@@ -210,14 +246,16 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   }
 
   function pose(dt: number, now: number) {
+    const frame = motion.frame
+    const reduced = motion.reduced
     const amount = compassAmount(frame)
-    const cameraTime = handoffSnapshot !== undefined && frame < 814 ? handoffSnapshot : frame
+    const cameraTime = motion.cameraFrame
     const index = Math.max(0, Math.min(863, Math.floor(cameraTime) - 1))
     const a = timeline?.camera[index]
     const b = timeline?.camera[Math.min(index + 1, 863)]
     const fraction = cameraTime - Math.floor(cameraTime)
-    const position = a ? new Vector3(...a.position) : new Vector3(8.9, 11, 10.9)
-    const target = a ? new Vector3(...a.target) : new Vector3(.1, .5, -1.7)
+    const position = a ? cameraPosition.set(...a.position) : cameraPosition.set(8.9, 11, 10.9)
+    const target = a ? cameraTarget.set(...a.target) : cameraTarget.set(.1, .5, -1.7)
     if (a && b) {
       position.lerp(scratch.set(...b.position), fraction)
       target.lerp(scratch.set(...b.target), fraction)
@@ -240,12 +278,20 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
     if (world && mixer) {
       world.visible = opacity > .001
       if (world.visible) {
-        if (action) { action.enabled = true; action.paused = false }
-        mixer.setTime(((handoffSnapshot ?? frame) - 1) / 24)
-        // A zero-scale pop animation still incurs GPU work unless it is hidden.
-        // Only authored animated transforms qualify, never glTF quantization scales.
-        for (const node of animatedScaleNodes) node.visible = Math.max(Math.abs(node.scale.x), Math.abs(node.scale.y), Math.abs(node.scale.z)) > .0005
-        for (const material of worldMaterials) material.opacity = opacity
+        const time = (motion.storyFrame - 1) / AUTHORED_FPS
+        if (time !== mixerTime) {
+          mixerTime = time
+          if (action) { action.enabled = true; action.paused = false }
+          mixer.setTime(time)
+          // A zero-scale pop animation still incurs GPU work unless it is hidden.
+          // Only authored animated transforms qualify, never glTF quantization scales.
+          for (const node of animatedScaleNodes) node.visible = Math.max(Math.abs(node.scale.x), Math.abs(node.scale.y), Math.abs(node.scale.z)) > .0005
+        }
+        setWorldTransparency(opacity < 1)
+        if (opacity !== worldOpacityApplied) {
+          worldOpacityApplied = opacity
+          for (const material of worldMaterials) material.opacity = opacity
+        }
       }
     }
     shadow.visible = !!world && opacity > .001
@@ -264,25 +310,34 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
     const idleTilt = fresh || reduced ? 0 : Math.sin(now / 3500) * .045
     compassTilt.rotation.set(-.08 + pitch * Math.PI / 180 * .4 + idleTilt, .04 - roll * Math.PI / 180 * .4 + idleTilt * .5, 0)
     if (needle) needle.rotation.y = reduced ? 0 : heading * Math.PI / 180
-    host.dataset.frame = frame.toFixed(2)
-    host.dataset.worldOpacity = opacity.toFixed(3)
+    const frameLabel = frame.toFixed(2)
+    if (host.dataset.frame !== frameLabel) host.dataset.frame = frameLabel
+    const opacityLabel = opacity.toFixed(3)
+    if (host.dataset.worldOpacity !== opacityLabel) host.dataset.worldOpacity = opacityLabel
   }
 
   function tick(now: number) {
     raf = 0
     if (disposed || failed || !isForeground()) return
-    const dt = Math.min(.25, previous ? (now - previous) / 1000 : 1 / 30)
+    const dt = previous ? (now - previous) / 1000 : 1 / 30
+    // The first frame after a world draw arrives late exactly when that draw was expensive.
+    if (previousDrewWorld && previous) {
+      const ratio = governor.sample(now - previousRender)
+      if (ratio !== undefined) applyPixelRatio(ratio)
+    }
+    previousDrewWorld = false
     previous = now
-    if ((targetFrame >= 784 || world) && ready) frame = reduced ? targetFrame : stepTowardFrame(frame, targetFrame, dt)
+    if ((motion.towardCompass || world) && ready) motion.advance(dt)
     sensors()
-    // 30 fps animation with capped DPR keeps this decorative screen modest on phones.
-    const draw = now - previousRender >= 1000 / 30
+    // 30 fps drawing with a measured pixel ratio keeps this decorative screen modest on phones.
+    const draw = drawDue(now, previousRender)
     if (draw) {
       pose(Math.min(.05, (now - previousRender) / 1000), now)
       renderer.render(scene, camera)
       previousRender = now
+      previousDrewWorld = !!world?.visible
     }
-    if (!draw || Math.abs(frame - targetFrame) > .01 || (frame >= 830 && !reduced)) raf = requestAnimationFrame(tick)
+    if (!draw || !motion.settled || (motion.frame >= SENSOR_FRAME && !motion.reduced)) raf = requestAnimationFrame(tick)
   }
 
   function wake() {
@@ -334,13 +389,15 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
       if (!needle) { disposeModel(compass); compass = undefined; throw new Error('Missing compass needle') }
       compassFace.add(compass)
     }),
-    targetFrame < 784 ? loadWorld() : Promise.resolve(),
+    motion.towardCompass ? Promise.resolve() : loadWorld(),
   ]).then(() => {
     if (disposed || failed) return
     ready = true
     window.clearTimeout(timeout)
+    host.dataset.pixelRatio = governor.pixelRatio.toFixed(2)
     pose(1 / 30, performance.now())
     renderer.render(scene, camera)
+    warmWorldPrograms()
     host.dataset.state = 'ready'
     options.onReady()
     wake()
@@ -348,15 +405,8 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
 
   return {
     setTarget(next, reducedMotion) {
-      targetFrame = clampFrame(next)
-      reduced = reducedMotion
-      if (targetFrame >= 784 && frame < 765) {
-        // Skip fades the scene currently on screen; it does not play unseen chapters.
-        handoffSnapshot = frame
-        frame = 782
-      } else if (targetFrame < 784) handoffSnapshot = undefined
-      if (targetFrame < 784 && !worldRequest) void loadWorld().catch(fail)
-      if (reduced) frame = targetFrame
+      motion.setTarget(next, reducedMotion)
+      if (motion.target < HANDOFF_FRAME && !worldRequest) void loadWorld().catch(fail)
       sensors()
       resize()
     },

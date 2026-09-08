@@ -53,6 +53,17 @@ plus the existing back / next / skip / replay ids; `data-mode` and `data-step`
 The world uses skinned characters from the reusable Blender asset library;
 loading and reduced motion use matching rendered stills. Bone textures are
 disposed on scene exit.
+Motion policy (`sceneMath.ts`, `sceneMotion.ts`): chapter hops use twice the
+authored 24 fps with a duration capped at 1.8 s of story time, eased in and out so every hold
+pose is reached gently; the same plan runs forwards, backwards and for Skip,
+which still only fades the scene on screen. Story time follows rendered wall
+time but advances at most 0.25 s per drawn frame, so a slow renderer stretches a
+hop rather than skipping its gestures. Runtime policy (`scenePerformance.ts`,
+`sceneRuntime.ts`): drawing is paced at 30 fps; world materials stay opaque and
+single-pass except during the world fade (both shader variants are warmed at
+load); the pixel ratio starts at min(device, 1.5) and steps down to 1 (never lower,
+the characters lose their detail) only when the median of six consecutive world
+frames exceeds 50 ms, never back up (`data-pixel-ratio` on the scene host reports the current value).
 Preview: `/dev/visual-system?onboarding=choice` for the role screen,
 `?onboarding=gate` for the organizer account choice (`&mode=operator` for the
 signed-in tour offer), `?onboarding=1` through `?onboarding=7` for participant

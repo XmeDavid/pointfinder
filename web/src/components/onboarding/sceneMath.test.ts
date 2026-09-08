@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { Vector3 } from 'three'
-import { compassAmount, stepTowardFrame, unwrapHeading, worldOpacity } from './sceneMath'
+import {
+  AUTHORED_FPS, compassAmount, planTransition, TRANSITION_MAX_SECONDS, TRANSITION_SPEED, transitionFrame,
+  unwrapHeading, worldOpacity,
+} from './sceneMath'
 
 describe('onboarding scene motion', () => {
   it('removes the world before the compass finishes appearing, in either direction', () => {
@@ -12,12 +15,31 @@ describe('onboarding scene motion', () => {
     expect(compassAmount(849)).toBe(1)
     expect(worldOpacity(798)).toBeCloseTo(.5)
   })
-  it('moves backwards and forwards without overshooting a resting pose', () => {
-    expect(stepTowardFrame(124.9,125,.2)).toBe(125)
-    expect(stepTowardFrame(125.1,125,.2)).toBe(125)
-    expect(stepTowardFrame(300,125,.1)).toBeLessThan(300)
-    expect(stepTowardFrame(300,465,.1)).toBeGreaterThan(300)
-    expect(stepTowardFrame(125,125,.1)).toBe(125)
+  it('bounds every chapter hop and plays short hops at twice the authored speed', () => {
+    // Real chapter hops (70 to 185 frames) and the first approach (1 to 125).
+    for (const [from, to] of [[1, 125], [125, 301], [301, 371], [371, 465], [465, 580], [580, 765], [782, 864]]) {
+      const { duration } = planTransition(from, to)
+      expect(duration).toBeGreaterThanOrEqual(1.4)
+      expect(duration).toBeLessThanOrEqual(TRANSITION_MAX_SECONDS)
+    }
+    expect(planTransition(301, 371).duration).toBeCloseTo(70 / (AUTHORED_FPS * TRANSITION_SPEED))
+    expect(planTransition(125, 301).duration).toBe(TRANSITION_MAX_SECONDS)
+    expect(planTransition(301, 125).duration).toBe(planTransition(125, 301).duration)
+    expect(planTransition(125, 125).duration).toBe(0)
+  })
+  it('eases into holds without overshooting, forwards and backwards', () => {
+    const forward = planTransition(125, 301)
+    expect(transitionFrame(forward, 0)).toBe(125)
+    expect(transitionFrame(forward, forward.duration / 2)).toBeCloseTo(213)
+    expect(transitionFrame(forward, forward.duration)).toBe(301)
+    expect(transitionFrame(forward, forward.duration * 3)).toBe(301)
+    const early = transitionFrame(forward, forward.duration * .1) - 125
+    const middle = transitionFrame(forward, forward.duration * .55) - transitionFrame(forward, forward.duration * .45)
+    expect(early).toBeLessThan(middle)
+    const backward = planTransition(301, 125)
+    expect(transitionFrame(backward, backward.duration / 2)).toBeCloseTo(213)
+    expect(transitionFrame(backward, backward.duration)).toBe(125)
+    expect(transitionFrame(planTransition(125, 125), 0)).toBe(125)
   })
   it('unwraps magnetic headings without a full spin across north', () => {
     expect(unwrapHeading(359,1)).toBe(361)
