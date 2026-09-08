@@ -2,12 +2,20 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { buttonVariants, cn } from '@/components'
 import { Screen } from '@/features/player/components/Screen'
+import { lazy, Suspense } from 'react'
 
+const WelcomePage = lazy(() => import('@/features/introduction/WelcomePage').then((m) => ({ default: m.WelcomePage })))
+
+/** The native home for anonymous visitors: the same welcome world `/welcome` serves everywhere. */
 export default function Welcome() {
+  return <Suspense fallback={<WelcomeLoading />}><WelcomePage /></Suspense>
+}
+
+export function WelcomeLoading() {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   return (
     <Screen className="justify-center">
-      <div className="my-auto flex flex-col items-center gap-6 text-center">
+      <div className="my-auto flex flex-col items-center gap-6 py-8 text-center">
         <div>
           <h1 className="text-4xl font-semibold tracking-tight">{t('welcome.title')}</h1>
           <p className="mt-2 max-w-[34ch] text-muted-foreground">{t('welcome.subtitle')}</p>

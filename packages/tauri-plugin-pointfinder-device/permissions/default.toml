@@ -1,3 +1,3 @@
 [default]
-description = "Share app-owned exports and observe native layout and lifecycle"
-permissions = ["allow-share-file", "allow-safe-area-insets", "allow-register-listener", "allow-remove-listener"]
+description = "Share app-owned exports and observe native layout, lifecycle and welcome compass motion"
+permissions = ["allow-share-file", "allow-safe-area-insets", "allow-start-orientation", "allow-stop-orientation", "allow-register-listener", "allow-remove-listener"]

@@ -1,5 +1,107 @@
 # Component Inventory
 
+Component: OnboardingExperience
+Status: canonical
+Location: `web/src/components/onboarding/OnboardingExperience.tsx`
+Modes: Auth / Onboarding. One welcome world at `/welcome` (browser and native;
+also the native anonymous home), in three audiences (`mode`): `anonymous`
+visitors, signed-in `operator`, joined `player`. The public website itself is
+unchanged; its Get started walks the map into the role choice (no register-card
+ghost) and pricing opens the organizer gate (`?role=organizer`).
+States: role choice (participant left, organizer right); organizer gate
+(anonymous: Create an account / Sign in / See how it works first; operator:
+Take a quick tour / Go to my dashboard); six manually advanced chapters per
+role; landing per audience (participant: Join; anonymous organizer: Create an
+account + Sign in; operator: Create my first game when the dashboard is empty
+and no `first-game` row exists, else Go to my dashboard; player: Back to your
+game); Back to the choice from the first chapter and Change role (anonymous
+only), Skip from any chapter, replay, language changes in place, loading and
+failed graphics per branch, retry, static reduced motion, unavailable
+preference storage, long German copy, both themes and safe-area-aware phone /
+landscape layout.
+Notes: The decorative 3D world fills the viewport. Localized DOM copy and canonical
+buttons sit over the world on semantic canvas scrims; no text is baked into the
+scene. Choosing "participating" goes straight to `/join` (the map offers the
+participant story once after joining; Settings keeps it under Help); choosing
+"organizing" opens the gate on the organizer world's first frame, so nobody has
+to register before watching. The choice only picks which story is told
+(`branch` prop on the scene: `choice`, `participant`, `organizer`); it never
+changes authentication, routes or permissions. Organizer chapters use short
+chapter-specific transition labels (Place bases, Connect challenges, Invite teams,
+Go live, Review results) that are educational only; nothing is created or set live.
+Anonymous completion or Skip stores `{ version: 2, role }` under the v2 platform
+key/value preference (never authentication storage) and, for the organizer story,
+a one-shot handoff that the next registration or sign-in on the device claims;
+choosing a role alone stores nothing, and earlier single-story visitors see the
+role choice once. Late preference reads never override an interaction, and a
+stalled read unblocks after 1.2 s. Operator completion, skip and "Go to my
+dashboard" on the gate write the account's `introduction` row through
+`web/src/features/introduction/progress.ts` (server-side, per account; a failed
+write is owed locally and retried at the next sign-in); the first-game CTA starts
+the guided tutorial on the dashboard and creates nothing itself. A branch change
+shows the new branch's still until the renderer reports ready again and gives a
+failed renderer a fresh attempt. Stills: `role-choice.webp`, `step-1..6.webp`,
+`organizer-step-1..6.webp`, `step-7.webp` (compass). Test ids:
+`onboarding-role-participant`, `onboarding-role-organizer`,
+`onboarding-change-role`, `onboarding-gate-create-account`,
+`onboarding-gate-watch`, `onboarding-tour-start`, `onboarding-tour-skip`,
+`onboarding-landing-create-account`, `onboarding-first-game`,
+`onboarding-dashboard`, `onboarding-dashboard-link`, `onboarding-player-back`,
+plus the existing back / next / skip / replay ids; `data-mode` and `data-step`
+(`choice`, `gate`, chapter ids, `compass`) on the root.
+The world uses skinned characters from the reusable Blender asset library;
+loading and reduced motion use matching rendered stills. Bone textures are
+disposed on scene exit.
+Preview: `/dev/visual-system?onboarding=choice` for the role screen,
+`?onboarding=gate` for the organizer account choice (`&mode=operator` for the
+signed-in tour offer), `?onboarding=1` through `?onboarding=7` for participant
+chapters, `?onboarding=1&role=organizer` (any 1–7) for organizer chapters, and
+`&mode=operator|player` on any chapter or `7` for those audiences' controls;
+fixtures never read or write onboarding completion or account progress. Use
+browser reduced-motion settings for static frames and block `/onboarding/*` to
+inspect graphics recovery.
+
+Component: IntroductionCard
+Status: canonical
+Location: `web/src/features/introduction/IntroductionCard.tsx`
+Modes: Operator / Tutorials library
+States: not watched yet, watched, skipped (badge hidden while progress is
+loading or failed; the Watch button always works), Watch / Watch again.
+Notes: "How PointFinder works" leads the tutorials library and replays the
+organizer story at `/welcome?play=organizer`. It is the account's
+`introduction` row, shared with the guided tutorials' cache entry but never a
+scenario card, a practice game or a first-game decision. Test ids:
+`tutorial-introduction-card`, `tutorial-introduction-status`,
+`tutorial-introduction-watch`.
+
+Component: IntroductionPrompt
+Status: canonical
+Location: `web/src/features/player/components/IntroductionPrompt.tsx`
+Modes: Player / Map
+States: offered once after joining (hidden when the participant story was
+already watched on the device, after Not now, after opening, or when
+preferences cannot be read).
+Notes: A SurfacePanel under the map header; it never blocks the map, a pending
+tag or a queued action. Opens `/welcome?play=participant`, whose landing and
+chapters lead back to the game. Settings keeps the story under Help
+(`settings-how-it-works`). Test ids: `player-intro-prompt`,
+`player-intro-prompt-open`, `player-intro-prompt-dismiss`.
+
+Component: WelcomeCompass
+Status: canonical
+Location: `web/src/components/compass/WelcomeCompass.tsx`
+Modes: Auth / Onboarding
+States: native magnetic heading and physical tilt, spring-back touch drag, slow
+idle turn (browser / unavailable / stale heading), background paused, reduced
+motion static, light/dark, small phones. Decorative and hidden from assistive
+technology; its cardinal letters are artwork, not navigation or player data.
+Notes: Ports the legacy native rose geometry using existing semantic colors.
+The scoped perspective and sonar rings belong to this onboarding illustration.
+Sensors use `web/src/platform/orientation.ts`; no sensor/location permission
+prompt or network access is introduced. Native sensors stop on page exit,
+background and reduced motion. Vertical touch scrolling remains available.
+Preview: `/dev/visual-system`, animated and static side by side.
+
 Seed inventory for the first web visual-system remediation slice. This is not a
 full audit; it records the canonical foundation added before larger refactors.
 

@@ -1,0 +1,18 @@
+{
+  "branch": "role-choice",
+  "exportObjects": 21,
+  "worldMeshGroups": 1,
+  "worldBytes": 2838936,
+  "cameraCoordinateSystem": "glTF Y up",
+  "terrainTextures": 0,
+  "characterLibrary": "pathfinder-characters-v1",
+  "characterRigs": 2,
+  "characterBones": [
+    17,
+    17
+  ],
+  "characterVertices": 48337,
+  "drawPrimitives": 51,
+  "triangles": 98320,
+  "optimized": true
+}

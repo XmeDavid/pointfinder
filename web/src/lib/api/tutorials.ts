@@ -1,4 +1,4 @@
-import type { ScenarioId, TutorialProgress, TutorialStatus } from '@/features/tutorials/types'
+import type { AccountProgressRow, ScenarioId, TutorialProgress, TutorialStatus } from '@/features/tutorials/types'
 import type { Game } from '@/types/game'
 import apiClient from './client'
 
@@ -25,7 +25,8 @@ export const tutorialsApi = {
     return data
   },
 
-  list: async (): Promise<TutorialProgress[]> => {
+  /** Every progress row of the account, the introduction included; consumers pick their own. */
+  list: async (): Promise<AccountProgressRow[]> => {
     const { data } = await apiClient.get('/users/me/tutorials')
     return data
   },

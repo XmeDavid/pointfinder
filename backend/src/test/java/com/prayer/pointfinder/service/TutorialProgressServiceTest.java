@@ -193,7 +193,23 @@ class TutorialProgressServiceTest extends IntegrationTestBase {
                     tutorialProgressService.upsertForCurrentUser(scenarioId, body("in_progress", null, null))
                             .scenarioId());
         }
-        assertEquals(6, tutorialProgressService.listForCurrentUser().size(), "one row per known scenario");
+        assertEquals(7, tutorialProgressService.listForCurrentUser().size(), "one row per known scenario");
+    }
+
+    @Test
+    void introductionIsAnAccountRowSeparateFromTheGuidedFirstGame() {
+        authenticate("tut-introduction@test.com");
+
+        TutorialProgressResponse watched = tutorialProgressService.upsertForCurrentUser(
+                TutorialProgressService.INTRODUCTION, body("completed", null, null));
+
+        assertEquals("introduction", watched.scenarioId());
+        assertEquals("completed", watched.status());
+        assertNotNull(watched.completedAt());
+        assertNull(watched.gameId());
+        // Watching the introduction says nothing about the guided first game.
+        assertEquals(List.of("introduction"),
+                tutorialProgressService.listForCurrentUser().stream().map(TutorialProgressResponse::scenarioId).toList());
     }
 
     @Test

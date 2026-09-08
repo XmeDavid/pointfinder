@@ -292,102 +292,6 @@ body {
   animation: topoWalkGlow var(--topo-walk-duration) ease-out forwards;
 }
 
-/* Register card "ghost": the destination the walk arrives at. Over the last third
-   of the pan it fades and rises into place so we settle INTO the card, rather than
-   the real card popping in after navigation. Pinned to register's centered layout
-   and light palette so handing off to the real page is seamless. */
-.topo-register-transition__card-dock {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.topo-register-transition__card {
-  width: 100%;
-  max-width: 28rem; /* matches register card's max-w-md */
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--pf-dataColor-registerBorder);
-  background: var(--pf-dataColor-white);
-  /* Match the real register card's Tailwind shadow-sm exactly for a seamless handoff. */
-  box-shadow:
-    0 1px 3px 0 rgb(0 0 0 / 0.1),
-    0 1px 2px -1px rgb(0 0 0 / 0.1);
-  color: var(--pf-dataColor-registerText);
-  text-align: center;
-  opacity: 0;
-  transform: translateY(16px) scale(0.96);
-  will-change: opacity, transform;
-  animation: topoCardWalkIn var(--topo-walk-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.topo-register-transition__card-icon {
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 0.5rem;
-  border-radius: 9999px;
-  background: var(--pf-dataColor-registerPrimary);
-  color: var(--pf-dataColor-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.topo-register-transition__card-title {
-  font-size: 1.5rem;
-  line-height: 2rem;
-  font-weight: 600;
-}
-
-.topo-register-transition__card-sub {
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--pf-dataColor-registerMuted);
-}
-
-.topo-register-transition__card-label {
-  margin-top: 1.25rem;
-  display: block;
-  text-align: left;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.topo-register-transition__card-req {
-  color: var(--pf-dataColor-red);
-}
-
-.topo-register-transition__card-field {
-  margin-top: 0.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  padding: 0 0.75rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--pf-dataColor-registerBorder);
-  background: var(--pf-dataColor-white);
-  text-align: left;
-  font-size: 0.875rem;
-  color: var(--pf-dataColor-registerPlaceholder);
-}
-
-.topo-register-transition__card-btn {
-  margin-top: 1rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  background: var(--pf-dataColor-registerPrimary);
-  color: var(--pf-dataColor-white);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
 /* Valley walk: a smooth quadratic curve from the lower-left crop to the upper-right
    crop that dips down into the valley around the first third before rising to the
    register frame. Sampled every 10% along the curve, with the camera's progress
@@ -488,19 +392,6 @@ body {
   }
 }
 
-/* card holds off-screen through the pan, then walks into place over the final third */
-@keyframes topoCardWalkIn {
-  0%,
-  64% {
-    opacity: 0;
-    transform: translateY(16px) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 .register-atlas-screen {
   position: relative;
   overflow: hidden;
@@ -532,14 +423,6 @@ body {
   z-index: 1;
 }
 
-/* Arriving from the landing walk, the card is already at rest: the transition's
-   card ghost performed the entrance and ended on this exact frame, so the real
-   card must appear settled (no second rise) for a seamless handoff. */
-.register-atlas-screen--arrived .register-atlas-card {
-  opacity: 1;
-  transform: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .contour-flow,
   .contour-breathe,
@@ -550,16 +433,8 @@ body {
   .topo-register-transition__wash,
   .topo-register-transition__walk,
   .topo-register-transition__terrain,
-  .topo-register-transition__glow,
-  .register-atlas-screen--arrived .register-atlas-card {
+  .topo-register-transition__glow {
     animation: none;
-  }
-
-  /* with motion reduced we navigate instantly, so the overlay never renders;
-     still pin the card to its final state in case the class is present */
-  .register-atlas-screen--arrived .register-atlas-card {
-    opacity: 1;
-    transform: none;
   }
 }
 

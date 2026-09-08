@@ -11,6 +11,8 @@ test('operator enables order in settings, saves a shared route, and retains it w
   await page.route('**/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     if (path.startsWith('/api/auth/')) return route.fulfill({ json: { accessToken: token, user } })
+    // Every mocked operator already settled the introduction, so sign-in lands on the dashboard as before.
+    if (path === '/api/users/me/tutorials') return route.fulfill({ json: [{ scenarioId: 'introduction', status: 'skipped', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00Z', completedAt: null }] })
     if (path === '/api/workspaces') return route.fulfill({ json: { personal: { tier: 'free', status: 'active', activeGames: 1 }, organizations: [] } })
     if (path.startsWith('/api/quota/')) return route.fulfill({ json: { limits: { maxActiveGames: 10 }, usage: { currentActiveGames: 1 } } })
     if (path === '/api/games/g') {

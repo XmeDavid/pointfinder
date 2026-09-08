@@ -120,6 +120,11 @@ class PracticeGameEndpointTest extends IntegrationTestBase {
         assertEquals(HttpStatus.BAD_REQUEST, refused.getStatusCode());
         assertTrue(refused.getBody().contains("TUTORIAL_PRACTICE_GAME_NOT_ALLOWED"));
 
+        // The account introduction is a known progress row but never a game.
+        ResponseEntity<String> introduction = practiceRaw(other, "introduction", practiceBody("Nope"));
+        assertEquals(HttpStatus.BAD_REQUEST, introduction.getStatusCode());
+        assertTrue(introduction.getBody().contains("TUTORIAL_PRACTICE_GAME_NOT_ALLOWED"));
+
         ResponseEntity<String> unknown = practiceRaw(other, "no-such", practiceBody("Nope"));
         assertEquals(HttpStatus.BAD_REQUEST, unknown.getStatusCode());
         assertTrue(unknown.getBody().contains("TUTORIAL_SCENARIO_UNKNOWN"));

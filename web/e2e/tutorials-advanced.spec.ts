@@ -39,7 +39,7 @@ async function mockApi(page: Page, scenario: string, state: State) {
     if (path.startsWith('/api/auth/')) return json({ accessToken: token, user })
     if (path === '/api/workspaces') return json({ personal: { tier: 'pro', status: 'active', activeGames: 1 }, organizations: [] })
     if (path.startsWith('/api/quota/')) return json({ limits: { maxActiveGames: null }, usage: { currentActiveGames: 1 } })
-    if (path === '/api/users/me/tutorials') return json(created ? [{ scenarioId: scenario, status: 'in_progress', currentStep: null, gameId: 'g', startedAt: '2026-09-06T09:00:00Z', completedAt: null }] : [])
+    if (path === '/api/users/me/tutorials') return json([{ scenarioId: 'introduction', status: 'skipped', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00Z', completedAt: null }, ...(created ? [{ scenarioId: scenario, status: 'in_progress', currentStep: null, gameId: 'g', startedAt: '2026-09-06T09:00:00Z', completedAt: null }] : [])])
     if (path.endsWith('/practice-game') && method === 'POST') { created = true; return json(state.game, 201) }
     if (path.startsWith('/api/users/me/tutorials/') && method === 'PUT') return json({ scenarioId: scenario, ...(request.postDataJSON() as object), startedAt: '2026-09-06T09:00:00Z', completedAt: null })
     if (path === '/api/games') return json(created ? [state.game] : [])

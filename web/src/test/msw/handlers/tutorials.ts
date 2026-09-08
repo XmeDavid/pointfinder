@@ -3,7 +3,7 @@ import type { TutorialProgress, TutorialStatus } from '@/features/tutorials/type
 import type { Game } from '@/types/game'
 import { createMockGame } from '../../factories/game'
 
-const KNOWN_SCENARIOS = ['first-game', 'fixed-route', 'exploration']
+const KNOWN_SCENARIOS = ['introduction', 'first-game', 'fixed-route', 'exploration']
 const KNOWN_STATUSES: TutorialStatus[] = ['in_progress', 'completed', 'skipped']
 
 interface RecordedPut {

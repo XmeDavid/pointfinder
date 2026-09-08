@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   Check,
-  Compass,
   Gift,
   MapPinned,
   MessageSquare,
@@ -46,6 +45,9 @@ const REGISTER_TERRAIN_TEXTURES = [
   "/landing/topo-terrain-dark.webp",
   "/landing/topo-terrain-light.webp",
 ];
+const WELCOME_STILL = "/onboarding/role-choice.webp";
+const WELCOME_ROUTE = "/welcome";
+const ORGANIZER_GATE_ROUTE = "/welcome?role=organizer";
 type BillingCycle = "yearly" | "monthly";
 
 export function LandingPage() {
@@ -65,14 +67,14 @@ export function LandingPage() {
     [],
   );
 
-  // Warm the register route + both walk textures so first paint of the transition is instant.
-  const preloadRegister = useCallback(() => {
+  // Warm the welcome route, its first still and both walk textures so first paint of the transition is instant.
+  const preloadWelcome = useCallback(() => {
     if (preloadedRef.current || typeof window === "undefined") {
       return;
     }
     preloadedRef.current = true;
-    void import("@/features/auth/RegisterPage");
-    for (const src of REGISTER_TERRAIN_TEXTURES) {
+    void import("@/features/introduction/WelcomePage");
+    for (const src of [...REGISTER_TERRAIN_TEXTURES, WELCOME_STILL]) {
       const img = new Image();
       img.src = src;
     }
@@ -80,12 +82,15 @@ export function LandingPage() {
 
   // Preload on idle even without hover, so slow networks still have textures ready.
   useEffect(() => {
-    const idle = window.setTimeout(preloadRegister, 1500);
+    const idle = window.setTimeout(preloadWelcome, 1500);
     return () => window.clearTimeout(idle);
-  }, [preloadRegister]);
+  }, [preloadWelcome]);
 
-  const startRegisterTransition = useCallback(
-    (event?: MouseEvent<HTMLElement>) => {
+  // "Get started" walks the map into the welcome world, where the visitor picks
+  // a role before anyone mentions an account. Pricing goes straight to the
+  // organizer's account choice.
+  const startWelcomeTransition = useCallback(
+    (to: string, event?: MouseEvent<HTMLElement>) => {
       if (
         event &&
         (event.defaultPrevented ||
@@ -108,18 +113,19 @@ export function LandingPage() {
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       if (shouldReduceMotion) {
-        navigate("/register");
+        navigate(to);
         return;
       }
 
       setIsRegisterTransitionActive(true);
-      window.sessionStorage.setItem("pointfinder:register-arrival", "cinematic");
       transitionTimer.current = window.setTimeout(() => {
-        navigate("/register");
+        navigate(to);
       }, 1500);
     },
     [isRegisterTransitionActive, navigate],
   );
+  const startFromHero = useCallback((event?: MouseEvent<HTMLElement>) => startWelcomeTransition(WELCOME_ROUTE, event), [startWelcomeTransition]);
+  const startFromPricing = useCallback((event?: MouseEvent<HTMLElement>) => startWelcomeTransition(ORGANIZER_GATE_ROUTE, event), [startWelcomeTransition]);
 
   const workflow = [
     {
@@ -220,11 +226,11 @@ export function LandingPage() {
               {t("landing.nav.operatorLogin")}
             </Link>
             <Link
-              to="/register"
+              to={WELCOME_ROUTE}
               className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}
-              onClick={startRegisterTransition}
-              onMouseEnter={preloadRegister}
-              onFocus={preloadRegister}
+              onClick={startFromHero}
+              onMouseEnter={preloadWelcome}
+              onFocus={preloadWelcome}
             >
               {t("landing.nav.getStarted")}
             </Link>
@@ -246,11 +252,11 @@ export function LandingPage() {
 
               <div className="mt-8">
                 <Link
-                  to="/register"
+                  to={WELCOME_ROUTE}
                   className={cn(buttonVariants({ size: "lg" }))}
-                  onClick={startRegisterTransition}
-                  onMouseEnter={preloadRegister}
-                  onFocus={preloadRegister}
+                  onClick={startFromHero}
+                  onMouseEnter={preloadWelcome}
+                  onFocus={preloadWelcome}
                 >
                   {t("landing.nav.getStarted")}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -355,8 +361,8 @@ export function LandingPage() {
                 suffix=""
                 features={freeFeatures}
                 cta={t("landing.pricing.startFree")}
-                href="/register"
-                onRegisterClick={startRegisterTransition}
+                href={ORGANIZER_GATE_ROUTE}
+                onStartClick={startFromPricing}
               />
               <PersonalPricingCard
                 icon={Smartphone}
@@ -371,8 +377,8 @@ export function LandingPage() {
                 savings={billingCycle === "yearly" ? t("landing.pricing.yearlySavings") : undefined}
                 features={personalFeatures}
                 cta={personalCta}
-                href="/register"
-                onRegisterClick={startRegisterTransition}
+                href={ORGANIZER_GATE_ROUTE}
+                onStartClick={startFromPricing}
                 billingCycle={billingCycle}
                 onBillingCycleChange={setBillingCycle}
                 monthlyLabel={t("landing.pricing.monthlyToggle")}
@@ -467,9 +473,10 @@ function HeroBackdrop() {
   );
 }
 
+/* "Walk the map" into the welcome world. There is no card ghost any more: the
+   destination is a role choice, and nothing may suggest an account is needed
+   before the visitor has picked one. */
 function TopoRegisterTransition({ active }: { active: boolean }) {
-  const { t } = useTranslation();
-
   if (!active) {
     return null;
   }
@@ -483,28 +490,6 @@ function TopoRegisterTransition({ active }: { active: boolean }) {
         <div className="topo-map-layer topo-register-transition__terrain topo-register-transition__terrain--light" />
       </div>
       <div className="topo-register-transition__glow" />
-      {/* Card ghost — a faithful stand-in for register's card that we walk into,
-          so the real card is already settled when the route swaps in. */}
-      <div className="topo-register-transition__card-dock">
-        <div className="topo-register-transition__card">
-          <div className="topo-register-transition__card-icon">
-            <Compass className="h-6 w-6" aria-hidden="true" />
-          </div>
-          <div className="topo-register-transition__card-title">
-            {t("auth.createAccount")}
-          </div>
-          <div className="topo-register-transition__card-sub">
-            {t("auth.registerDescription")}
-          </div>
-          <div className="topo-register-transition__card-label">
-            {t("auth.email")} <span className="topo-register-transition__card-req">*</span>
-          </div>
-          <div className="topo-register-transition__card-field">you@example.com</div>
-          <div className="topo-register-transition__card-btn">
-            {t("auth.sendRegistrationLink")}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -670,7 +655,7 @@ type PricingCardProps = {
   highlighted?: boolean;
   external?: boolean;
   headerAction?: ReactNode;
-  onRegisterClick?: (event: MouseEvent<HTMLElement>) => void;
+  onStartClick?: (event: MouseEvent<HTMLElement>) => void;
 };
 
 function PricingCard({
@@ -687,7 +672,7 @@ function PricingCard({
   highlighted,
   external,
   headerAction,
-  onRegisterClick,
+  onStartClick,
 }: PricingCardProps) {
   const body = (
     <>
@@ -736,7 +721,7 @@ function PricingCard({
             <Link
               to={href}
               className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}
-              onClick={href === "/register" ? onRegisterClick : undefined}
+              onClick={href.startsWith(WELCOME_ROUTE) ? onStartClick : undefined}
             >
               {cta}
             </Link>

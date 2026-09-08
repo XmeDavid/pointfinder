@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Compass, Mail } from "lucide-react";
@@ -8,6 +8,8 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
+import { holdPostAuthRedirect, releasePostAuthRedirect } from "@/lib/auth/postAuth";
+import { DASHBOARD_ROUTE, resolvePostRegistrationRoute } from "@/features/introduction/progress";
 import { useTranslation } from "react-i18next";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import axios from "@/platform/axios";
@@ -23,20 +25,8 @@ export function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [arrivedFromLanding] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    return window.sessionStorage.getItem("pointfinder:register-arrival") === "cinematic";
-  });
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (arrivedFromLanding) {
-      window.sessionStorage.removeItem("pointfinder:register-arrival");
-    }
-  }, [arrivedFromLanding]);
 
   const { data: invite } = useQuery({
     queryKey: ["invite", token],
@@ -78,12 +68,27 @@ export function RegisterPage() {
       return;
     }
     setLoading(true);
+    // Registration signs the account in; the guest guard waits while the
+    // introduction is marked started, then the organizer story plays. Nothing
+    // asks for a second sign-in, and the email link works in any tab.
+    holdPostAuthRedirect();
     try {
       await register(token!, trimmedName, effectiveEmail, password);
-      navigate("/dashboard");
+      const userId = useAuthStore.getState().user?.id;
+      let destination: string | null = DASHBOARD_ROUTE;
+      if (userId) {
+        try {
+          destination = await resolvePostRegistrationRoute(userId);
+        } catch {
+          destination = DASHBOARD_ROUTE;
+        }
+      }
+      // Null means the session changed underneath us; whoever owns it now decides.
+      if (destination) navigate(destination, { replace: true });
     } catch (err) {
       setError(getApiErrorMessage(err, t("auth.registrationFailed")));
     } finally {
+      releasePostAuthRedirect();
       setLoading(false);
     }
   };
@@ -91,11 +96,7 @@ export function RegisterPage() {
   // No token — email request flow
   if (!token) {
     return (
-      <div
-        className={`register-atlas-screen safe-page flex min-h-dvh items-center justify-center bg-muted/30 ${
-          arrivedFromLanding ? "register-atlas-screen--arrived" : ""
-        }`}
-      >
+      <div className="register-atlas-screen safe-page flex min-h-dvh items-center justify-center bg-muted/30">
         <div className="register-atlas-screen__backdrop" aria-hidden="true" />
         <Card className="register-atlas-card w-full max-w-md">
           <CardHeader className="text-center">
@@ -144,11 +145,7 @@ export function RegisterPage() {
 
   // Token present — full registration form
   return (
-    <div
-      className={`register-atlas-screen safe-page flex min-h-dvh items-center justify-center bg-muted/30 ${
-        arrivedFromLanding ? "register-atlas-screen--arrived" : ""
-      }`}
-    >
+    <div className="register-atlas-screen safe-page flex min-h-dvh items-center justify-center bg-muted/30">
       <div className="register-atlas-screen__backdrop" aria-hidden="true" />
       <Card className="register-atlas-card w-full max-w-md">
         <CardHeader className="text-center">

@@ -343,10 +343,34 @@
           "markdownDescription": "Denies the share_file command without any pre-configured scope."
         },
         {
-          "description": "Share app-owned exports and observe native layout and lifecycle\n#### This default permission set includes:\n\n- `allow-share-file`\n- `allow-safe-area-insets`\n- `allow-register-listener`\n- `allow-remove-listener`",
+          "description": "Enables the start_orientation command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-start-orientation",
+          "markdownDescription": "Enables the start_orientation command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the start_orientation command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-start-orientation",
+          "markdownDescription": "Denies the start_orientation command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the stop_orientation command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-stop-orientation",
+          "markdownDescription": "Enables the stop_orientation command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the stop_orientation command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-stop-orientation",
+          "markdownDescription": "Denies the stop_orientation command without any pre-configured scope."
+        },
+        {
+          "description": "Share app-owned exports and observe native layout, lifecycle and welcome compass motion\n#### This default permission set includes:\n\n- `allow-share-file`\n- `allow-safe-area-insets`\n- `allow-start-orientation`\n- `allow-stop-orientation`\n- `allow-register-listener`\n- `allow-remove-listener`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Share app-owned exports and observe native layout and lifecycle\n#### This default permission set includes:\n\n- `allow-share-file`\n- `allow-safe-area-insets`\n- `allow-register-listener`\n- `allow-remove-listener`"
+          "markdownDescription": "Share app-owned exports and observe native layout, lifecycle and welcome compass motion\n#### This default permission set includes:\n\n- `allow-share-file`\n- `allow-safe-area-insets`\n- `allow-start-orientation`\n- `allow-stop-orientation`\n- `allow-register-listener`\n- `allow-remove-listener`"
         }
       ]
     }

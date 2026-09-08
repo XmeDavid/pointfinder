@@ -1,6 +1,7 @@
 import { useAuth } from '@/app/player/services';
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth/store";
+import { isPostAuthRedirectHeld } from "@/lib/auth/postAuth";
 
 /**
  * Wraps public-only routes (login, register).
@@ -25,7 +26,9 @@ export function GuestGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isAuthenticated) {
+  // A sign-in or registration on this very page picks its own destination once
+  // the session is up; it keeps the page mounted until then.
+  if (isAuthenticated && !isPostAuthRedirectHeld()) {
     return <Navigate to="/dashboard" replace />;
   }
 

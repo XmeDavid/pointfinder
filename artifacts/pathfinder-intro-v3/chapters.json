@@ -1,0 +1,44 @@
+[
+  {
+    "id": "join",
+    "start": 1,
+    "hold": 125,
+    "end": 144
+  },
+  {
+    "id": "map",
+    "start": 145,
+    "hold": 301,
+    "end": 312
+  },
+  {
+    "id": "checkin",
+    "start": 313,
+    "hold": 371,
+    "end": 408
+  },
+  {
+    "id": "challenge",
+    "start": 409,
+    "hold": 465,
+    "end": 504
+  },
+  {
+    "id": "submit",
+    "start": 505,
+    "hold": 580,
+    "end": 600
+  },
+  {
+    "id": "explore",
+    "start": 601,
+    "hold": 765,
+    "end": 783
+  },
+  {
+    "id": "compass",
+    "start": 784,
+    "hold": 862,
+    "end": 864
+  }
+]

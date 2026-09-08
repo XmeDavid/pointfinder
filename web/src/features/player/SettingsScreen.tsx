@@ -12,6 +12,7 @@ import { getThemePreference, setThemePreference, type ThemePreference } from '@/
 import { onPushPermissionChange, pushPermission, requestPushPermission, type PushPermission } from '@/platform/push'
 import { usePlayerGame } from '@/features/player/usePlayerGame'
 import { Screen } from '@/features/player/components/Screen'
+import { PARTICIPANT_STORY_ROUTE } from '@/features/player/components/IntroductionPrompt'
 
 const LANGUAGE_LABELS: Record<Language, string> = { en: 'English', pt: 'Português', de: 'Deutsch' }
 
@@ -139,6 +140,10 @@ export default function SettingsScreen() {
       <Section title={t('settings.device')}>
         <Row label={t('settings.deviceId')} value={<span className="font-mono text-xs">{deviceId ? `${deviceId.slice(0, 8)}…` : '…'}</span>} />
         <Row label={t('settings.pendingActions')} value={game.pending.length} testId="settings-pending-actions" />
+      </Section>
+
+      <Section title={t('settings.help')}>
+        <Link to={PARTICIPANT_STORY_ROUTE} className="flex min-h-12 items-center px-4 py-2.5 text-sm font-medium" data-testid="settings-how-it-works">{t('settings.howItWorks')}</Link>
       </Section>
 
       <Section title={t('settings.privacy')}>

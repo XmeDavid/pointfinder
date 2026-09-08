@@ -1285,12 +1285,38 @@ for `first-game`. "Skip for now" writes a `skipped` row and hides the card
 permanently; the scenario stays available from the tutorials library at
 `/tutorials`. The card is never shown in an organization workspace.
 
+### The introduction is an account row, not a tutorial
+
+"How PointFinder works" is the one-minute organizer story in the welcome
+world. It has no steps and no practice game, but its status is per account so
+it follows the operator across devices: it is stored as the `introduction` row
+of the same table and allowlist, and the tutorial engine never sees it.
+
+- Registration signs the new account in and writes `in_progress` before the
+  story plays; finishing writes `completed`, skipping writes `skipped`. A
+  sign-in on any device reads the row: `completed` or `skipped` goes to the
+  dashboard as usual; no row or `in_progress` gets the gate (Take a quick tour
+  / Go to my dashboard), never the story by force. Declining writes `skipped`,
+  so an interrupted introduction resumes at the next sign-in but not at every
+  future one. The story stays replayable from the tutorials library.
+- A visitor who watched or skipped the organizer story anonymously carries that
+  into the next account created or signed in on the same device, once: the
+  handoff is claimed before any request and then cleared, and an existing
+  account row always wins over it.
+- The device keeps a per-user fallback of the last status it wrote. A failed
+  write is owed and retried at the next sign-in, an owed decision outranks a
+  stale server read, and only an unreadable server decides routing from it.
+- The story's closing "Create my first game" starts the guided `first-game`
+  tutorial on the dashboard; nothing is created until the operator chooses
+  that, and watching the introduction never marks `first-game` done or skipped.
+
 ### Restart, not delete
 
 There is no delete endpoint. Restarting a tutorial is a PUT with
 `status: in_progress` and `currentStep: null`, which resets `started_at` and
 clears `completed_at`. Scenario ids are validated against a server-side
-allowlist (`first-game`, `fixed-route`, `exploration`).
+allowlist (`introduction`, `first-game`, `fixed-route`, `exploration`,
+`unlock-chain`, `different-path`, `variable-outcome`).
 
 ### Not audited
 

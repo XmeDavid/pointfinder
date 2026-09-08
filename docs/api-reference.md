@@ -1284,8 +1284,12 @@ follows the operator across the browser and the Tauri shell.
 | `currentStep` | The scenario step id the operator is on. Optional; `null` with `in_progress` **restarts** the scenario (resets `startedAt`, clears `completedAt`). |
 | `gameId` | The game a `setup-game` scenario is bound to, so Resume returns to it. Optional. Nulled if that game is deleted. |
 
-`scenarioId` must be one of `first-game`, `fixed-route`, `exploration`; anything
-else returns `400 TUTORIAL_SCENARIO_UNKNOWN`. An unrecognised `status` returns
+`scenarioId` must be one of `introduction`, `first-game`, `fixed-route`,
+`exploration`, `unlock-chain`, `different-path`, `variable-outcome`; anything
+else returns `400 TUTORIAL_SCENARIO_UNKNOWN`. `introduction` is the account's
+"How PointFinder works" story (watched after registration or offered at
+sign-in): it shares this table so its status follows the account across
+devices, never carries a `gameId`, and says nothing about `first-game`. An unrecognised `status` returns
 `400 TUTORIAL_STATUS_UNKNOWN`. Returns the stored row. Not audited — this is UI
 preference, not domain state.
 
@@ -1296,7 +1300,9 @@ preference, not domain state.
 ```
 
 Creates, seeds and binds a **practice game** for a `practice-game` scenario
-(`fixed-route`, `exploration`) and returns `201` with the `GameResponse`. A
+(`fixed-route`, `exploration`, `unlock-chain`, `different-path`,
+`variable-outcome`) and returns `201` with the `GameResponse`. `first-game` and
+`introduction` are refused with `400 TUTORIAL_PRACTICE_GAME_NOT_ALLOWED`. A
 tutorial never runs on a game the operator made for a real event; it runs on a
 practice game, which:
 

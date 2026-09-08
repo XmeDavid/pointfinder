@@ -1,7 +1,9 @@
 import type { Assignment, Base, Challenge, Game, Team } from '@/types'
 import type { DrawerTab, GameMode } from '@/stores/workspace'
 
-export type ScenarioId = 'first-game' | 'fixed-route' | 'exploration' | 'unlock-chain' | 'different-path' | 'variable-outcome'
+export const SCENARIO_IDS = ['first-game', 'fixed-route', 'exploration', 'unlock-chain', 'different-path', 'variable-outcome'] as const
+export type ScenarioId = (typeof SCENARIO_IDS)[number]
+export const isScenarioId = (value: string): value is ScenarioId => (SCENARIO_IDS as readonly string[]).includes(value)
 /**
  * `new-game`: the operator creates the practice game through the real dialog
  * (the first lesson). `practice-game`: the server creates and seeds one on Start.
@@ -20,6 +22,14 @@ export interface TutorialProgress {
   gameId: string | null
   startedAt: string
   completedAt: string | null
+}
+
+/**
+ * A row as the server returns it. The account's `introduction` row shares the
+ * table without being a guided scenario; the engine only ever sees `TutorialProgress`.
+ */
+export interface AccountProgressRow extends Omit<TutorialProgress, 'scenarioId'> {
+  scenarioId: string
 }
 
 export interface FieldReading {

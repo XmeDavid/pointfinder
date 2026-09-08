@@ -8,6 +8,8 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
+import { holdPostAuthRedirect, releasePostAuthRedirect } from "@/lib/auth/postAuth";
+import { DASHBOARD_ROUTE, resolvePostLoginRoute } from "@/features/introduction/progress";
 import { useTranslation } from "react-i18next";
 
 export function LoginPage() {
@@ -23,9 +25,23 @@ export function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    // The guest guard stays out of the way until the destination is known:
+    // the dashboard as usual, or the introduction gate for an account that
+    // has neither watched nor skipped it yet.
+    holdPostAuthRedirect();
     try {
       await login(email, password);
-      navigate("/dashboard");
+      const userId = useAuthStore.getState().user?.id;
+      let destination: string | null = DASHBOARD_ROUTE;
+      if (userId) {
+        try {
+          destination = await resolvePostLoginRoute(userId);
+        } catch {
+          destination = DASHBOARD_ROUTE;
+        }
+      }
+      // Null means the session changed underneath us; whoever owns it now decides.
+      if (destination) navigate(destination, { replace: true });
     } catch (err: unknown) {
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
       if (status === 429) {
@@ -36,6 +52,7 @@ export function LoginPage() {
         setError(t("auth.invalidCredentials"));
       }
     } finally {
+      releasePostAuthRedirect();
       setLoading(false);
     }
   };

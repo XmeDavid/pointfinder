@@ -1,11 +1,13 @@
 ## Default Permission
 
-Share app-owned exports and observe native layout and lifecycle
+Share app-owned exports and observe native layout, lifecycle and welcome compass motion
 
 #### This default permission set includes the following:
 
 - `allow-share-file`
 - `allow-safe-area-insets`
+- `allow-start-orientation`
+- `allow-stop-orientation`
 - `allow-register-listener`
 - `allow-remove-listener`
 
@@ -118,6 +120,58 @@ Enables the share_file command without any pre-configured scope.
 <td>
 
 Denies the share_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`pointfinder-device:allow-start-orientation`
+
+</td>
+<td>
+
+Enables the start_orientation command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`pointfinder-device:deny-start-orientation`
+
+</td>
+<td>
+
+Denies the start_orientation command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`pointfinder-device:allow-stop-orientation`
+
+</td>
+<td>
+
+Enables the stop_orientation command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`pointfinder-device:deny-stop-orientation`
+
+</td>
+<td>
+
+Denies the stop_orientation command without any pre-configured scope.
 
 </td>
 </tr>

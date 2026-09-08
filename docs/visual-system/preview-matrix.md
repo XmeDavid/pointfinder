@@ -10,6 +10,9 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Semantic status and sync | yes | pending | pending |
 | Player field banners and submission states | pending | yes | yes |
 | Player onboarding and QR scanner chrome | partial | n/a | n/a |
+| Full-screen welcome world: role choice, organizer account gate and signed-in tour offer, participant and organizer chapters, landing per audience (visitor, operator with first-game hand-off, player), three languages, reduced motion and graphics fallback | yes (opt-in `?onboarding=choice`, `?onboarding=gate`, `?onboarding=1`–`7`, `&role=organizer`, `&mode=operator|player`) | n/a | n/a |
+| Account introduction touchpoints: tutorials library "How PointFinder works" card (not watched / watched / skipped), player map prompt after joining, Settings Help row | pending | n/a | n/a |
+| Welcome compass: animated/static, idle fallback, light/dark, reduced motion | yes | n/a | n/a |
 | Player location check-in panel: locating, denied, far, near, arrived, claim gating | pending | n/a | n/a |
 | Player arrival notice: named base, hidden base found, queued offline | pending | n/a | n/a |
 | Player map check-in radius rings and method-aware scan control | pending | n/a | n/a |

@@ -1,0 +1,19 @@
+{
+  "branch": "organizer",
+  "exportObjects": 105,
+  "worldMeshGroups": 32,
+  "worldBytes": 6245924,
+  "cameraCoordinateSystem": "glTF Y up",
+  "terrainTextures": 3,
+  "characterLibrary": "pathfinder-characters-v1",
+  "characterRigs": 3,
+  "characterBones": [
+    17,
+    17,
+    17
+  ],
+  "characterVertices": 68368,
+  "drawPrimitives": 154,
+  "triangles": 307095,
+  "optimized": true
+}

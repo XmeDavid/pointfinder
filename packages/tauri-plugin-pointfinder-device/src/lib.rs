@@ -21,6 +21,22 @@ struct ShareResult { result: String }
 struct SafeAreaInsets { top: f64, right: f64, bottom: f64, left: f64 }
 
 #[tauri::command]
+async fn start_orientation<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
+    #[cfg(not(mobile))]
+    { let _ = app; Err("unavailable: Mobile orientation only".into()) }
+    #[cfg(mobile)]
+    { app.state::<Device<R>>().0.run_mobile_plugin("startOrientation", ()).map_err(|e| e.to_string()) }
+}
+
+#[tauri::command]
+async fn stop_orientation<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
+    #[cfg(not(mobile))]
+    { let _ = app; Ok(()) }
+    #[cfg(mobile)]
+    { app.state::<Device<R>>().0.run_mobile_plugin("stopOrientation", ()).map_err(|e| e.to_string()) }
+}
+
+#[tauri::command]
 async fn safe_area_insets<R: Runtime>(app: tauri::AppHandle<R>) -> Result<SafeAreaInsets, String> {
     #[cfg(not(mobile))]
     { let _ = app; Err("unavailable: Mobile safe areas only".into()) }
@@ -61,7 +77,7 @@ async fn share_file<R: Runtime>(app: tauri::AppHandle<R>, id: String, name: Stri
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("pointfinder-device")
-        .invoke_handler(tauri::generate_handler![share_file, safe_area_insets])
+        .invoke_handler(tauri::generate_handler![share_file, safe_area_insets, start_orientation, stop_orientation])
         .setup(|_app, _api| {
             #[cfg(target_os = "android")]
             let handle = _api.register_android_plugin("com.prayer.pointfinder.device", "DevicePlugin")?;

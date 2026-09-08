@@ -33,6 +33,8 @@ async function mockOperatorApi(page: Page, games: MockGame[]) {
     const method = request.method()
 
     if (path.startsWith('/api/auth/')) return route.fulfill({ json: { accessToken: token, user } })
+    // Every mocked operator already settled the introduction, so sign-in lands on the dashboard as before.
+    if (path === '/api/users/me/tutorials') return route.fulfill({ json: [{ scenarioId: 'introduction', status: 'skipped', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00Z', completedAt: null }] })
     if (path === '/api/workspaces') {
       return route.fulfill({ json: { personal: { tier: 'free', status: 'active', activeGames: games.length }, organizations: [] } })
     }
@@ -174,7 +176,7 @@ const oneChallenge = [{
  * practice endpoint, then served with two bases and one challenge.
  */
 async function mockPracticeGameApi(page: Page, state: { game: Record<string, unknown>; bases: ReturnType<typeof twoBases> }) {
-  const progress: unknown[] = []
+  const progress: unknown[] = [{ scenarioId: 'introduction', status: 'skipped', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00Z', completedAt: null }]
   let practiceCreated = false
   await page.route('**/api/**', async (route) => {
     const request = route.request()

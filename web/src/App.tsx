@@ -106,6 +106,8 @@ const CreateOrgPage = lazy(() =>
   })),
 );
 
+const Welcome = lazy(() => import("@/features/auth/Welcome"));
+
 const AdminPanelLazy = lazy(() =>
   import("@/features/admin/AdminPanel").then((m) => ({
     default: m.AdminPanel,
@@ -195,6 +197,16 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
   {
     path: "/",
     element: <Home />,
+  },
+  {
+    // The welcome world: role choice and account gate for visitors, the
+    // organizer story for operators, the participant story for players.
+    path: "/welcome",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <Welcome />
+      </Suspense>
+    ),
   },
   {
     path: "/login",

@@ -33,7 +33,7 @@ async function mockApi(page: Page, state: { rows: Row[]; puts: Row[][] }) {
     if (path.startsWith('/api/auth/')) return route.fulfill({ json: { accessToken: token, user } })
     if (path === '/api/workspaces') return route.fulfill({ json: { personal: { tier: 'pro', status: 'active', activeGames: 1 }, organizations: [] } })
     if (path.startsWith('/api/quota/')) return route.fulfill({ json: { limits: { maxActiveGames: null }, usage: { currentActiveGames: 1 } } })
-    if (path === '/api/users/me/tutorials') return route.fulfill({ json: [] })
+    if (path === '/api/users/me/tutorials') return route.fulfill({ json: [{ scenarioId: 'introduction', status: 'skipped', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00Z', completedAt: null }] })
     if (path === '/api/games') return route.fulfill({ json: [game] })
     if (path === '/api/games/g') return route.fulfill({ json: game })
     if (path === '/api/games/g/bases') return route.fulfill({ json: bases })

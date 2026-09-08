@@ -4,6 +4,7 @@
 |---|---|---|---|---|
 | 2026-07-11 | Existing native `Waypoint*`, `Trail*`, and `pf*` aliases remain temporarily. | Avoid a risky all-screen cutover while generated semantic adapters land. | Mobile UI | Migrate consumers mode-by-mode, then remove aliases. |
 | 2026-09-05 | `QrCodeSvg` paints literal `#000000` on `#ffffff` instead of semantic tokens. | A QR code must stay dark-on-light in both themes and on paper to remain scannable; theming it would break field use. | PointFinder frontend | None — this is a permanent, machine-readable-graphic exception. |
+| 2026-09-08 | Auth onboarding GLB artwork and its renderer use authored physical material/light colors and camera geometry. | Blue uniforms, yellow/navy scarves, terrain and warm lighting are illustration content, not interface/status colors. The full-viewport canvas needs geometry-aware framing around the DOM overlay. | PointFinder frontend / illustration | Retain as a scoped illustration exception; every title, control, focus state and scrim continues to use canonical semantic tokens. Reassess asset budgets on device before extending the world. |
 
 ## 2026-09-05 — Single frontend ownership
 

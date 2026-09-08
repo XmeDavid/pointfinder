@@ -6,7 +6,7 @@ import {
   MapPinned,
   Radio,
 } from 'lucide-react'
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
@@ -52,6 +52,9 @@ import { CHECK_IN_METHODS } from '@/types/checkIn'
 import type { CheckInVerification } from '@/types/checkIn'
 import { CoachBubble } from '@/components/tour/CoachBubble'
 import { TourPill } from '@/components/tour/TourPill'
+import { WelcomeCompass } from '@/components/compass/WelcomeCompass'
+
+const OnboardingPreview = lazy(() => import('@/components/onboarding/OnboardingExperience').then((m) => ({ default: m.OnboardingExperience })))
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
 const submissionStatuses: SubmissionStatus[] = [
@@ -139,6 +142,25 @@ function HarnessSection({
 
 export function VisualHarnessPage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const params = new URLSearchParams(window.location.search)
+  const onboarding = params.get('onboarding')
+  if (onboarding !== null) {
+    // `?onboarding=choice` shows the role screen; `?onboarding=gate` the organizer's account choice
+    // (`&mode=operator` for the signed-in tour offer); `?onboarding=1`–`7` a chapter, participant
+    // unless `&role=organizer`. `&mode=operator|player` previews those audiences' controls.
+    const modeParam = params.get('mode')
+    const mode = modeParam === 'operator' || modeParam === 'player' ? modeParam : 'anonymous'
+    const gate = onboarding === 'gate'
+    const previewRole = onboarding === 'choice' ? 'choice' : gate || params.get('role') === 'organizer' || mode === 'operator' ? 'organizer' : 'participant'
+    const previewStep = previewRole === 'choice' || gate ? undefined : Math.max(0, Math.min(6, Number(onboarding) - 1 || 0))
+    const noop = () => undefined
+    return (
+      <Suspense fallback={<LoadingState />}>
+        <OnboardingPreview previewRole={previewRole} previewStep={previewStep} previewGate={gate} mode={mode}
+          operator={{ onSkipTour: noop, onDashboard: noop, onCreateFirstGame: noop }} />
+      </Suspense>
+    )
+  }
 
   return (
     <main className={`${theme === 'dark' ? 'dark' : ''} min-h-screen overflow-auto bg-background p-4 text-foreground md:p-6`}>
@@ -154,6 +176,15 @@ export function VisualHarnessPage() {
             <p className="max-w-3xl text-sm text-muted-foreground">
               Canonical, backend-free fixtures shared with native preview
               scenarios.
+            </p>
+            <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=choice">Preview the role choice</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=1">Participant introduction</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=1&role=organizer">Organizer introduction</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=gate">Organizer account choice</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=gate&mode=operator">Signed-in tour offer</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=7&mode=operator">Signed-in landing</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=7&mode=player">Player landing</a>
             </p>
           </div>
           <div className="flex gap-2" aria-label="Preview theme">
@@ -186,6 +217,12 @@ export function VisualHarnessPage() {
               logbook={null} missingNumber={2} />
             <BaseRouteNotice route={{ enabled: true, nextRequiredBaseNumber: null, provisionalCheckInIds: [] }}
               logbook={null} />
+          </HarnessSection>
+          <HarnessSection title="Welcome compass: idle and static / reduced motion preview">
+            <div className="flex flex-wrap justify-center gap-12 py-8">
+              <WelcomeCompass />
+              <WelcomeCompass animated={false} />
+            </div>
           </HarnessSection>
           <HarnessSection title="Native safe areas">
             <SafeAreaPreview />

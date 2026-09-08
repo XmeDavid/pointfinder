@@ -1,0 +1,20 @@
+[
+  {
+    "role": "PATHFINDER | lead",
+    "model": "short",
+    "bones": 17,
+    "sourceScale": 0.7
+  },
+  {
+    "role": "PATHFINDER | teammate A",
+    "model": "ponytail",
+    "bones": 17,
+    "sourceScale": 0.7
+  },
+  {
+    "role": "PATHFINDER | teammate B",
+    "model": "guide",
+    "bones": 17,
+    "sourceScale": 0.7
+  }
+]

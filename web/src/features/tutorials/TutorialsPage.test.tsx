@@ -58,6 +58,34 @@ describe('TutorialsPage', () => {
     expect(screen.getByTestId('tutorial-start-first-game')).toBeInTheDocument()
   })
 
+  it('leads with "How PointFinder works", replayable whatever its status, and separate from the scenarios', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tutorial-introduction-status')).toHaveTextContent('Not watched yet'))
+    expect(screen.getByTestId('tutorial-introduction-card')).toHaveTextContent('How PointFinder works')
+    expect(screen.getByTestId('tutorial-introduction-watch')).toHaveTextContent('Watch')
+    // The introduction row is not a scenario card.
+    expect(screen.queryByTestId('tutorial-card-introduction')).not.toBeInTheDocument()
+    await user.click(screen.getByTestId('tutorial-introduction-watch'))
+    expect(mockNavigate).toHaveBeenCalledWith('/welcome?play=organizer')
+  })
+
+  it('shows the introduction as watched or skipped without touching the first-game card', async () => {
+    tutorialProgressStore.seed([
+      { scenarioId: 'introduction' as never, status: 'completed', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00.000Z', completedAt: '2026-09-06T09:01:00.000Z' },
+    ])
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('tutorial-introduction-status')).toHaveTextContent('Watched'))
+    expect(screen.getByTestId('tutorial-introduction-watch')).toHaveTextContent('Watch again')
+    expect(screen.getByTestId('tutorial-status-first-game')).toHaveTextContent('Not started')
+
+    tutorialProgressStore.seed([
+      { scenarioId: 'introduction' as never, status: 'skipped', currentStep: null, gameId: null, startedAt: '2026-09-06T09:00:00.000Z', completedAt: null },
+    ])
+    const again = renderPage()
+    await waitFor(() => expect(again.getAllByTestId('tutorial-introduction-status').at(-1)).toHaveTextContent('Skipped'))
+  })
+
   it('reflects each stored status on the badge', async () => {
     tutorialProgressStore.seed([
       { scenarioId: 'first-game', status: 'completed', currentStep: 'finish', gameId: null, startedAt: '2026-09-06T09:00:00.000Z', completedAt: '2026-09-06T09:40:00.000Z' },

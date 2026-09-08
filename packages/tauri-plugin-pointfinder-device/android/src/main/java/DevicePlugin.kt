@@ -3,6 +3,12 @@ package com.prayer.pointfinder.device
 import android.app.Activity
 import android.content.ClipData
 import android.content.Intent
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.view.Surface
 import android.webkit.WebView
 import android.view.ViewTreeObserver
 import androidx.appcompat.app.AppCompatActivity
@@ -16,14 +22,22 @@ import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import androidx.core.content.FileProvider
 import java.io.File
+import org.json.JSONObject
 
 @InvokeArg
 class ShareArgs { lateinit var path: String; lateinit var contentType: String }
 
 @TauriPlugin
-class DevicePlugin(private val activity: Activity) : Plugin(activity) {
+class DevicePlugin(private val activity: Activity) : Plugin(activity), SensorEventListener {
     private var hostView: WebView? = null
     private var lastInsets: String? = null
+    private val sensors by lazy { activity.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+    private var orientationRequested = false
+    private var orientationListening = false
+    private var foreground = true
+    private val rotation = FloatArray(9)
+    private val screenRotation = FloatArray(9)
+    private val angles = FloatArray(3)
     private val layoutListener = ViewTreeObserver.OnGlobalLayoutListener {
         val data = insetData()
         if (data != null && data.toString() != lastInsets) {
@@ -38,6 +52,8 @@ class DevicePlugin(private val activity: Activity) : Plugin(activity) {
     }
 
     override fun onDestroy(activity: AppCompatActivity) {
+        orientationRequested = false
+        suspendOrientation()
         hostView?.viewTreeObserver?.removeOnGlobalLayoutListener(layoutListener)
         hostView = null
     }
@@ -70,8 +86,75 @@ class DevicePlugin(private val activity: Activity) : Plugin(activity) {
         }
     }
 
-    override fun onResume() { trigger("foreground", JSObject().apply { put("active", true) }) }
-    override fun onPause() { trigger("foreground", JSObject().apply { put("active", false) }) }
+    override fun onResume() {
+        foreground = true
+        resumeOrientation()
+        trigger("foreground", JSObject().apply { put("active", true) })
+    }
+    override fun onPause() {
+        foreground = false
+        suspendOrientation()
+        trigger("foreground", JSObject().apply { put("active", false) })
+    }
+
+    @Command
+    fun startOrientation(invoke: Invoke) {
+        activity.runOnUiThread {
+            if (sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) == null) {
+                invoke.reject("unavailable: No orientation sensor")
+                return@runOnUiThread
+            }
+            orientationRequested = true
+            resumeOrientation()
+            if (foreground && !orientationListening) {
+                orientationRequested = false
+                invoke.reject("unavailable: Could not start orientation")
+            } else invoke.resolve()
+        }
+    }
+
+    @Command
+    fun stopOrientation(invoke: Invoke) {
+        activity.runOnUiThread {
+            orientationRequested = false
+            suspendOrientation()
+            invoke.resolve()
+        }
+    }
+
+    private fun resumeOrientation() {
+        if (!orientationRequested || !foreground || orientationListening) return
+        val sensor = sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) ?: return
+        orientationListening = sensors.registerListener(this, sensor, 33_333)
+    }
+
+    private fun suspendOrientation() {
+        if (orientationListening) sensors.unregisterListener(this)
+        orientationListening = false
+    }
+
+    override fun onSensorChanged(event: SensorEvent) {
+        if (!orientationRequested || !foreground || !orientationListening) return
+        SensorManager.getRotationMatrixFromVector(rotation, event.values)
+        // Sensor axes follow natural device orientation, even on landscape-native tablets.
+        val (x, y) = when (hostView?.display?.rotation) {
+            Surface.ROTATION_90 -> SensorManager.AXIS_Y to SensorManager.AXIS_MINUS_X
+            Surface.ROTATION_180 -> SensorManager.AXIS_MINUS_X to SensorManager.AXIS_MINUS_Y
+            Surface.ROTATION_270 -> SensorManager.AXIS_MINUS_Y to SensorManager.AXIS_X
+            else -> SensorManager.AXIS_X to SensorManager.AXIS_Y
+        }
+        SensorManager.remapCoordinateSystem(rotation, x, y, screenRotation)
+        SensorManager.getOrientation(screenRotation, angles)
+        val heading = (Math.toDegrees(angles[0].toDouble()) + 360) % 360
+        trigger("orientation", JSObject().apply {
+            put("heading", if (event.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) JSONObject.NULL else heading)
+            // Match Core Motion: positive pitch when the top of the phone tilts up.
+            put("pitch", -Math.toDegrees(angles[1].toDouble()))
+            put("roll", -Math.toDegrees(angles[2].toDouble()))
+        })
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     @Command
     fun shareFile(invoke: Invoke) {

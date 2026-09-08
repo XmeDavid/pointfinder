@@ -4,6 +4,19 @@ Small Tauri mobile plugin for the native share sheet, safe areas, and applicatio
 The shared frontend uses `web/src/platform/share.ts`, `safeArea.ts`, and `lifecycle.ts`; feature
 modules should not invoke the plugin directly.
 
+The welcome compass uses `web/src/platform/orientation.ts` to share one scoped
+`start_orientation()` / `stop_orientation()` subscription to `orientation`
+events: `{ heading: number | null, pitch: number, roll: number }`, in degrees.
+Heading is clockwise from magnetic north. iOS uses heading-only Core Location
+(no location authorization or position updates) plus Core Motion at 30 Hz;
+Android uses the rotation vector at approximately 30 Hz, remapped to the screen.
+Both stop sensors while backgrounded and on explicit stop. No sensor data is
+stored or sent over the network. The frontend stops the subscription on reduced
+motion and unmount, unwraps heading across north, and falls back to a slow idle
+turn when heading is unavailable. Browser and desktop need no sensor permission.
+Validate physical heading, tilt direction and background/resume on real phones;
+browser E2E checks cannot verify the sensor hardware.
+
 `share_file(id, name, content_type)` accepts a committed PointFinder media ID,
 copies that file into the app's export cache, and invokes Android ACTION_SEND
 with a FileProvider URI or iOS UIActivityViewController. It does not accept an

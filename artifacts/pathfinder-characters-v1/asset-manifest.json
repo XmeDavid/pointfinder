@@ -1,0 +1,70 @@
+{
+  "pathfinder-short": {
+    "bones": 17,
+    "modules": [
+      "body",
+      "face",
+      "hair",
+      "uniform",
+      "boots",
+      "scarf"
+    ],
+    "file": "pathfinder-short.glb",
+    "bytes": 2614548,
+    "vertices": 35606,
+    "poses": [
+      "idle",
+      "wave",
+      "point",
+      "celebrate",
+      "phone",
+      "walk"
+    ]
+  },
+  "pathfinder-ponytail": {
+    "bones": 17,
+    "modules": [
+      "body",
+      "face",
+      "hair",
+      "uniform",
+      "boots",
+      "scarf"
+    ],
+    "file": "pathfinder-ponytail.glb",
+    "bytes": 2504144,
+    "vertices": 33636,
+    "poses": [
+      "idle",
+      "wave",
+      "point",
+      "celebrate",
+      "phone",
+      "walk"
+    ]
+  },
+  "pathfinder-guide": {
+    "bones": 17,
+    "modules": [
+      "body",
+      "face",
+      "hair",
+      "uniform",
+      "boots",
+      "scarf",
+      "backpack",
+      "hat"
+    ],
+    "file": "pathfinder-guide.glb",
+    "bytes": 3282564,
+    "vertices": 44666,
+    "poses": [
+      "idle",
+      "wave",
+      "point",
+      "celebrate",
+      "phone",
+      "walk"
+    ]
+  }
+}

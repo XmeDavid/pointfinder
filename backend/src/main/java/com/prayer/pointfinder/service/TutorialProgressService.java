@@ -37,8 +37,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TutorialProgressService {
 
+    /**
+     * The account-level introduction ("How PointFinder works"): the organizer
+     * animation shown after registration and replayable from the tutorials
+     * library. It shares this table so completion follows the account across
+     * devices, but it is not a guided scenario: it never binds a game and
+     * {@link PracticeGameService} refuses to seed one for it.
+     */
+    public static final String INTRODUCTION = "introduction";
+
     /** Scenario ids the client may report progress for. Grows with each new scenario file. */
     public static final Set<String> KNOWN_SCENARIOS = Set.of(
+            INTRODUCTION,
             "first-game", "fixed-route", "exploration", "unlock-chain", "different-path", "variable-outcome");
 
     private final UserTutorialProgressRepository progressRepository;

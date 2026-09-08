@@ -1,0 +1,29 @@
+{
+  "sourceObjects": 175,
+  "worldMeshGroups": 55,
+  "worldBytes": 8143784,
+  "compassBytes": 103300,
+  "compassNeedle": "PF_CompassNeedle",
+  "compassNeedleAxis": "y",
+  "compassNorthLocal": [
+    0,
+    0,
+    -1
+  ],
+  "cameraCoordinateSystem": "glTF Y up",
+  "terrainTextures": 5,
+  "characterLibrary": "pathfinder-characters-v1",
+  "characterRigs": 3,
+  "characterBones": [
+    17,
+    17,
+    17
+  ],
+  "characterVertices": 68368,
+  "worldDrawPrimitives": 140,
+  "worldTriangles": 390531,
+  "compassDrawPrimitives": 7,
+  "compassTriangles": 3868,
+  "optimizer": "glTF Transform 4.5.0; palette, quantize, WebP; no mesh simplification",
+  "runtimeDecoder": "native glTF / no WASM"
+}
