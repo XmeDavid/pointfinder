@@ -1,6 +1,6 @@
 import {
   clampFrame, HANDOFF_FRAME, LAST_STORY_FRAME, planTransition, TRANSITION_MAX_STEP_SECONDS,
-  transitionFrame, WORLD_FADE_END, WORLD_FADE_START, type FrameTransition,
+  transitionFrame, WORLD_FADE_END, WORLD_FADE_START, type FrameTransition, type MotionBranch,
 } from './sceneMath'
 
 /** Story position and pacing, independent of WebGL so the policy is unit-testable. */
@@ -21,7 +21,7 @@ export interface SceneMotion {
   advance: (dt: number) => number
 }
 
-export function createSceneMotion(initialTarget: number, reducedMotion: boolean): SceneMotion {
+export function createSceneMotion(initialTarget: number, reducedMotion: boolean, branch: MotionBranch = 'participant'): SceneMotion {
   let target = clampFrame(initialTarget)
   let reduced = reducedMotion
   let frame = target >= HANDOFF_FRAME || reduced ? target : 1
@@ -30,7 +30,7 @@ export function createSceneMotion(initialTarget: number, reducedMotion: boolean)
   let elapsed = 0
 
   const plan = () => {
-    transition = reduced || frame === target ? undefined : planTransition(frame, target)
+    transition = reduced || frame === target ? undefined : planTransition(frame, target, branch)
     elapsed = 0
   }
   plan()

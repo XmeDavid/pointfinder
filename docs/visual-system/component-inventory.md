@@ -66,10 +66,15 @@ wait; a language change restarts the wait for the new copy; backgrounding
 Reduced motion, previews, loading and failed renderers stay manual and hide
 the toggle.
 The world uses skinned characters from the reusable Blender asset library;
-loading and reduced motion use matching rendered stills. Bone textures are
+graphics failures and reduced motion use matching rendered stills. Loading keeps
+the art area empty until the live opening pose is rendered, avoiding a completed-step
+poster flashing before the entrance animation. Bone textures are
 disposed on scene exit.
 Motion policy (`sceneMath.ts`, `sceneMotion.ts`): chapter hops use three times the
-authored 24 fps with a duration capped at 1.2 s of story time, eased in and out so every hold
+authored 24 fps with short reveals capped at 1.2 s of story time. Step 1 → 2 takes
+2.8 s in both stories (walking / placing bases); player step 5 → 6 takes 2.4 s.
+These intervals use the same pacing in reverse, proportional to remaining distance
+when interrupted. Transitions ease in and out so every hold
 pose is reached gently; the same plan runs forwards, backwards, for the compass
 handoff and for Skip, which still only fades the scene on screen. Story time follows rendered wall
 time but advances at most 0.25 s per drawn frame, so a slow renderer stretches a

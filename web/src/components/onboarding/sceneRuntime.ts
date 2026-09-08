@@ -117,7 +117,7 @@ export function createSceneRuntime(host: HTMLDivElement, options: Options): Scen
   let previousDrewWorld = false
   /** Target already reported through onSettled; each requested target is reported once. */
   let settledReported: number | undefined
-  const motion = createSceneMotion(options.targetFrame, options.reducedMotion)
+  const motion = createSceneMotion(options.targetFrame, options.reducedMotion, branch)
   let timeline: Timeline | undefined
   let world: Object3D | undefined
   let compass: Object3D | undefined

@@ -26,8 +26,9 @@ export const compassAmount = (frame: number) => smoothStep((frame - 800) / 49)
  */
 export const unwrapHeading = (previousDegrees: number, heading: number) => nearestAngle(previousDegrees, heading)
 
-/** Transition policy: chapter hops play at three times the authored speed and always
- * finish within TRANSITION_MAX_SECONDS of story time, eased in and out (smoothstep, peak
+/** Transition policy: short reveals play at three times the authored speed and
+ * finish within TRANSITION_MAX_SECONDS of story time; longer actions have explicit durations below.
+ * All transitions are eased in and out (smoothstep, peak
  * rate 1.5x the average) so every hold pose is reached gently. The same plan runs
  * forwards, backwards and for the compass handoff. Story time advances by rendered wall
  * time, but never more than TRANSITION_MAX_STEP_SECONDS per drawn frame, so a slow
@@ -40,8 +41,19 @@ export const TRANSITION_MAX_STEP_SECONDS = .25
 
 export interface FrameTransition { readonly from: number; readonly to: number; readonly duration: number }
 
-export const planTransition = (from: number, to: number): FrameTransition =>
-  ({ from, to, duration: Math.min(TRANSITION_MAX_SECONDS, Math.abs(to - from) / (AUTHORED_FPS * TRANSITION_SPEED)) })
+export type MotionBranch = 'choice' | 'participant' | 'organizer'
+
+export function planTransition(from: number, to: number, branch: MotionBranch = 'participant'): FrameTransition {
+  const distance = Math.abs(to - from)
+  // Walking and placing bases need time to read as actions. Short reveals retain the brisk pace.
+  const within = (start: number, end: number) => Math.min(from, to) >= start && Math.max(from, to) <= end
+  const duration = branch !== 'choice' && within(125, 301)
+    ? distance / (301 - 125) * 2.8
+    : branch === 'participant' && within(580, 765)
+      ? distance / (765 - 580) * 2.4
+      : Math.min(TRANSITION_MAX_SECONDS, distance / (AUTHORED_FPS * TRANSITION_SPEED))
+  return { from, to, duration }
+}
 
 export const transitionFrame = (transition: FrameTransition, elapsed: number) =>
   transition.duration <= 0 || elapsed >= transition.duration

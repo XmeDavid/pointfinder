@@ -15,19 +15,30 @@ describe('onboarding scene motion', () => {
     expect(compassAmount(849)).toBe(1)
     expect(worldOpacity(798)).toBeCloseTo(.5)
   })
-  it('bounds every chapter hop to 1.2 s and plays short hops at three times the authored speed', () => {
+  it('bounds short chapter reveals to 1.2 s and plays short hops at three times the authored speed', () => {
     expect(TRANSITION_SPEED).toBe(3)
     expect(TRANSITION_MAX_SECONDS).toBe(1.2)
     // Real chapter hops (70 to 185 frames), the first approach (1 to 125) and the handoff.
-    for (const [from, to] of [[1, 125], [125, 301], [301, 371], [371, 465], [465, 580], [580, 765], [782, 864]]) {
+    for (const [from, to] of [[1, 125], [301, 371], [371, 465], [465, 580], [782, 864]]) {
       const { duration } = planTransition(from, to)
       expect(duration).toBeGreaterThanOrEqual(.9)
       expect(duration).toBeLessThanOrEqual(TRANSITION_MAX_SECONDS)
     }
     expect(planTransition(301, 371).duration).toBeCloseTo(70 / (AUTHORED_FPS * TRANSITION_SPEED))
-    expect(planTransition(125, 301).duration).toBe(TRANSITION_MAX_SECONDS)
+    expect(planTransition(125, 301).duration).toBe(2.8)
     expect(planTransition(301, 125).duration).toBe(planTransition(125, 301).duration)
     expect(planTransition(125, 125).duration).toBe(0)
+  })
+  it('gives walking, placing bases and player exploration longer while keeping other reveals quick', () => {
+    for (const branch of ['participant', 'organizer'] as const) {
+      expect(planTransition(125, 301, branch).duration).toBe(2.8)
+      expect(planTransition(301, 125, branch).duration).toBe(2.8)
+      expect(planTransition(213, 301, branch).duration).toBeCloseTo(1.4)
+    }
+    expect(planTransition(580, 765, 'participant').duration).toBe(2.4)
+    expect(planTransition(765, 580, 'participant').duration).toBe(2.4)
+    expect(planTransition(580, 765, 'organizer').duration).toBe(1.2)
+    expect(planTransition(765, 864, 'participant').duration).toBe(1.2)
   })
   it('eases into holds without overshooting, forwards and backwards', () => {
     const forward = planTransition(125, 301)

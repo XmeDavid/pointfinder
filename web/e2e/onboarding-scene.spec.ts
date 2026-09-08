@@ -34,6 +34,28 @@ const ready = async (page: Page, branch: string) => {
   await expect(scene(page).locator('canvas')).toBeVisible()
 }
 
+test('selecting either role never shows the completed first-step poster while its world loads', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  for (const branch of ['participant', 'organizer']) {
+    await page.goto('/welcome')
+    await ready(page, 'choice')
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    const asset = branch === 'participant' ? '**/onboarding/world.glb' : '**/onboarding/organizer-world.glb'
+    await page.route(asset, async (route) => { await gate; await route.continue() })
+    try {
+      await page.getByTestId(`onboarding-role-${branch}`).click()
+      await expect(scene(page)).toHaveAttribute('data-branch', branch)
+      await expect(scene(page)).toHaveClass(/invisible/)
+      await expect(page.locator('.onboarding-still')).toHaveCount(0)
+      await expect(page.getByRole('status')).toHaveText(/Loading/)
+    } finally { release() }
+    await ready(page, branch)
+    await expect(page.locator('.onboarding-still')).toHaveCount(0)
+    await page.unroute(asset)
+  }
+})
+
 test('native onboarding renders the participant GLBs for the participant story, reverses chapters, fades the world and recovers its WebGL context', async ({ page }, info) => {
   test.skip(info.project.name !== 'native-shell', 'The public browser website keeps its existing entry')
   test.setTimeout(180_000)

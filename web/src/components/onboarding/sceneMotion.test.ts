@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TRANSITION_MAX_SECONDS, TRANSITION_MAX_STEP_SECONDS, WORLD_FADE_START } from './sceneMath'
+import { planTransition, TRANSITION_MAX_SECONDS, TRANSITION_MAX_STEP_SECONDS, WORLD_FADE_START } from './sceneMath'
 import { createSceneMotion, type SceneMotion } from './sceneMotion'
 
 /** Run the loop at a fixed frame interval until settled; returns wall seconds and frames drawn. */
@@ -26,16 +26,17 @@ describe('onboarding scene motion policy', () => {
       expect(seconds).toBeGreaterThan(.9)
     }
   })
-  it('finishes every chapter hop in about a second of wall time and stops exactly on the hold', () => {
+  it('finishes each chapter with its intended pacing and stops exactly on the hold', () => {
     const motion = createSceneMotion(125, false)
     run(motion, 1000 / 60)
     const steps = [301, 371, 465, 580, 765, 864]
     for (const step of steps) {
+      const duration = planTransition(motion.frame, step).duration
       motion.setTarget(step, false)
       const { seconds } = run(motion, 1000 / 60)
       expect(motion.frame).toBe(step)
       expect(seconds).toBeGreaterThanOrEqual(.9)
-      expect(seconds).toBeLessThanOrEqual(TRANSITION_MAX_SECONDS + 1 / 60)
+      expect(seconds).toBeLessThanOrEqual(duration + 1 / 60)
     }
   })
   it('stretches rather than skips on a slow renderer: at most a quarter second of story per drawn frame', () => {
@@ -44,7 +45,7 @@ describe('onboarding scene motion policy', () => {
     run(motion, 1000 / 60)
     motion.setTarget(301, false)
     const { ticks, seconds } = run(motion, 400)
-    const minimumPoses = Math.ceil(TRANSITION_MAX_SECONDS / TRANSITION_MAX_STEP_SECONDS)
+    const minimumPoses = Math.ceil(planTransition(125, 301).duration / TRANSITION_MAX_STEP_SECONDS)
     expect(ticks).toBeGreaterThanOrEqual(minimumPoses)
     expect(seconds).toBeLessThanOrEqual(minimumPoses * .4 + .4)
     expect(motion.frame).toBe(301)

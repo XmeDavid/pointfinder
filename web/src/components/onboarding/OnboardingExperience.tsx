@@ -79,7 +79,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
   const failed = useCallback(() => setStatus('error'), [])
   const retry = useCallback(() => { setStatus('loading'); setAttempt((value) => value + 1) }, [])
 
-  // A new branch means new geometry: show its still until the renderer reports ready again,
+  // A new branch means new geometry: keep it hidden until the renderer reports ready again,
   // and give a failed renderer a fresh attempt instead of carrying the error across roles.
   const [sceneBranch, setSceneBranch] = useState(branch)
   if (sceneBranch !== branch) {
@@ -93,7 +93,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
     let active = true
     void import('./OnboardingScene').then((module) => {
       if (active) {
-        // Restoring motion mounts a fresh renderer; keep its still until ready.
+        // Restoring motion mounts a fresh renderer; reveal it only once ready.
         setStatus('loading')
         setScene(() => module.OnboardingScene)
       }
@@ -115,7 +115,9 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
     if (previousLayout.current !== layout) heading.current?.focus({ preventScroll: true })
     previousLayout.current = layout
   }, [layout])
-  const staticWorld = reducedMotion || status !== 'ready'
+  // Completed chapter stills are fallbacks, not loading posters: showing one before the
+  // live scene starts at frame 1 flashes the finished world and then makes it disappear.
+  const staticWorld = reducedMotion || status === 'error'
   const language = i18n.resolvedLanguage?.split('-')[0] ?? 'en'
 
   // Chapters advance on their own once the live renderer has drawn the hold and the reader had
