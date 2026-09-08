@@ -121,9 +121,19 @@ body {
 }
 .landing-hero-copy {
   position: relative;
+  display: grid;
   z-index: 1;
   padding-top: 2.5rem;
-  padding-bottom: 14rem;
+  padding-bottom: 2rem;
+}
+.landing-hero-content {
+  display: flex;
+  flex-direction: column;
+}
+.landing-hero-actions {
+  margin-top: auto;
+  /* Keep the portrait's faces clear, including when translated copy wraps. */
+  padding-top: 12rem;
 }
 .landing-hero-media {
   position: absolute;
@@ -145,7 +155,7 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 92%, transparent) 0%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 82%, transparent) 42%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 25%, transparent) 72%, transparent 100%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 92%, transparent) 0%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 82%, transparent) 25%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 15%, transparent) 48%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 85%, transparent) 100%);
 }
 @media (min-width: 768px) {
   .landing-hero {
@@ -155,9 +165,12 @@ body {
     align-items: center;
   }
   .landing-hero-copy {
+    display: block;
     padding-top: 3rem;
     padding-bottom: 3rem;
   }
+  .landing-hero-content { display: block; }
+  .landing-hero-actions { margin-top: 1.75rem; padding-top: 0; }
   .landing-hero-image { object-position: left 78%; }
   .landing-hero-scrim {
     background: linear-gradient(to right, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 85%, transparent) 0%, color-mix(in srgb, var(--pf-dataColor-atlasEvergreen) 60%, transparent) 32%, transparent 56%);

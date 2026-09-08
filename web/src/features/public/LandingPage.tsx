@@ -192,23 +192,25 @@ export function LandingPage() {
         {/* 1. Full-bleed forest hero: live copy on the dark left, the whole scene on the right. */}
         <section className="landing-hero landing-dark" aria-labelledby="landing-hero-title">
           <div className="landing-hero-copy landing-reveal mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md md:w-[46%] lg:w-full lg:max-w-[27rem]">
+            <div className="landing-hero-content max-w-md md:w-[46%] lg:w-full lg:max-w-[27rem]">
               <h1 id="landing-hero-title" className="text-[clamp(2.25rem,5.2vw,4rem)] font-bold leading-[1.05] tracking-tight text-balance">
                 {t("landing.hero.title")}
               </h1>
               <p className="mt-4 max-w-prose text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
                 {t("landing.hero.tagline")}
               </p>
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                {getStartedLink()}
-                <a href="#how-it-works" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
-                  {t("landing.hero.secondaryCta")}
-                </a>
+              <div className="landing-hero-actions">
+                <div className="flex flex-wrap items-center gap-3">
+                  {getStartedLink()}
+                  <a href="#how-it-works" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
+                    {t("landing.hero.secondaryCta")}
+                  </a>
+                </div>
+                <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
+                  <BrandTile size={24} decorative className="rounded-md" />
+                  {t("landing.hero.note")}
+                </p>
               </div>
-              <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-                <BrandTile size={24} decorative className="rounded-md" />
-                {t("landing.hero.note")}
-              </p>
             </div>
           </div>
           <figure className="landing-hero-media landing-reveal landing-reveal-late">

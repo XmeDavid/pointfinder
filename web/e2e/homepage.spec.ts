@@ -139,6 +139,11 @@ test('the hero keeps the whole scene in view and every illustration is the impor
     const section = await page.locator('.landing-hero').boundingBox()
     expect(box!.y, `${width}px image starts at hero top`).toBeCloseTo(section!.y, 0)
     expect(box!.height, `${width}px image covers hero height`).toBeCloseTo(section!.height, 0)
+    if (width < 768) {
+      const action = await page.locator('.landing-hero-actions a').first().boundingBox()
+      // Keep the actions beneath the faces in the portrait crop.
+      expect(action!.y - section!.y, `${width}px actions clear the faces`).toBeGreaterThan(section!.height * 0.65)
+    }
     // The scene is 3:2; the visible crop never gets so wide that the characters would be cut.
     expect(box!.width / box!.height, `${width}px hero aspect`).toBeLessThanOrEqual(2.05)
     expect(await overflowFree(page)).toBe(true)

@@ -774,6 +774,9 @@ Page structure and palette:
   (`.landing-cream`), evergreen organizer band with the pointing guide and the
   real Command workspace as independent layers, compact pricing (theme-aware),
   and the forest call to action whose feet hold the footer.
+- Below `md`, hero actions sit at the bottom with space after the introduction
+  to keep the scouts' faces clear. A bottom scrim supports the action note;
+  translated copy and wrapping buttons expand the hero without clipping.
 - `.landing-page` re-maps the semantic surface tokens to the marketing palette
   (`dataColor.atlasCream*`, `atlasEvergreen*`, `atlasInk`, `atlasMist`,
   `atlasMint`) so canonical buttons, badges and cards keep their shape. The
