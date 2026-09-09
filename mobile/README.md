@@ -21,7 +21,9 @@ packages/tauri-plugin-*/      NFC, push, secure-store, sharing and lifecycle plu
 
 ## Toolchains
 
-Everything is user-local, nothing under `/usr`. Export before building:
+Everything is user-local, nothing under `/usr`. Export before building.
+
+Linux box:
 
 ```bash
 export PATH="$HOME/.cargo/bin:$HOME/.bun/bin:$PATH"
@@ -30,6 +32,21 @@ export ANDROID_HOME="$HOME/Android/Sdk"
 export NDK_HOME="$HOME/Android/Sdk/ndk/27.2.12479018"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 ```
+
+Mac (Android Studio's bundled JDK, SDK under `~/Library`, Bun from Homebrew;
+NDK 27.2 was unpacked from the r27c zip into the versioned directory):
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
+export PATH="/opt/homebrew/bin:$HOME/.cargo/bin:$ANDROID_HOME/platform-tools:$PATH"
+```
+
+The Gradle `rust` task spawns `bun` from the daemon's PATH, so if a daemon
+was started without Bun on PATH, run `gen/android/gradlew --stop` first.
+Rust needs the four Android targets (`rustup target add aarch64-linux-android
+armv7-linux-androideabi i686-linux-android x86_64-linux-android`).
 
 iOS builds run on the Mac, which has Xcode, Rust with the iOS targets, Bun,
 and `xcodegen` under `~/.local/bin`.
@@ -61,7 +78,10 @@ carry the iOS copy.
 
 Play requires `targetSdk` 36 (Android 16) and 16 KB page-aligned native
 libraries. `gen/android/app/build.gradle.kts` targets 36 and
-`src-tauri/.cargo/config.toml` pins the alignment for every Android target.
+`src-tauri/build.rs` adds the linker flag for Android targets (Tauri's own
+`CARGO_TARGET_*_RUSTFLAGS` override `.cargo/config.toml`, so it cannot live
+there). Verify a built bundle with the NDK's `llvm-readelf -lW` on
+`libmobile_lib.so`: every `LOAD` segment must show alignment `0x4000`.
 
 Android release signing reads `src-tauri/gen/android/keystore.properties`
 (git-ignored) with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`.
