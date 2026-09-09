@@ -182,7 +182,10 @@
       "created": "{{name}} created",
       "adminAttached": "{{email}} already had an account and administers the club now.",
       "adminInvited": "A registration invitation went to {{email}}. Accepting it makes them the owner.",
-      "openClub": "Open club"
+      "openClub": "Open club",
+      "dealTitle": "The deal",
+      "advancedJson": "Advanced: the resolved JSON",
+      "advancedJsonHint": "What the limits above send as quota overrides. Read-only."
     },
     "limits": {
       "title": "Limits",
@@ -204,6 +207,20 @@
       "off": "Off",
       "invalid": "Enter a number above zero.",
       "modeFor": "{{limit}} limit"
+    },
+    "createdBy": "Created by",
+    "invoice": {
+      "issueAction": "Issue invoice",
+      "issueTitle": "Issue an invoice",
+      "issueDesc": "Stripe finalizes and sends this invoice to the club’s billing contact straight away.",
+      "amount": "Amount (€)",
+      "amountHint": "The whole deal price, not a monthly rate.",
+      "description": "Description",
+      "dueDays": "Days until due",
+      "termMonths": "Months of term",
+      "termMonthsHint": "What paying this invoice buys.",
+      "confirm": "Sends {{amount}}, due in {{days}} days, buying {{months}} months of term.",
+      "sendAction": "Issue and send"
     }
   },
   "game": {
@@ -2434,6 +2451,37 @@
     }
   },
   "club": {
-    "paidUntil": "Paid until {{date}}"
+    "paidUntil": "Paid until {{date}}",
+    "owner": "Owner",
+    "tier": {
+      "free": "Free",
+      "club": "Club"
+    },
+    "status": {
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "grace_period": "In grace period",
+      "frozen": "Frozen",
+      "cancelled": "Cancelled"
+    },
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices yet",
+      "paidOn": "Paid {{date}}",
+      "dueOn": "Due {{date}}",
+      "noDueDate": "No due date",
+      "term_one": "{{count}} month of term",
+      "term_other": "{{count}} months of term",
+      "openHosted": "Open the invoice page",
+      "openPdf": "Open the PDF"
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "desc": "The new owner must already be a member, and is granted every permission.",
+      "pickMember": "Choose a member",
+      "action": "Transfer",
+      "confirm": "Hand {{club}} to {{name}}? They gain every permission over the club.",
+      "noCandidates": "There is no other member to hand the club to."
+    }
   }
 }

@@ -82,7 +82,12 @@ export interface UpdateClubRequest {
   name?: string
   tier?: OrgTier
   status?: SubscriptionStatus
-  quotaOverrides?: Record<string, number | boolean | null> | null
+  /**
+   * The whole override map. Wider than the club form's own keys because a deal
+   * may carry a per-deal key the form does not manage, and a save must not
+   * drop it.
+   */
+  quotaOverrides?: Record<string, unknown> | null
   termEnd?: string | null
   gracePeriodEnd?: string | null
   adminNote?: string | null

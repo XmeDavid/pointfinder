@@ -182,7 +182,10 @@
       "created": "{{name}} criado",
       "adminAttached": "{{email}} já tinha conta e passa a administrar o clube.",
       "adminInvited": "Foi enviado um convite de registo para {{email}}. Ao aceitá-lo passa a proprietário.",
-      "openClub": "Abrir clube"
+      "openClub": "Abrir clube",
+      "dealTitle": "O acordo",
+      "advancedJson": "Avançado: o JSON resultante",
+      "advancedJsonHint": "O que os limites acima enviam como quota overrides. Apenas leitura."
     },
     "limits": {
       "title": "Limites",
@@ -204,6 +207,20 @@
       "off": "Desligado",
       "invalid": "Introduza um número acima de zero.",
       "modeFor": "Limite de {{limit}}"
+    },
+    "createdBy": "Criado por",
+    "invoice": {
+      "issueAction": "Emitir fatura",
+      "issueTitle": "Emitir uma fatura",
+      "issueDesc": "O Stripe finaliza e envia esta fatura ao contacto de faturação do clube de imediato.",
+      "amount": "Valor (€)",
+      "amountHint": "O preço total do acordo, não um valor mensal.",
+      "description": "Descrição",
+      "dueDays": "Dias até ao vencimento",
+      "termMonths": "Meses de período",
+      "termMonthsHint": "O que o pagamento desta fatura compra.",
+      "confirm": "Envia {{amount}}, com vencimento em {{days}} dias, comprando {{months}} meses de período.",
+      "sendAction": "Emitir e enviar"
     }
   },
   "game": {
@@ -2434,6 +2451,37 @@
     }
   },
   "club": {
-    "paidUntil": "Pago até {{date}}"
+    "paidUntil": "Pago até {{date}}",
+    "owner": "Proprietário",
+    "tier": {
+      "free": "Gratuito",
+      "club": "Clube"
+    },
+    "status": {
+      "active": "Ativo",
+      "past_due": "Pagamento em atraso",
+      "grace_period": "Em período de tolerância",
+      "frozen": "Congelado",
+      "cancelled": "Cancelado"
+    },
+    "invoices": {
+      "title": "Faturas",
+      "empty": "Ainda sem faturas",
+      "paidOn": "Paga a {{date}}",
+      "dueOn": "Vence a {{date}}",
+      "noDueDate": "Sem data de vencimento",
+      "term_one": "{{count}} mês de período",
+      "term_other": "{{count}} meses de período",
+      "openHosted": "Abrir a página da fatura",
+      "openPdf": "Abrir o PDF"
+    },
+    "transfer": {
+      "title": "Transferir propriedade",
+      "desc": "O novo proprietário tem de já ser membro e recebe todas as permissões.",
+      "pickMember": "Escolher um membro",
+      "action": "Transferir",
+      "confirm": "Entregar {{club}} a {{name}}? Passa a ter todas as permissões sobre o clube.",
+      "noCandidates": "Não há outro membro a quem entregar o clube."
+    }
   }
 }

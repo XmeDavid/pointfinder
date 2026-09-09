@@ -182,7 +182,10 @@
       "created": "{{name}} angelegt",
       "adminAttached": "{{email}} hatte bereits ein Konto und verwaltet den Verein jetzt.",
       "adminInvited": "Eine Registrierungseinladung ging an {{email}}. Mit der Annahme wird daraus die Eigentümerschaft.",
-      "openClub": "Verein öffnen"
+      "openClub": "Verein öffnen",
+      "dealTitle": "Der Vertrag",
+      "advancedJson": "Erweitert: das resultierende JSON",
+      "advancedJsonHint": "Was die Limits oben als Quota-Overrides senden. Nur lesbar."
     },
     "limits": {
       "title": "Limits",
@@ -204,6 +207,20 @@
       "off": "Aus",
       "invalid": "Geben Sie eine Zahl über null ein.",
       "modeFor": "Limit für {{limit}}"
+    },
+    "createdBy": "Erstellt von",
+    "invoice": {
+      "issueAction": "Rechnung stellen",
+      "issueTitle": "Eine Rechnung stellen",
+      "issueDesc": "Stripe finalisiert diese Rechnung und sendet sie sofort an den Rechnungskontakt des Vereins.",
+      "amount": "Betrag (€)",
+      "amountHint": "Der gesamte Vertragspreis, kein Monatsbetrag.",
+      "description": "Beschreibung",
+      "dueDays": "Tage bis zur Fälligkeit",
+      "termMonths": "Monate Laufzeit",
+      "termMonthsHint": "Was die Zahlung dieser Rechnung kauft.",
+      "confirm": "Sendet {{amount}}, fällig in {{days}} Tagen, kauft {{months}} Monate Laufzeit.",
+      "sendAction": "Stellen und senden"
     }
   },
   "game": {
@@ -2434,6 +2451,37 @@
     }
   },
   "club": {
-    "paidUntil": "Bezahlt bis {{date}}"
+    "paidUntil": "Bezahlt bis {{date}}",
+    "owner": "Eigentümer",
+    "tier": {
+      "free": "Kostenlos",
+      "club": "Verein"
+    },
+    "status": {
+      "active": "Aktiv",
+      "past_due": "Zahlung überfällig",
+      "grace_period": "In Kulanzfrist",
+      "frozen": "Eingefroren",
+      "cancelled": "Gekündigt"
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "empty": "Noch keine Rechnungen",
+      "paidOn": "Bezahlt am {{date}}",
+      "dueOn": "Fällig am {{date}}",
+      "noDueDate": "Kein Fälligkeitsdatum",
+      "term_one": "{{count}} Monat Laufzeit",
+      "term_other": "{{count}} Monate Laufzeit",
+      "openHosted": "Rechnungsseite öffnen",
+      "openPdf": "PDF öffnen"
+    },
+    "transfer": {
+      "title": "Eigentum übertragen",
+      "desc": "Die neue Eigentümerin muss bereits Mitglied sein und erhält alle Berechtigungen.",
+      "pickMember": "Mitglied auswählen",
+      "action": "Übertragen",
+      "confirm": "{{club}} an {{name}} übergeben? Damit erhält diese Person alle Berechtigungen über den Verein.",
+      "noCandidates": "Es gibt kein anderes Mitglied, dem der Verein übergeben werden kann."
+    }
   }
 }
