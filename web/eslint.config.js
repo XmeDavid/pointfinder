@@ -20,4 +20,18 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Native plugins are reached through src/platform only, so features stay
+    // runnable in the browser and every native capability has one adapter.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/platform/**'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['@tauri-apps/*', 'tauri-plugin-*'],
+          message: 'Import native capabilities from @/platform instead of a Tauri plugin.',
+        }],
+      }],
+    },
+  },
 ])

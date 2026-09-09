@@ -11,6 +11,12 @@ export const kv: KeyValueStore = {
   set: async (key, value) => isNative() ? (await import('./tauri/kv')).kv.set(key, value) : browserSettings.set(key, value),
   remove: async (key) => isNative() ? (await import('./tauri/kv')).kv.remove(key) : browserSettings.remove(key),
 }
+/** Secrets that must survive reinstalls of the web bundle: Keychain / Keystore on phones, localStorage in the browser. */
+export const secrets: KeyValueStore = {
+  get: async (key) => isNative() ? (await import('./tauri/secureKv')).secureKv.get(key) : localStorage.getItem(`pf.${key}`),
+  set: async (key, value) => isNative() ? (await import('./tauri/secureKv')).secureKv.set(key, value) : localStorage.setItem(`pf.${key}`, value),
+  remove: async (key) => isNative() ? (await import('./tauri/secureKv')).secureKv.remove(key) : localStorage.removeItem(`pf.${key}`),
+}
 export const gameCache: GameCache = {
   load: async (key) => isNative() ? (await import('./tauri/gameCache')).gameCache.load(key) : browserGameCache.load(key),
   save: async (key, version, snapshot) => isNative() ? (await import('./tauri/gameCache')).gameCache.save(key, version, snapshot) : browserGameCache.save(key, version, snapshot),
