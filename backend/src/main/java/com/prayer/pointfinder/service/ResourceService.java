@@ -5,6 +5,7 @@ import com.prayer.pointfinder.dto.request.UpdateResourceRequest;
 import com.prayer.pointfinder.dto.response.ResourceResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.ResourceFolderRepository;
@@ -75,6 +76,7 @@ public class ResourceService {
             resource.setSizeBytes((long) content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length);
         } else {
             validateFileProvided(file);
+            quotaService.enforceOrgFileSizeLimit(org, file.getSize());
             enforceOrgStorageQuota(org, file.getSize());
             resource = resourceRepository.save(resource); // need ID for S3 key
             String s3Key = buildS3Key(orgId.toString(), resource.getId(), file.getOriginalFilename());
@@ -130,6 +132,7 @@ public class ResourceService {
             resource.setSizeBytes((long) content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length);
         } else {
             validateFileProvided(file);
+            quotaService.enforceFileSizeLimit(game, file.getSize());
             enforceGameStorageQuota(game, file.getSize());
             resource = resourceRepository.save(resource);
             String ownerId = game.getOrganization() != null
@@ -252,12 +255,19 @@ public class ResourceService {
         }
     }
 
+    /**
+     * Storage limits bound real bytes in object storage rather than a product
+     * feature, so — like the org member limit — they are enforced in every
+     * deployment, not behind {@code app.quota.enforcement-enabled}. They carry
+     * a code now so a client can tell a full workspace from a bad request.
+     */
     private void enforceOrgStorageQuota(Organization org, long uploadSize) {
         long maxBytes = quotaService.getMaxResourceStorageBytes(org);
         if (maxBytes <= 0) return;
         long used = resourceRepository.sumSizeBytesByOrganizationId(org.getId());
         if (used + uploadSize > maxBytes) {
-            throw new BadRequestException("Organization storage quota exceeded");
+            throw new BadRequestException("Organization storage quota exceeded",
+                    ErrorCode.QUOTA_RESOURCE_STORAGE_EXCEEDED);
         }
     }
 
@@ -270,7 +280,8 @@ public class ResourceService {
             if (maxBytes <= 0) return;
             long used = resourceRepository.sumSizeBytesByCreatedByIdAndOrganizationIsNull(currentUser.getId());
             if (used + uploadSize > maxBytes) {
-                throw new BadRequestException("Personal storage quota exceeded");
+                throw new BadRequestException("Personal storage quota exceeded",
+                        ErrorCode.QUOTA_RESOURCE_STORAGE_EXCEEDED);
             }
         }
     }

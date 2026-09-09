@@ -323,6 +323,7 @@ public class GameService {
         Game game = gameAccessService.getAccessibleGame(gameId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        quotaService.enforceOperatorsPerGameLimit(game);
         game.getOperators().add(user);
         gameRepository.save(game);
     }

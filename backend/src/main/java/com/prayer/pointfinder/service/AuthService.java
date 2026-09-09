@@ -52,6 +52,7 @@ public class AuthService {
     private final EmailService emailService;
     private final UserSubscriptionRepository userSubRepository;
     private final LoginAttemptService loginAttemptService;
+    private final QuotaService quotaService;
 
     @Transactional(timeout = 10)
     public AuthResponse login(LoginRequest request) {
@@ -94,6 +95,13 @@ public class AuthService {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email already registered");
+        }
+
+        // Registering through a game invite is an accept, so it answers to the
+        // same operator limit — checked before the account is created, so a
+        // refusal does not leave a user behind.
+        if (invite.getGame() != null) {
+            quotaService.enforceOperatorsPerGameLimit(invite.getGame());
         }
 
         validatePassword(request.getPassword());

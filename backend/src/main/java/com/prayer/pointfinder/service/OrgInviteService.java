@@ -38,11 +38,7 @@ public class OrgInviteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
 
         // Check member quota (pending invites don't count, only existing members)
-        int currentCount = membershipRepository.countByOrganizationId(orgId);
-        int maxMembers = quotaService.getMaxMembers(org);
-        if (maxMembers > 0 && currentCount >= maxMembers) {
-            throw new BadRequestException("Organization has reached its member limit (" + maxMembers + ")");
-        }
+        quotaService.enforceOrgMemberLimit(org);
 
         // Check if email is already a member
         userRepository.findByEmail(email).ifPresent(existingUser -> {

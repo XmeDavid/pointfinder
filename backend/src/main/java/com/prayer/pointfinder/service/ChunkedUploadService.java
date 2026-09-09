@@ -62,6 +62,7 @@ public class ChunkedUploadService {
     private final ApnsPushService apnsPushService;
     private final FcmPushService fcmPushService;
     private final ChunkedUploadProperties uploadProps;
+    private final QuotaService quotaService;
 
     @Transactional(timeout = 10)
     public UploadSessionResponse createSession(UUID gameId, Player authPlayer, UploadSessionInitRequest request) {
@@ -76,6 +77,10 @@ public class ChunkedUploadService {
         Instant now = Instant.now();
         expireStaleSessionsForPlayerInGame(gameId, player.getId(), now);
         SessionMetadata metadata = validateSessionMetadata(request);
+        // The plan's own cap, on top of the deployment-wide ceiling checked in
+        // validateSessionMetadata. Checked at session creation so the player
+        // hears about it before the first chunk leaves the device.
+        quotaService.enforceFileSizeLimit(player.getTeam().getGame(), metadata.totalSizeBytes());
 
         if (metadata.mediaItemKey() != null) {
             var existing = findRecoverableSessionByMediaItemKey(gameId, player.getId(), metadata.mediaItemKey());

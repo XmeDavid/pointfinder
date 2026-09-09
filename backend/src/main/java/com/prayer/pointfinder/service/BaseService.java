@@ -92,6 +92,7 @@ public class BaseService {
     public BaseResponse createBase(UUID gameId, CreateBaseRequest request) {
         Game game = lockAccessibleGame(gameId);
         if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) requireSetup(game);
+        quotaService.enforceBasesPerGameLimit(game);
 
         Challenge fixedChallenge = null;
         if (request.getFixedChallengeId() != null) {

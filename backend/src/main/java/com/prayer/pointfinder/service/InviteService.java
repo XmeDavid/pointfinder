@@ -33,6 +33,7 @@ public class InviteService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final GameAccessService gameAccessService;
+    private final QuotaService quotaService;
 
     @Transactional(readOnly = true)
     public List<InviteResponse> getGlobalInvites() {
@@ -111,6 +112,8 @@ public class InviteService {
             if (alreadyOperator) {
                 throw new BadRequestException("This operator is already assigned to the game.");
             }
+
+            quotaService.enforceOperatorsPerGameLimit(game);
         } else {
             gameAccessService.ensureCurrentUserIsAdmin();
         }
@@ -155,6 +158,11 @@ public class InviteService {
         if (invite.getGame() == null) {
             throw new BadRequestException("This is a registration invite and cannot be accepted this way.");
         }
+
+        // Checked again here, not only at invite time: an invite sent while
+        // the game had room can otherwise be accepted after other operators
+        // have filled it.
+        quotaService.enforceOperatorsPerGameLimit(invite.getGame());
 
         invite.setStatus(InviteStatus.accepted);
         inviteRepository.save(invite);

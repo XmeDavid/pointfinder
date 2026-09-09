@@ -41,6 +41,7 @@ public class PlayerController {
     private final PlayerPushTokenService playerPushTokenService;
     private final ChunkedUploadService chunkedUploadService;
     private final FileStorageService fileStorageService;
+    private final com.prayer.pointfinder.service.QuotaService quotaService;
     private final Validator validator;
 
     // Player-authenticated endpoints below
@@ -88,6 +89,9 @@ public class PlayerController {
             @RequestParam(value = "answer", required = false, defaultValue = "") String answer,
             @RequestParam(value = "idempotencyKey", required = false) UUID idempotencyKey) {
         Player player = SecurityUtils.getCurrentPlayer();
+
+        // The plan's per-file cap, before any bytes are written to storage.
+        quotaService.enforceFileSizeLimit(gameId, file.getSize());
 
         // Store the file and get the URL
         String fileUrl = fileStorageService.store(file, gameId);

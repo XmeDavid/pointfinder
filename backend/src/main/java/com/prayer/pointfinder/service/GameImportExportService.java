@@ -273,6 +273,9 @@ public class GameImportExportService {
         if (importsLocation) {
             quotaService.enforceLocationCheckIn(newGame);
         }
+        // The whole batch is weighed before anything is written, so an import
+        // that does not fit says so once instead of dying halfway through.
+        quotaService.enforceImportedBasesLimit(newGame, data.getBases().size());
         newGame = gameRepository.save(newGame);
 
         // Import tag vocabulary — upsert by label so round-trips are stable

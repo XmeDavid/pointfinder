@@ -43,11 +43,7 @@ public class OrgMembershipService {
         Organization org = orgRepository.findById(orgId)
             .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
 
-        int currentCount = membershipRepository.countByOrganizationId(orgId);
-        int maxMembers = quotaService.getMaxMembers(org);
-        if (maxMembers > 0 && currentCount >= maxMembers) {
-            throw new BadRequestException("Organization has reached its member limit (" + maxMembers + ")");
-        }
+        quotaService.enforceOrgMemberLimit(org);
 
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found"));

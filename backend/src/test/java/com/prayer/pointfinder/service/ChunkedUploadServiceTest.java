@@ -79,6 +79,8 @@ class ChunkedUploadServiceTest {
     private ApnsPushService apnsPushService;
     @Mock
     private FcmPushService fcmPushService;
+    @Mock
+    private QuotaService quotaService;
 
     private ChunkedUploadService chunkedUploadService;
     private ChunkedUploadProperties testUploadProps;
@@ -107,7 +109,8 @@ class ChunkedUploadServiceTest {
                 meterRegistry,
                 apnsPushService,
                 fcmPushService,
-                props
+                props,
+                quotaService
         );
         Counter counter = mock(Counter.class);
         when(meterRegistry.counter(any(String.class))).thenReturn(counter);

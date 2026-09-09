@@ -131,32 +131,43 @@ public class QuotaService {
         }
     }
 
+    /** One more base on an existing game. */
     public void enforceBasesPerGameLimit(Game game) {
         if (!enforcementEnabled) return;
-        Integer max;
-        if (game.getOrganization() != null) {
-            max = resolveOrgLimits(game.getOrganization()).maxBasesPerGame();
-        } else {
-            UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            max = resolvePersonalLimits(sub).maxBasesPerGame();
-        }
-        if (max == null) return;
+        enforceBaseCount(game, gameRepository.countBasesByGameId(game.getId()), 1);
+    }
 
-        long current = gameRepository.countBasesByGameId(game.getId());
-        if (current >= max) {
+    /**
+     * The whole imported batch, checked before the first base row is written.
+     * An import that would land over the limit is refused up front with one
+     * clear error, rather than failing partway through and rolling back work
+     * the operator has already watched start.
+     *
+     * <p>Takes the game before it is persisted — the limit resolves from its
+     * owner, not from anything in the database — so the count is always
+     * against a fresh game's zero bases.
+     */
+    public void enforceImportedBasesLimit(Game game, int importedBases) {
+        if (!enforcementEnabled) return;
+        enforceBaseCount(game, 0, importedBases);
+    }
+
+    private void enforceBaseCount(Game game, long current, int additional) {
+        Integer max = resolveGameLimits(game).maxBasesPerGame();
+        if (max == null) return;
+        if (current + additional > max) {
             throw new BadRequestException("Base limit reached (" + max + ")", ErrorCode.QUOTA_BASES_PER_GAME_EXCEEDED);
         }
     }
 
+    /**
+     * One more operator on the game. Called both when an invite is created and
+     * again when it is accepted: an invite sent under the limit can otherwise
+     * be accepted long after other operators have filled the game.
+     */
     public void enforceOperatorsPerGameLimit(Game game) {
         if (!enforcementEnabled) return;
-        Integer max;
-        if (game.getOrganization() != null) {
-            max = resolveOrgLimits(game.getOrganization()).maxOperatorsPerGame();
-        } else {
-            UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            max = resolvePersonalLimits(sub).maxOperatorsPerGame();
-        }
+        Integer max = resolveGameLimits(game).maxOperatorsPerGame();
         if (max == null) return;
 
         long current = gameRepository.countOperatorsByGameId(game.getId());
@@ -166,19 +177,63 @@ public class QuotaService {
     }
 
     /**
+     * Rejects an upload larger than the plan's per-file cap, on every path
+     * that accepts bytes: a direct multipart submission, a chunked upload
+     * session (checked at creation, so a player is told before the first
+     * chunk leaves the device), and an operator resource upload.
+     */
+    public void enforceFileSizeLimit(Game game, long sizeBytes) {
+        if (!enforcementEnabled) return;
+        enforceFileSize(getMaxFileSizeBytesOrNull(game), sizeBytes);
+    }
+
+    /** By game id, for the direct multipart submission upload. */
+    @Transactional(readOnly = true)
+    public void enforceFileSizeLimit(UUID gameId, long sizeBytes) {
+        if (!enforcementEnabled) return;
+        Game game = gameRepository.findById(gameId)
+            .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        enforceFileSizeLimit(game, sizeBytes);
+    }
+
+    /** The org-resource path: a resource can belong to an org with no game. */
+    public void enforceOrgFileSizeLimit(Organization org, long sizeBytes) {
+        if (!enforcementEnabled) return;
+        enforceFileSize(resolveOrgLimits(org).maxFileSizeBytes(), sizeBytes);
+    }
+
+    private void enforceFileSize(Long max, long sizeBytes) {
+        if (max == null) return; // an override of null means unlimited
+        if (sizeBytes > max) {
+            throw new BadRequestException(
+                "File size exceeds the limit for this plan (" + max + " bytes)",
+                ErrorCode.QUOTA_FILE_SIZE_EXCEEDED);
+        }
+    }
+
+    /**
+     * The organization's member limit. Unlike the per-game quotas this is not
+     * behind {@code app.quota.enforcement-enabled}: a seat count is what a
+     * club deal actually buys, so it holds in every deployment. It carries a
+     * code now so clients can tell it apart from a validation error.
+     */
+    public void enforceOrgMemberLimit(Organization org) {
+        int max = getMaxMembers(org);
+        if (max <= 0) return;
+        if (membershipRepository.countByOrganizationId(org.getId()) >= max) {
+            throw new BadRequestException(
+                "Organization has reached its member limit (" + max + ")",
+                ErrorCode.QUOTA_ORG_MEMBERS_EXCEEDED);
+        }
+    }
+
+    /**
      * Location check-in is an entitlement, not a counter: the free tier may
      * build NFC and QR bases only. Resolved per game so an org game follows
      * the org's plan and a personal game the creator's.
      */
     public boolean isLocationCheckInAllowed(Game game) {
-        QuotaResponse.Limits limits;
-        if (game.getOrganization() != null) {
-            limits = resolveOrgLimits(game.getOrganization());
-        } else {
-            UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            limits = resolvePersonalLimits(sub);
-        }
-        return !Boolean.FALSE.equals(limits.locationCheckIn());
+        return !Boolean.FALSE.equals(resolveGameLimits(game).locationCheckIn());
     }
 
     /**
@@ -222,13 +277,7 @@ public class QuotaService {
 
     public void enforcePlayersPerGameLimit(Game game) {
         if (!enforcementEnabled) return;
-        Integer max;
-        if (game.getOrganization() != null) {
-            max = resolveOrgLimits(game.getOrganization()).maxPlayersPerGame();
-        } else {
-            UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-            max = resolvePersonalLimits(sub).maxPlayersPerGame();
-        }
+        Integer max = resolveGameLimits(game).maxPlayersPerGame();
         if (max == null) return;
 
         long current = playerRepository.countByGameId(game.getId());
@@ -237,17 +286,18 @@ public class QuotaService {
         }
     }
 
-    public int getMaxMembers(Organization org) {
+    private int getMaxMembers(Organization org) {
         QuotaResponse.Limits limits = resolveOrgLimits(org);
         return limits.maxMembers() != null ? limits.maxMembers() : Integer.MAX_VALUE;
     }
 
     public long getMaxFileSizeBytes(Game game) {
-        if (game.getOrganization() != null) {
-            return resolveOrgLimits(game.getOrganization()).maxFileSizeBytes();
-        }
-        UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
-        return resolvePersonalLimits(sub).maxFileSizeBytes();
+        Long max = getMaxFileSizeBytesOrNull(game);
+        return max != null ? max : Long.MAX_VALUE;
+    }
+
+    private Long getMaxFileSizeBytesOrNull(Game game) {
+        return resolveGameLimits(game).maxFileSizeBytes();
     }
 
     public long getMaxResourceStorageBytes(Organization org) {
@@ -269,6 +319,19 @@ public class QuotaService {
     }
 
     // --- Limit Resolution ---
+
+    /**
+     * The limits that bound a game: the owning organization's when it has one,
+     * otherwise the creator's personal plan. Every per-game quota resolves
+     * through here so ownership is read one way and one way only.
+     */
+    private QuotaResponse.Limits resolveGameLimits(Game game) {
+        if (game.getOrganization() != null) {
+            return resolveOrgLimits(game.getOrganization());
+        }
+        UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
+        return resolvePersonalLimits(sub);
+    }
 
     private QuotaResponse.Limits resolvePersonalLimits(UserSubscription sub) {
         if (sub == null || sub.getTier() == IndividualTier.free) {
