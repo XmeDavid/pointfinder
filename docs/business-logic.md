@@ -18,6 +18,7 @@
 7. [Push Notifications](#7-push-notifications)
 8. [Broadcast Mode](#8-broadcast-mode)
 9. [Operator Onboarding and Tutorials](#9-operator-onboarding-and-tutorials)
+10. [Plans, Workspaces and Clubs](#10-plans-workspaces-and-clubs)
 
 ---
 
@@ -1407,6 +1408,68 @@ challenges in the same order from opposite ends, built in the assignment grid) a
 
 - **`fixed-route`** — a `practice-game` scenario that turns on `enforceBaseOrder`, explains the game-wide `unlockTrigger`, and opens the route editor. It teaches no new rule: every base already carries an `orderIndex` from creation, so `BaseOrderService.sequenceNumbers` always numbers the whole route and readiness has nothing to check.
 - **`exploration`** — a `practice-game` scenario that hides one base and writes the clue into another challenge's completion text. It reflects the real player contract: `PlayerService.getProgress` omits a hidden, not-yet-visited base entirely, so it has no map pin and no list row, while a hidden `LOCATION` base still geofences because `buildCandidates` keeps hidden rows. The copy teaches the clue text; the unlock mechanism (`Challenge.unlocksBaseIds`, edited in the challenge form's "Reveals bases" section) is the `unlock-chain` scenario's lesson.
+
+---
+
+## 10. Plans, Workspaces and Clubs
+
+### Personal plans are self-serve; clubs are not
+
+There is exactly one self-serve plan. **Personal Pro costs €3.99 a month or
+€30 a year**, and both cycles are offered wherever the plan is offered: the
+public pricing section and the operator billing tab share
+`BillingCycleToggle`, the amounts in `web/src/lib/pricing.ts` and one
+`Intl.NumberFormat` price formatter, so no screen carries a euro literal.
+The toggle's `monthly` / `yearly` choice maps to the `monthly` / `annual`
+cycle the checkout API expects.
+
+**Clubs are sales-led.** No club or institution checkout exists in the UI:
+
+- `/org/create` stays a route so the workspace switcher's "+" has a
+  destination, but it explains what a club includes and offers a contact
+  link. It creates nothing.
+- The billing tab shows a single Club information block with the same
+  contact call to action, never a club price and never a seat count. A
+  club's limits are agreed with us, and every surface says so in the same
+  words (`billing.club*`, `org.club*`, `landing.pricing.club*`).
+- Club billing therefore has no client-side entry point: the account, its
+  limits and its invoicing are set up by us.
+
+The single contact address lives in `web/src/lib/contact.ts` and is used by
+the landing page, the billing tab and `/org/create`.
+
+### Which billing controls a workspace member sees
+
+The personal workspace always shows its own plan and portal. In an **org
+workspace, subscription controls appear only for a member holding
+`MANAGE_BILLING`** (bit 32); other members see the club information block
+and their usage, and no upgrade or portal control at all.
+
+### The active workspace is a device preference, validated against the server
+
+The active workspace is persisted per device (`pointfinder-workspace`). It
+can therefore name an org the account has since left, been removed from, or
+that was deleted — a workspace whose every request would 403. The
+`/workspaces` list is the authority: `useWorkspaces` reconciles the
+persisted workspace as soon as the list loads, **falling back to personal
+when the org is gone** and adopting a rename made elsewhere.
+
+### Club settings
+
+The members page owns club settings, so every membership decision sits on
+one surface:
+
+- **Rename** (`PATCH /api/orgs/{id}`) for a member holding `MANAGE_PERMS`,
+  or the club's creator.
+- **Delete** (`DELETE /api/orgs/{id}`) for the creator only, behind the
+  shared destructive confirm dialog. On success the client switches to the
+  personal workspace, because the one it was standing in no longer exists.
+- Pending invites show their status, so an `expired` invite reads as
+  expired rather than as one still awaiting an answer.
+
+Leaving a club, declining an invite, transferring ownership and showing a
+paid-until date are **not** implemented on the client yet; they wait on the
+matching endpoints.
 
 ---
 

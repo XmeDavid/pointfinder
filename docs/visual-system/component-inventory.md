@@ -217,6 +217,18 @@ Modes: Operator Command
 States: active, stale, no signal  
 Notes: Centralizes operator location freshness semantics for leaderboard and map-adjacent UI.
 
+Component: BillingCycleToggle  
+Status: canonical  
+Location: `web/src/components/ui/billing-cycle-toggle.tsx`\
+Modes: Public / Marketing, Admin / Organization / Billing  
+States: monthly selected, yearly selected, long translated labels  
+Notes: The only billing-cycle segmented control. Shared by the landing pricing
+card and `BillingTab`, so both offer the same choice with the same affordance.
+Its `monthly` / `yearly` value is presentation; `CHECKOUT_CYCLE` in
+`web/src/lib/pricing.ts` maps it to the `monthly` / `annual` cycle the checkout
+API expects. Prices are never literals: `formatPrice` renders them through
+`Intl.NumberFormat` in the reader's language. Preview: Core/BillingCycleToggle.
+
 Component: SurfacePanel  
 Status: canonical  
 Location: `web/src/components/layout/SurfacePanel.tsx`\
@@ -769,7 +781,11 @@ Page structure and palette:
 
 - Personal pricing opens on Monthly (€3.99/month), with Monthly first in the
   billing toggle and an annual-savings offer. Selecting Yearly shows €30/year
-  and the saving against twelve monthly payments; all copy is localized.
+  and the saving against twelve monthly payments; all copy is localized. The
+  toggle is the canonical `BillingCycleToggle`, and both amounts come from
+  `web/src/lib/pricing.ts`, so the operator billing tab offers exactly the same
+  two prices. The club card quotes no price: it links to the shared contact
+  address in `web/src/lib/contact.ts`.
 - Five bands: forest hero (`.landing-dark`), cream three-step explanation
   (`.landing-cream`), evergreen organizer band with the pointing guide and the
   real Command workspace as independent layers, compact pricing (theme-aware),
@@ -794,3 +810,19 @@ Page structure and palette:
   both themes, 320–1600 px without horizontal overflow, reduced motion, images
   blocked, hero crop keeps the whole scene, every illustration is the imported
   file).
+
+Component: OrgSettingsSection  
+Status: canonical  
+Location: `web/src/features/org/OrgSettingsSection.tsx`\
+Modes: Admin / Organization / Billing  
+States: unchanged name (save disabled), empty name (save disabled), saving,
+saved, failed rename, creator danger zone, delete confirm, failed delete.
+Notes: Club rename and delete, on the members page so every membership
+decision sits on one surface. Rename needs `MANAGE_PERMS` or the creator;
+delete is the creator's alone and goes through the shared
+`ConfirmDeleteDialog`. A successful delete switches the workspace back to
+personal and returns to the dashboard. `MemberPermissionsDialog` beside it now
+composes the canonical `Dialog`, so it traps focus, closes on Escape and
+reports a failed save. Test ids: `org-settings`, `org-name-input`,
+`org-rename-save`, `org-rename-saved`, `org-danger-zone`, `org-delete-btn`,
+`member-permissions-dialog`, `member-permissions-save`.
