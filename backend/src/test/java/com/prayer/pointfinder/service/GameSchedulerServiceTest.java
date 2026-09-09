@@ -75,7 +75,6 @@ class GameSchedulerServiceTest {
         // Default thresholds for the detector; individual tests may override via
         // ReflectionTestUtils when they need a shorter/longer window.
         ReflectionTestUtils.setField(gameSchedulerService, "needsAttentionThresholdMinutes", 15L);
-        ReflectionTestUtils.setField(gameSchedulerService, "stalledThresholdMinutes", 2L);
     }
 
     // ── autoEndGames ───────────────────────────────────────────────────
@@ -428,9 +427,8 @@ class GameSchedulerServiceTest {
 
     @Test
     void detectNeedsAttentionUploadsIgnoresActiveSessions() {
-        // Active sessions are handled by the Wave D stalled-active scheduler,
-        // not by the needs-attention detector. The repository query only
-        // returns completed sessions, so the detector must stay silent even
+        // Active sessions are not the detector's concern. The repository query
+        // only returns completed sessions, so the detector must stay silent even
         // when there are plenty of active sessions in the system.
         when(uploadSessionRepository.findCompletedNeedsAttention(any(Instant.class)))
                 .thenReturn(List.of());

@@ -584,10 +584,6 @@ This means a player can interrupt an upload, kill the app, return hours later, a
 
 This is a non-negotiable product principle. No future change to this scheduler may turn it into a garbage collector.
 
-**Wave D placeholder**
-
-A second property `app.uploads.stalled-threshold-minutes` (default `2`) is registered now so that the Wave D stalled-active scheduler has a config knob in place without requiring another deploy. No scheduler currently consumes it.
-
 **Operator visibility (Wave D)**
 
 The operator-facing endpoints, WebSocket broadcast topics, and web UI for needs-attention uploads are scoped to Wave D and not part of this wave. The schema, FK linkage, and detector are landing first so that Wave D has clean data to surface.

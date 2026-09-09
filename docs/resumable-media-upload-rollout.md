@@ -39,4 +39,4 @@ As of migration `V34__upload_session_submission_link.sql`, every `upload_session
 
 > **The detector is ALERT-ONLY.** It never modifies, deletes, or fails any session or submission. The player can always come back days or weeks later and retry the submission, which will populate the FK normally. See `docs/business-logic.md` § "Upload Session ↔ Submission Contract" and the source spec at `docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md` (P0 Media Reliability) for the full contract and the rationale.
 
-A second property `app.uploads.stalled-threshold-minutes` (default `2`) is registered for the Wave D stalled-active scheduler that will surface mid-upload stalls; no scheduler currently consumes it. Operator-facing endpoints, WebSocket broadcasts, and the web UI for these signals land in Wave D.
+Mid-upload stalls (active sessions whose chunks stop arriving) have no detector yet. When one is added it needs its own threshold property, scheduler method, and repository query; none of those exist today.

@@ -145,34 +145,6 @@ public interface UploadSessionRepository extends JpaRepository<UploadSession, UU
     }
 
     /**
-     * Returns active upload sessions whose {@code updatedAt} has not moved in
-     * longer than the given cutoff. These are candidates for the Wave D
-     * stalled-active scheduler. Written now while the schema is fresh in memory;
-     * currently not wired into a scheduler — Wave D will register the caller.
-     *
-     * <p>Ordered ascending by {@code updatedAt} so the longest-stalled uploads
-     * surface first. Capped at 500 rows to bound a single scheduler tick.
-     */
-    @Query("""
-            SELECT s
-            FROM UploadSession s
-            WHERE s.status = com.prayer.pointfinder.entity.UploadSessionStatus.active
-              AND s.updatedAt < :olderThan
-            ORDER BY s.updatedAt ASC
-            """)
-    List<UploadSession> findStalledActiveSessions(
-            @Param("olderThan") Instant olderThan,
-            Pageable pageable
-    );
-
-    default List<UploadSession> findStalledActiveSessions(Instant olderThan) {
-        return findStalledActiveSessions(
-                olderThan,
-                PageRequest.of(0, 500)
-        );
-    }
-
-    /**
      * Returns completed upload sessions for a (player, game) whose
      * {@code submission_id} is still NULL. Used by {@code PlayerService} after a
      * new submission is created to populate the FK for every matching media item.

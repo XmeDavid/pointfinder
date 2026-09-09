@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +51,24 @@ class JwtAuthenticationFilterTest {
 
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    void repositoryFailurePropagatesInsteadOfContinuingAnonymously() {
+        UUID userId = UUID.randomUUID();
+        String jwt = "valid.user.token";
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
+        when(tokenProvider.validateToken(jwt)).thenReturn(true);
+        when(tokenProvider.getTokenType(jwt)).thenReturn("user");
+        when(tokenProvider.getUserIdFromToken(jwt)).thenReturn(userId);
+        when(userRepository.findById(userId)).thenThrow(new IllegalStateException("db down"));
+
+        assertThatThrownBy(() -> filter.doFilterInternal(request, response, filterChain))
+                .isInstanceOf(IllegalStateException.class);
+
+        verifyNoInteractions(filterChain);
+        verify(response, never()).setStatus(anyInt());
     }
 
     @Test

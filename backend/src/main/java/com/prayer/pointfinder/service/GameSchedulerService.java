@@ -48,16 +48,6 @@ public class GameSchedulerService {
     private long needsAttentionThresholdMinutes;
 
     /**
-     * Registered here so the Wave D stalled-active scheduler has a property to
-     * read. Default 2 minutes. This property is intentionally not consumed by any
-     * scheduler yet — adding a setter-ready field now avoids a second restart in
-     * Wave D. See docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md.
-     */
-    @SuppressWarnings("unused") // wired in Wave D
-    @Value("${app.uploads.stalled-threshold-minutes:2}")
-    private long stalledThresholdMinutes;
-
-    /**
      * Ends practice games (tutorial games) that have reached their expiry, in
      * setup or live. Ended games keep their content and no longer count
      * anywhere, so a late "keep" still works.
