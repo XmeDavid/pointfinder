@@ -5,10 +5,14 @@ import { ERROR_CODES } from "@pointfinder/api";
 
 const JAVA_ENUM = resolve(__dirname, "../../../backend/src/main/java/com/prayer/pointfinder/exception/ErrorCode.java");
 
-/** Enum constants only: an upper-case identifier alone on its line, optionally followed by a comma. */
+/**
+ * Enum constants only: an upper-case identifier at the start of a line,
+ * optionally followed by a comma or semicolon and a trailing line comment.
+ * Javadoc and section comments start with `*` or `//`, so they never match.
+ */
 function backendCodes(): string[] {
   const body = readFileSync(JAVA_ENUM, "utf-8");
-  return [...body.matchAll(/^\s+([A-Z][A-Z0-9_]+),?\s*$/gm)].map((m) => m[1]);
+  return [...body.matchAll(/^\s+([A-Z][A-Z0-9_]+)\s*[,;]?\s*(?:\/\/.*)?$/gm)].map((m) => m[1]);
 }
 
 describe("ERROR_CODES", () => {
