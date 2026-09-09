@@ -85,9 +85,12 @@ there). Verify a built bundle with the NDK's `llvm-readelf -lW` on
 
 Android release signing reads `src-tauri/gen/android/keystore.properties`
 (git-ignored) with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`.
-`storeFile` must be the upload key the legacy app used
-(`android-app/app-key.jks`, same alias), otherwise Play refuses the bundle.
-Without the file, release builds are unsigned. Never commit it.
+The Play upload key lives next to it as `src-tauri/gen/android/upload-key.jks`
+(git-ignored; it is the key the legacy app shipped with, moved out of
+`android-app/` so that directory can be deleted), so `storeFile=upload-key.jks`.
+Play refuses bundles signed with any other key. Without the properties file,
+release builds are unsigned. Never commit either file, and keep a backup of
+the keystore outside this checkout.
 
 iOS uses the same team `ZQ6CKMW9NA` and the same capabilities as the legacy
 app: push, NFC tag reading, and associated domains for both hosts. Export for

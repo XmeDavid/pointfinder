@@ -12,6 +12,7 @@ android-app/local.properties
 # Sensitive / release artifacts
 secrets/
 android-app/app-key.jks
+mobile/src-tauri/gen/android/upload-key.jks
 android-app/pepk.jar
 android-app/app/release/
 
