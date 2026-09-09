@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { IconRail } from "./IconRail";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspaceContext } from "@/stores/workspaceContext";
 const platform = vi.hoisted(() => ({ native: false }));
 vi.mock('@/platform/runtime', () => ({ isNative: () => platform.native, isNativeEntry: () => platform.native }));
 
@@ -23,6 +24,33 @@ describe("IconRail", () => {
     useWorkspaceStore.setState({
       mode: "build",
       settingsPanelOpen: false,
+    });
+    useWorkspaceContext.setState({ active: { type: "personal" } });
+  });
+
+  describe("org workspace navigation", () => {
+    it("offers members and resources only in an org workspace", () => {
+      useWorkspaceContext.setState({
+        active: { type: "org", orgId: "org-1", orgName: "Scout Group 42" },
+      });
+      renderWithRouter(<IconRail showModes={false} />);
+      const rail = within(screen.getByTestId("icon-rail-desktop"));
+      expect(rail.getByTestId("org-members-btn")).toHaveAccessibleName("Members");
+      expect(rail.getByTestId("org-resources-btn")).toBeInTheDocument();
+    });
+
+    it("hides both from the personal workspace", () => {
+      renderWithRouter(<IconRail showModes={false} />);
+      expect(screen.queryByTestId("org-members-btn")).toBeNull();
+      expect(screen.queryByTestId("org-resources-btn")).toBeNull();
+    });
+
+    it("keeps them out of the game workspace, where the rail shows modes", () => {
+      useWorkspaceContext.setState({
+        active: { type: "org", orgId: "org-1", orgName: "Scout Group 42" },
+      });
+      renderWithRouter(<IconRail showModes={true} />);
+      expect(screen.queryByTestId("org-members-btn")).toBeNull();
     });
   });
 

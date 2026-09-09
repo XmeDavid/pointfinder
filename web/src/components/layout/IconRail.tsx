@@ -11,6 +11,7 @@ import {
   Moon,
   FolderOpen,
   Shield,
+  Users,
 } from "lucide-react";
 import {
   useWorkspaceStore,
@@ -147,11 +148,21 @@ export function IconRail({ showModes }: IconRailProps) {
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={() => navigate("/org/resources")}
-              title="Resources"
-              aria-label="Resources"
+              title={t("org.resources", "Resources")}
+              aria-label={t("org.resources", "Resources")}
+              data-testid="org-resources-btn"
               className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <FolderOpen size={18} />
+            </button>
+            <button
+              onClick={() => navigate("/org/members")}
+              title={t("org.members", "Members")}
+              aria-label={t("org.members", "Members")}
+              data-testid="org-members-btn"
+              className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <Users size={18} />
             </button>
           </div>
         )}

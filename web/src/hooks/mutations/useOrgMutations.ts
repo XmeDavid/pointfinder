@@ -11,6 +11,17 @@ export function useCreateOrg() {
   })
 }
 
+export function useUpdateOrg(orgId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => organizationsApi.update(orgId, { name }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workspaces'] })
+      qc.invalidateQueries({ queryKey: ['org', orgId] })
+    },
+  })
+}
+
 export function useCreateOrgInvite(orgId: string) {
   const qc = useQueryClient()
   return useMutation({

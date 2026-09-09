@@ -1,6 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { organizationsApi } from '../../lib/api/organizations'
 
+export function useOrg(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['org', orgId],
+    queryFn: () => organizationsApi.getById(orgId!),
+    enabled: !!orgId,
+    retry: false,
+  })
+}
+
 export function useOrgMembers(orgId: string | undefined) {
   return useQuery({
     queryKey: ['org-members', orgId],

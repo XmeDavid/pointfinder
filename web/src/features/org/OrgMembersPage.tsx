@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWorkspaceContext } from '../../stores/workspaceContext'
-import { useOrgMembers, useOrgInvites } from '../../hooks/queries/useOrganization'
+import { useOrg, useOrgMembers, useOrgInvites } from '../../hooks/queries/useOrganization'
 import { useCreateOrgInvite, useRemoveOrgMember, useRevokeOrgInvite } from '../../hooks/mutations/useOrgMutations'
 import { hasPermission, OrgPermission } from '../../types/organization'
 import { useAuthStore } from '../../lib/auth/store'
 import { MemberPermissionsDialog } from './MemberPermissionsDialog'
+import { OrgSettingsSection } from './OrgSettingsSection'
+import { StatusBadge } from '@/components/status'
 import { useQuota } from '../../hooks/queries/useQuota'
 
 export function OrgMembersPage() {
@@ -14,6 +16,7 @@ export function OrgMembersPage() {
   const user = useAuthStore((s) => s.user)
   const orgId = active.type === 'org' ? active.orgId : undefined
   const { data: members, isLoading } = useOrgMembers(orgId)
+  const { data: organization } = useOrg(orgId)
   const { data: pendingInvites, isLoading: invitesLoading } = useOrgInvites(orgId)
   const createInvite = useCreateOrgInvite(orgId ?? '')
   const revokeInvite = useRevokeOrgInvite(orgId ?? '')
@@ -38,6 +41,8 @@ export function OrgMembersPage() {
   const canManagePerms = myMembership
     ? hasPermission(myMembership.permissions, OrgPermission.MANAGE_PERMS)
     : false
+  const isCreator = organization != null && organization.createdBy === user?.id
+  const canManageOrg = canManagePerms || isCreator
 
   const handleInvite = () => {
     if (!inviteEmail.trim()) return
@@ -123,8 +128,14 @@ export function OrgMembersPage() {
                 key={invite.id}
                 className="flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border"
               >
-                <div>
-                  <p className="text-sm font-medium text-foreground">{invite.email}</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-foreground truncate">{invite.email}</p>
+                    <StatusBadge
+                      tone={invite.status === 'expired' ? 'muted' : 'warning'}
+                      label={t(`org.inviteStatus.${invite.status}`)}
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {t('org.invitedBy', 'Invited by')} {invite.inviterName ?? t('common.unknown', 'Unknown')}
                   </p>
@@ -140,6 +151,10 @@ export function OrgMembersPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {canManageOrg && orgId && (
+        <OrgSettingsSection orgId={orgId} orgName={active.orgName} canDelete={isCreator} />
       )}
 
       {editingMember && orgId && (

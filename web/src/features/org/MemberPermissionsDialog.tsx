@@ -1,5 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { useUpdateOrgPermissions } from '../../hooks/mutations/useOrgMutations'
 import { OrgPermission } from '../../types/organization'
 
@@ -71,17 +79,11 @@ export function MemberPermissionsDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--pf-color-surface-scrim)]"
-      onClick={onClose}
-    >
-      <div
-        className="bg-background rounded-xl p-6 w-80 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="font-semibold text-foreground">
-          {t('org.editPermissions', 'Edit Permissions')}
-        </h3>
+    <Dialog open onOpenChange={(next) => { if (!next) onClose() }}>
+      <DialogContent className="max-w-sm" onClose={onClose} data-testid="member-permissions-dialog">
+        <DialogHeader>
+          <DialogTitle>{t('org.editPermissions', 'Edit Permissions')}</DialogTitle>
+        </DialogHeader>
         <div className="space-y-2">
           {PERMISSION_LIST.map(({ permission, label, fallback }) => (
             <label key={permission} className="flex items-center gap-2 text-sm">
@@ -96,22 +98,25 @@ export function MemberPermissionsDialog({
             </label>
           ))}
         </div>
-        <div className="flex gap-2 justify-end">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm text-muted-foreground"
-          >
-            {t('common.cancel', 'Cancel')}
-          </button>
-          <button
+        {updatePerms.isError && (
+          <p className="mt-3 text-sm text-destructive" role="alert">
+            {t('common.serverError')}
+          </p>
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
             onClick={handleSave}
             disabled={updatePerms.isPending}
-            className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg disabled:opacity-50"
+            data-testid="member-permissions-save"
           >
-            {t('common.save', 'Save')}
-          </button>
-        </div>
-      </div>
-    </div>
+            {t('common.save')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

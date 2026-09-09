@@ -27,6 +27,22 @@ export function createOrgInvite(overrides: Partial<OrgInvite> = {}): OrgInvite {
   }
 }
 
+function createOrganization(overrides: Partial<Organization> = {}): Organization {
+  return {
+    id: 'org-1',
+    name: 'Scout Group 42',
+    slug: 'scout-group-42',
+    createdBy: 'user-1',
+    subscriptionTier: 'base',
+    subscriptionStatus: 'active',
+    memberCount: 4,
+    quotaOverrides: null,
+    createdAt: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+let organization: Organization = createOrganization()
 let members: OrgMember[] = [createOrgMember()]
 let invites: OrgInvite[] = []
 let renames: { orgId: string; name: string }[] = []
@@ -35,11 +51,15 @@ let failNextWrite = false
 
 export const orgsStore = {
   reset(): void {
+    organization = createOrganization()
     members = [createOrgMember()]
     invites = []
     renames = []
     deletions = []
     failNextWrite = false
+  },
+  seedOrganization(overrides: Partial<Organization>): void {
+    organization = createOrganization(overrides)
   },
   seedMembers(next: OrgMember[]): void {
     members = next
@@ -66,6 +86,7 @@ function takeFailure(): boolean {
 }
 
 export const orgsHandlers = [
+  http.get('/api/orgs/:orgId', () => HttpResponse.json(organization)),
   http.get('/api/orgs/:orgId/members', () => HttpResponse.json(members)),
   http.get('/api/orgs/:orgId/invites', () => HttpResponse.json(invites)),
   http.get('/api/org-invites/my', () => HttpResponse.json([])),
@@ -75,17 +96,7 @@ export const orgsHandlers = [
     const body = (await request.json()) as { name?: string }
     const orgId = params.orgId as string
     renames.push({ orgId, name: body.name ?? '' })
-    const organization: Organization = {
-      id: orgId,
-      name: body.name ?? '',
-      slug: 'scout-group-42',
-      createdBy: 'user-1',
-      subscriptionTier: 'base',
-      subscriptionStatus: 'active',
-      memberCount: members.length,
-      quotaOverrides: null,
-      createdAt: '2026-01-01T00:00:00Z',
-    }
+    organization = { ...organization, id: orgId, name: body.name ?? '' }
     return HttpResponse.json(organization)
   }),
 

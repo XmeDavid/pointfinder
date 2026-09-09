@@ -1068,6 +1068,18 @@
     "clubIncludesInvoice": "Eine Rechnung für den Verein, von uns eingerichtet und gestellt",
     "clubContact": "Sprich mit uns über einen Verein",
     "clubContactHint": "Schreib uns — wir richten den Verein ein und bestätigen die Details mit dir.",
+    "resources": "Ressourcen",
+    "settings": "Vereinseinstellungen",
+    "renamed": "Name gespeichert.",
+    "deleteTitle": "Diesen Verein löschen",
+    "deleteDesc": "Entfernt den Verein, seine Mitglieder und alles, was ihm gehört. Spiele des Vereins gehen mit. Das lässt sich nicht rückgängig machen.",
+    "deleteAction": "Verein löschen",
+    "deleteConfirm": "\"{{name}}\" löschen? Mitglieder, Ressourcen und Spiele gehen mit, und das lässt sich nicht rückgängig machen.",
+    "inviteStatus": {
+      "pending": "Ausstehend",
+      "accepted": "Angenommen",
+      "expired": "Abgelaufen"
+    },
     "perm": {
       "operate": "Spiele betreiben",
       "create": "Spiele erstellen",

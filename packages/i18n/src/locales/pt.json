@@ -1068,6 +1068,18 @@
     "clubIncludesInvoice": "Uma única fatura para o clube, tratada e emitida por nós",
     "clubContact": "Fala connosco sobre um clube",
     "clubContactHint": "Escreve-nos e tratamos da configuração do clube e confirmamos os detalhes contigo.",
+    "resources": "Recursos",
+    "settings": "Definições do clube",
+    "renamed": "Nome guardado.",
+    "deleteTitle": "Eliminar este clube",
+    "deleteDesc": "Remove o clube, os seus membros e tudo o que lhe pertence. Os jogos do clube vão com ele. Não é possível anular.",
+    "deleteAction": "Eliminar clube",
+    "deleteConfirm": "Eliminar \"{{name}}\"? Os membros, recursos e jogos vão com ele, e não é possível anular.",
+    "inviteStatus": {
+      "pending": "Pendente",
+      "accepted": "Aceite",
+      "expired": "Expirado"
+    },
     "perm": {
       "operate": "Operar jogos",
       "create": "Criar jogos",
