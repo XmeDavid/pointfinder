@@ -104,7 +104,7 @@ test('reads fine when every image is blocked and no hero motion plays under redu
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   const fallbacks = page.getByTestId('landing-artwork-fallback')
   await expect(fallbacks.first()).toBeVisible()
-  await expect(fallbacks.first()).toContainText(/Three scouts on a forest trail/)
+  await expect(fallbacks.first()).toContainText(/Three explorers on a forest trail/)
   await expect(page.locator('#organizers').getByTestId('landing-artwork-fallback').filter({ hasText: 'Screenshot unavailable' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Out in the field. Always in the loop.' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your next adventure starts here.' })).toBeVisible()
@@ -126,7 +126,7 @@ test('plays the hero arrival once when motion is allowed', async ({ page }) => {
 test('the hero keeps the whole scene in view and every illustration is the imported artwork', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  const hero = page.getByRole('img', { name: /Three scouts on a forest trail/ })
+  const hero = page.getByRole('img', { name: /Three explorers on a forest trail/ })
   await expect(hero).toHaveAttribute('src', '/landing/illustrated/hero.webp')
   await expect(hero).toHaveJSProperty('naturalWidth', 1536)
   for (const width of [320, 390, 639, 640, 768, 1000, 1024, 1280, 1600]) {

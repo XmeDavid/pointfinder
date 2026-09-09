@@ -113,9 +113,9 @@ describe('LandingPage', () => {
 
   it('keeps the page readable when artwork and screenshots fail to load', () => {
     mount()
-    const hero = screen.getByRole('img', { name: /Three scouts on a forest trail/ })
+    const hero = screen.getByRole('img', { name: /Three explorers on a forest trail/ })
     fireEvent.error(hero)
-    expect(screen.getByRole('img', { name: /Three scouts on a forest trail/ })).toHaveTextContent(/Three scouts on a forest trail/)
+    expect(screen.getByRole('img', { name: /Three explorers on a forest trail/ })).toHaveTextContent(/Three explorers on a forest trail/)
     const shot = screen.getByRole('img', { name: /Command workspace/ })
     fireEvent.error(shot)
     expect(screen.getByRole('img', { name: /Command workspace/ })).toHaveTextContent('Screenshot unavailable')
@@ -135,7 +135,7 @@ describe('LandingPage', () => {
     expect(screen.getByRole('img', { name: /QR code on a wooden base post/ })).toHaveAttribute('src', '/landing/illustrated/step-checkin.webp')
     expect(screen.getByRole('img', { name: /guide with a backpack/ })).toHaveAttribute('src', '/landing/illustrated/guide-pointing.webp')
     expect(screen.getByRole('img', { name: /Command workspace/ })).toHaveAttribute('src', '/landing/illustrated/workspace-preview.webp')
-    expect(screen.getByRole('img', { name: /Three scouts on a forest trail/ })).toHaveAttribute('src', '/landing/illustrated/hero.webp')
+    expect(screen.getByRole('img', { name: /Three explorers on a forest trail/ })).toHaveAttribute('src', '/landing/illustrated/hero.webp')
     expect(screen.getByText(/Costa de Lavos, Portugal/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Your next adventure starts here.' })).toBeInTheDocument()
   })
