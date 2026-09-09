@@ -66,6 +66,16 @@ class PlayerControllerTest {
     @MockitoBean
     private FileStorageService fileStorageService;
 
+    // Added by the audit-findings wave to PlayerController; the slice must mock them too.
+
+    @MockitoBean
+
+    private com.prayer.pointfinder.service.PlayerLocationService playerLocationService;
+
+    @MockitoBean
+
+    private com.prayer.pointfinder.service.PlayerPushTokenService playerPushTokenService;
+
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 

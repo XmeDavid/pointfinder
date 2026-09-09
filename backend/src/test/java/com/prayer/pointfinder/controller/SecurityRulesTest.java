@@ -92,6 +92,16 @@ class SecurityRulesTest {
     @MockitoBean
     private com.prayer.pointfinder.service.FileStorageService fileStorageService;
 
+    // Added by the audit-findings wave to PlayerController; the slice must mock them too.
+
+    @MockitoBean
+
+    private com.prayer.pointfinder.service.PlayerLocationService playerLocationService;
+
+    @MockitoBean
+
+    private com.prayer.pointfinder.service.PlayerPushTokenService playerPushTokenService;
+
     private static final String OPERATOR_TOKEN = "operator-jwt";
     private static final String PLAYER_TOKEN = "player-jwt";
     private static final String ADMIN_TOKEN = "admin-jwt";
