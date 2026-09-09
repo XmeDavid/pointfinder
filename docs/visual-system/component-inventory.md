@@ -826,3 +826,115 @@ composes the canonical `Dialog`, so it traps focus, closes on Escape and
 reports a failed save. Test ids: `org-settings`, `org-name-input`,
 `org-rename-save`, `org-rename-saved`, `org-danger-zone`, `org-delete-btn`,
 `member-permissions-dialog`, `member-permissions-save`.
+
+## Sales-led clubs (2026-09-09)
+
+Mode: Admin / Organization / Billing. A club is agreed with us, stood up by an
+admin, and invoiced; its own members read what it has paid for and manage their
+membership. Dense, calm, recoverable: every write says what it will do before
+it does it, and a refusal stays where the values were typed.
+
+Component: ClubLimitsFields
+Status: canonical
+Location: `web/src/features/admin/ClubLimitsFields.tsx` with
+`web/src/features/admin/clubLimits.ts`
+Modes: Admin / Organization / Billing
+States: value (number input), unlimited, tier default, on/off for the
+location-check-in flag, invalid number (inline message, save blocked),
+disabled while saving
+Notes: The agreed limits of a club deal, one row per quota override key, used
+unchanged by the creation dialog and the club detail. `clubLimits.ts` owns the
+standard deal and the mapping in both directions: a number caps the limit,
+"unlimited" sends an explicit JSON `null`, "tier default" omits the key. Byte
+limits are entered in gigabytes. `unmanagedOverrides` keeps a per-deal key the
+form cannot express so a save does not drop it. Test ids
+`club-limits`, `club-limit-<key>-mode`, `club-limit-<key>-value`.
+
+Component: NewClubDialog
+Status: canonical
+Location: `web/src/features/admin/NewClubDialog.tsx`
+Modes: Admin / Organization / Billing
+States: empty (submit disabled), invalid limit (submit disabled), submitting,
+failed (inline error), created-with-attached-admin, created-with-invitation
+Notes: Opened from "New club" on the admin organizations list. Carries the
+club's name, its administrator's email, an optional term end and internal note,
+and the limits pre-filled with the standard deal. The result step says which of
+the two paths the administrator took and offers to open the club. Test ids
+`admin-new-club`, `new-club-dialog`, `new-club-name`, `new-club-admin-email`,
+`new-club-term-end`, `new-club-note`, `new-club-submit`, `new-club-error`,
+`new-club-result`, `new-club-open`.
+
+Component: IssueInvoiceDialog
+Status: canonical
+Location: `web/src/features/admin/IssueInvoiceDialog.tsx`
+Modes: Admin / Organization / Billing
+States: incomplete (submit disabled), confirmation line, sending, failed
+(inline error, dialog stays open so the amount is not retyped)
+Notes: Bills a club for an agreed term. The amount is entered in euros and sent
+in cents; the confirmation line spells out the amount, the days until due and
+the months of term, because submitting sends a real invoice. Backend refusals —
+`INVOICE_STRIPE_NOT_CONFIGURED`, `INVOICE_NO_BILLING_CONTACT`,
+`INVOICE_STRIPE_CALL_FAILED`, `INVOICE_AMOUNT_INVALID` — are localized through
+the shared error catalog. Test ids `admin-org-issue-invoice`,
+`issue-invoice-dialog`, `issue-invoice-amount`, `issue-invoice-description`,
+`issue-invoice-due-days`, `issue-invoice-term-months`, `issue-invoice-confirm`,
+`issue-invoice-submit`, `issue-invoice-error`.
+
+Component: OrgInvoiceList
+Status: canonical
+Location: `web/src/components/billing/OrgInvoiceList.tsx`
+Modes: Admin / Organization / Billing
+States: empty, draft / open / paid / void / uncollectible, due date, paid date,
+no due date, missing hosted URL or PDF (the link is simply absent)
+Notes: A club's invoices as both the admin panel and the club's own billing tab
+show them. Read-only — an invoice's life belongs to Stripe. Amounts and dates
+go through `Intl` in `web/src/lib/clubBilling.ts`. The `testId` prop names the
+copy: `admin-org-invoices` in the admin panel, `club-invoices` on the billing
+tab.
+
+Component: ClubTermSummary
+Status: canonical
+Location: `web/src/components/billing/ClubTermSummary.tsx`
+Modes: Admin / Organization / Billing
+States: active, payment overdue, in grace period, frozen, cancelled; with a
+paid-until date or "No paid term"
+Notes: States the two facts a club's members need — its status and the date it
+is paid through — at the top of the members page and on the billing tab's club
+block. It only states them: the warnings that act on the same status stay with
+`BillingWarningBanner` and `FrozenBlocker`. Test ids `org-members-term`,
+`billing-club-term`.
+
+Component: ClubMembershipActions
+Status: canonical
+Location: `web/src/features/org/ClubMembershipActions.tsx`
+Modes: Admin / Organization / Billing
+States: leave with confirm, failed departure, creator transfer with confirm,
+no other member to hand the club to, failed transfer
+Notes: The two halves of "what can I do about my own membership", on the
+members page beside every other membership decision and exclusive by design:
+the creator cannot leave, so they are offered the transfer that would let them.
+A successful departure switches back to the personal workspace. Both confirms
+are the shared `ConfirmDeleteDialog`. Test ids `club-leave`, `club-leave-btn`,
+`club-leave-error`, `club-transfer`, `club-transfer-target`,
+`club-transfer-btn`.
+
+Admin panel and club detail:
+
+- The admin organizations list gains "New club" and both lists gain prev/next
+  over their page of 50, with the range they are showing; changing a search
+  returns to the first page. Test ids `admin-users-pagination`,
+  `admin-orgs-pagination`, each with `-prev`, `-next` and `-range`.
+- The club detail replaces its raw JSON textarea with the limits form plus an
+  "advanced" disclosure showing the resolved JSON read-only
+  (`admin-org-overrides-json`). Name, tier, status, term end and note save in
+  one PATCH (`admin-org-name`, `admin-org-tier`, `admin-org-status`,
+  `admin-org-term-end`, `admin-org-note`, `admin-org-save`, `admin-org-saved`),
+  and ownership transfers to an existing member (`admin-org-transfer`).
+- A pending club invitation on the dashboard can be declined as well as
+  accepted (`org-invite`, `org-invite-accept`, `org-invite-decline`,
+  `org-invite-error`).
+- Coverage: `web/src/features/admin/NewClubDialog.test.tsx`,
+  `web/src/features/admin/AdminOrgDetail.test.tsx`,
+  `web/src/features/org/ClubMembership.test.tsx`,
+  `web/src/features/dashboard/PendingOrgInvites.test.tsx`, and the club cases
+  in `web/src/features/profile/BillingTab.test.tsx`.

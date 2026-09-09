@@ -1433,8 +1433,10 @@ cycle the checkout API expects.
   contact call to action, never a club price and never a seat count. A
   club's limits are agreed with us, and every surface says so in the same
   words (`billing.club*`, `org.club*`, `landing.pricing.club*`).
-- Club billing therefore has no client-side entry point: the account, its
-  limits and its invoicing are set up by us.
+- Club billing therefore has no self-serve entry point: the account, its
+  limits and its invoicing are set up by us, from the admin panel described
+  below. What a club's own members get is the read side — its status, the date
+  it is paid through, and its invoices.
 
 The single contact address lives in `web/src/lib/contact.ts` and is used by
 the landing page, the billing tab and `/org/create`.
@@ -1467,10 +1469,48 @@ one surface:
   personal workspace, because the one it was standing in no longer exists.
 - Pending invites show their status, so an `expired` invite reads as
   expired rather than as one still awaiting an answer.
+- **Leave** (`POST /api/orgs/{id}/leave`) for any member who did not create
+  the club, behind a confirm. On success the client switches to the personal
+  workspace, for the same reason a delete does.
+- **Transfer ownership** (`POST /api/orgs/{id}/transfer-ownership`) in the
+  creator's place, because the backend refuses to let a creator leave. The two
+  controls are therefore exclusive: whoever cannot leave is offered the move
+  that would let them, and the target list excludes the current owner.
+- The club's **status and paid-until date** head the page
+  (`ClubTermSummary`), so the facts the grace and frozen warnings act on are
+  visible where membership is managed. Those warnings stay with
+  `BillingWarningBanner` and `FrozenBlocker`, which already render app-wide.
 
-Leaving a club, declining an invite, transferring ownership and showing a
-paid-until date are **not** implemented on the client yet; they wait on the
-matching endpoints.
+A pending invitation on the dashboard can be **declined**
+(`POST /api/org-invites/{inviteId}/decline`) as well as accepted.
+
+### What a club sees of its billing
+
+The billing tab's club block repeats the status and paid-until date, and a
+member holding `MANAGE_BILLING` also gets the club's invoice list
+(`GET /api/orgs/{id}/invoices`) — status, amount, due or paid date, and the
+hosted payment page and PDF. No other member sees it, and nobody sees a portal:
+there is none to open. The personal Stripe history is shown only in the
+personal workspace, because `/billing/invoices` no longer takes an org.
+
+### What an admin does with a club
+
+The admin panel owns the sales-led half. "New club" on the organizations list
+takes the club's name, its administrator's email, an optional term end and
+internal note, and the agreed limits (`POST /api/admin/orgs`); afterwards it
+says which of the two paths the administrator took — attached because the
+address already had an account, or sent a registration invitation. The club's
+detail edits name, tier, status, term end and note, transfers ownership, and
+issues invoices (`POST /api/admin/orgs/{id}/invoices`, amount entered in euros
+and sent in cents).
+
+Limits are edited as limits, not as JSON. `web/src/features/admin/clubLimits.ts`
+holds the standard deal in the table above and maps each row onto its override
+key with three modes: a number caps the limit, "unlimited" sends an explicit
+JSON `null`, and "tier default" omits the key. Byte limits are entered in
+gigabytes. An "advanced" disclosure shows the resolved JSON read-only, and a
+per-deal key the form does not manage is carried through a save rather than
+dropped. Both admin lists page through their 50 rows with prev/next.
 
 ## 11. Clubs and Invoicing
 
