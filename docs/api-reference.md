@@ -100,17 +100,17 @@ Header: `X-Forwarded-Host` (for email link generation)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/games` | Operator | List all games (admin: all; operator: own games) |
+| GET | `/games` | Operator | List the personal workspace's games; `?orgId=<uuid>` lists that organization's games (members with `OPERATE_GAMES`) |
 | GET | `/games/:id` | Operator | Get game by ID |
-| POST | `/games` | Operator | Create game; creator becomes operator |
+| POST | `/games` | Operator | Create game; creator becomes operator. Optional `orgId` makes it org-owned (needs `CREATE_GAMES`) |
 | PUT | `/games/:id` | Operator | Update game metadata |
-| DELETE | `/games/:id` | Operator | Delete game (cascades all data) |
+| DELETE | `/games/:id` | Operator | Delete game (cascades all data). An org game additionally needs `DELETE_GAMES` in that org |
 | PATCH | `/games/:id/status` | Operator | Transition game status |
 | GET | `/games/:id/operators` | Operator | List operators for game |
 | POST | `/games/:id/operators/:userId` | Operator | Add operator to game |
 | DELETE | `/games/:id/operators/:userId` | Operator | Remove operator from game |
 | GET | `/games/:id/export` | Operator | Export game definition as JSON |
-| POST | `/games/import` | Operator | Import game from export JSON |
+| POST | `/games/import` | Operator | Import game from export JSON; optional `orgId` imports into an organization (needs `CREATE_GAMES`) |
 | GET | `/games/:id/snapshot` | Player or Operator | Canonical state snapshot (see below) |
 
 ### Key Payloads
@@ -123,9 +123,18 @@ Header: `X-Forwarded-Host` (for email link generation)
   "startDate": "ISO8601 (optional)",
   "endDate": "ISO8601 (optional)",
   "uniformAssignment": false,
-  "tileSource": "osm | osm-classic | voyager | positron | swisstopo | swisstopo-sat"
+  "tileSource": "osm | osm-classic | voyager | positron | swisstopo | swisstopo-sat",
+  "orgId": "uuid (optional)"
 }
 ```
+> `orgId` creates the game inside that organization instead of the caller's
+> personal workspace. The caller must be a member with `CREATE_GAMES`
+> (`403` otherwise). An org game does not count against the creator's personal
+> active-game quota; the organization's live-game limit is enforced at go-live
+> instead. It is ignored when `tutorialScenario` is set — practice games are
+> always personal. `GameImportRequest` accepts the same optional `orgId`.
+> The game response carries `orgId` and `orgName` for org-owned games, both
+> `null` for personal ones. See `docs/business-logic.md` § "Org-owned games".
 
 **PATCH /games/:id/status** (UpdateGameStatusRequest)
 ```json

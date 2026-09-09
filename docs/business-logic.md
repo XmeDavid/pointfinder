@@ -108,6 +108,36 @@ web checklist now carries that condition too (`readiness.locationBoundAssigned`)
 
 **iOS-specific**: `CheckInTabView` and `GameMapView` explicitly block gameplay when `gameStatus == "setup"` or `"ended"`, showing a message rather than enabling NFC scan.
 
+### Org-owned games
+
+A game belongs either to the operator who created it or to an organization —
+never to both. The workspace switcher decides which: creating (or importing) a
+game while an org workspace is active sends that `orgId`, and the caller must
+be a member of the org with `CREATE_GAMES`. Admins bypass the check, as
+everywhere. Practice games are always personal: a `tutorialScenario` wins over
+any `orgId` the dialog might carry.
+
+Ownership decides which plan bounds the game. A personal game counts against
+the creator's active-game limit at creation and again whenever an ended game is
+revived. An org game counts against nothing at creation; it is the
+organization's **live-game** limit that is enforced at go-live, so an org may
+build as many games as it likes and only pay for the ones it runs at once.
+Every other per-game quota (bases, operators, players, file size, location
+check-in) already resolves through the owning organization when there is one.
+
+Permissions follow the org membership bitmask: `OPERATE_GAMES` to see and work
+on an org game (granted to every member by default), `CREATE_GAMES` to create
+or import one into the org, `DELETE_GAMES` to delete one. The game's creator is
+still an operator on it, but on an org game deletion is the organization's call,
+so the creator needs `DELETE_GAMES` like anybody else.
+
+The dashboard lists one workspace at a time: `GET /api/games` returns the
+caller's personal games (created or operated, no organization), and
+`GET /api/games?orgId=...` returns that organization's games for members that
+may operate them. Backend: `GameService.getAllGames`, `GameAccessService`,
+`QuotaService.enforceOrgLiveGameLimit`. Web: `useGames`, `CreateGameDialog`,
+`ImportGameDialog`, `DashboardPage`.
+
 ### Operator Setup Workflow: Unified Bases & Challenges View
 
 Most games use a **fixed base + challenge pair** as their primary building block, so the web admin surfaces a unified "Bases & Challenges" view at `/games/:gameId/bases-and-challenges`. It sits at the top of the setup sidebar and is the recommended starting point for new operators.
