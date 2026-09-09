@@ -57,6 +57,25 @@ public class SecurityConfig {
                     response.getWriter().write(
                         "{\"error\":\"Unauthorized\",\"message\":\"Authentication required\"}");
                 })
+                // Spring's default handler answers a role denial with
+                // response.sendError(403), which asks the container for an
+                // ERROR dispatch. This chain is stateless and re-runs on that
+                // dispatch with an empty SecurityContext — JwtAuthenticationFilter
+                // does not re-authenticate error dispatches — so the request
+                // looked anonymous the second time round and the entry point
+                // above overwrote the 403 with a 401. An authenticated operator
+                // asking for /api/admin/** was therefore told to log in, which
+                // they had already done.
+                //
+                // Writing the body here instead commits the response, so there
+                // is no error dispatch and no second pass to lose the status.
+                .accessDeniedHandler((request, response, deniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write(
+                        "{\"error\":\"Forbidden\",\"message\":\"You are not authorized to perform this action\"}");
+                    response.getWriter().flush();
+                })
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
