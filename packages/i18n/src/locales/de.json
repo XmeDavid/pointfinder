@@ -1153,7 +1153,8 @@
       "manage": "Berechtigungen verwalten",
       "billing": "Abrechnung verwalten",
       "resources": "Ressourcen verwalten"
-    }
+    },
+    "declineInvite": "Ablehnen"
   },
   "resources": {
     "title": "Ressourcen",
@@ -2481,7 +2482,15 @@
       "pickMember": "Mitglied auswählen",
       "action": "Übertragen",
       "confirm": "{{club}} an {{name}} übergeben? Damit erhält diese Person alle Berechtigungen über den Verein.",
-      "noCandidates": "Es gibt kein anderes Mitglied, dem der Verein übergeben werden kann."
+      "noCandidates": "Es gibt kein anderes Mitglied, dem der Verein übergeben werden kann.",
+      "creatorDesc": "Sie haben diesen Verein erstellt und können ihn daher nicht verlassen. Übergeben Sie ihn zuerst einem anderen Mitglied."
+    },
+    "noTerm": "Keine bezahlte Laufzeit",
+    "leave": {
+      "title": "Diesen Verein verlassen",
+      "desc": "Sie verlieren den Zugriff auf die Spiele und Ressourcen des Vereins. Ihr persönlicher Arbeitsbereich bleibt unberührt.",
+      "action": "Verein verlassen",
+      "confirm": "„{{name}}“ verlassen? Sie verlieren den Zugriff auf dessen Spiele und Ressourcen und bräuchten eine neue Einladung, um zurückzukehren."
     }
   }
 }

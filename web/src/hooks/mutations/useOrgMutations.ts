@@ -75,6 +75,41 @@ export function useUpdateOrgPermissions(orgId: string) {
   })
 }
 
+/** Hand the club to another member. The creator, or a member with MANAGE_PERMS. */
+export function useTransferOrgOwnership(orgId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => organizationsApi.transferOwnership(orgId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['org', orgId] })
+      qc.invalidateQueries({ queryKey: ['org-members', orgId] })
+      qc.invalidateQueries({ queryKey: ['workspaces'] })
+    },
+  })
+}
+
+/** A non-creator member removes themself from the club. */
+export function useLeaveOrg() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (orgId: string) => organizationsApi.leave(orgId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workspaces'] })
+    },
+  })
+}
+
+/** The invitee turns a pending club invitation down. */
+export function useDeclineOrgInvite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (inviteId: string) => organizationsApi.declineOrgInvite(inviteId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-org-invites'] })
+    },
+  })
+}
+
 export function useDeleteOrg() {
   const qc = useQueryClient()
   return useMutation({

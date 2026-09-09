@@ -1153,7 +1153,8 @@
       "manage": "Manage permissions",
       "billing": "Manage billing",
       "resources": "Manage resources"
-    }
+    },
+    "declineInvite": "Decline"
   },
   "resources": {
     "title": "Resources",
@@ -2481,7 +2482,15 @@
       "pickMember": "Choose a member",
       "action": "Transfer",
       "confirm": "Hand {{club}} to {{name}}? They gain every permission over the club.",
-      "noCandidates": "There is no other member to hand the club to."
+      "noCandidates": "There is no other member to hand the club to.",
+      "creatorDesc": "You created this club, so you cannot leave it. Hand it to another member first."
+    },
+    "noTerm": "No paid term",
+    "leave": {
+      "title": "Leave this club",
+      "desc": "You lose access to the club’s games and resources. Your personal workspace is untouched.",
+      "action": "Leave club",
+      "confirm": "Leave \"{{name}}\"? You lose access to its games and resources, and would need a new invitation to come back."
     }
   }
 }

@@ -1153,7 +1153,8 @@
       "manage": "Gerir permissões",
       "billing": "Gerir faturação",
       "resources": "Gerir recursos"
-    }
+    },
+    "declineInvite": "Recusar"
   },
   "resources": {
     "title": "Recursos",
@@ -2481,7 +2482,15 @@
       "pickMember": "Escolher um membro",
       "action": "Transferir",
       "confirm": "Entregar {{club}} a {{name}}? Passa a ter todas as permissões sobre o clube.",
-      "noCandidates": "Não há outro membro a quem entregar o clube."
+      "noCandidates": "Não há outro membro a quem entregar o clube.",
+      "creatorDesc": "Criou este clube, por isso não pode sair. Entregue-o primeiro a outro membro."
+    },
+    "noTerm": "Sem período pago",
+    "leave": {
+      "title": "Sair deste clube",
+      "desc": "Perde o acesso aos jogos e recursos do clube. O seu espaço pessoal fica intacto.",
+      "action": "Sair do clube",
+      "confirm": "Sair de \"{{name}}\"? Perde o acesso aos seus jogos e recursos e precisaria de novo convite para voltar."
     }
   }
 }

@@ -7,7 +7,9 @@ import { hasPermission, OrgPermission } from '../../types/organization'
 import { useAuthStore } from '../../lib/auth/store'
 import { MemberPermissionsDialog } from './MemberPermissionsDialog'
 import { OrgSettingsSection } from './OrgSettingsSection'
+import { ClubMembershipActions } from './ClubMembershipActions'
 import { StatusBadge } from '@/components/status'
+import { ClubTermSummary } from '@/components/billing/ClubTermSummary'
 import { useQuota } from '../../hooks/queries/useQuota'
 
 export function OrgMembersPage() {
@@ -53,9 +55,18 @@ export function OrgMembersPage() {
 
   return (
     <div className="h-screen bg-background p-8 overflow-auto">
-      <h1 className="text-2xl font-bold text-foreground mb-6">
+      <h1 className="text-2xl font-bold text-foreground mb-2">
         {t('org.members', 'Members')}
       </h1>
+
+      {/* What the club has paid for, where its membership is managed. */}
+      <div className="mb-6">
+        <ClubTermSummary
+          status={organization?.subscriptionStatus ?? quota?.status}
+          termEnd={organization?.termEnd ?? quota?.termEnd}
+          testId="org-members-term"
+        />
+      </div>
 
       {canInvite && (
         <div className="flex gap-2 mb-6 max-w-md">
@@ -155,6 +166,16 @@ export function OrgMembersPage() {
 
       {canManageOrg && orgId && (
         <OrgSettingsSection orgId={orgId} orgName={active.orgName} canDelete={isCreator} />
+      )}
+
+      {orgId && organization && (
+        <ClubMembershipActions
+          orgId={orgId}
+          orgName={active.orgName}
+          members={members ?? []}
+          currentUserId={user?.id}
+          isCreator={isCreator}
+        />
       )}
 
       {editingMember && orgId && (

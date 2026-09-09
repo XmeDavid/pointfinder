@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { OrgInvite, OrgMember, Organization } from '@/types/organization'
+import type { OrgInvoice } from '@/types/billing'
 
 export function createOrgMember(overrides: Partial<OrgMember> = {}): OrgMember {
   return {
@@ -48,6 +49,11 @@ let members: OrgMember[] = [createOrgMember()]
 let invites: OrgInvite[] = []
 let renames: { orgId: string; name: string }[] = []
 let deletions: string[] = []
+let departures: string[] = []
+let transfers: { orgId: string; userId: string }[] = []
+let accepts: string[] = []
+let declines: string[] = []
+let invoices: OrgInvoice[] = []
 let failNextWrite = false
 
 export const orgsStore = {
@@ -57,6 +63,11 @@ export const orgsStore = {
     invites = []
     renames = []
     deletions = []
+    departures = []
+    transfers = []
+    accepts = []
+    declines = []
+    invoices = []
     failNextWrite = false
   },
   seedOrganization(overrides: Partial<Organization>): void {
@@ -68,6 +79,9 @@ export const orgsStore = {
   seedInvites(next: OrgInvite[]): void {
     invites = next
   },
+  seedInvoices(next: OrgInvoice[]): void {
+    invoices = next
+  },
   /** Make the next rename or delete answer 500, for error-state coverage. */
   failNextWrite(): void {
     failNextWrite = true
@@ -77,6 +91,21 @@ export const orgsStore = {
   },
   deletions(): string[] {
     return [...deletions]
+  },
+  /** Clubs the caller removed themself from, in order. */
+  departures(): string[] {
+    return [...departures]
+  },
+  transfers(): { orgId: string; userId: string }[] {
+    return transfers.map((entry) => ({ ...entry }))
+  },
+  /** Invites the caller took up, in order. */
+  accepts(): string[] {
+    return [...accepts]
+  },
+  /** Invites the caller turned down, in order. */
+  declines(): string[] {
+    return [...declines]
   },
 }
 
@@ -91,6 +120,33 @@ export const orgsHandlers = [
   http.get('/api/orgs/:orgId/members', () => HttpResponse.json(members)),
   http.get('/api/orgs/:orgId/invites', () => HttpResponse.json(invites)),
   http.get('/api/org-invites/my', () => HttpResponse.json([])),
+  http.get('/api/orgs/:orgId/invoices', () => HttpResponse.json(invoices)),
+
+  http.post('/api/orgs/:orgId/leave', ({ params }) => {
+    if (takeFailure()) return new HttpResponse(null, { status: 500 })
+    departures.push(params.orgId as string)
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.post('/api/orgs/:orgId/transfer-ownership', async ({ params, request }) => {
+    if (takeFailure()) return new HttpResponse(null, { status: 500 })
+    const body = (await request.json()) as { userId: string }
+    transfers.push({ orgId: params.orgId as string, userId: body.userId })
+    organization = { ...organization, createdBy: body.userId }
+    return HttpResponse.json(organization)
+  }),
+
+  http.post('/api/org-invites/:inviteId/accept', ({ params }) => {
+    if (takeFailure()) return new HttpResponse(null, { status: 500 })
+    accepts.push(params.inviteId as string)
+    return HttpResponse.json(createOrgMember())
+  }),
+
+  http.post('/api/org-invites/:inviteId/decline', ({ params }) => {
+    if (takeFailure()) return new HttpResponse(null, { status: 500 })
+    declines.push(params.inviteId as string)
+    return new HttpResponse(null, { status: 204 })
+  }),
 
   http.patch('/api/orgs/:orgId', async ({ params, request }) => {
     if (takeFailure()) return new HttpResponse(null, { status: 500 })

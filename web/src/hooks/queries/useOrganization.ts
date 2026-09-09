@@ -26,6 +26,16 @@ export function useOrgInvites(orgId: string | undefined) {
   })
 }
 
+/** The club's own invoice history. Only a member with MANAGE_BILLING may read it. */
+export function useOrgInvoices(orgId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['org-invoices', orgId],
+    queryFn: () => organizationsApi.listInvoices(orgId!),
+    enabled: !!orgId && enabled,
+    retry: false,
+  })
+}
+
 export function useMyOrgInvites() {
   return useQuery({
     queryKey: ['my-org-invites'],

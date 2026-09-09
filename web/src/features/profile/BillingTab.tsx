@@ -11,6 +11,11 @@ import { StatusBadge as SemanticStatusBadge, type StatusBadgeTone } from '@/comp
 import { BillingCycleToggle } from '@/components/ui/billing-cycle-toggle'
 import { CHECKOUT_CYCLE, formatPrice, PERSONAL_PRICE_EUR, type BillingCycleOption } from '@/lib/pricing'
 import { contactHref } from '@/lib/contact'
+import { hasPermission, OrgPermission } from '@/types/organization'
+import { useWorkspaces } from '@/hooks/queries/useWorkspaces'
+import { useOrgInvoices } from '@/hooks/queries/useOrganization'
+import { ClubTermSummary } from '@/components/billing/ClubTermSummary'
+import { OrgInvoiceList } from '@/components/billing/OrgInvoiceList'
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -202,6 +207,7 @@ export function BillingTab() {
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
   const { data: billingStatus } = useBillingStatus()
+  const { data: workspaces } = useWorkspaces()
   const unlimitedLabel = t('billingProgress.unlimited')
   const checkout = useCreateCheckout()
   const portal = useCreatePortal()
@@ -211,8 +217,16 @@ export function BillingTab() {
   const allInvoices = invoicesQuery.data?.pages.flatMap((p) => p.invoices) ?? []
 
   const isOrg = active.type === 'org'
+  const orgId = active.type === 'org' ? active.orgId : undefined
   const tier = quota?.tier ?? 'free'
   const isProPersonal = !isOrg && tier === 'pro'
+
+  // A club is invoiced by us. Its invoice history is readable by a member who
+  // holds MANAGE_BILLING, and by nobody else in the workspace.
+  const orgWorkspace = orgId ? workspaces?.organizations.find((org) => org.id === orgId) : undefined
+  const canManageBilling =
+    orgWorkspace != null && hasPermission(orgWorkspace.permissions, OrgPermission.MANAGE_BILLING)
+  const orgInvoices = useOrgInvoices(orgId, canManageBilling)
 
   const showPersonalUpgrade = !isOrg && !isProPersonal
   // Only a personal subscription has a Stripe portal. A club is invoiced by us,
@@ -309,6 +323,15 @@ export function BillingTab() {
       {/* Clubs are sales-led: no self-serve club checkout lives in the product. */}
       <div className="mt-8 rounded-xl border border-border p-6 max-w-lg" data-testid="billing-club-info">
         <h2 className="text-lg font-semibold text-foreground">{t('billing.clubPlan', 'Club')}</h2>
+        {isOrg && (
+          <div className="mt-2">
+            <ClubTermSummary
+              status={orgWorkspace?.status ?? quota?.status}
+              termEnd={orgWorkspace?.termEnd ?? quota?.termEnd}
+              testId="billing-club-term"
+            />
+          </div>
+        )}
         <p className="mt-1 text-sm text-muted-foreground">{t('billing.clubDesc')}</p>
         <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
           <li>{t('billing.clubIncludesMembers')}</li>
@@ -398,6 +421,20 @@ export function BillingTab() {
         </div>
       )}
 
+      {isOrg && canManageBilling && (
+        <div className="mt-8 max-w-lg" data-testid="billing-club-invoices">
+          <h2 className="text-lg font-semibold text-foreground mb-4">{t('club.invoices.title')}</h2>
+          {orgInvoices.isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <OrgInvoiceList invoices={orgInvoices.data ?? []} testId="club-invoices" />
+          )}
+        </div>
+      )}
+
+      {!isOrg && (
       <div className="mt-8 max-w-lg">
         <h2 className="text-lg font-semibold text-foreground mb-4">
           {t('billing.history', 'Billing History')}
@@ -436,6 +473,7 @@ export function BillingTab() {
           </button>
         )}
       </div>
+      )}
     </>
   )
 }
