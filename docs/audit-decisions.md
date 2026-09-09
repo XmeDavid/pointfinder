@@ -275,4 +275,99 @@ Extracted `computeReconnectBackoffSeconds()` as a testable top-level function. C
 - Write stub ViewModel tests for all Android/iOS ViewModels (rejected: iOS requires test architecture with @Observable fakes that doesn't exist yet)
 - Require tests before any new feature merges (deferred: would block velocity without clear ROI)
 
-**Rationale for remaining deferrals:** 9.4 (instrumentation tests) and 9.6 (iOS View/ViewModel tests) require platform-specific test infrastructure (Compose test rules, SwiftUI ViewInspector or similar) that would need a dedicated sprint. 9.7 (E2E parity) is incremental by nature. All mitigated by 33 Maestro E2E specs.
+**Rationale for remaining deferrals:** 9.4 (instrumentation tests) requires Compose test rules that need a dedicated sprint. 9.7 (E2E parity) is incremental by nature. Both mitigated by 33 Maestro E2E specs.
+
+---
+
+## Finding 2.13 -- PlayerService further extraction (2026-09-09)
+
+**Decision:** Extract PlayerLocationService and PlayerPushTokenService from PlayerService, reducing dependencies from 21 to 18.
+
+**Changes:**
+- `PlayerLocationService.java`: Contains both `updateLocation` overloads with coordinate validation, persistence, and WebSocket broadcasting. Dependencies: PlayerRepository, PlayerLocationRepository, GameAccessService, GameEventBroadcaster.
+- `PlayerPushTokenService.java`: Contains `updatePushToken` delegating to PushTokenService. Single dependency.
+- `PlayerLocationServiceTest.java`: 6 tests moved from PlayerServiceTest covering coordinate validation.
+- `PlayerController.java`: Updated to inject new services for location and push token endpoints.
+
+**Alternatives considered:**
+- Extract only location methods (push token is one method)
+- Also extract progress methods
+
+**Rationale:** Location methods use two dependencies (PlayerLocationRepository, GameEventBroadcaster) not needed by any other PlayerService method, making them clean extraction candidates. Push token registration is a single method but its dependency (PushTokenService) is also unused elsewhere in PlayerService.
+
+---
+
+## Finding 2.19 -- GameStatus sealed interface (2026-09-09)
+
+**Decision:** Added a `GameStatusTransition` sealed interface alongside the existing GameStatus enum, rather than replacing it.
+
+**Changes:**
+- `GameStatusTransition.java`: Sealed interface with 5 record subtypes modeling valid transitions (GoLive, EndGame, RevertToSetup, ResetToSetup, ReLive). Static methods `allowedTransitions()` and `canTransition()`.
+- `GameStatus.java`: Added `canTransitionTo(GameStatus)` delegate method.
+- `GameService.java`: `validateStatusTransition` now uses `current.canTransitionTo(target)`.
+
+**Alternatives considered:**
+- Replace enum with sealed interface (breaks JPA @Enumerated)
+- Keep enum only with inline transition logic
+
+**Rationale:** This approach provides compile-time documentation of the state machine and centralizes transition rules in one place, while preserving JPA compatibility. The previous decision (2026-08-31) evaluated all 19 enums and correctly concluded most don't benefit from sealed interfaces; GameStatus is the exception because its transitions were previously scattered across GameService's switch expression.
+
+---
+
+## Finding 12.6 -- Join code length increase (2026-09-09)
+
+**Decision:** Increased join code length from 7 to 8 characters.
+
+**Changes:**
+- `TeamService.java`: `generateUniqueJoinCode()` now calls `CodeGenerator.generate(8, ...)`.
+
+**Alternatives considered:**
+- Keep 7 chars and rely only on PlayerJoinRateLimiter
+- Increase to 10 chars (matching broadcast code)
+
+**Rationale:** 8 characters with a 36-char alphabet gives ~2.8 trillion combinations (up from ~78 billion). Combined with the existing PlayerJoinRateLimiter (per-IP + per-device rate limiting) and nginx rate limiting, this makes brute-force impractical. 10 chars was rejected as unnecessarily long for codes players type manually.
+
+---
+
+## Finding 5.6 -- Database backup strategy (2026-09-09)
+
+**Decision:** Created backup script and documented strategy.
+
+**Changes:**
+- `scripts/db-backup.sh`: pg_dump via docker exec, timestamped gzip, configurable retention.
+- `docs/infrastructure.md`: Backup section with cron schedule, restore procedure.
+
+**Alternatives considered:**
+- pg_basebackup with WAL archiving (PITR)
+- Managed backup service
+
+**Rationale:** pg_dump is simple, reliable, and sufficient for the current single-instance deployment. The script can be cron-scheduled for daily backups. WAL archiving would be appropriate if the database grows beyond what nightly dumps can handle.
+
+---
+
+## Finding 9.6 -- iOS ViewModel tests (2026-09-09)
+
+**Decision:** Created AppStateViewModelTests.swift with 7 functional areas and 15+ test methods.
+
+**Rationale:** AppState is the central observable object, making it the highest-impact test target. Tests cover auth state, error handling, deep links, solve sessions, base status, and logout guards.
+
+---
+
+## Finding 9.5 -- MobileRealtimeClient message parsing tests (2026-09-09)
+
+**Decision:** Created MobileRealtimeClientMessageTest.kt with 10 tests covering envelope deserialization.
+
+**Rationale:** Reconnection was already tested (MobileRealtimeReconnectTest.kt). Message parsing was the remaining gap. Tests cover all event types, forward compatibility, malformed input, and edge cases.
+
+---
+
+## Finding 9.9 -- SubmissionServiceTest consolidation (2026-09-09)
+
+**Decision:** Extracted 3 helper methods consolidating duplicate mock setup.
+
+**Changes:**
+- `buildDefaultRequest(answer)`: Eliminates repeated 4-line request construction
+- `givenAutoValidationChallenge(answers)`: Consolidates repeated auto-validation setup
+- `assertAutoValidationStatus(answer, expected)`: Consolidates repeated assertion pattern
+
+6 auto-validation tests reduced from ~15 lines each to 2 lines each.

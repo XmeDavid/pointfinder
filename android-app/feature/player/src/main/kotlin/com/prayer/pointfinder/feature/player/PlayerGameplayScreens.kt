@@ -142,7 +142,7 @@ fun CheckInScreen(
         }
         Spacer(Modifier.height(8.dp))
         Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Default.LocationOn, contentDescription = null)
+            Icon(Icons.Default.LocationOn, contentDescription = stringResource(R.string.action_check_in_at_base))
             Spacer(Modifier.size(8.dp))
             Text(stringResource(R.string.action_check_in_at_base))
         }
@@ -215,7 +215,7 @@ private fun NfcUnavailableScreen(
                 onClick = onOpenNfcSettings,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Default.Settings, contentDescription = null)
+                Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_nfc_open_settings))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.action_nfc_open_settings))
             }

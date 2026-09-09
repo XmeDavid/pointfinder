@@ -12,6 +12,8 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.ChunkedUploadService;
 import com.prayer.pointfinder.service.FileStorageService;
+import com.prayer.pointfinder.service.PlayerLocationService;
+import com.prayer.pointfinder.service.PlayerPushTokenService;
 import com.prayer.pointfinder.service.PlayerService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
@@ -35,6 +37,8 @@ public class PlayerController {
     private final com.prayer.pointfinder.service.PushTokenService pushTokenService;
 
     private final PlayerService playerService;
+    private final PlayerLocationService playerLocationService;
+    private final PlayerPushTokenService playerPushTokenService;
     private final ChunkedUploadService chunkedUploadService;
     private final FileStorageService fileStorageService;
     private final Validator validator;
@@ -180,7 +184,7 @@ public class PlayerController {
     public ResponseEntity<Void> updateLocation(@PathVariable UUID gameId,
                                                 @Valid @RequestBody UpdateLocationRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
-        playerService.updateLocation(gameId, player, request.getLat(), request.getLng(),
+        playerLocationService.updateLocation(gameId, player, request.getLat(), request.getLng(),
                 request.getAccuracy(), request.getCapturedAt());
         return ResponseEntity.noContent().build();
     }
@@ -188,7 +192,7 @@ public class PlayerController {
     @PutMapping("/push-token")
     public ResponseEntity<Void> updatePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
-        playerService.updatePushToken(player, request.getPushToken(), request.resolvePlatform());
+        playerPushTokenService.updatePushToken(player.getId(), request.getPushToken(), request.resolvePlatform());
         return ResponseEntity.noContent().build();
     }
 

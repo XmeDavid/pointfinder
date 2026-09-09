@@ -27,7 +27,6 @@ public class PlayerService {
 
     private final PlayerRepository playerRepository;
     private final BaseOrderService baseOrderService;
-    private final PushTokenService pushTokenService;
     private final GameRepository gameRepository;
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
@@ -37,7 +36,6 @@ public class PlayerService {
     private final ActivityEventRepository activityEventRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final SubmissionService submissionService;
-    private final PlayerLocationRepository playerLocationRepository;
     private final GameAccessService gameAccessService;
     private final OperatorPushNotificationService operatorPushNotificationService;
     private final TemplateVariableService templateVariableService;
@@ -583,11 +581,6 @@ public class PlayerService {
                 resolvedContent);
     }
 
-    @Transactional(timeout = 10)
-    public void updatePushToken(Player authPlayer, String pushToken, PushPlatform platform) {
-        pushTokenService.registerPlayer(authPlayer.getId(), pushToken, platform);
-    }
-
     /**
      * Self-service player data deletion.
      * Removes the player record (including push token, device ID).
@@ -600,62 +593,6 @@ public class PlayerService {
 
         // Delete the player record (cascading from FK will be handled by DB)
         playerRepository.delete(player);
-    }
-
-    /** Backwards-compatible overload for callers with no fix metadata. */
-    @Transactional(timeout = 10)
-    public void updateLocation(UUID gameId, Player authPlayer, Double lat, Double lng) {
-        updateLocation(gameId, authPlayer, lat, lng, null, null);
-    }
-
-    @Transactional(timeout = 10)
-    public void updateLocation(UUID gameId, Player authPlayer, Double lat, Double lng,
-                               Double accuracy, Instant capturedAt) {
-        if (lat == null || lng == null || !Double.isFinite(lat) || !Double.isFinite(lng)
-                || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-            throw new BadRequestException("Invalid coordinates");
-        }
-
-        // A garbage accuracy reading is not a reason to drop a good position:
-        // keep the coordinates, forget the metadata.
-        Double storedAccuracy = accuracy != null && Double.isFinite(accuracy) && accuracy >= 0
-                ? accuracy : null;
-
-        Player player = loadPlayer(authPlayer);
-
-        Team team = player.getTeam();
-        team.getId(); // force initialization
-
-        gameAccessService.ensurePlayerBelongsToGame(player, gameId);
-        ensureGameIsLiveForPlayerActions(team);
-
-        PlayerLocation location = playerLocationRepository.findById(player.getId()).orElse(null);
-        if (location == null) {
-            location = PlayerLocation.builder()
-                    .player(player)
-                    .lat(lat)
-                    .lng(lng)
-                    .accuracyM(storedAccuracy)
-                    .capturedAt(capturedAt)
-                    .build();
-        } else {
-            location.setLat(lat);
-            location.setLng(lng);
-            location.setAccuracyM(storedAccuracy);
-            location.setCapturedAt(capturedAt);
-        }
-        playerLocationRepository.save(location);
-
-        Map<String, Object> locationData = new HashMap<>();
-        locationData.put("teamId", team.getId());
-        locationData.put("playerId", player.getId());
-        locationData.put("displayName", player.getDisplayName());
-        locationData.put("lat", lat);
-        locationData.put("lng", lng);
-        locationData.put("accuracyM", storedAccuracy);
-        locationData.put("capturedAt", capturedAt != null ? capturedAt.toString() : null);
-        locationData.put("updatedAt", Instant.now().toString());
-        eventBroadcaster.broadcastLocationUpdate(gameId, locationData);
     }
 
     public void markNotificationsSeen(Player authPlayer) {

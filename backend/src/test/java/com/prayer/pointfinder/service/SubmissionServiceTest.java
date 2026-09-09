@@ -172,16 +172,54 @@ class SubmissionServiceTest {
         return id;
     }
 
+    // -- Request / scenario builders (audit 9.9) ----------------------------
+
+    /**
+     * Build a standard CreateSubmissionRequest with the default team, challenge,
+     * and base IDs. Callers can override the answer or set additional fields on
+     * the returned object.
+     */
+    private CreateSubmissionRequest buildDefaultRequest(String answer) {
+        CreateSubmissionRequest request = new CreateSubmissionRequest();
+        request.setTeamId(teamId);
+        request.setChallengeId(challengeId);
+        request.setBaseId(baseId);
+        request.setAnswer(answer);
+        return request;
+    }
+
+    /**
+     * Configure the challenge for auto-validation with the given correct
+     * answers, stub repositories, and prepare the save mock.
+     */
+    private void givenAutoValidationChallenge(List<String> correctAnswers) {
+        challenge.setAutoValidate(true);
+        challenge.setCorrectAnswer(correctAnswers);
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
+    }
+
+    /**
+     * Submit with auto-validation and assert the resulting submission status.
+     * Captures the saved Submission via ArgumentCaptor and verifies both the
+     * entity status and the response DTO status string.
+     */
+    private void assertAutoValidationStatus(String answer, SubmissionStatus expectedStatus) {
+        CreateSubmissionRequest request = buildDefaultRequest(answer);
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> captor = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(captor.capture());
+        assertEquals(expectedStatus, captor.getValue().getStatus());
+        assertEquals(expectedStatus.name(), response.status());
+    }
+
     @Test
     void createSubmissionReturnsExistingRecordWhenIdempotencySaveRaces() {
         UUID idempotencyKey = UUID.randomUUID();
         UUID existingSubmissionId = UUID.randomUUID();
 
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("answer");
+        CreateSubmissionRequest request = buildDefaultRequest("answer");
         request.setIdempotencyKey(idempotencyKey);
 
         Submission existing = Submission.builder()
@@ -212,11 +250,7 @@ class SubmissionServiceTest {
     void createSubmissionPersistsValidatedFileUrl() {
         String rawFileUrl = "/uploads/" + gameId + "/" + UUID.randomUUID() + ".jpg";
 
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("answer");
+        CreateSubmissionRequest request = buildDefaultRequest("answer");
         request.setFileUrl(rawFileUrl);
 
         stubDefaultRepositories(rawFileUrl);
@@ -250,11 +284,7 @@ class SubmissionServiceTest {
                 .displayName("Scout")
                 .build();
 
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("answer");
+        CreateSubmissionRequest request = buildDefaultRequest("answer");
 
         when(playerRepository.findById(playerId)).thenReturn(Optional.of(hydratedPlayer));
         stubDefaultRepositories(null);
@@ -267,101 +297,33 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationStoresCorrectStatusWhenAnswerMatches() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(List.of("Open Sesame"));
-
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("  open sesame  ");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.correct.name(), response.status());
+        givenAutoValidationChallenge(List.of("Open Sesame"));
+        assertAutoValidationStatus("  open sesame  ", SubmissionStatus.correct);
     }
 
     @Test
     void createSubmissionAutoValidationStoresCorrectStatusWhenAnyAnswerMatches() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(List.of("Open Sesame", "Abracadabra", "Please"));
-
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("abracadabra");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.correct.name(), response.status());
+        givenAutoValidationChallenge(List.of("Open Sesame", "Abracadabra", "Please"));
+        assertAutoValidationStatus("abracadabra", SubmissionStatus.correct);
     }
 
     @Test
     void createSubmissionAutoValidationStoresRejectedStatusWhenAnswerDoesNotMatch() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(List.of("Open Sesame"));
-
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("wrong answer");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.rejected, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.rejected.name(), response.status());
+        givenAutoValidationChallenge(List.of("Open Sesame"));
+        assertAutoValidationStatus("wrong answer", SubmissionStatus.rejected);
     }
 
     @Test
     void createSubmissionAutoValidationStoresRejectedStatusWhenNoAnswerMatchesMultiple() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(List.of("Open Sesame", "Abracadabra"));
-
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("wrong answer");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.rejected, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.rejected.name(), response.status());
+        givenAutoValidationChallenge(List.of("Open Sesame", "Abracadabra"));
+        assertAutoValidationStatus("wrong answer", SubmissionStatus.rejected);
     }
 
     @Test
     void createSubmissionWithAnswerTypeNoneAutoApproves() {
         challenge.setAnswerType(AnswerType.none);
 
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("");
+        CreateSubmissionRequest request = buildDefaultRequest("");
 
         stubDefaultRepositories(null);
         stubSubmissionSave();
@@ -377,49 +339,20 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationIsCaseInsensitive() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(List.of("Hello World"));
-
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("  HELLO WORLD  ");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
+        givenAutoValidationChallenge(List.of("Hello World"));
+        assertAutoValidationStatus("  HELLO WORLD  ", SubmissionStatus.correct);
     }
 
     @Test
     void createSubmissionAutoValidationResolvesTemplateVariablesBeforeMatching() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(List.of("{{teamColor}}"));
+        givenAutoValidationChallenge(List.of("{{teamColor}}"));
 
         // Template resolution replaces {{teamColor}} with the actual team-specific value
         when(templateVariableService.resolveTemplates(
                 eq(List.of("{{teamColor}}")), eq(gameId), eq(challengeId), eq(teamId)))
                 .thenReturn(List.of("red"));
 
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("red");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.correct, submissionCaptor.getValue().getStatus());
+        assertAutoValidationStatus("red", SubmissionStatus.correct);
     }
 
     @Test
@@ -438,11 +371,7 @@ class SubmissionServiceTest {
                 .idempotencyKey(idempotencyKey)
                 .build();
 
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("answer");
+        CreateSubmissionRequest request = buildDefaultRequest("answer");
         request.setIdempotencyKey(idempotencyKey);
 
         // First call finds existing - returns it directly without saving
@@ -458,33 +387,13 @@ class SubmissionServiceTest {
 
     @Test
     void createSubmissionAutoValidationWithNullCorrectAnswerStaysPending() {
-        challenge.setAutoValidate(true);
-        challenge.setCorrectAnswer(null);
-
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("any answer");
-
-        stubDefaultRepositories(null);
-        stubSubmissionSave();
-
-        SubmissionResponse response = submissionService.createSubmission(gameId, request);
-
-        ArgumentCaptor<Submission> submissionCaptor = ArgumentCaptor.forClass(Submission.class);
-        verify(submissionRepository).save(submissionCaptor.capture());
-        assertEquals(SubmissionStatus.pending, submissionCaptor.getValue().getStatus());
-        assertEquals(SubmissionStatus.pending.name(), response.status());
+        givenAutoValidationChallenge(null);
+        assertAutoValidationStatus("any answer", SubmissionStatus.pending);
     }
 
     @Test
     void createSubmissionDataIntegrityWithoutIdempotencyKeyRethrows() {
-        CreateSubmissionRequest request = new CreateSubmissionRequest();
-        request.setTeamId(teamId);
-        request.setChallengeId(challengeId);
-        request.setBaseId(baseId);
-        request.setAnswer("answer");
+        CreateSubmissionRequest request = buildDefaultRequest("answer");
         // No idempotencyKey set
 
         stubDefaultRepositories(null);

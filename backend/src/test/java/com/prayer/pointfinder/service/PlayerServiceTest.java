@@ -93,10 +93,6 @@ class PlayerServiceTest {
     @Mock
     private SubmissionService submissionService;
     @Mock
-    private TeamLocationRepository teamLocationRepository;
-    @Mock
-    private PlayerLocationRepository playerLocationRepository;
-    @Mock
     private GameRepository gameRepository;
     @Mock
     private GameAccessService gameAccessService;
@@ -120,93 +116,6 @@ class PlayerServiceTest {
 
     @InjectMocks
     private PlayerService playerService;
-
-    @Test
-    void updateLocationBlocksWhenGameIsNotLive() {
-        UUID gameId = UUID.randomUUID();
-        UUID teamId = UUID.randomUUID();
-        UUID playerId = UUID.randomUUID();
-
-        Game game = Game.builder()
-                .id(gameId)
-                .name("Setup Game")
-                .description("Desc")
-                .status(GameStatus.setup)
-                .build();
-        Team team = Team.builder()
-                .id(teamId)
-                .game(game)
-                .name("Wolves")
-                .joinCode("SETUP02")
-                .color("#FF9900")
-                .build();
-        Player player = Player.builder()
-                .id(playerId)
-                .team(team)
-                .deviceId("device-location")
-                .displayName("Player")
-                .build();
-
-        when(playerRepository.findById(playerId)).thenReturn(Optional.of(player));
-
-        BadRequestException ex = assertThrows(
-                BadRequestException.class,
-                () -> playerService.updateLocation(gameId, player, 40.0, -8.0)
-        );
-
-        assertEquals("Game is not active yet", ex.getMessage());
-        verify(playerLocationRepository, never()).save(any());
-    }
-
-    @Test
-    void updateLocationRejectsInvalidLatitude() {
-        UUID gameId = UUID.randomUUID();
-        Player player = Player.builder()
-                .id(UUID.randomUUID())
-                .deviceId("device-loc")
-                .displayName("Player")
-                .build();
-
-        BadRequestException ex = assertThrows(
-                BadRequestException.class,
-                () -> playerService.updateLocation(gameId, player, 91.0, 10.0)
-        );
-        assertEquals("Invalid coordinates", ex.getMessage());
-        verify(playerLocationRepository, never()).save(any());
-    }
-
-    @Test
-    void updateLocationRejectsInvalidLongitude() {
-        UUID gameId = UUID.randomUUID();
-        Player player = Player.builder()
-                .id(UUID.randomUUID())
-                .deviceId("device-loc")
-                .displayName("Player")
-                .build();
-
-        BadRequestException ex = assertThrows(
-                BadRequestException.class,
-                () -> playerService.updateLocation(gameId, player, 40.0, -181.0)
-        );
-        assertEquals("Invalid coordinates", ex.getMessage());
-        verify(playerLocationRepository, never()).save(any());
-    }
-
-    @Test
-    void updateLocationRejectsNegativeInvalidLatitude() {
-        UUID gameId = UUID.randomUUID();
-        Player player = Player.builder()
-                .id(UUID.randomUUID())
-                .deviceId("device-loc")
-                .displayName("Player")
-                .build();
-
-        BadRequestException ex = assertThrows(
-                BadRequestException.class,
-                () -> playerService.updateLocation(gameId, player, -91.0, 0.0)
-        );
-        assertEquals("Invalid coordinates", ex.getMessage());
-    }
 
     @Test
     void getProgressShowsHiddenBaseWhenUnlockChallengeIsCompleted() {
@@ -365,26 +274,6 @@ class PlayerServiceTest {
         playerService.checkIn(gameId, baseId, player, request);
 
         verify(operatorPushNotificationService).notifyOperatorsForCheckIn(eq(game), eq(team), eq(base));
-    }
-
-    @Test
-    void updateLocationRejectsNaNLatitude() {
-        UUID gameId = UUID.randomUUID();
-        UUID playerId = UUID.randomUUID();
-        Player player = Player.builder().id(playerId).build();
-
-        assertThrows(BadRequestException.class,
-                () -> playerService.updateLocation(gameId, player, Double.NaN, 0.0));
-    }
-
-    @Test
-    void updateLocationRejectsInfinityLongitude() {
-        UUID gameId = UUID.randomUUID();
-        UUID playerId = UUID.randomUUID();
-        Player player = Player.builder().id(playerId).build();
-
-        assertThrows(BadRequestException.class,
-                () -> playerService.updateLocation(gameId, player, 0.0, Double.POSITIVE_INFINITY));
     }
 
     @Test

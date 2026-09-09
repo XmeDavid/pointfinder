@@ -328,12 +328,7 @@ public class GameService {
         if (current == target) {
             throw new BadRequestException("Game is already in " + current + " state");
         }
-        boolean valid = switch (current) {
-            case setup -> target == GameStatus.live;
-            case live -> target == GameStatus.ended || target == GameStatus.setup;
-            case ended -> target == GameStatus.live || target == GameStatus.setup;
-        };
-        if (!valid) {
+        if (!current.canTransitionTo(target)) {
             throw new BadRequestException("Cannot transition from " + current + " to " + target);
         }
     }

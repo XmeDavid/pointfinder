@@ -336,13 +336,65 @@ Uses named volumes (`gradle-cache`, `bun-cache`, and per-workspace `node_modules
 | `frontend_dist` | Named | `/app/dist` (frontend) → `/usr/share/nginx/html/app` (nginx) | Regeneratable | Rebuilt on each deploy; safe to delete |
 | `secrets/` | Bind (RO) | `./secrets/` → `/app/config/` | Important | APNs `.p8` key and FCM JSON credentials; store securely |
 
-### Backup recommendations
+### Backup strategy
+
+#### Automated database backups
+
+`scripts/db-backup.sh` creates timestamped, gzip-compressed `pg_dump` backups
+via `docker exec` and prunes files older than a configurable retention period.
 
 ```bash
-# PostgreSQL — dump to compressed file
-docker exec pointfinder-db pg_dump -U scout pointfinder | gzip > backup-$(date +%Y%m%d).sql.gz
+# Default: dumps to ./backups, 30-day retention
+./scripts/db-backup.sh
 
-# Uploads — rsync to remote storage
+# Custom directory and 7-day retention
+RETENTION_DAYS=7 ./scripts/db-backup.sh /mnt/nas/pointfinder-backups
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_CONTAINER` | `pointfinder-db` | Docker container to exec into |
+| `DB_NAME` | `pointfinder` | Database name |
+| `DB_USER` | `scout` | PostgreSQL user |
+| `RETENTION_DAYS` | `30` | Days to keep before pruning |
+
+**Recommended cron schedule — daily at 03:00:**
+
+```cron
+0 3 * * * cd /path/to/pointfinder && ./scripts/db-backup.sh >> /var/log/pointfinder-backup.log 2>&1
+```
+
+#### Restore procedure
+
+```bash
+# 1. Stop the backend so no writes occur during restore
+docker compose stop backend
+
+# 2. Decompress and pipe into psql inside the container
+gunzip -c backups/pointfinder-20260909-030000.sql.gz \
+  | docker exec -i pointfinder-db psql -U scout -d pointfinder
+
+# 3. Restart the backend
+docker compose start backend
+```
+
+For a full database replacement (e.g. restoring to a fresh container), drop and
+recreate the database first:
+
+```bash
+docker exec pointfinder-db psql -U scout -d postgres \
+  -c "DROP DATABASE pointfinder;" \
+  -c "CREATE DATABASE pointfinder OWNER scout;"
+gunzip -c backups/pointfinder-20260909-030000.sql.gz \
+  | docker exec -i pointfinder-db psql -U scout -d pointfinder
+```
+
+#### Uploads backup
+
+User-submitted files live on the host at `$UPLOADS_PATH` (default `./data/uploads`).
+Back them up with rsync or any file-level tool:
+
+```bash
 rsync -az ./data/uploads/ remote:/backups/uploads/
 ```
 

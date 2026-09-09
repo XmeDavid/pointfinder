@@ -285,7 +285,7 @@ public class TeamService {
 
     private String generateUniqueJoinCode() {
         for (int attempt = 0; attempt < MAX_JOIN_CODE_ATTEMPTS; attempt++) {
-            String code = CodeGenerator.generate(7, CodeGenerator.FULL_ALPHANUMERIC);
+            String code = CodeGenerator.generate(8, CodeGenerator.FULL_ALPHANUMERIC);
             if (teamRepository.findByJoinCode(code).isEmpty()) {
                 return code;
             }

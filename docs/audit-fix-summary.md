@@ -58,7 +58,7 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 | 9.3 | Zero Android ViewModel tests | Separate task | **Resolved (2026-09-08)** -- PlayerViewModelTest.kt with 11 tests |
 | 9.4 | Zero Android instrumentation tests | Separate task | Yes (mitigated by Maestro E2E) |
 | 9.5 | MobileRealtimeClient test coverage | Separate task | **Resolved (2026-09-08)** -- 19 tests total (URL, token, parsing, reconnect backoff) |
-| 9.6 | Zero iOS View/ViewModel tests | Separate task | Yes (mitigated by Maestro E2E + 13 unit test files) |
+| 9.6 | Zero iOS View/ViewModel tests | Separate task | **Resolved (2026-09-09)** -- AppStateViewModelTests.swift with 15+ tests |
 | 9.7 | E2E parity gaps | Separate task | Yes (documented) |
 | 9.8 | ChunkedUploadServiceTest ReflectionTestUtils | **Resolved** | No longer uses ReflectionTestUtils; uses proper Mockito setup |
 | 9.9 | SubmissionServiceTest helper extraction | Separate task | **Resolved** -- Refactored with shared @BeforeEach setup + stubDefaultRepositories/stubSubmissionSave helpers |
@@ -342,5 +342,57 @@ Resolved 3 of the 6 remaining deferred items: certificate pinning (12.2), Androi
 | # | Finding | Why still deferred |
 |---|---------|-------------------|
 | 9.4 | Android instrumentation tests | Mitigated by Maestro E2E; requires Compose test infrastructure |
-| 9.6 | iOS View/ViewModel tests | Mitigated by Maestro E2E + unit tests; requires SwiftUI test infrastructure |
+| 9.7 | E2E parity gaps | Incremental by nature; documented |
+
+---
+
+## Changes Made (2026-09-09 automated pass)
+
+Resolved 4 remaining findings and made further improvements to previously resolved ones.
+
+### Finding 2.13 -- PlayerService further extraction (21 -> 18 deps)
+
+1. **PlayerLocationService.java** -- New service with both `updateLocation` overloads. Dependencies: PlayerRepository, PlayerLocationRepository, GameAccessService, GameEventBroadcaster.
+2. **PlayerPushTokenService.java** -- New service with `updatePushToken`. Single dependency: PushTokenService.
+3. **PlayerLocationServiceTest.java** -- 6 tests moved from PlayerServiceTest (coordinate validation).
+4. **PlayerController.java** -- Injected new services for location/push-token endpoints.
+5. **PlayerServiceTest.java** -- Removed moved tests and unused mock fields.
+6. **PlayerLocationFieldsTest.java** -- Updated to use PlayerLocationService.
+
+### Finding 2.19 -- GameStatus sealed interface
+
+7. **GameStatusTransition.java** -- Sealed interface with 5 record subtypes (GoLive, EndGame, RevertToSetup, ResetToSetup, ReLive). Static `allowedTransitions()` and `canTransition()`.
+8. **GameStatus.java** -- Added `canTransitionTo()` delegate method.
+9. **GameService.java** -- `validateStatusTransition` now uses `current.canTransitionTo(target)`.
+
+### Finding 5.6 -- Database backup strategy
+
+10. **scripts/db-backup.sh** -- Backup script using pg_dump via docker exec, timestamped gzip, configurable retention.
+11. **docs/infrastructure.md** -- Backup strategy section with cron schedule and restore procedure.
+
+### Finding 6.16 -- Final contentDescription fixes
+
+12. **PlayerGameplayScreens.kt** -- Two remaining `contentDescription = null` on icons inside Buttons changed to use existing `stringResource()` labels.
+
+### Finding 9.5 -- MobileRealtimeClient message parsing tests
+
+13. **MobileRealtimeClientMessageTest.kt** -- 10 tests covering all event type envelopes, forward compatibility, malformed JSON, and edge cases.
+
+### Finding 9.6 -- iOS ViewModel tests
+
+14. **AppStateViewModelTests.swift** -- 15+ tests across 7 areas: auth state, errors, deep links, solve sessions, base status, logout guards, force logout.
+
+### Finding 9.9 -- SubmissionServiceTest consolidation
+
+15. **SubmissionServiceTest.java** -- Extracted 3 helper methods (buildDefaultRequest, givenAutoValidationChallenge, assertAutoValidationStatus). 6 auto-validation tests reduced from ~15 to 2 lines each.
+
+### Finding 12.6 -- Join code length increase
+
+16. **TeamService.java** -- Join code length increased from 7 to 8 characters (~2.8 trillion combinations).
+
+### Remaining deferred items (2)
+
+| # | Finding | Why still deferred |
+|---|---------|-------------------|
+| 9.4 | Android instrumentation tests | Mitigated by Maestro E2E; requires Compose test infrastructure |
 | 9.7 | E2E parity gaps | Incremental by nature; documented |
