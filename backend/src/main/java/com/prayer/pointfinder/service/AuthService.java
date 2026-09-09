@@ -11,6 +11,7 @@ import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
+import com.prayer.pointfinder.repository.OrgInviteRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
 import com.prayer.pointfinder.repository.UserRepository;
@@ -43,6 +44,8 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final OperatorInviteRepository inviteRepository;
+    private final OrgInviteRepository orgInviteRepository;
+    private final OrgInviteService orgInviteService;
     private final EmailChangeTokenRepository emailChangeTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
@@ -73,8 +76,13 @@ public class AuthService {
 
     @Transactional(timeout = 10)
     public AuthResponse register(String inviteToken, RegisterRequest request) {
-        OperatorInvite invite = inviteRepository.findByToken(inviteToken)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
+        OperatorInvite invite = inviteRepository.findByToken(inviteToken).orElse(null);
+        if (invite == null) {
+            // Not an operator invite: it may be an org invite, the link a club
+            // administrator receives when an admin creates their club for an
+            // address that has no account yet.
+            return registerFromOrgInvite(inviteToken, request);
+        }
 
         if (invite.getStatus() != InviteStatus.pending) {
             throw new BadRequestException("Invite has already been used or expired");
@@ -112,6 +120,51 @@ public class AuthService {
                 .tier(IndividualTier.free)
                 .status(SubscriptionStatus.active)
                 .build());
+
+        return generateAuthResponse(user);
+    }
+
+    /**
+     * Registration from an {@code org_invites} token.
+     *
+     * <p>Creating the account and joining the org happen in one transaction, so
+     * the invitee's very first authenticated request already sees the club.
+     * Before this existed, {@code OrgInviteService.acceptInviteByToken} had no
+     * caller at all and an invited club administrator landed in an empty
+     * account with a pending invite they could not reach.
+     */
+    private AuthResponse registerFromOrgInvite(String inviteToken, RegisterRequest request) {
+        OrgInvite orgInvite = orgInviteRepository.findByToken(inviteToken)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
+
+        if (orgInvite.getStatus() != InviteStatus.pending) {
+            throw new BadRequestException("Invite has already been used or expired");
+        }
+
+        if (!orgInvite.getEmail().equalsIgnoreCase(request.getEmail())) {
+            throw new BadRequestException("Email does not match the invitation");
+        }
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email already registered");
+        }
+
+        validatePassword(request.getPassword());
+
+        User user = userRepository.save(User.builder()
+                .email(request.getEmail())
+                .name(request.getName())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(UserRole.operator)
+                .build());
+
+        userSubRepository.save(UserSubscription.builder()
+                .user(user)
+                .tier(IndividualTier.free)
+                .status(SubscriptionStatus.active)
+                .build());
+
+        orgInviteService.acceptInviteByToken(inviteToken, user);
 
         return generateAuthResponse(user);
     }

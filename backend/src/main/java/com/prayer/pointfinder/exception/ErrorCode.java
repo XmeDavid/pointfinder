@@ -166,4 +166,20 @@ public enum ErrorCode {
     ASSIGNMENT_DUPLICATE,
     /** A bulk set puts the same challenge at two bases within one column. */
     ASSIGNMENT_CHALLENGE_REPEATED,
+
+    // ── Clubs and invoicing ───────────────────────────────────────────────
+    /** The admin email on a club creation request is missing or not a valid address. */
+    ORG_ADMIN_EMAIL_INVALID,
+    /** An admin sent a tier, status, or other enum value the backend does not know. */
+    ORG_INVALID_ENUM_VALUE,
+    /** Ownership can only move to someone who is already a member of the org. */
+    ORG_TRANSFER_TARGET_NOT_MEMBER,
+    /** Invoicing needs STRIPE_SECRET_KEY; this deployment has none configured. */
+    INVOICE_STRIPE_NOT_CONFIGURED,
+    /** The club has no billing email to invoice — no admin member and no pending invite. */
+    INVOICE_NO_BILLING_CONTACT,
+    /** Stripe rejected the customer or invoice call. Details carry Stripe's own message. */
+    INVOICE_STRIPE_CALL_FAILED,
+    /** amountCents, dueDays, or termMonths was outside its allowed range. */
+    INVOICE_AMOUNT_INVALID,
 }

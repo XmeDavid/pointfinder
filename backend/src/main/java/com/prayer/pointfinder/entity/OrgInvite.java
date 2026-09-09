@@ -41,6 +41,15 @@ public class OrgInvite {
     @JoinColumn(name = "invited_by")
     private User invitedBy;
 
+    /**
+     * Set when an admin creates a club for an email that has no account yet.
+     * The creating admin owns the org meanwhile; accepting this invite makes
+     * the invitee the org creator and grants ALL permissions.
+     */
+    @Column(name = "transfer_ownership", nullable = false)
+    @Builder.Default
+    private boolean transferOwnership = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

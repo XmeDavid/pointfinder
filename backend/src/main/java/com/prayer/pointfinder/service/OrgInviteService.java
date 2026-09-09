@@ -84,6 +84,37 @@ public class OrgInviteService {
         return toResponse(invite);
     }
 
+    /**
+     * The invite an admin sends when they create a club for an address that
+     * has no account yet. It differs from a member invite in two ways: it
+     * carries every org permission, and accepting it transfers ownership of
+     * the club from the creating admin to the invitee.
+     *
+     * <p>Unlike {@link #createInvite}, this does not check the caller's org
+     * permissions or the member quota — the caller is a platform admin who
+     * has just created the org, and the invitee is its first member.
+     */
+    @Transactional(timeout = 10)
+    public OrgInvite createOwnerInvite(Organization org, String email, User admin, String requestHost) {
+        OrgInvite invite = OrgInvite.builder()
+                .organization(org)
+                .email(email)
+                .token(UUID.randomUUID().toString())
+                .status(InviteStatus.pending)
+                .defaultPermissions(OrgPermission.ALL)
+                .transferOwnership(true)
+                .invitedBy(admin)
+                .build();
+        invite = orgInviteRepository.saveAndFlush(invite);
+
+        emailService.sendOrgRegistrationInvite(
+                email, invite.getToken(), org.getName(), admin.getName(), requestHost);
+
+        log.info("[ORG_INVITE] operation=createOwnerInvite orgId={} email={} admin={}",
+                org.getId(), email, admin.getId());
+        return invite;
+    }
+
     @Transactional(readOnly = true)
     public List<OrgInviteResponse> getOrgInvites(UUID orgId) {
         organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.INVITE_MEMBERS);
@@ -143,6 +174,15 @@ public class OrgInviteService {
         return toMemberResponse(membership, currentUser);
     }
 
+    /**
+     * Accepts an org invite by its raw token. This is the path a brand-new
+     * account takes: {@code POST /api/auth/register/{token}} creates the user
+     * and then calls this, so the invitee lands inside the org on their very
+     * first request instead of having to find a pending invite afterwards.
+     *
+     * <p>An invite flagged {@code transferOwnership} also makes the invitee the
+     * org's creator, handing the club over from the admin who set it up.
+     */
     @Transactional(timeout = 10)
     public OrgMemberResponse acceptInviteByToken(String token, User user) {
         OrgInvite invite = orgInviteRepository.findByToken(token)
@@ -173,6 +213,13 @@ public class OrgInviteService {
                 .permissions(invite.getDefaultPermissions())
                 .build();
         membership = membershipRepository.save(membership);
+
+        if (invite.isTransferOwnership()) {
+            org.setCreatedBy(user);
+            orgRepository.save(org);
+            log.info("[ORG_INVITE] operation=transferOwnershipOnAccept orgId={} newOwner={}",
+                    org.getId(), user.getId());
+        }
 
         log.info("[ORG_INVITE] operation=acceptInviteByToken orgId={} userId={}", org.getId(), user.getId());
 

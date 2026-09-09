@@ -2,12 +2,15 @@ package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateOrgInviteRequest;
 import com.prayer.pointfinder.dto.request.CreateOrgRequest;
+import com.prayer.pointfinder.dto.request.TransferOrgOwnershipRequest;
 import com.prayer.pointfinder.dto.request.UpdateMemberPermissionsRequest;
 import com.prayer.pointfinder.dto.request.UpdateOrgRequest;
 import com.prayer.pointfinder.dto.response.OrgInviteResponse;
+import com.prayer.pointfinder.dto.response.OrgInvoiceResponse;
 import com.prayer.pointfinder.dto.response.OrgMemberResponse;
 import com.prayer.pointfinder.dto.response.OrgResponse;
 import com.prayer.pointfinder.service.OrgInviteService;
+import com.prayer.pointfinder.service.OrgInvoiceService;
 import com.prayer.pointfinder.service.OrgMembershipService;
 import com.prayer.pointfinder.service.OrganizationService;
 
@@ -28,6 +31,7 @@ public class OrganizationController {
     private final OrganizationService organizationService;
     private final OrgMembershipService membershipService;
     private final OrgInviteService orgInviteService;
+    private final OrgInvoiceService orgInvoiceService;
 
     @PostMapping
     public ResponseEntity<OrgResponse> createOrg(@Valid @RequestBody CreateOrgRequest request) {
@@ -49,6 +53,19 @@ public class OrganizationController {
     public ResponseEntity<Void> deleteOrg(@PathVariable UUID orgId) {
         organizationService.deleteOrg(orgId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{orgId}/transfer-ownership")
+    public ResponseEntity<OrgResponse> transferOwnership(
+            @PathVariable UUID orgId,
+            @Valid @RequestBody TransferOrgOwnershipRequest request) {
+        return ResponseEntity.ok(organizationService.transferOwnership(orgId, request.getUserId()));
+    }
+
+    /** A club's own billing history. Members need MANAGE_BILLING to see it. */
+    @GetMapping("/{orgId}/invoices")
+    public ResponseEntity<List<OrgInvoiceResponse>> listInvoices(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(orgInvoiceService.listInvoicesForMember(orgId));
     }
 
     @GetMapping("/{orgId}/members")

@@ -5,11 +5,13 @@ import com.prayer.pointfinder.dto.response.InviteResponse;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.InviteStatus;
 import com.prayer.pointfinder.entity.OperatorInvite;
+import com.prayer.pointfinder.entity.OrgInvite;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
+import com.prayer.pointfinder.repository.OrgInviteRepository;
 import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 public class InviteService {
 
     private final OperatorInviteRepository inviteRepository;
+    private final OrgInviteRepository orgInviteRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final GameAccessService gameAccessService;
@@ -57,13 +60,33 @@ public class InviteService {
     }
 
     @Transactional(readOnly = true)
+    /**
+     * Resolves a raw invite token from either table.
+     *
+     * <p>{@code /register/{token}?org=true} links sent by
+     * {@code EmailService.sendOrgRegistrationInvite} carry an
+     * {@code org_invites} token, which used to 404 here because only
+     * {@code operator_invites} was searched — an invited club administrator
+     * could not get past the registration page. Both are looked up now.
+     */
     public InviteTokenResponse getInviteByToken(String token) {
-        OperatorInvite invite = inviteRepository.findByToken(token)
+        OperatorInvite invite = inviteRepository.findByToken(token).orElse(null);
+        if (invite != null) {
+            if (invite.getStatus() != InviteStatus.pending) {
+                throw new BadRequestException("Invite has already been used or expired");
+            }
+            return InviteTokenResponse.forOperator(invite.getEmail());
+        }
+
+        OrgInvite orgInvite = orgInviteRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
-        if (invite.getStatus() != InviteStatus.pending) {
+        if (orgInvite.getStatus() != InviteStatus.pending) {
             throw new BadRequestException("Invite has already been used or expired");
         }
-        return new InviteTokenResponse(invite.getEmail());
+        return InviteTokenResponse.forOrg(
+                orgInvite.getEmail(),
+                orgInvite.getOrganization().getId(),
+                orgInvite.getOrganization().getName());
     }
 
     @Transactional(timeout = 10)

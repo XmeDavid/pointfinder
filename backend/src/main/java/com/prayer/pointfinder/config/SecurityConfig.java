@@ -69,6 +69,10 @@ public class SecurityConfig {
                 // STOMP/native handlers can perform auth after the socket opens.
                 .requestMatchers("/ws/**", "/ws-native").permitAll()
                 .requestMatchers("/api/player/**").hasRole("PLAYER")
+                // Platform administration — club creation, deal terms,
+                // invoicing, ownership transfer. Gated at the filter chain so
+                // no controller can accidentally ship an unguarded method.
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Snapshot endpoint is reachable by players AND operators —
                 // the controller branches on the JWT principal type and
                 // delegates to GameAccessService for the per-role access

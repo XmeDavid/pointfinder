@@ -556,7 +556,7 @@ class AuthControllerTest {
     @Test
     void getPendingInviteReturns200WithEmail() throws Exception {
         when(inviteService.getInviteByToken("pending-token"))
-                .thenReturn(new InviteTokenResponse("invited@test.com"));
+                .thenReturn(InviteTokenResponse.forOperator("invited@test.com"));
 
         mockMvc.perform(get("/api/auth/invite/pending-token"))
                 .andExpect(status().isOk())

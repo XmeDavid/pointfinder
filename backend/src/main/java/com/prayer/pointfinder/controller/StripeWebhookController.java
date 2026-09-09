@@ -60,32 +60,57 @@ public class StripeWebhookController {
         String type = event.getType();
         log.info("[WEBHOOK] Received event type={} id={}", type, event.getId());
 
+        // Every branch goes through applyOnce, which skips an event id already
+        // in stripe_events and records it alongside the effect in one
+        // transaction. Stripe redelivers freely; the ledger keeps each event's
+        // effect to exactly one application.
         try {
             switch (type) {
                 case "checkout.session.completed" -> {
                     Session session = deserialize(event, Session.class);
                     if (session != null) {
                         log.info("[WEBHOOK] checkout.session.completed clientRef={} customer={}", session.getClientReferenceId(), session.getCustomer());
-                        webhookService.handleCheckoutCompleted(session);
+                        webhookService.applyOnce(event.getId(), type,
+                            () -> webhookService.handleCheckoutCompleted(session));
                     } else {
                         log.error("[WEBHOOK] checkout.session.completed could not deserialize event={}", event.getId());
                     }
                 }
                 case "invoice.paid" -> {
                     Invoice invoice = deserialize(event, Invoice.class);
-                    if (invoice != null) webhookService.handleInvoicePaid(invoice);
+                    if (invoice != null) {
+                        webhookService.applyOnce(event.getId(), type,
+                            () -> webhookService.handleInvoicePaid(invoice));
+                    }
+                }
+                case "invoice.voided", "invoice.marked_uncollectible" -> {
+                    Invoice invoice = deserialize(event, Invoice.class);
+                    if (invoice != null) {
+                        String status = "invoice.voided".equals(type) ? "void" : "uncollectible";
+                        webhookService.applyOnce(event.getId(), type,
+                            () -> webhookService.handleInvoiceClosed(invoice, status));
+                    }
                 }
                 case "invoice.payment_failed" -> {
                     Invoice invoice = deserialize(event, Invoice.class);
-                    if (invoice != null) webhookService.handleInvoicePaymentFailed(invoice);
+                    if (invoice != null) {
+                        webhookService.applyOnce(event.getId(), type,
+                            () -> webhookService.handleInvoicePaymentFailed(invoice));
+                    }
                 }
                 case "customer.subscription.deleted" -> {
                     Subscription sub = deserialize(event, Subscription.class);
-                    if (sub != null) webhookService.handleSubscriptionDeleted(sub);
+                    if (sub != null) {
+                        webhookService.applyOnce(event.getId(), type,
+                            () -> webhookService.handleSubscriptionDeleted(sub));
+                    }
                 }
                 case "customer.subscription.updated" -> {
                     Subscription sub = deserialize(event, Subscription.class);
-                    if (sub != null) webhookService.handleSubscriptionUpdated(sub);
+                    if (sub != null) {
+                        webhookService.applyOnce(event.getId(), type,
+                            () -> webhookService.handleSubscriptionUpdated(sub));
+                    }
                 }
                 default -> log.debug("[WEBHOOK] Unhandled event type: {}", type);
             }

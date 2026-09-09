@@ -4,6 +4,8 @@ import com.prayer.pointfinder.dto.request.CreateOrgRequest;
 import com.prayer.pointfinder.dto.request.UpdateOrgRequest;
 import com.prayer.pointfinder.dto.response.OrgResponse;
 import com.prayer.pointfinder.entity.*;
+import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameRepository;
@@ -99,6 +101,46 @@ public class OrganizationService {
         orgRepository.delete(org);
     }
 
+    /**
+     * Hands the org to another member. Open to the current owner, to anyone
+     * holding MANAGE_PERMS, and to platform admins — a club whose owner has
+     * left must not need a support ticket to get a new one.
+     */
+    @Transactional
+    public OrgResponse transferOwnership(UUID orgId, UUID newOwnerId) {
+        Organization org = findOrgOrThrow(orgId);
+        User currentUser = SecurityUtils.getCurrentUser();
+        boolean isCreator = org.getCreatedBy().getId().equals(currentUser.getId());
+        if (!isCreator) {
+            ensureCurrentUserHasPermission(orgId, OrgPermission.MANAGE_PERMS);
+        }
+        return applyOwnershipTransfer(org, newOwnerId, currentUser);
+    }
+
+    /**
+     * The transfer itself, with no authorization of its own — callers decide
+     * who may do it. Shared by the org-admin route above and the platform-admin
+     * route in {@link AdminOrgService}.
+     */
+    OrgResponse applyOwnershipTransfer(Organization org, UUID newOwnerId, User actor) {
+        OrgMembership membership = membershipRepository
+            .findByOrganizationIdAndUserId(org.getId(), newOwnerId)
+            .orElseThrow(() -> new BadRequestException(
+                "The new owner must already be a member of this organization.",
+                ErrorCode.ORG_TRANSFER_TARGET_NOT_MEMBER));
+
+        membership.setPermissions(OrgPermission.ALL);
+        membershipRepository.save(membership);
+
+        org.setCreatedBy(membership.getUser());
+        org = orgRepository.save(org);
+
+        log.info("[ORG] operation=transferOwnership orgId={} newOwner={} actor={}",
+            org.getId(), newOwnerId, actor.getId());
+
+        return toResponse(org);
+    }
+
     // --- Helpers used by other services ---
 
     public Organization findOrgOrThrow(UUID orgId) {
@@ -125,7 +167,8 @@ public class OrganizationService {
         }
     }
 
-    private OrgResponse toResponse(Organization org) {
+    /** Shared with {@link AdminOrgService} so both paths return one org shape. */
+    OrgResponse toResponse(Organization org) {
         int memberCount = membershipRepository.countByOrganizationId(org.getId());
         return new OrgResponse(
             org.getId(),
@@ -136,11 +179,13 @@ public class OrganizationService {
             org.getSubscriptionStatus().name(),
             memberCount,
             org.getQuotaOverrides(),
+            org.getTermEnd(),
             org.getCreatedAt()
         );
     }
 
-    private String generateUniqueSlug(String name) {
+    /** Shared with {@link AdminOrgService}, which creates clubs on sales' behalf. */
+    String generateUniqueSlug(String name) {
         String base = Normalizer.normalize(name, Normalizer.Form.NFD)
             .replaceAll("[^\\p{ASCII}]", "")
             .toLowerCase(Locale.ROOT)
