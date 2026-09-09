@@ -72,7 +72,8 @@
       "deleteTeamDescription": "Todos os jogadores e atribuições ligados a esta equipa serão afetados. Esta ação não pode ser anulada.",
       "deleteTeamMembers_one": "Esta equipa tem {{count}} membro.",
       "deleteTeamMembers_other": "Esta equipa tem {{count}} membros."
-    }
+    },
+    "close": "Fechar"
   },
   "auth": {
     "signIn": "Entrar",
@@ -163,7 +164,47 @@
     "gracePeriodEnd": "Fim do período de tolerância",
     "joined": "Registo",
     "billingCycle": "Ciclo de faturação",
-    "periodEnd": "Fim do período"
+    "periodEnd": "Fim do período",
+    "previousPage": "Anterior",
+    "nextPage": "Seguinte",
+    "pageRange": "{{from}}–{{to}} de {{total}}",
+    "club": {
+      "newAction": "Novo clube",
+      "newTitle": "Novo clube",
+      "newDesc": "Criar um clube depois de fechado o acordo. O administrador do clube entra de imediato ou recebe um convite para se registar.",
+      "name": "Nome do clube",
+      "adminEmail": "E-mail do administrador do clube",
+      "adminEmailHint": "Um endereço que já tenha conta entra já no clube. Qualquer outro recebe um convite de registo.",
+      "termEnd": "Pago até",
+      "termEndHint": "Deixe vazio para que a primeira fatura paga defina o período.",
+      "note": "Nota interna",
+      "createAction": "Criar clube",
+      "created": "{{name}} criado",
+      "adminAttached": "{{email}} já tinha conta e passa a administrar o clube.",
+      "adminInvited": "Foi enviado um convite de registo para {{email}}. Ao aceitá-lo passa a proprietário.",
+      "openClub": "Abrir clube"
+    },
+    "limits": {
+      "title": "Limites",
+      "newClubHint": "Pré-preenchido com o acordo padrão de clube. Altere o que este acordo definir de outra forma.",
+      "hint": "\"Padrão do plano\" deixa o limite ao plano. \"Ilimitado\" remove-o.",
+      "members": "Membros",
+      "liveGames": "Jogos em direto",
+      "playersPerGame": "Jogadores por jogo",
+      "basesPerGame": "Bases por jogo",
+      "operatorsPerGame": "Operadores por jogo",
+      "fileSize": "Tamanho máximo de ficheiro",
+      "storage": "Armazenamento de recursos",
+      "locationCheckIn": "Check-in por localização",
+      "gigabytes": "GB",
+      "upTo": "Até",
+      "unlimited": "Ilimitado",
+      "tierDefault": "Padrão do plano",
+      "on": "Ligado",
+      "off": "Desligado",
+      "invalid": "Introduza um número acima de zero.",
+      "modeFor": "Limite de {{limit}}"
+    }
   },
   "game": {
     "export": "Exportar Jogo",
@@ -2391,5 +2432,8 @@
         "none": "Ainda não visto"
       }
     }
+  },
+  "club": {
+    "paidUntil": "Pago até {{date}}"
   }
 }

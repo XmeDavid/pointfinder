@@ -72,7 +72,8 @@
       "deleteTeamDescription": "Alle Spieler und Zuweisungen dieses Teams sind betroffen. Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleteTeamMembers_one": "Dieses Team hat {{count}} Mitglied.",
       "deleteTeamMembers_other": "Dieses Team hat {{count}} Mitglieder."
-    }
+    },
+    "close": "Schliessen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -163,7 +164,47 @@
     "gracePeriodEnd": "Ende der Nachfrist",
     "joined": "Beigetreten",
     "billingCycle": "Abrechnungszeitraum",
-    "periodEnd": "Ende des Zeitraums"
+    "periodEnd": "Ende des Zeitraums",
+    "previousPage": "Zurück",
+    "nextPage": "Weiter",
+    "pageRange": "{{from}}–{{to}} von {{total}}",
+    "club": {
+      "newAction": "Neuer Verein",
+      "newTitle": "Neuer Verein",
+      "newDesc": "Einen Verein anlegen, nachdem der Vertrag steht. Die Vereinsverwaltung tritt sofort bei oder wird zur Registrierung eingeladen.",
+      "name": "Vereinsname",
+      "adminEmail": "E-Mail der Vereinsverwaltung",
+      "adminEmailHint": "Eine Adresse mit vorhandenem Konto tritt dem Verein sofort bei. Jede andere erhält eine Registrierungseinladung.",
+      "termEnd": "Bezahlt bis",
+      "termEndHint": "Leer lassen, damit die erste bezahlte Rechnung die Laufzeit setzt.",
+      "note": "Interne Notiz",
+      "createAction": "Verein anlegen",
+      "created": "{{name}} angelegt",
+      "adminAttached": "{{email}} hatte bereits ein Konto und verwaltet den Verein jetzt.",
+      "adminInvited": "Eine Registrierungseinladung ging an {{email}}. Mit der Annahme wird daraus die Eigentümerschaft.",
+      "openClub": "Verein öffnen"
+    },
+    "limits": {
+      "title": "Limits",
+      "newClubHint": "Mit dem Standardvertrag für Vereine vorbelegt. Ändern Sie, was dieser Vertrag anders vorsieht.",
+      "hint": "„Tarifvorgabe“ überlässt das Limit dem Tarif. „Unbegrenzt“ hebt es auf.",
+      "members": "Mitglieder",
+      "liveGames": "Live-Spiele",
+      "playersPerGame": "Spieler pro Spiel",
+      "basesPerGame": "Basen pro Spiel",
+      "operatorsPerGame": "Operatoren pro Spiel",
+      "fileSize": "Maximale Dateigrösse",
+      "storage": "Ressourcenspeicher",
+      "locationCheckIn": "Standort-Check-in",
+      "gigabytes": "GB",
+      "upTo": "Bis zu",
+      "unlimited": "Unbegrenzt",
+      "tierDefault": "Tarifvorgabe",
+      "on": "An",
+      "off": "Aus",
+      "invalid": "Geben Sie eine Zahl über null ein.",
+      "modeFor": "Limit für {{limit}}"
+    }
   },
   "game": {
     "export": "Spiel exportieren",
@@ -2391,5 +2432,8 @@
         "none": "Noch nicht angesehen"
       }
     }
+  },
+  "club": {
+    "paidUntil": "Bezahlt bis {{date}}"
   }
 }

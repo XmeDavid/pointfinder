@@ -4,16 +4,21 @@ import { useTranslation } from 'react-i18next'
 import { adminApi } from '@/lib/api/admin'
 import { AdminUserDetail } from './AdminUserDetail'
 import { AdminOrgDetail } from './AdminOrgDetail'
+import { NewClubDialog } from './NewClubDialog'
 import type { AdminUser, AdminOrg } from '@/types/admin'
 import { StatusBadge, type StatusBadgeTone } from '@/components/status'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { LoadingState } from '@/components/feedback/LoadingState'
 import { EmptyState } from '@/components/feedback/EmptyState'
+import { formatClubDate } from '@/lib/clubBilling'
 
 type Tab = 'users' | 'orgs'
 type Detail = { type: 'user'; id: string } | { type: 'org'; id: string } | null
+
+const PAGE_SIZE = 50
 
 const TIER_TONES: Record<string, StatusBadgeTone> = {
   free: 'muted',
@@ -33,22 +38,75 @@ function AdminBadge({ value, toneMap }: { value: string; toneMap: Record<string,
   return <StatusBadge tone={toneMap[value] ?? 'muted'} label={value} />
 }
 
-export function AdminPanel() {
+/**
+ * Prev/next over a page of 50. The list endpoints report `totalElements`, so
+ * the page can say where it is without fetching what it is not showing.
+ */
+function Pagination({
+  page,
+  count,
+  total,
+  onChange,
+  testId,
+}: {
+  page: number
+  count: number
+  total: number
+  onChange: (next: number) => void
+  testId: string
+}) {
   const { t } = useTranslation()
+  if (total === 0) return null
+  const from = page * PAGE_SIZE + 1
+  const to = page * PAGE_SIZE + count
+  const hasNext = to < total
+
+  return (
+    <div className="mt-4 flex items-center gap-3" data-testid={testId}>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={page === 0}
+        onClick={() => onChange(page - 1)}
+        data-testid={`${testId}-prev`}
+      >
+        {t('admin.previousPage', 'Previous')}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={!hasNext}
+        onClick={() => onChange(page + 1)}
+        data-testid={`${testId}-next`}
+      >
+        {t('admin.nextPage', 'Next')}
+      </Button>
+      <p className="text-xs text-muted-foreground" data-testid={`${testId}-range`}>
+        {t('admin.pageRange', { from, to, total })}
+      </p>
+    </div>
+  )
+}
+
+export function AdminPanel() {
+  const { t, i18n } = useTranslation()
   const [tab, setTab] = useState<Tab>('users')
   const [userSearch, setUserSearch] = useState('')
   const [orgSearch, setOrgSearch] = useState('')
+  const [userPage, setUserPage] = useState(0)
+  const [orgPage, setOrgPage] = useState(0)
   const [detail, setDetail] = useState<Detail>(null)
+  const [creatingClub, setCreatingClub] = useState(false)
 
   const { data: usersPage, isLoading: usersLoading } = useQuery({
-    queryKey: ['admin', 'users', userSearch],
-    queryFn: () => adminApi.listUsers({ search: userSearch, size: 50 }),
+    queryKey: ['admin', 'users', userSearch, userPage],
+    queryFn: () => adminApi.listUsers({ search: userSearch, page: userPage, size: PAGE_SIZE }),
     enabled: tab === 'users',
   })
 
   const { data: orgsPage, isLoading: orgsLoading } = useQuery({
-    queryKey: ['admin', 'orgs', orgSearch],
-    queryFn: () => adminApi.listOrgs({ search: orgSearch, size: 50 }),
+    queryKey: ['admin', 'orgs', orgSearch, orgPage],
+    queryFn: () => adminApi.listOrgs({ search: orgSearch, page: orgPage, size: PAGE_SIZE }),
     enabled: tab === 'orgs',
   })
 
@@ -83,7 +141,7 @@ export function AdminPanel() {
                 <Input
                   type="text"
                   value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
+                  onChange={e => { setUserSearch(e.target.value); setUserPage(0) }}
                   placeholder={t('admin.searchUsers', 'Search by name or email...')}
                   className="mb-4 max-w-sm"
                 />
@@ -112,10 +170,14 @@ export function AdminPanel() {
                     ))}
                   </ul>
                 )}
-                {usersPage && usersPage.totalElements > usersPage.content.length && (
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Showing {usersPage.content.length} of {usersPage.totalElements}
-                  </p>
+                {usersPage && (
+                  <Pagination
+                    page={userPage}
+                    count={usersPage.content.length}
+                    total={usersPage.totalElements}
+                    onChange={setUserPage}
+                    testId="admin-users-pagination"
+                  />
                 )}
               </div>
             )}
@@ -123,13 +185,18 @@ export function AdminPanel() {
             {/* Orgs tab */}
             {tab === 'orgs' && (
               <div>
-                <Input
-                  type="text"
-                  value={orgSearch}
-                  onChange={e => setOrgSearch(e.target.value)}
-                  placeholder={t('admin.searchOrgs', 'Search by name...')}
-                  className="mb-4 max-w-sm"
-                />
+                <div className="mb-4 flex items-center gap-3">
+                  <Input
+                    type="text"
+                    value={orgSearch}
+                    onChange={e => { setOrgSearch(e.target.value); setOrgPage(0) }}
+                    placeholder={t('admin.searchOrgs', 'Search by name...')}
+                    className="max-w-sm"
+                  />
+                  <Button onClick={() => setCreatingClub(true)} data-testid="admin-new-club">
+                    {t('admin.club.newAction')}
+                  </Button>
+                </div>
                 {orgsLoading && <LoadingState label={t('common.loading', 'Loading')} />}
                 {!orgsLoading && orgsPage?.content.length === 0 && (
                   <EmptyState density="compact" title={t('admin.noOrgs', 'No organizations found')} />
@@ -144,7 +211,10 @@ export function AdminPanel() {
                       >
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-foreground truncate">{o.name}</p>
-                          <p className="text-xs text-muted-foreground">/{o.slug} · {o.memberCount} {o.memberCount === 1 ? t('admin.member', 'member') : t('admin.members', 'members')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            /{o.slug} · {o.memberCount} {o.memberCount === 1 ? t('admin.member', 'member') : t('admin.members', 'members')}
+                            {o.termEnd && ` · ${t('club.paidUntil', { date: formatClubDate(o.termEnd, i18n.language) })}`}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2 ml-4 shrink-0">
                           <AdminBadge value={o.subscriptionTier} toneMap={TIER_TONES} />
@@ -155,16 +225,29 @@ export function AdminPanel() {
                     ))}
                   </ul>
                 )}
-                {orgsPage && orgsPage.totalElements > orgsPage.content.length && (
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Showing {orgsPage.content.length} of {orgsPage.totalElements}
-                  </p>
+                {orgsPage && (
+                  <Pagination
+                    page={orgPage}
+                    count={orgsPage.content.length}
+                    total={orgsPage.totalElements}
+                    onChange={setOrgPage}
+                    testId="admin-orgs-pagination"
+                  />
                 )}
               </div>
             )}
           </>
         )}
       </SurfacePanel>
+
+      <NewClubDialog
+        open={creatingClub}
+        onClose={() => setCreatingClub(false)}
+        onCreated={(orgId) => {
+          setCreatingClub(false)
+          setDetail({ type: 'org', id: orgId })
+        }}
+      />
     </div>
   )
 }

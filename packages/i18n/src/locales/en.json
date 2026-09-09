@@ -72,7 +72,8 @@
       "deleteTeamDescription": "All players and assignments tied to this team will be affected. This action cannot be undone.",
       "deleteTeamMembers_one": "This team has {{count}} member.",
       "deleteTeamMembers_other": "This team has {{count}} members."
-    }
+    },
+    "close": "Close"
   },
   "auth": {
     "signIn": "Sign In",
@@ -163,7 +164,47 @@
     "gracePeriodEnd": "Grace period end",
     "joined": "Joined",
     "billingCycle": "Billing cycle",
-    "periodEnd": "Period end"
+    "periodEnd": "Period end",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageRange": "{{from}}–{{to}} of {{total}}",
+    "club": {
+      "newAction": "New club",
+      "newTitle": "New club",
+      "newDesc": "Stand a club up after a deal is signed. The club administrator joins straight away, or is invited to register.",
+      "name": "Club name",
+      "adminEmail": "Club administrator email",
+      "adminEmailHint": "An address that already has an account joins the club now. Any other gets a registration invitation.",
+      "termEnd": "Paid until",
+      "termEndHint": "Leave empty to let the first paid invoice set the term.",
+      "note": "Internal note",
+      "createAction": "Create club",
+      "created": "{{name}} created",
+      "adminAttached": "{{email}} already had an account and administers the club now.",
+      "adminInvited": "A registration invitation went to {{email}}. Accepting it makes them the owner.",
+      "openClub": "Open club"
+    },
+    "limits": {
+      "title": "Limits",
+      "newClubHint": "Pre-filled with the standard club deal. Change whatever this deal agreed differently.",
+      "hint": "\"Tier default\" leaves the limit to the tier. \"Unlimited\" removes it.",
+      "members": "Members",
+      "liveGames": "Live games",
+      "playersPerGame": "Players per game",
+      "basesPerGame": "Bases per game",
+      "operatorsPerGame": "Operators per game",
+      "fileSize": "Max file size",
+      "storage": "Resource storage",
+      "locationCheckIn": "Location check-in",
+      "gigabytes": "GB",
+      "upTo": "Up to",
+      "unlimited": "Unlimited",
+      "tierDefault": "Tier default",
+      "on": "On",
+      "off": "Off",
+      "invalid": "Enter a number above zero.",
+      "modeFor": "{{limit}} limit"
+    }
   },
   "game": {
     "export": "Export Game",
@@ -2391,5 +2432,8 @@
         "none": "Not watched yet"
       }
     }
+  },
+  "club": {
+    "paidUntil": "Paid until {{date}}"
   }
 }
