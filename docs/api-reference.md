@@ -26,6 +26,7 @@
 15. [Users & Invites](#15-users--invites)
 16. [Notifications](#16-notifications)
 17. [Stages](#17-stages)
+18. [Workspaces, Quota, and Billing](#18-workspaces-quota-and-billing)
 
 ---
 
@@ -1431,6 +1432,245 @@ checked against the same quota.
 **Broadcasts**: `game_config` on every CRUD; `stage_unlock` additionally fires on activation (including the auto-activation of the first stage). See `docs/realtime-and-mobile.md`.
 
 **Error codes**: `STAGE_NOT_FOUND`, `STAGE_GAME_MISMATCH`, `STAGE_HAS_BASES`, `STAGE_TRIGGER_BASE_NOT_FOUND`, `STAGE_ALREADY_ACTIVE` (see Error Codes appendix below).
+
+---
+
+## 18. Workspaces, Quota, and Billing
+
+Two billing models sit side by side. A **personal** workspace is self-serve:
+free or pro, bought on Stripe. An **organization** is sales-led: an admin
+creates it, invoices it, and its access runs on a term. See
+`docs/business-logic.md` § "Clubs and Invoicing" for the model behind these
+endpoints.
+
+### Workspaces
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/workspaces` | Operator | The caller's personal workspace plus every org they belong to |
+
+```json
+{
+  "personal": { "tier": "free | pro", "status": "active | past_due | grace_period | frozen | cancelled", "activeGames": 2 },
+  "organizations": [
+    {
+      "id": "UUID", "name": "string", "slug": "string",
+      "tier": "free | club",
+      "status": "active | past_due | grace_period | frozen | cancelled",
+      "memberCount": 12, "liveGames": 1, "permissions": 127,
+      "termEnd": "ISO-8601 | null"
+    }
+  ]
+}
+```
+
+`termEnd` is what a dashboard shows as "paid until". `null` means the org has
+no term: a free org, or a club an admin drives by hand.
+
+### Quota
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/quota/personal` | Operator | Limits and usage for the caller's personal workspace |
+| GET | `/quota/org/:orgId` | Org member or admin | Limits and usage for one org |
+
+```json
+{
+  "context": "personal | org",
+  "orgId": "UUID | null",
+  "tier": "free | pro | club",
+  "limits": {
+    "maxActiveGames": 1, "maxOperatorsPerGame": 1, "maxBasesPerGame": 25,
+    "maxFileSizeBytes": 104857600, "maxMembers": null, "maxLiveGames": null,
+    "maxResourceStorageBytes": 0, "maxPlayersPerGame": 50, "locationCheckIn": false
+  },
+  "usage": {
+    "currentActiveGames": 0, "currentMembers": null,
+    "currentLiveGames": null, "currentResourceStorageBytes": 0
+  },
+  "overrides": { "max_members": 40 },
+  "status": "active",
+  "termEnd": "ISO-8601 | null"
+}
+```
+
+A `null` limit means unlimited. `overrides` is the raw per-deal JSON, present
+only when the workspace has one; `limits` already has it applied.
+
+### Personal billing
+
+**Base path**: `/api/billing` · **Auth**: Operator
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/billing/checkout` | Stripe Checkout session for the pro plan |
+| POST | `/billing/portal` | Stripe billing portal for the caller's own subscription |
+| GET | `/billing/status` | The caller's subscription tier, status, cycle, period end |
+| GET | `/billing/invoices` | The caller's Stripe invoices (`limit`, `startingAfter`) |
+
+**POST /billing/checkout**
+```json
+{ "plan": "pro", "cycle": "monthly | annual" }
+```
+Returns `{ "url": "string", "sessionId": "string" }`. Prices live in Stripe;
+the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
+
+> There is no org checkout and no org billing portal. `POST /billing/org-checkout`,
+> `POST /billing/org-portal`, and the `orgId` parameter on `/billing/checkout`
+> and `/billing/invoices` were removed with the club model.
+
+### Organizations
+
+**Base path**: `/api/orgs` · **Auth**: Operator, gated per endpoint by `OrgPermission`
+
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| POST | `/orgs` | any operator | Create a free org |
+| GET | `/orgs/:orgId` | member | Org detail |
+| PATCH | `/orgs/:orgId` | MANAGE_PERMS | Rename |
+| DELETE | `/orgs/:orgId` | creator or admin | Delete |
+| POST | `/orgs/:orgId/transfer-ownership` | creator or MANAGE_PERMS | Hand the org to another member |
+| GET | `/orgs/:orgId/invoices` | MANAGE_BILLING | The club's invoice history |
+| GET | `/orgs/:orgId/members` | member | Members |
+| DELETE | `/orgs/:orgId/members/:userId` | MANAGE_PERMS | Remove a member |
+| PATCH | `/orgs/:orgId/members/:userId/permissions` | MANAGE_PERMS | Set a member's permission bitmask |
+| POST | `/orgs/:orgId/invites` | INVITE_MEMBERS | Invite by email |
+| GET | `/orgs/:orgId/invites` | INVITE_MEMBERS | Pending invites |
+| DELETE | `/orgs/:orgId/invites/:inviteId` | INVITE_MEMBERS | Revoke |
+
+**OrgResponse** (returned by create, get, patch, and both transfer routes)
+```json
+{
+  "id": "UUID", "name": "string", "slug": "string", "createdBy": "UUID",
+  "subscriptionTier": "free | club",
+  "subscriptionStatus": "active | past_due | grace_period | frozen | cancelled",
+  "memberCount": 12,
+  "quotaOverrides": { "max_members": 40 },
+  "termEnd": "ISO-8601 | null",
+  "createdAt": "ISO-8601"
+}
+```
+
+**POST /orgs/:orgId/transfer-ownership**
+```json
+{ "userId": "UUID" }
+```
+The target must already be a member; otherwise `400 ORG_TRANSFER_TARGET_NOT_MEMBER`.
+The new owner is granted every permission.
+
+**GET /orgs/:orgId/invoices** → array of `OrgInvoiceResponse`
+```json
+[{
+  "id": "UUID", "orgId": "UUID", "stripeInvoiceId": "in_...",
+  "amountCents": 49900, "currency": "eur", "description": "string",
+  "status": "draft | open | paid | void | uncollectible",
+  "hostedInvoiceUrl": "string | null", "invoicePdf": "string | null",
+  "dueAt": "ISO-8601 | null", "paidAt": "ISO-8601 | null",
+  "termMonths": 12, "createdAt": "ISO-8601"
+}]
+```
+
+### Admin: clubs and invoicing
+
+**Base path**: `/api/admin` · **Auth**: `ROLE_ADMIN`, enforced by SecurityConfig for the whole tree
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/admin/orgs` | Paged org list (`search`, `page`, `size`) |
+| GET | `/admin/orgs/:orgId` | Org detail with members, game count, storage |
+| POST | `/admin/orgs` | Create a club |
+| PATCH | `/admin/orgs/:orgId` | Change name, tier, status, term, quota overrides, admin note |
+| POST | `/admin/orgs/:orgId/transfer-ownership` | Hand the club to an existing member |
+| POST | `/admin/orgs/:orgId/invoices` | Issue and send a Stripe invoice |
+| GET | `/admin/orgs/:orgId/invoices` | Every invoice issued for the club |
+| GET | `/admin/orgs/:orgId/games` | The club's games |
+| PATCH | `/admin/users/:userId/subscription` | Override a personal subscription |
+
+**POST /admin/orgs**
+```json
+{
+  "name": "string (2-100)",
+  "adminEmail": "string (email)",
+  "quotaOverrides": { "max_members": 40 },
+  "termEnd": "ISO-8601 (optional)",
+  "adminNote": "string (optional)"
+}
+```
+Creates the org at tier `club`, status `active`. Response `201`:
+```json
+{
+  "org": { "...OrgResponse..." },
+  "adminEmail": "string",
+  "adminUserId": "UUID | null",
+  "inviteId": "UUID | null"
+}
+```
+Exactly one of `adminUserId` and `inviteId` is set. An address that already has
+an account becomes a member with every permission straight away. An address
+that does not gets a registration invite; until they accept, the creating admin
+is the org's `createdBy`, and accepting transfers ownership to them.
+
+**PATCH /admin/orgs/:orgId** — every field optional
+```json
+{
+  "name": "string",
+  "tier": "free | club",
+  "status": "active | past_due | grace_period | frozen | cancelled",
+  "quotaOverrides": { "max_live_games": 3 },
+  "termEnd": "ISO-8601",
+  "gracePeriodEnd": "ISO-8601",
+  "adminNote": "string"
+}
+```
+Returns the updated `OrgResponse`. An unknown `tier` or `status` answers
+`400 ORG_INVALID_ENUM_VALUE`.
+
+**POST /admin/orgs/:orgId/invoices**
+```json
+{
+  "amountCents": 49900,
+  "currency": "eur",
+  "description": "PointFinder club, 2026/27 season",
+  "dueDays": 30,
+  "termMonths": 12
+}
+```
+`amountCents` is the whole deal price, not a monthly rate. Only `amountCents`
+and `description` are required; `currency` defaults to `"eur"`, `dueDays` to
+30, `termMonths` to 12. Response `201` is an `OrgInvoiceResponse`.
+
+The backend ensures a Stripe Customer for the org (email = the club's billing
+contact, name = the org name, `metadata.orgId`), creates an invoice with
+`collection_method=send_invoice` and one line item, finalizes it, and sends it.
+Requires `STRIPE_SECRET_KEY`; without it, `400 INVOICE_STRIPE_NOT_CONFIGURED`.
+
+**Error codes**: `ORG_ADMIN_EMAIL_INVALID`, `ORG_INVALID_ENUM_VALUE`,
+`ORG_TRANSFER_TARGET_NOT_MEMBER`, `INVOICE_STRIPE_NOT_CONFIGURED`,
+`INVOICE_NO_BILLING_CONTACT`, `INVOICE_STRIPE_CALL_FAILED`,
+`INVOICE_AMOUNT_INVALID` (see the Error Codes appendix below).
+
+### Registration from an invite
+
+`GET /auth/invite/:token` and `POST /auth/register/:token` resolve **both**
+operator invites and org invites. For an org token the lookup also names the
+organization, and registration joins the caller to it in the same transaction:
+
+```json
+{ "email": "string", "orgId": "UUID | null", "orgName": "string | null" }
+```
+
+`orgId` and `orgName` are null for an operator invite.
+
+### Frozen workspaces
+
+A frozen personal subscription blocks every `/api/**` call by its owner. A
+frozen org blocks requests that act inside it — `/api/orgs/{id}/**`, and
+`/api/games/{id}/**` for a game the org owns — while leaving the caller's
+personal games alone. Both answer `403` with code `ACCOUNT_FROZEN`.
+
+`/api/auth/**`, `/api/billing/**`, `/api/webhooks/**`, `/api/workspaces` and
+`/api/quota/**` stay reachable so the account can see why it is frozen and pay.
+Players are unaffected: a frozen club never locks players out of a running game.
 
 ---
 

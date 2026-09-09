@@ -19,6 +19,7 @@
 8. [Broadcast Mode](#8-broadcast-mode)
 9. [Operator Onboarding and Tutorials](#9-operator-onboarding-and-tutorials)
 10. [Plans, Workspaces and Clubs](#10-plans-workspaces-and-clubs)
+11. [Clubs and Invoicing](#11-clubs-and-invoicing)
 
 ---
 
@@ -1470,6 +1471,188 @@ one surface:
 Leaving a club, declining an invite, transferring ownership and showing a
 paid-until date are **not** implemented on the client yet; they wait on the
 matching endpoints.
+
+## 11. Clubs and Invoicing
+
+PointFinder sells two different things and bills them two different ways.
+
+A **personal** workspace is self-serve. An operator signs up free and upgrades
+to pro on Stripe Checkout — €3.99 a month or €30 a year, prices held in Stripe,
+the backend only mapping `STRIPE_PRICE_PRO_MONTHLY` and
+`STRIPE_PRICE_PRO_ANNUAL` — and Stripe's subscription lifecycle drives their
+status from then on.
+
+A **club** is not sold from a pricing page. A deal is agreed with a sports club
+or a school, an admin stands the organization up, and it is invoiced. There is
+no org checkout, no org subscription, and no org billing portal: those were
+removed. What a club has instead is a **term**.
+
+### The tier
+
+`OrgTier` is `free` or `club`. The earlier `base` and `high` tiers were merged:
+they existed to price two self-serve org plans that no longer exist, and a
+sales-led deal does not need a tier per price point — it needs one shape plus
+the ability to vary it.
+
+`club` defaults describe a standard deal:
+
+| Limit | Club default | Override key |
+|---|---|---|
+| Members | 15 | `max_members` |
+| Live games | 10 | `max_live_games` |
+| Players per game | 200 | `max_players_per_game` |
+| Bases per game | unlimited | `max_bases_per_game` |
+| Operators per game | unlimited | `max_operators_per_game` |
+| File size | 2 GB | `max_file_size_bytes` |
+| Resource storage | 25 GB | `max_resource_storage_bytes` |
+| Location check-in | allowed | `location_check_in` |
+
+Every one is a key in the org's existing `quota_overrides` JSON, so a deal that
+agreed 40 members and three live games is one row edit, not a new tier. An
+override of `null` for a numeric key means unlimited. `free` keeps the
+minimal limits a lapsed or never-signed org gets: 3 members, 1 live game, 25
+bases, 50 players, 100 MB files, no storage, no location check-in.
+
+Postgres still carries the retired `base` and `high` labels in the `org_tier`
+type. V65 migrated every row off them; dropping the labels would mean rewriting
+the type and every column that uses it, for no benefit once no row and no Java
+constant names them.
+
+### The term
+
+`organizations.term_end` is the date the club has paid through — what a
+dashboard shows as "paid until". `null` means no term: a free org, or a club an
+admin drives by hand.
+
+Nothing from Stripe announces a term ending, because the term is a date this
+backend owns. `SubscriptionLifecycleService` sweeps hourly:
+
+1. **`startGracePeriodsForExpiredTerms`** — an org whose status is `active` and
+   whose `term_end` has passed moves to `grace_period` with `grace_period_end =
+   term_end + 7 days`. Grace is measured from the term, not from the sweep, so a
+   sweep that runs late does not hand the club extra time.
+2. **`freezeExpiredGracePeriods`** — the pre-existing sweep: anything in
+   `grace_period` past `grace_period_end` becomes `frozen`. It also covers
+   personal subscriptions.
+
+Both run in that order inside one scheduled method, so a club whose term lapsed
+more than a week ago reaches `frozen` in a single pass.
+
+### What frozen means
+
+`FrozenAccountFilter` runs once per request and applies two independent gates,
+because the personal and org workspaces are billed separately:
+
+- The caller's own subscription is `frozen` → every `/api/**` call is refused.
+- The request acts **inside a frozen org** → refused, even when the caller's
+  personal account is fine.
+
+The org context is read from the path. `/api/orgs/{id}/**` names its org
+outright. `/api/games/{id}/**` resolves through
+`OrganizationRepository.findSubscriptionStatusByGameId`, a projection query
+that selects the status column alone over an inner join, so a personal game
+yields an empty result and passes without a second query. `OncePerRequestFilter`
+means one lookup per request at most; there is no cache and therefore nothing
+that can go stale.
+
+`/api/auth/**`, `/api/billing/**`, `/api/webhooks/**`, `/api/workspaces` and
+`/api/quota/**` stay open so a frozen account can see its state and pay.
+Players carry a `Player` principal rather than a `User`, so a club that lapses
+mid-event never locks players out of the game already under way.
+
+Both refusals answer `403` with code `ACCOUNT_FROZEN`.
+
+### Creating a club
+
+`POST /api/admin/orgs` takes the club's name and its administrator's email.
+
+- **The address already has an account** → it gets a membership with every
+  permission (`OrgPermission.ALL`) and becomes the org's `createdBy`.
+- **It does not** → an `org_invites` row with `ALL` permissions and
+  `transfer_ownership = true` is created and a registration email sent. The
+  creating admin is `createdBy` in the meantime, because the column is NOT NULL
+  and an ownerless org cannot be administered. Accepting the invite makes the
+  invitee the owner.
+
+That second path used to be a dead end. `EmailService.sendOrgRegistrationInvite`
+has always sent `/register/{token}?org=true`, but the token endpoint behind that
+page searched `operator_invites` only, so an invited club administrator got
+"Invalid invite token"; `OrgInviteService.acceptInviteByToken` had no caller at
+all. `GET /api/auth/invite/{token}` and `POST /api/auth/register/{token}` now
+resolve either table, and registering through an org token creates the account,
+its free personal subscription, and the membership in one transaction.
+
+### Ownership transfer
+
+`POST /api/admin/orgs/{id}/transfer-ownership` (admin) and
+`POST /api/orgs/{id}/transfer-ownership` (the club's own creator, or a member
+with `MANAGE_PERMS`) set `created_by` to an existing member and grant them every
+permission. The target must already be a member: an org's owner is by definition
+someone inside it, and silently adding them would hide a mistyped id
+(`ORG_TRANSFER_TARGET_NOT_MEMBER`).
+
+### The invoice lifecycle
+
+1. **Issue.** `POST /api/admin/orgs/{id}/invoices` with the amount in cents, a
+   description, days until due (30) and the months of term the payment buys (12).
+   The backend ensures a Stripe Customer for the org — email = the club's
+   billing contact, name = the org name, `metadata.orgId` — creates an invoice
+   with `collection_method=send_invoice` and `days_until_due`, attaches one
+   `InvoiceItem`, sets `metadata` `{orgId, termMonths}`, finalizes and sends it.
+   The billing contact is the club's creator if they are a member, else the
+   longest-standing member with `MANAGE_BILLING`, else the pending owner
+   invite's address.
+2. **Persist.** An `org_invoices` row mirrors what Stripe returned: status,
+   hosted URL, PDF, due date, amount, currency, term months, and who issued it.
+   Members with `MANAGE_BILLING` read it at `GET /api/orgs/{id}/invoices`
+   without a Stripe round trip, which is also where the term months live.
+3. **Payment.** `invoice.paid` for a customer whose Stripe invoice id matches an
+   `org_invoices` row marks it paid, sets the org `active`, clears
+   `grace_period_end`, and sets `term_end = max(now, current term_end) +
+   termMonths`. Renewing early therefore adds to the running term instead of
+   truncating it; renewing after a lapse is measured from now, not backdated.
+4. **Write-off.** `invoice.voided` and `invoice.marked_uncollectible` record
+   `void` / `uncollectible` on the row and leave the term alone.
+
+All Stripe SDK calls for invoicing sit behind `StripeInvoiceGateway`, so
+everything above it is plain domain code that tests drive with a stub — no key,
+no network.
+
+### Webhook idempotency
+
+Stripe redelivers an event whenever the endpoint does not answer 2xx, and on
+its own retry schedule besides. Every branch of `StripeWebhookController` runs
+its handler through `StripeWebhookService.applyOnce`, which:
+
+- returns immediately if the event id is already in the `stripe_events` table;
+- otherwise runs the handler and inserts the id **in the same transaction**.
+
+Sharing one transaction is the point. A redelivery of an applied event finds the
+row and does nothing, so a term is extended once rather than twice. A handler
+that throws rolls back both its effect and the ledger row, so Stripe's next
+delivery gets a real attempt rather than a silent skip.
+
+### Configuration
+
+| Variable | Needed for |
+|---|---|
+| `STRIPE_SECRET_KEY` | Personal checkout and portal, **and all club invoicing**. Without it, invoicing answers `400 INVOICE_STRIPE_NOT_CONFIGURED`. |
+| `STRIPE_WEBHOOK_SECRET` | Signature verification on `POST /api/webhooks/stripe`. Without it no payment is ever applied, so no term is ever extended. |
+| `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_PRO_ANNUAL` | The only self-serve prices. |
+
+The `STRIPE_PRICE_ORG_*` variables are gone and can be removed from
+deployments.
+
+### Audit
+
+This schema has no admin audit table — the V36 audit foundation is game-scoped
+(check-ins, submissions, activity events) and an org tier change belongs to
+none of those. Admin actions are therefore recorded as structured log lines
+naming the acting admin and the target org: `[ADMIN] operation=createClub`,
+`operation=updateClub` (with the resulting tier, status, term and overrides),
+`operation=transferOwnership`, and `[CLUB_BILLING] operation=issueInvoice` /
+`operation=createCustomer`. Webhook effects log under `[WEBHOOK]`, including the
+skip line for a recognised redelivery.
 
 ---
 
