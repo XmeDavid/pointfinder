@@ -16,6 +16,8 @@ export interface QuotaLimits {
   maxLiveGames: number | null
   maxPlayersPerGame: number | null
   maxResourceStorageBytes: number | null
+  /** Whether bases may use location check-in. Paid tiers only; absent on older servers. */
+  locationCheckIn?: boolean | null
 }
 
 export interface QuotaUsage {

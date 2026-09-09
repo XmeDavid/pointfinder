@@ -36,6 +36,7 @@ public class GameReadinessValidator {
     private final AssignmentRepository assignmentRepository;
     private final TeamVariableService teamVariableService;
     private final com.prayer.pointfinder.repository.StageRepository stageRepository;
+    private final QuotaService quotaService;
 
     /**
      * Throws {@link BadRequestException} if the game cannot go live.
@@ -67,7 +68,7 @@ public class GameReadinessValidator {
                             nfcLinkedCount, nfcBaseCount));
         }
 
-        validateLocationBases(allBases);
+        validateLocationBases(game, allBases);
 
         long teamCount = teamRepository.countByGameId(game.getId());
         if (teamCount == 0) {
@@ -130,13 +131,18 @@ public class GameReadinessValidator {
      * ever reach, or two bases that unlock from one spot. Both are caught
      * here rather than discovered by a team standing in a field.
      */
-    private void validateLocationBases(List<Base> allBases) {
+    private void validateLocationBases(Game game, List<Base> allBases) {
         List<Base> locationBases = allBases.stream()
                 .filter(b -> b.getCheckInMethod() == CheckInMethod.LOCATION)
                 .toList();
         if (locationBases.isEmpty()) {
             return;
         }
+
+        // Location check-in is a paid feature. A base can only be switched to
+        // it on a covered plan, but a downgrade since then would otherwise
+        // let the game go live on a plan that no longer includes it.
+        quotaService.enforceLocationCheckIn(game);
 
         for (Base base : locationBases) {
             if (base.getLat() == null || base.getLng() == null

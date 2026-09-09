@@ -122,6 +122,8 @@ public enum ErrorCode {
     QUOTA_FILE_SIZE_EXCEEDED,
     /** Game has reached the maximum number of players for this tier. */
     QUOTA_PLAYERS_PER_GAME_EXCEEDED,
+    /** Location check-in is a paid feature; the free tier may only use NFC and QR bases. */
+    QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED,
 
     // ── Variables ─────────────────────────────────────────────────────────
     /**

@@ -53,6 +53,7 @@ public class BaseService {
     private final GameEventBroadcaster eventBroadcaster;
     private final GameTagRepository gameTagRepository;
     private final ResourceEmbedService resourceEmbedService;
+    private final QuotaService quotaService;
 
     @Transactional(readOnly = true)
     public List<BaseResponse> getBasesByGame(UUID gameId) {
@@ -103,6 +104,9 @@ public class BaseService {
                 ? parseCheckInMethod(request.getCheckInMethod())
                 : (game.getDefaultCheckInMethod() != null ? game.getDefaultCheckInMethod() : CheckInMethod.NFC);
         Integer checkInRadiusM = clampRadius(request.getCheckInRadiusM());
+        if (checkInMethod == CheckInMethod.LOCATION) {
+            quotaService.enforceLocationCheckIn(game);
+        }
         requireUsableCoordinates(checkInMethod, request.getLat(), request.getLng());
 
         Base base = Base.builder()
@@ -157,7 +161,11 @@ public class BaseService {
         if (request.getCheckInMethod() != null) {
             // A client that sends the method knows about radii too, so its
             // radius is authoritative: null means "inherit the game default".
-            base.setCheckInMethod(parseCheckInMethod(request.getCheckInMethod()));
+            CheckInMethod requested = parseCheckInMethod(request.getCheckInMethod());
+            if (requested == CheckInMethod.LOCATION && base.getCheckInMethod() != CheckInMethod.LOCATION) {
+                quotaService.enforceLocationCheckIn(base.getGame());
+            }
+            base.setCheckInMethod(requested);
             base.setCheckInRadiusM(clampRadius(request.getCheckInRadiusM()));
         } else if (request.getCheckInRadiusM() != null) {
             base.setCheckInRadiusM(clampRadius(request.getCheckInRadiusM()));

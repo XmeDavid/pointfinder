@@ -44,6 +44,7 @@ public class GameImportExportService {
     private final GameAccessService gameAccessService;
     private final GameTagRepository gameTagRepository;
     private final StageRepository stageRepository;
+    private final QuotaService quotaService;
 
     @Transactional(readOnly = true)
     public GameExportDto exportGame(UUID gameId) {
@@ -264,6 +265,12 @@ public class GameImportExportService {
                 .createdBy(currentUser)
                 .build();
         newGame.getOperators().add(currentUser);
+        // An imported file may carry location bases from a plan that had them.
+        boolean importsLocation = newGame.getDefaultCheckInMethod() == CheckInMethod.LOCATION
+                || data.getBases().stream().anyMatch(b -> CheckInMethod.LOCATION.name().equals(b.getCheckInMethod()));
+        if (importsLocation) {
+            quotaService.enforceLocationCheckIn(newGame);
+        }
         newGame = gameRepository.save(newGame);
 
         // Import tag vocabulary — upsert by label so round-trips are stable

@@ -11,6 +11,7 @@ import { BaseAssignmentSection } from './assignments/BaseAssignmentSection'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { useGame } from '@/hooks/queries/useGames'
+import { useLocationCheckInAllowed } from '@/hooks/queries/useQuota'
 import { getStyleUrl } from '@/lib/tile-sources'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { NfcStatusBadge } from '@/components/status'
@@ -56,6 +57,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   // Local form state
   const methodLabel = useCheckInMethodLabel()
+  const locationAllowed = useLocationCheckInAllowed()
   const [localName, setLocalName] = useState(base?.name ?? '')
   const [localDescription, setLocalDescription] = useState(base?.description ?? '')
   const [localLat, setLocalLat] = useState(base?.lat?.toString() ?? '')
@@ -254,14 +256,19 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
             >
               {CHECK_IN_METHODS.map((method) => {
                 const isActive = localMethod === method
+                // A free plan keeps NFC and QR; location stays visible but
+                // locked so the operator learns what the upgrade unlocks.
+                const locked = method === 'LOCATION' && !locationAllowed && !isActive
                 return (
                   <button
                     key={method}
                     type="button"
                     aria-pressed={isActive}
+                    disabled={locked}
+                    aria-describedby={locked ? 'base-checkin-location-plan' : undefined}
                     data-testid={`base-checkin-method-${method.toLowerCase()}`}
                     onClick={() => setLocalMethod(method)}
-                    className={`min-h-11 flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    className={`min-h-11 flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       isActive
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -275,6 +282,15 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
             {localMethod === game?.defaultCheckInMethod && (
               <p data-testid="base-checkin-inherits" className="mt-1 text-xs text-muted-foreground">
                 {t('checkIn.inheritsDefault')}
+              </p>
+            )}
+            {!locationAllowed && (
+              <p
+                id="base-checkin-location-plan"
+                data-testid="base-checkin-location-plan"
+                className="mt-1 text-xs text-muted-foreground"
+              >
+                {t('checkIn.locationPaid')}
               </p>
             )}
           </div>

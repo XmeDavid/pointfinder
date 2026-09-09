@@ -113,7 +113,8 @@ class GameServiceTest {
                 challengeTeamVariableRepository,
                 gameAccessService,
                 gameTagRepository,
-                stageRepository
+                stageRepository,
+                quotaService
         );
 
         gameService = new GameService(
@@ -123,7 +124,8 @@ class GameServiceTest {
                 new GameProgressResetService(submissionRepository, checkInRepository,
                         activityEventRepository, uploadSessionRepository, teamLocationRepository),
                 new GameReadinessValidator(baseRepository, challengeRepository,
-                        teamRepository, assignmentRepository, teamVariableService, stageRepository),
+                        teamRepository, assignmentRepository, teamVariableService, stageRepository,
+                        quotaService),
                 quotaService, progressRepository
         );
 

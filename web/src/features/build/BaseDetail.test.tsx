@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -7,6 +7,7 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockBase } from '@/test/factories/base'
 import { createMockGame } from '@/test/factories/game'
+import { useAuthStore } from '@/lib/auth/store'
 
 const platform = vi.hoisted(() => ({ native: false }))
 vi.mock('@/platform', () => ({ isNative: () => platform.native }))
@@ -258,5 +259,78 @@ describe('BaseDetail tutorial anchors', () => {
     // The draft flips immediately, before any save.
     expect(screen.getByTestId('visibility-hidden')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('visibility-visible')).toHaveAttribute('aria-pressed', 'false')
+  })
+})
+
+describe('BaseDetail location check-in entitlement', () => {
+  // A decodable, far-future token: the API client refreshes anything it cannot read.
+  const accessToken = `header.${btoa(JSON.stringify({ exp: 4102444800 })).replace(/=+$/, '')}.signature`
+  const signedIn = { isAuthenticated: true, accessToken }
+  const signedOut = { isAuthenticated: false, accessToken: null }
+
+  function quotaHandler(locationCheckIn: boolean | undefined) {
+    server.use(
+      http.get('/api/quota/personal', () =>
+        HttpResponse.json({
+          context: 'personal',
+          orgId: null,
+          tier: locationCheckIn === false ? 'free' : 'pro',
+          limits: {
+            maxActiveGames: 1,
+            maxOperatorsPerGame: 1,
+            maxBasesPerGame: 25,
+            maxFileSizeBytes: 1,
+            maxMembers: null,
+            maxLiveGames: null,
+            maxPlayersPerGame: 50,
+            maxResourceStorageBytes: 0,
+            ...(locationCheckIn === undefined ? {} : { locationCheckIn }),
+          },
+          usage: {
+            currentActiveGames: 0,
+            currentMembers: null,
+            currentLiveGames: null,
+            currentResourceStorageBytes: 0,
+          },
+          overrides: null,
+        }),
+      ),
+    )
+  }
+
+  afterEach(() => useAuthStore.setState(signedOut))
+
+  it('locks the location method and explains the plan on a free account', async () => {
+    useAuthStore.setState(signedIn)
+    quotaHandler(false)
+    renderBaseDetail()
+
+    const location = await screen.findByTestId('base-checkin-method-location')
+    await waitFor(() => expect(location).toBeDisabled())
+    expect(screen.getByTestId('base-checkin-location-plan')).toHaveTextContent(
+      'Location check-in is part of paid plans',
+    )
+    expect(screen.getByTestId('base-checkin-method-qr')).toBeEnabled()
+    expect(screen.getByTestId('base-checkin-method-nfc')).toBeEnabled()
+  })
+
+  it('keeps the full picker on a paid plan', async () => {
+    useAuthStore.setState(signedIn)
+    quotaHandler(true)
+    renderBaseDetail()
+
+    const location = await screen.findByTestId('base-checkin-method-location')
+    await waitFor(() => expect(screen.queryByTestId('base-checkin-location-plan')).toBeNull())
+    expect(location).toBeEnabled()
+  })
+
+  it('keeps the full picker when the server predates the entitlement', async () => {
+    useAuthStore.setState(signedIn)
+    quotaHandler(undefined)
+    renderBaseDetail()
+
+    const location = await screen.findByTestId('base-checkin-method-location')
+    expect(location).toBeEnabled()
+    expect(screen.queryByTestId('base-checkin-location-plan')).toBeNull()
   })
 })

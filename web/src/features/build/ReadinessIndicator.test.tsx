@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -11,6 +11,7 @@ import { createMockChallenge, resetChallengeCounter } from '@/test/factories/cha
 import { createMockTeam, resetTeamCounter } from '@/test/factories/team'
 import { createMockAssignment, resetAssignmentCounter } from '@/test/factories/assignment'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useAuthStore } from '@/lib/auth/store'
 import ReadinessIndicator from './ReadinessIndicator'
 
 function createWrapper() {
@@ -453,5 +454,92 @@ describe('ReadinessIndicator expansion lives in the workspace store', () => {
 
     await user.click(await screen.findByTestId('readiness-toggle'))
     await waitFor(() => expect(useWorkspaceStore.getState().readinessExpanded).toBe(true))
+  })
+})
+
+describe('ReadinessIndicator location check-in entitlement', () => {
+  afterEach(() => useAuthStore.setState({ isAuthenticated: false, accessToken: null }))
+
+  function setupLocationGameOnPlan(locationCheckIn: boolean) {
+    const accessToken = `header.${btoa(JSON.stringify({ exp: 4102444800 })).replace(/=+$/, '')}.signature`
+    useAuthStore.setState({ isAuthenticated: true, accessToken })
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({
+            id: 'b1',
+            checkInMethod: 'LOCATION',
+            checkInRadiusM: 20,
+            lat: 41.1,
+            lng: -8.6,
+            nfcLinked: false,
+            hidden: false,
+          }),
+        ]),
+      ),
+      http.get('/api/games/:gameId/challenges', () =>
+        HttpResponse.json([createMockChallenge({ id: 'c1' })]),
+      ),
+      http.get('/api/games/:gameId/teams', () => HttpResponse.json([createMockTeam({ id: 't1' })])),
+      http.get('/api/games/:gameId/assignments', () =>
+        HttpResponse.json([createMockAssignment({ baseId: 'b1', challengeId: 'c1' })]),
+      ),
+      http.get('/api/games/:gameId/team-variables/completeness', () =>
+        HttpResponse.json({ complete: true, errors: [] }),
+      ),
+      http.get('/api/quota/personal', () =>
+        HttpResponse.json({
+          context: 'personal',
+          orgId: null,
+          tier: locationCheckIn ? 'pro' : 'free',
+          limits: {
+            maxActiveGames: 1,
+            maxOperatorsPerGame: 1,
+            maxBasesPerGame: 25,
+            maxFileSizeBytes: 1,
+            maxMembers: null,
+            maxLiveGames: null,
+            maxPlayersPerGame: 50,
+            maxResourceStorageBytes: 0,
+            locationCheckIn,
+          },
+          usage: {
+            currentActiveGames: 0,
+            currentMembers: null,
+            currentLiveGames: null,
+            currentResourceStorageBytes: 0,
+          },
+          overrides: null,
+        }),
+      ),
+    )
+  }
+
+  it('adds a failing plan check when a free game holds a location base', async () => {
+    const user = userEvent.setup()
+    setupLocationGameOnPlan(false)
+
+    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/items? remaining/)).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('readiness-toggle'))
+    expect(await screen.findByText('Location check-in included in your plan')).toBeInTheDocument()
+  })
+
+  it('shows no plan check on a paid plan', async () => {
+    setupLocationGameOnPlan(true)
+
+    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Ready to launch')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Location check-in included in your plan')).toBeNull()
   })
 })

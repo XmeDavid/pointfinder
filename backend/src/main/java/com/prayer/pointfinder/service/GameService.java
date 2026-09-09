@@ -145,6 +145,9 @@ public class GameService {
                 .tutorialExpiresAt(practice ? PracticeGames.expiry() : null)
                 .build();
         game.getOperators().add(currentUser);
+        if (game.getDefaultCheckInMethod() == CheckInMethod.LOCATION) {
+            quotaService.enforceLocationCheckIn(game);
+        }
 
         try {
             game = gameRepository.saveAndFlush(game);
@@ -192,6 +195,9 @@ public class GameService {
             CheckInMethod method = validateCheckInMethod(request.getDefaultCheckInMethod());
             if (method != game.getDefaultCheckInMethod() && game.getStatus() != GameStatus.setup) {
                 throw new BadRequestException("Check-in settings can only be changed during setup");
+            }
+            if (method == CheckInMethod.LOCATION && method != game.getDefaultCheckInMethod()) {
+                quotaService.enforceLocationCheckIn(game);
             }
             game.setDefaultCheckInMethod(method);
         }

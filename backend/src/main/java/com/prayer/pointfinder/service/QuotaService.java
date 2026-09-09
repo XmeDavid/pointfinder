@@ -38,6 +38,9 @@ public class QuotaService {
     @Value("${app.quota.enforcement-enabled:false}")
     private boolean enforcementEnabled;
 
+    /** Override key: a boolean, so an admin can grant location check-in to a free account. */
+    static final String LOCATION_CHECK_IN_KEY = "location_check_in";
+
     private static final long MB = 1024L * 1024L;
     private static final long GB = 1024L * MB;
 
@@ -159,6 +162,37 @@ public class QuotaService {
     }
 
     /**
+     * Location check-in is an entitlement, not a counter: the free tier may
+     * build NFC and QR bases only. Resolved per game so an org game follows
+     * the org's plan and a personal game the creator's.
+     */
+    public boolean isLocationCheckInAllowed(Game game) {
+        QuotaResponse.Limits limits;
+        if (game.getOrganization() != null) {
+            limits = resolveOrgLimits(game.getOrganization());
+        } else {
+            UserSubscription sub = userSubRepository.findByUserId(game.getCreatedBy().getId()).orElse(null);
+            limits = resolvePersonalLimits(sub);
+        }
+        return !Boolean.FALSE.equals(limits.locationCheckIn());
+    }
+
+    /**
+     * Rejects a LOCATION base (or a LOCATION game default) on a plan that
+     * does not include it. Called when a base is created or switched to
+     * location, when the game default changes, on import, and again at
+     * go-live so a plan downgrade cannot leave a live game the plan does
+     * not cover.
+     */
+    public void enforceLocationCheckIn(Game game) {
+        if (!enforcementEnabled) return;
+        if (isLocationCheckInAllowed(game)) return;
+        throw new BadRequestException(
+            "Location check-in is not included in your plan",
+            ErrorCode.QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED);
+    }
+
+    /**
      * A practice game takes a single player, so the operator can open the
      * player app and see that side, and nothing more. This is a product rule
      * of practice games, not a subscription quota, so it ignores the
@@ -233,7 +267,8 @@ public class QuotaService {
                 getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_file_size_bytes", 100 * MB),
                 null, null,
                 getOverrideLong(sub != null ? sub.getQuotaOverrides() : null, "max_resource_storage_bytes", 0L),
-                getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_players_per_game", 50));
+                getOverride(sub != null ? sub.getQuotaOverrides() : null, "max_players_per_game", 50),
+                getOverrideBoolean(sub != null ? sub.getQuotaOverrides() : null, LOCATION_CHECK_IN_KEY, false));
         }
         // Pro
         return new QuotaResponse.Limits(
@@ -243,7 +278,8 @@ public class QuotaService {
             getOverrideLong(sub.getQuotaOverrides(), "max_file_size_bytes", 2 * GB),
             null, null,
             getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", GB),
-            getOverride(sub.getQuotaOverrides(), "max_players_per_game", null));
+            getOverride(sub.getQuotaOverrides(), "max_players_per_game", null),
+            getOverrideBoolean(sub.getQuotaOverrides(), LOCATION_CHECK_IN_KEY, true));
     }
 
     private QuotaResponse.Limits resolveOrgLimits(Organization org) {
@@ -257,7 +293,8 @@ public class QuotaService {
                 getOverride(overrides, "max_members", 15),
                 getOverride(overrides, "max_live_games", null),
                 getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB),
-                getOverride(overrides, "max_players_per_game", null));
+                getOverride(overrides, "max_players_per_game", null),
+                getOverrideBoolean(overrides, LOCATION_CHECK_IN_KEY, true));
         }
         if (org.getSubscriptionTier() == OrgTier.base) {
             return new QuotaResponse.Limits(
@@ -268,7 +305,8 @@ public class QuotaService {
                 getOverride(overrides, "max_members", 10),
                 getOverride(overrides, "max_live_games", 10),
                 getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB),
-                getOverride(overrides, "max_players_per_game", 200));
+                getOverride(overrides, "max_players_per_game", 200),
+                getOverrideBoolean(overrides, LOCATION_CHECK_IN_KEY, true));
         }
         // Free tier — minimal limits for cancelled/downgraded orgs
         return new QuotaResponse.Limits(
@@ -279,7 +317,8 @@ public class QuotaService {
             getOverride(overrides, "max_members", 3),
             getOverride(overrides, "max_live_games", 1),
             getOverrideLong(overrides, "max_resource_storage_bytes", 0L),
-            getOverride(overrides, "max_players_per_game", 50));
+            getOverride(overrides, "max_players_per_game", 50),
+            getOverrideBoolean(overrides, LOCATION_CHECK_IN_KEY, false));
     }
 
     private Integer getOverride(Map<String, Object> overrides, String key, Integer defaultValue) {
@@ -287,6 +326,16 @@ public class QuotaService {
             Object val = overrides.get(key);
             if (val == null) return null;
             return ((Number) val).intValue();
+        }
+        return defaultValue;
+    }
+
+    private Boolean getOverrideBoolean(Map<String, Object> overrides, String key, Boolean defaultValue) {
+        if (overrides != null && overrides.containsKey(key)) {
+            Object val = overrides.get(key);
+            if (val == null) return defaultValue;
+            if (val instanceof Boolean b) return b;
+            return Boolean.parseBoolean(String.valueOf(val));
         }
         return defaultValue;
     }

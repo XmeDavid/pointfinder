@@ -155,6 +155,17 @@ later does not rewrite bases that already exist.
 | `QR` | Scan the printed code, which carries the same token as the tag | None — the code prints from the token |
 | `LOCATION` | A GPS fix inside the base radius, verified server-side | Real coordinates (not 0,0), radius 5–200 m, no two location rings overlapping |
 
+**Location check-in is a paid feature.** The free individual tier and the free
+org tier may only build `NFC` and `QR` bases; `pro`, `base` and `high` include
+`LOCATION`. `QuotaService.enforceLocationCheckIn` rejects a `LOCATION` base with
+`QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED` wherever one comes into being (base create,
+base update to location, the game default, import) and again in the go-live
+readiness check, so a plan downgrade cannot leave a live game the plan no longer
+covers. Like the other quotas it is behind `QUOTA_ENFORCEMENT_ENABLED`; the quota
+endpoints report `limits.locationCheckIn` regardless so the web client can lock
+the method picker and show the plan hint. The `location_check_in` boolean quota
+override grants it to a single account.
+
 Per-base fields: `check_in_method` and `check_in_radius_m` (null inherits the
 game default). Game fields: `default_check_in_method` and
 `default_check_in_radius_m` (default 15 m). Legacy iOS and Android apps only

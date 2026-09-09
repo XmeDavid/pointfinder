@@ -7,6 +7,7 @@ import { useGame } from '@/hooks/queries/useGames'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useVariableCompleteness } from '@/hooks/queries/useVariables'
+import { useLocationCheckInAllowed } from '@/hooks/queries/useQuota'
 import { isValidCheckInRadiusM, resolveCheckInMethod, resolveCheckInRadiusM } from '@/types/checkIn'
 
 export interface ReadinessCheck {
@@ -32,6 +33,7 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
   const { data: completeness } = useVariableCompleteness(gameId)
 
   const defaultRadius = game?.defaultCheckInRadiusM
+  const locationAllowed = useLocationCheckInAllowed()
 
   return useMemo(() => {
     const baseList = bases ?? []
@@ -111,6 +113,11 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
         passed: radiusOkCount === locationBases.length,
       },
       { label: t('readiness.locationOverlap'), passed: !overlapping },
+      // Location check-in is a paid feature. The server refuses go-live for a
+      // location base on a plan without it, so the checklist says so first.
+      ...(locationBases.length > 0 && !locationAllowed
+        ? [{ label: t('readiness.locationPlan'), passed: false }]
+        : []),
       { label: t('readiness.variablesComplete'), passed: completeness?.complete ?? true },
     ]
 
@@ -119,5 +126,5 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
       legacyNote: baseList.some((b) => resolveCheckInMethod(b.checkInMethod) !== 'NFC'),
       allPassed: checks.every((check) => check.passed),
     }
-  }, [bases, challenges, teams, assignments, completeness, defaultRadius, t])
+  }, [bases, challenges, teams, assignments, completeness, defaultRadius, locationAllowed, t])
 }

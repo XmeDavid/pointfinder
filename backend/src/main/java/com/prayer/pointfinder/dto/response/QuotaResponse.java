@@ -20,7 +20,9 @@ public record QuotaResponse(
         Integer maxMembers,
         Integer maxLiveGames,
         Long maxResourceStorageBytes,
-        Integer maxPlayersPerGame
+        Integer maxPlayersPerGame,
+        /** Whether bases may use the LOCATION check-in method. Paid tiers only. */
+        Boolean locationCheckIn
     ) {}
 
     public record Usage(

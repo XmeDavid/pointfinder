@@ -7,6 +7,7 @@ import { exportFile } from '@/lib/exportFile'
 import { useNavigate } from 'react-router-dom'
 import { SlideDrawer } from '@/components/layout/SlideDrawer'
 import { useGame } from '@/hooks/queries/useGames'
+import { useLocationCheckInAllowed } from '@/hooks/queries/useQuota'
 import { useUpdateGame, useUpdateGameStatus, useDeleteGame } from '@/hooks/mutations/useGameMutations'
 import { isPracticeGame, practiceHoursLeft } from '@/features/tutorials/practiceGame'
 import { PracticeGameChoices } from '@/features/tutorials/PracticeGameChoices'
@@ -141,6 +142,7 @@ export default function GameSettingsPanel({
   const [localUniform, setLocalUniform] = useState<boolean | null>(null)
   const [localBroadcast, setLocalBroadcast] = useState<boolean | null>(null)
   const methodLabel = useCheckInMethodLabel()
+  const locationAllowed = useLocationCheckInAllowed()
   const [radiusDraft, setRadiusDraft] = useState<string | null>(null)
   const [radiusError, setRadiusError] = useState(false)
 
@@ -383,11 +385,13 @@ export default function GameSettingsPanel({
             >
               {CHECK_IN_METHODS.map((method) => {
                 const isActive = defaultMethod === method
+                const locked = method === 'LOCATION' && !locationAllowed && !isActive
                 return (
                   <button
                     key={method}
                     type="button"
-                    disabled={checkInLocked || updateGame.isPending}
+                    disabled={checkInLocked || updateGame.isPending || locked}
+                    aria-describedby={locked ? 'checkin-location-plan' : undefined}
                     aria-pressed={isActive}
                     data-testid={`checkin-default-method-${method.toLowerCase()}`}
                     onClick={() => updateGame.mutate({ defaultCheckInMethod: method })}
@@ -402,6 +406,22 @@ export default function GameSettingsPanel({
                 )
               })}
             </div>
+            {!locationAllowed && (
+              <p
+                id="checkin-location-plan"
+                data-testid="checkin-location-plan"
+                className="text-xs text-muted-foreground"
+              >
+                {t('checkIn.locationPaid')}{' '}
+                <button
+                  type="button"
+                  className="underline underline-offset-2 hover:text-foreground"
+                  onClick={() => navigate('/billing')}
+                >
+                  {t('checkIn.locationPaidCta')}
+                </button>
+              </p>
+            )}
           </div>
 
           {defaultMethod === 'LOCATION' && (

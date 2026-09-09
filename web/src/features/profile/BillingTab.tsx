@@ -406,6 +406,16 @@ export function BillingTab() {
                 unlimitedLabel={unlimitedLabel}
               />
             )}
+            <div className="flex items-center justify-between" data-testid="billing-location-checkin">
+              <span className="text-muted-foreground">
+                {t('billing.locationCheckIn', 'Location check-in')}
+              </span>
+              <span className="text-foreground">
+                {quota.limits.locationCheckIn === false
+                  ? t('billing.notIncluded', 'Not included')
+                  : t('billing.included', 'Included')}
+              </span>
+            </div>
             <QuotaBar
               label={t('billing.maxFileSize', 'Max file size')}
               max={quota.limits.maxFileSizeBytes}
