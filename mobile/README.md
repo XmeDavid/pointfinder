@@ -40,6 +40,7 @@ and `xcodegen` under `~/.local/bin`.
 bun install                                   # from the repo root, links the local plugins
 bun run --cwd ../web typecheck                # shared front end
 cargo check --manifest-path src-tauri/Cargo.toml   # Rust shell and plugins, desktop target
+cargo test --manifest-path src-tauri/Cargo.toml    # same, plus the Rust unit tests; CI runs this on every push
 bun run tauri dev                             # desktop window, native calls report unavailable
 bun run tauri android dev                     # device or emulator via adb
 bun run tauri android build --debug --target aarch64 --apk
