@@ -22,17 +22,9 @@ public class StripeConfig {
     @Value("${app.stripe.prices.individual-pro-annual:}")
     private String priceProAnnual;
 
-    @Value("${app.stripe.prices.org-base-monthly:}")
-    private String priceOrgBaseMonthly;
-
-    @Value("${app.stripe.prices.org-base-annual:}")
-    private String priceOrgBaseAnnual;
-
-    @Value("${app.stripe.prices.org-high-monthly:}")
-    private String priceOrgHighMonthly;
-
-    @Value("${app.stripe.prices.org-high-annual:}")
-    private String priceOrgHighAnnual;
+    // Clubs have no Stripe price: an admin issues a one-off invoice for the
+    // agreed amount, so there is nothing here to map. The retired
+    // STRIPE_PRICE_ORG_* variables can be removed from the deployment.
 
     @Value("${app.stripe.success-url:}")
     private String successUrl;

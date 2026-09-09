@@ -1,12 +1,9 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.CreateCheckoutRequest;
-import com.prayer.pointfinder.dto.request.CreateOrgCheckoutRequest;
-import com.prayer.pointfinder.dto.request.OrgPortalRequest;
 import com.prayer.pointfinder.dto.response.CheckoutResponse;
 import com.prayer.pointfinder.dto.response.InvoiceListResponse;
 import com.prayer.pointfinder.dto.response.UserSubscriptionResponse;
-import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.service.BillingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.UUID;
 
+/**
+ * Self-serve personal billing. Clubs are sales-led and never touch this
+ * controller: see {@code /api/admin/orgs/**} for issuing a club invoice and
+ * {@code GET /api/orgs/{orgId}/invoices} for a club's billing history.
+ */
 @RestController
 @RequestMapping("/api/billing")
 @RequiredArgsConstructor
@@ -28,27 +29,9 @@ public class BillingController {
         return ResponseEntity.ok(billingService.createCheckoutSession(request));
     }
 
-    @PostMapping("/org-checkout")
-    public ResponseEntity<CheckoutResponse> createOrgCheckout(@Valid @RequestBody CreateOrgCheckoutRequest request) {
-        return ResponseEntity.ok(billingService.createOrgCheckoutSession(
-            request.getOrgName(), request.getPlan(), request.getCycle()));
-    }
-
     @PostMapping("/portal")
     public ResponseEntity<Map<String, String>> createPortal() {
         String url = billingService.createPortalSession();
-        return ResponseEntity.ok(Map.of("url", url));
-    }
-
-    @PostMapping("/org-portal")
-    public ResponseEntity<Map<String, String>> createOrgPortal(@Valid @RequestBody OrgPortalRequest request) {
-        UUID orgId;
-        try {
-            orgId = UUID.fromString(request.orgId());
-        } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("orgId must be a valid UUID");
-        }
-        String url = billingService.createOrgPortalSession(orgId);
         return ResponseEntity.ok(Map.of("url", url));
     }
 
@@ -60,8 +43,7 @@ public class BillingController {
     @GetMapping("/invoices")
     public ResponseEntity<InvoiceListResponse> getInvoices(
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) String startingAfter,
-            @RequestParam(required = false) UUID orgId) {
-        return ResponseEntity.ok(billingService.getInvoices(orgId, Math.min(limit, 100), startingAfter));
+            @RequestParam(required = false) String startingAfter) {
+        return ResponseEntity.ok(billingService.getInvoices(Math.min(limit, 100), startingAfter));
     }
 }

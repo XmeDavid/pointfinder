@@ -9,8 +9,6 @@ import com.prayer.pointfinder.dto.response.InvoiceResponse;
 import com.prayer.pointfinder.dto.response.UserSubscriptionResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
-import com.prayer.pointfinder.exception.ResourceNotFoundException;
-import com.prayer.pointfinder.repository.OrganizationRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.stripe.exception.StripeException;
@@ -29,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,8 +36,6 @@ public class BillingService {
 
     private final StripeConfig stripeConfig;
     private final UserSubscriptionRepository userSubRepository;
-    private final OrganizationRepository orgRepository;
-    private final OrganizationService organizationService;
 
     private void ensureStripeConfigured() {
         if (stripeConfig.getSecretKey() == null || stripeConfig.getSecretKey().isBlank()) {
@@ -48,6 +43,11 @@ public class BillingService {
         }
     }
 
+    /**
+     * Self-serve checkout, personal only. Clubs never pass through here: a
+     * club is created by an admin and paid by invoice, so the only client
+     * reference this backend ever mints is {@code user:<id>}.
+     */
     @Transactional
     public CheckoutResponse createCheckoutSession(CreateCheckoutRequest request) {
         ensureStripeConfigured();
@@ -58,22 +58,9 @@ public class BillingService {
             throw new BadRequestException("Stripe price not configured for plan: " + request.getPlan() + "/" + request.getCycle());
         }
 
-        String customerId = null;
-        String clientReferenceId;
-
-        if (request.getOrgId() != null) {
-            organizationService.ensureCurrentUserHasPermission(request.getOrgId(), OrgPermission.MANAGE_BILLING);
-            Organization org = orgRepository.findById(request.getOrgId())
-                .orElseThrow(() -> new ResourceNotFoundException("Organization", request.getOrgId()));
-            customerId = org.getStripeCustomerId();
-            clientReferenceId = "org:" + org.getId();
-        } else {
-            UserSubscription sub = userSubRepository.findByUserId(currentUser.getId()).orElse(null);
-            if (sub != null) {
-                customerId = sub.getStripeCustomerId();
-            }
-            clientReferenceId = "user:" + currentUser.getId();
-        }
+        UserSubscription sub = userSubRepository.findByUserId(currentUser.getId()).orElse(null);
+        String customerId = sub != null ? sub.getStripeCustomerId() : null;
+        String clientReferenceId = "user:" + currentUser.getId();
 
         try {
             SessionCreateParams.Builder builder = SessionCreateParams.builder()
@@ -96,8 +83,8 @@ public class BillingService {
 
             Session session = Session.create(builder.build());
 
-            log.info("[BILLING] operation=createCheckout user={} plan={} cycle={} orgId={}",
-                currentUser.getId(), request.getPlan(), request.getCycle(), request.getOrgId());
+            log.info("[BILLING] operation=createCheckout user={} plan={} cycle={}",
+                currentUser.getId(), request.getPlan(), request.getCycle());
 
             return new CheckoutResponse(session.getUrl(), session.getId());
         } catch (Exception e) {
@@ -131,32 +118,6 @@ public class BillingService {
         }
     }
 
-    public String createOrgPortalSession(UUID orgId) {
-        ensureStripeConfigured();
-        organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.MANAGE_BILLING);
-
-        Organization org = orgRepository.findById(orgId)
-            .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
-
-        if (org.getStripeCustomerId() == null) {
-            throw new BadRequestException("No Stripe customer associated with this organization");
-        }
-
-        try {
-            com.stripe.param.billingportal.SessionCreateParams params =
-                com.stripe.param.billingportal.SessionCreateParams.builder()
-                    .setCustomer(org.getStripeCustomerId())
-                    .setReturnUrl(stripeConfig.getSuccessUrl())
-                    .build();
-            com.stripe.model.billingportal.Session portalSession =
-                com.stripe.model.billingportal.Session.create(params);
-            return portalSession.getUrl();
-        } catch (StripeException e) {
-            log.error("[BILLING] Stripe org portal creation failed: {}", e.getMessage());
-            throw new BadRequestException("Failed to create billing portal session");
-        }
-    }
-
     @Transactional(readOnly = true)
     public UserSubscriptionResponse getSubscriptionStatus() {
         User currentUser = SecurityUtils.getCurrentUser();
@@ -174,76 +135,29 @@ public class BillingService {
         );
     }
 
-    @Transactional
-    public CheckoutResponse createOrgCheckoutSession(String orgName, String plan, String cycle) {
-        ensureStripeConfigured();
-        User currentUser = SecurityUtils.getCurrentUser();
-        String priceId = resolvePriceId(plan, cycle);
-
-        if (priceId == null || priceId.isBlank()) {
-            throw new BadRequestException("Stripe price not configured for plan: " + plan + "/" + cycle);
-        }
-
-        // Don't create the org yet — store info in Stripe metadata
-        String clientReferenceId = "new-org:" + currentUser.getId();
-
-        try {
-            SessionCreateParams.Builder builder = SessionCreateParams.builder()
-                .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
-                .setSuccessUrl(stripeConfig.getSuccessUrl() + "?session_id={CHECKOUT_SESSION_ID}&new_org=true")
-                .setCancelUrl(stripeConfig.getCancelUrl())
-                .setClientReferenceId(clientReferenceId)
-                .setCustomerEmail(currentUser.getEmail())
-                .putMetadata("org_name", orgName)
-                .putMetadata("org_plan", plan)
-                .putMetadata("billing_cycle", cycle)
-                .addLineItem(SessionCreateParams.LineItem.builder()
-                    .setPrice(priceId)
-                    .setQuantity(1L)
-                    .build());
-
-            Session session = Session.create(builder.build());
-
-            log.info("[BILLING] operation=createOrgCheckout user={} orgName={} plan={} cycle={}",
-                currentUser.getId(), orgName, plan, cycle);
-
-            return new CheckoutResponse(session.getUrl(), session.getId());
-        } catch (StripeException e) {
-            log.error("[BILLING] Stripe org checkout creation failed: {}", e.getMessage());
-            throw new BadRequestException("Failed to create checkout session: " + e.getMessage());
-        }
-    }
-
+    /** The only self-serve prices this backend maps. Clubs are invoiced, not priced. */
     private String resolvePriceId(String plan, String cycle) {
         return switch (plan + "-" + cycle) {
             case "pro-monthly" -> stripeConfig.getPriceProMonthly();
             case "pro-annual" -> stripeConfig.getPriceProAnnual();
-            case "org-base-monthly" -> stripeConfig.getPriceOrgBaseMonthly();
-            case "org-base-annual" -> stripeConfig.getPriceOrgBaseAnnual();
-            case "org-high-monthly" -> stripeConfig.getPriceOrgHighMonthly();
-            case "org-high-annual" -> stripeConfig.getPriceOrgHighAnnual();
             default -> null;
         };
     }
 
-    public InvoiceListResponse getInvoices(UUID orgId, int limit, String startingAfter) {
+    /**
+     * Personal Stripe invoices. Club invoices are not Stripe subscription
+     * invoices and are served from {@code org_invoices} instead — see
+     * {@code GET /api/orgs/{orgId}/invoices}.
+     */
+    public InvoiceListResponse getInvoices(int limit, String startingAfter) {
         ensureStripeConfigured();
         User currentUser = SecurityUtils.getCurrentUser();
 
-        String customerId;
-        if (orgId != null) {
-            organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.MANAGE_BILLING);
-            Organization org = orgRepository.findById(orgId)
-                .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
-            customerId = org.getStripeCustomerId();
-        } else {
-            UserSubscription sub = userSubRepository.findByUserId(currentUser.getId()).orElse(null);
-            customerId = sub != null ? sub.getStripeCustomerId() : null;
-        }
+        UserSubscription sub = userSubRepository.findByUserId(currentUser.getId()).orElse(null);
+        String customerId = sub != null ? sub.getStripeCustomerId() : null;
 
         if (customerId == null) {
-            log.info("[BILLING] operation=getInvoices user={} orgId={} result=no_customer",
-                currentUser.getId(), orgId);
+            log.info("[BILLING] operation=getInvoices user={} result=no_customer", currentUser.getId());
             return new InvoiceListResponse(Collections.emptyList(), false);
         }
 
@@ -263,8 +177,8 @@ public class BillingService {
                 .map(this::mapInvoice)
                 .collect(Collectors.toList());
 
-            log.info("[BILLING] operation=getInvoices user={} orgId={} count={} hasMore={}",
-                currentUser.getId(), orgId, invoices.size(), collection.getHasMore());
+            log.info("[BILLING] operation=getInvoices user={} count={} hasMore={}",
+                currentUser.getId(), invoices.size(), collection.getHasMore());
 
             return new InvoiceListResponse(invoices, Boolean.TRUE.equals(collection.getHasMore()));
         } catch (StripeException e) {
