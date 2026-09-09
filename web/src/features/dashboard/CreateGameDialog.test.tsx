@@ -7,6 +7,7 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockGame } from '@/test/factories/game'
 import { useTourStore } from '@/features/tutorials/store'
+import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { CreateGameDialog } from './CreateGameDialog'
 
 const mockNavigate = vi.fn()
@@ -33,6 +34,11 @@ function renderDialog(open = true) {
 describe('CreateGameDialog', () => {
   beforeEach(() => {
     mockNavigate.mockClear()
+    useWorkspaceContext.getState().setActive({ type: 'personal' })
+  })
+
+  afterEach(() => {
+    useWorkspaceContext.getState().setActive({ type: 'personal' })
   })
 
   it('renders nothing when closed', () => {
@@ -134,6 +140,57 @@ describe('CreateGameDialog', () => {
     expect(await screen.findByTestId('create-game-error')).toHaveTextContent('You already have a practice game. Delete or keep it first.')
     expect(onClose).not.toHaveBeenCalled()
     expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  it('creates the game in the active organization workspace', async () => {
+    const user = userEvent.setup()
+    let sent: Record<string, unknown> = {}
+    server.use(http.post('/api/games', async ({ request }) => {
+      sent = (await request.json()) as Record<string, unknown>
+      return HttpResponse.json(createMockGame({ id: 'game-org', name: String(sent.name) }), { status: 201 })
+    }))
+    useWorkspaceContext.getState().setActive({ type: 'org', orgId: 'org-7', orgName: 'Scout District' })
+    renderDialog()
+
+    await user.type(screen.getByLabelText('Name'), 'District rally')
+    await user.click(screen.getByRole('button', { name: /create game/i }))
+
+    await waitFor(() => expect(sent.orgId).toBe('org-7'))
+  })
+
+  it('sends no orgId from the personal workspace', async () => {
+    const user = userEvent.setup()
+    let sent: Record<string, unknown> = {}
+    server.use(http.post('/api/games', async ({ request }) => {
+      sent = (await request.json()) as Record<string, unknown>
+      return HttpResponse.json(createMockGame({ id: 'game-personal', name: String(sent.name) }), { status: 201 })
+    }))
+    renderDialog()
+
+    await user.type(screen.getByLabelText('Name'), 'My own game')
+    await user.click(screen.getByRole('button', { name: /create game/i }))
+
+    await waitFor(() => expect(sent.name).toBe('My own game'))
+    expect('orgId' in sent).toBe(false)
+  })
+
+  it('keeps a practice game personal even in an organization workspace', async () => {
+    const user = userEvent.setup()
+    let sent: Record<string, unknown> = {}
+    server.use(http.post('/api/games', async ({ request }) => {
+      sent = (await request.json()) as Record<string, unknown>
+      return HttpResponse.json(createMockGame({ id: 'game-practice-org', name: String(sent.name) }), { status: 201 })
+    }))
+    useWorkspaceContext.getState().setActive({ type: 'org', orgId: 'org-7', orgName: 'Scout District' })
+    useTourStore.getState().start('first-game')
+    renderDialog()
+
+    await user.type(screen.getByLabelText('Name'), 'My first game')
+    await user.click(screen.getByRole('button', { name: /create game/i }))
+
+    await waitFor(() => expect(sent.tutorialScenario).toBe('first-game'))
+    expect('orgId' in sent).toBe(false)
+    useTourStore.getState().reset()
   })
 
   it('disables submit when name is empty', () => {

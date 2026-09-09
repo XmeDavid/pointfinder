@@ -24,12 +24,19 @@ export interface CreateGameDto {
   defaultCheckInRadiusM?: number;
   /** `first-game` while that tutorial runs: the server marks the game as a practice game. */
   tutorialScenario?: string;
+  /**
+   * Creates the game inside this organization instead of the personal
+   * workspace. Sent when the workspace switcher is on an org.
+   */
+  orgId?: string;
 }
 
 export interface GameImportData {
   gameData: GameExportDto;
   startDate?: string;
   endDate?: string;
+  /** Imports into this organization instead of the personal workspace. */
+  orgId?: string;
 }
 
 export interface GameMetadataExportDto {
@@ -153,8 +160,14 @@ export function isGameExportDto(value: unknown): value is GameExportDto {
 }
 
 export const gamesApi = {
-  list: async (): Promise<Game[]> => {
-    const { data } = await apiClient.get("/games");
+  /**
+   * One workspace at a time: no `orgId` lists the caller's personal games,
+   * an `orgId` lists that organization's games.
+   */
+  list: async (orgId?: string): Promise<Game[]> => {
+    const { data } = await apiClient.get("/games", {
+      params: orgId ? { orgId } : undefined,
+    });
     return data;
   },
 

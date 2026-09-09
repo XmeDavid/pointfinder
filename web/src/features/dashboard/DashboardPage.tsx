@@ -25,29 +25,23 @@ export function DashboardPage() {
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
 
+  // The personal active-game limit is a personal-workspace rule: an org game
+  // is bounded by the org plan's live-game limit at go-live instead, so
+  // creating one here is never blocked by the operator's own quota.
   const atGameLimit =
+    active.type === 'personal' &&
     quota != null &&
     quota.limits.maxActiveGames !== null &&
     quota.usage.currentActiveGames >= quota.limits.maxActiveGames
 
+  // The server already returns just the active workspace's games; only the
+  // search box narrows further.
   const filtered = useMemo(() => {
     if (!games) return []
-    let result = games
-
-    // Filter by workspace
-    if (active.type === 'personal') {
-      result = result.filter((g) => !g.orgId)
-    } else {
-      result = result.filter((g) => g.orgId === active.orgId)
-    }
-
-    // Then apply search filter
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      result = result.filter((g) => g.name.toLowerCase().includes(q))
-    }
-    return result
-  }, [games, search, active])
+    if (!search.trim()) return games
+    const q = search.toLowerCase()
+    return games.filter((g) => g.name.toLowerCase().includes(q))
+  }, [games, search])
 
   return (
     <div className="h-screen bg-background p-8 overflow-auto">

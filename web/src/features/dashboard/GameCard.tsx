@@ -35,6 +35,14 @@ export function GameCard({
           <GameStatusBadge status={game.status} labelCase="lower" />
         </div>
       </div>
+      {game.orgName && (
+        <p
+          className="mt-1 text-xs text-muted-foreground truncate"
+          data-testid={`game-org-${game.id}`}
+        >
+          {game.orgName}
+        </p>
+      )}
       {game.description && (
         <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
           {game.description}

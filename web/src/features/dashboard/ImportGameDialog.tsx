@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useImportGame } from '@/hooks/mutations/useGameMutations'
+import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { isGameExportDto, type GameExportDto } from '@/lib/api/games'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -16,6 +17,7 @@ export function ImportGameDialog({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const importGame = useImportGame()
+  const { active } = useWorkspaceContext()
   const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [parsed, setParsed] = useState<GameExportDto | null>(null)
@@ -65,7 +67,7 @@ export function ImportGameDialog({
   const handleImport = () => {
     if (!parsed) return
     importGame.mutate(
-      { gameData: parsed },
+      { gameData: parsed, ...(active.type === 'org' ? { orgId: active.orgId } : {}) },
       {
         onSuccess: (game) => {
           handleClose()

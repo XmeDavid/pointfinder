@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useTourStore } from '@/features/tutorials/store'
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/api/errors'
 import { useCreateGame } from '@/hooks/mutations/useGameMutations'
+import { useWorkspaceContext } from '@/stores/workspaceContext'
 import type { Game } from '@/types'
 
 export function CreateGameDialog({
@@ -23,6 +24,7 @@ export function CreateGameDialog({
   const { t } = useTranslation()
   const createGame = useCreateGame()
   const firstGameRun = useTourStore((s) => s.activeScenario === 'first-game')
+  const { active } = useWorkspaceContext()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -39,8 +41,13 @@ export function CreateGameDialog({
         name: name.trim(),
         description: description.trim(),
         // Inside the first-game tutorial the server marks this as a practice
-        // game; outside a run the flag is simply ignored.
-        ...(firstGameRun ? { tutorialScenario: 'first-game' } : {}),
+        // game; outside a run the flag is simply ignored. Practice games are
+        // always personal, so the org is not offered during a run.
+        ...(firstGameRun
+          ? { tutorialScenario: 'first-game' }
+          : active.type === 'org'
+            ? { orgId: active.orgId }
+            : {}),
       })
     } catch (err) {
       // At the active-game limit the answer is a plan, not a retry.
