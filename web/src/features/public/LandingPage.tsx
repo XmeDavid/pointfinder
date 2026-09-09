@@ -7,13 +7,15 @@ import { useTranslation } from "react-i18next";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { appStoreUrl, GOOGLE_PLAY_URL } from "@/lib/appDownloads";
+import { contactHref } from "@/lib/contact";
+import { BillingCycleToggle } from "@/components/ui/billing-cycle-toggle";
+import { formatPrice, PERSONAL_PRICE_EUR, type BillingCycleOption } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { Artwork } from "./landing/Artwork";
 import { BrandMark, BrandTile } from "@/components/brand";
 import { LandingHeader } from "./landing/LandingHeader";
 
-const CONTACT_EMAIL = "info@pointfinder.pt";
-const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("PointFinder club deal")}`;
+const CONTACT_HREF = contactHref();
 
 const WELCOME_STILL = "/onboarding/role-choice.webp";
 const WELCOME_ROUTE = "/welcome";
@@ -37,12 +39,10 @@ const ART = {
 const OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
 const CARTO_ATTRIBUTION_URL = "https://carto.com/attributions";
 
-type BillingCycle = "yearly" | "monthly";
-
 export function LandingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycleOption>("monthly");
   const [isWelcomeTransitionActive, setIsWelcomeTransitionActive] = useState(false);
   const transitionTimer = useRef<number | null>(null);
   const preloadedRef = useRef(false);
@@ -327,7 +327,7 @@ export function LandingPage() {
                 icon={Smartphone}
                 title={t("landing.pricing.personal")}
                 description={yearly ? t("landing.pricing.yearlyDesc") : t("landing.pricing.monthlyDesc")}
-                price={yearly ? "€30" : "€3.99"}
+                price={formatPrice(yearly ? PERSONAL_PRICE_EUR.yearly : PERSONAL_PRICE_EUR.monthly, i18n.language)}
                 suffix={yearly ? t("landing.pricing.perYear") : t("landing.pricing.perMonth")}
                 savings={yearly ? t("landing.pricing.yearlySavings") : t("landing.pricing.yearlyOfferSavings")}
                 features={yearly ? annualFeatures : monthlyFeatures}
@@ -336,7 +336,7 @@ export function LandingPage() {
                 onStartClick={startFromPricing}
                 highlighted
                 headerAction={
-                  <BillingToggle
+                  <BillingCycleToggle
                     value={billingCycle}
                     onChange={setBillingCycle}
                     label={t("landing.pricing.billingCycle")}
@@ -461,43 +461,6 @@ function MapAttribution() {
         return <Fragment key={index}>{part}</Fragment>;
       })}
     </span>
-  );
-}
-
-function BillingToggle({
-  value,
-  onChange,
-  label,
-  monthlyLabel,
-  yearlyLabel,
-}: {
-  value: BillingCycle;
-  onChange: (value: BillingCycle) => void;
-  label: string;
-  monthlyLabel: string;
-  yearlyLabel: string;
-}) {
-  const options: { value: BillingCycle; label: string }[] = [
-    { value: "monthly", label: monthlyLabel },
-    { value: "yearly", label: yearlyLabel },
-  ];
-  return (
-    <div role="group" aria-label={label} className="grid w-fit grid-cols-2 rounded-md border border-border bg-muted p-0.5 text-xs">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={value === option.value}
-          className={cn(
-            "rounded-sm px-2.5 py-1 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            value === option.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-          )}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
   );
 }
 
