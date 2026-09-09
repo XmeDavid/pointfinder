@@ -50,6 +50,14 @@ public class Organization {
     @Column(name = "grace_period_end")
     private Instant gracePeriodEnd;
 
+    /**
+     * End of the paid club term. Null means no term: a free org, or a club an
+     * admin drives by hand. A term that has passed moves the org into a grace
+     * period; a paid invoice pushes it out by the invoice's termMonths.
+     */
+    @Column(name = "term_end")
+    private Instant termEnd;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "quota_overrides", columnDefinition = "jsonb")
     private Map<String, Object> quotaOverrides;

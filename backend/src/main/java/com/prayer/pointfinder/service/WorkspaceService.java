@@ -42,7 +42,7 @@ public class WorkspaceService {
                 return new WorkspaceResponse.OrgWorkspace(
                     org.getId(), org.getName(), org.getSlug(),
                     org.getSubscriptionTier().name(), org.getSubscriptionStatus().name(),
-                    memberCount, (int) liveGames, m.getPermissions());
+                    memberCount, (int) liveGames, m.getPermissions(), org.getTermEnd());
             }).toList();
 
         return new WorkspaceResponse(personal, orgs);

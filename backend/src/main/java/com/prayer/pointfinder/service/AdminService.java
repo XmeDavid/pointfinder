@@ -91,6 +91,7 @@ public class AdminService {
                 o.getSubscriptionTier().name(),
                 o.getSubscriptionStatus().name(),
                 orgMembershipRepository.countByOrganizationId(o.getId()),
+                o.getTermEnd(),
                 o.getCreatedAt()
         ));
     }
@@ -127,6 +128,7 @@ public class AdminService {
                 org.getSubscriptionStatus().name(),
                 org.getStripeCustomerId(),
                 org.getGracePeriodEnd(),
+                org.getTermEnd(),
                 org.getQuotaOverrides(),
                 org.getAdminNote(),
                 memberships.size(),

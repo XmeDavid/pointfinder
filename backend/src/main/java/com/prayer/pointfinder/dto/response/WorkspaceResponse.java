@@ -1,5 +1,6 @@
 package com.prayer.pointfinder.dto.response;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,8 @@ public record WorkspaceResponse(
         String status,
         int memberCount,
         int liveGames,
-        Integer permissions
+        Integer permissions,
+        /** End of the paid club term, or null when the org has no term. */
+        Instant termEnd
     ) {}
 }

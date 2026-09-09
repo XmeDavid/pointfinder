@@ -41,7 +41,39 @@ public class SubscriptionLifecycleService {
         log.info("[LIFECYCLE] grace period started orgId={} endsAt={}", org.getId(), org.getGracePeriodEnd());
     }
 
+    /**
+     * A club whose paid term has run out. Unlike a personal subscription, no
+     * Stripe event announces this: the term is a date the backend owns, so a
+     * sweeper watches it. Grace runs for {@link #GRACE_PERIOD_DAYS} days from
+     * {@code termEnd} itself, not from when this sweep happened, so a late
+     * sweep does not hand the club extra time.
+     *
+     * <p>Runs before {@link #freezeExpiredGracePeriods()} on the same
+     * schedule, so a term that ended more than a week ago moves through grace
+     * and into frozen within one hour rather than two sweeps.
+     */
+    @Transactional
+    public int startGracePeriodsForExpiredTerms() {
+        Instant now = Instant.now();
+        List<Organization> expired = orgRepository
+            .findBySubscriptionStatusAndTermEndNotNullAndTermEndBefore(SubscriptionStatus.active, now);
+        for (Organization org : expired) {
+            org.setSubscriptionStatus(SubscriptionStatus.grace_period);
+            org.setGracePeriodEnd(org.getTermEnd().plus(GRACE_PERIOD_DAYS, ChronoUnit.DAYS));
+            orgRepository.save(org);
+            log.info("[LIFECYCLE] club term expired orgId={} termEnd={} graceEndsAt={}",
+                org.getId(), org.getTermEnd(), org.getGracePeriodEnd());
+        }
+        return expired.size();
+    }
+
     @Scheduled(fixedRate = 3600000)
+    @Transactional
+    public void sweepExpiredTermsAndGracePeriods() {
+        startGracePeriodsForExpiredTerms();
+        freezeExpiredGracePeriods();
+    }
+
     @Transactional
     public void freezeExpiredGracePeriods() {
         Instant now = Instant.now();

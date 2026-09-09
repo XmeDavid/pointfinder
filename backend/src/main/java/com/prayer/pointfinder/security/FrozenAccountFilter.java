@@ -3,6 +3,7 @@ package com.prayer.pointfinder.security;
 import com.prayer.pointfinder.entity.SubscriptionStatus;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.entity.UserSubscription;
+import com.prayer.pointfinder.repository.OrganizationRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,13 +16,45 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+/**
+ * Blocks a frozen workspace from acting.
+ *
+ * <p>Two independent gates, because the two workspaces are billed separately:
+ * <ul>
+ *   <li>the caller's own personal subscription is frozen — they may not use
+ *       the API at all, exactly as before;</li>
+ *   <li>the request carries an <em>org context</em> and that org is frozen —
+ *       the caller may not act inside it, even though their personal account
+ *       is fine.</li>
+ * </ul>
+ *
+ * <p>The org context is read from the path, not from a repository scan: a
+ * {@code /api/orgs/{id}/**} request names its org directly, and a
+ * {@code /api/games/{id}/**} request resolves to at most one org through a
+ * single projection query ({@code findSubscriptionStatusByGameId}) that
+ * returns the status column alone. A personal game yields an empty Optional
+ * and passes. Since {@link OncePerRequestFilter} runs this once per request,
+ * that is one extra query on org-scoped requests and none on personal ones —
+ * the "cache per request" the design asks for falls out of the filter's own
+ * lifecycle, with no cache to invalidate.
+ *
+ * <p>The allow-list keeps billing, auth, and the read-only workspace/quota
+ * endpoints reachable, so a frozen club's admin can still see why they are
+ * frozen and settle the invoice.
+ *
+ * <p>Players carry a {@code Player} principal, never a {@code User}, so a
+ * frozen club never locks out players already in a live game.
+ */
 @Component
 @RequiredArgsConstructor
 public class FrozenAccountFilter extends OncePerRequestFilter {
 
     private final UserSubscriptionRepository userSubRepository;
+    private final OrganizationRepository orgRepository;
 
     private static final Set<String> ALLOWED_PREFIXES = Set.of(
         "/api/billing",
@@ -30,6 +63,9 @@ public class FrozenAccountFilter extends OncePerRequestFilter {
         "/api/workspaces",
         "/api/quota"
     );
+
+    private static final String ORGS_PREFIX = "/api/orgs/";
+    private static final String GAMES_PREFIX = "/api/games/";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -51,15 +87,54 @@ public class FrozenAccountFilter extends OncePerRequestFilter {
 
         UserSubscription sub = userSubRepository.findByUserId(user.getId()).orElse(null);
         if (sub != null && sub.getStatus() == SubscriptionStatus.frozen) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write(
-                "{\"error\":\"ACCOUNT_FROZEN\",\"message\":\"Your account is frozen. Please update your payment method.\"}"
-            );
+            reject(response, "Your account is frozen. Please update your payment method.");
+            return;
+        }
+
+        if (isOrgContextFrozen(path)) {
+            reject(response, "This organization is frozen. Please settle the outstanding invoice.");
             return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /** Resolves the org this request acts inside, if any, and reports whether it is frozen. */
+    private boolean isOrgContextFrozen(String path) {
+        if (path.startsWith(ORGS_PREFIX)) {
+            UUID orgId = parseFirstSegment(path, ORGS_PREFIX);
+            if (orgId == null) return false;
+            return orgRepository.findById(orgId)
+                .map(org -> org.getSubscriptionStatus() == SubscriptionStatus.frozen)
+                .orElse(false);
+        }
+        if (path.startsWith(GAMES_PREFIX)) {
+            UUID gameId = parseFirstSegment(path, GAMES_PREFIX);
+            if (gameId == null) return false;
+            Optional<SubscriptionStatus> status = orgRepository.findSubscriptionStatusByGameId(gameId);
+            return status.filter(s -> s == SubscriptionStatus.frozen).isPresent();
+        }
+        return false;
+    }
+
+    /** The path segment right after {@code prefix}, parsed as a UUID, or null when it is not one. */
+    private UUID parseFirstSegment(String path, String prefix) {
+        String rest = path.substring(prefix.length());
+        int slash = rest.indexOf('/');
+        String segment = slash >= 0 ? rest.substring(0, slash) : rest;
+        try {
+            return UUID.fromString(segment);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private void reject(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.getWriter().write(
+            "{\"error\":\"ACCOUNT_FROZEN\",\"code\":\"ACCOUNT_FROZEN\",\"message\":\"" + message + "\"}"
+        );
     }
 
     private boolean isAllowedPath(String path) {

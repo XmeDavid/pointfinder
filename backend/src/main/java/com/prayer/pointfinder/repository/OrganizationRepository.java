@@ -23,6 +23,19 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
 
     List<Organization> findBySubscriptionStatusAndGracePeriodEndBefore(SubscriptionStatus status, Instant before);
 
+    /** Clubs whose paid term has run out but which have not entered grace yet. */
+    List<Organization> findBySubscriptionStatusAndTermEndNotNullAndTermEndBefore(
+            SubscriptionStatus status, Instant before);
+
+    /**
+     * The owning org's subscription status for a game, in one query, so
+     * {@link com.prayer.pointfinder.security.FrozenAccountFilter} can gate
+     * {@code /api/games/{id}/**} without loading the game aggregate. The join
+     * is inner, so a personal game yields an empty Optional.
+     */
+    @Query("SELECT o.subscriptionStatus FROM Game g JOIN g.organization o WHERE g.id = :gameId")
+    Optional<SubscriptionStatus> findSubscriptionStatusByGameId(@Param("gameId") UUID gameId);
+
     @Query("SELECT o FROM Organization o WHERE LOWER(o.name) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<Organization> searchByName(@Param("search") String search, Pageable pageable);
 }

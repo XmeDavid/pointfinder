@@ -64,7 +64,9 @@ public class QuotaService {
             limits,
             new QuotaResponse.Usage(
                 (int) activeGames, null, null, currentResourceBytes),
-            sub.getQuotaOverrides());
+            sub.getQuotaOverrides(),
+            sub.getStatus().name(),
+            null);
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +95,9 @@ public class QuotaService {
                 (int) (gameRepository.countByOrganizationIdAndStatusIn(
                     orgId, List.of(GameStatus.setup, GameStatus.live))),
                 memberCount, (int) liveGames, currentResourceBytes),
-            org.getQuotaOverrides());
+            org.getQuotaOverrides(),
+            org.getSubscriptionStatus().name(),
+            org.getTermEnd());
     }
 
     // --- Enforcement ---
@@ -251,8 +255,7 @@ public class QuotaService {
         Long override = getOverrideLong(overrides, "max_resource_storage_bytes", null);
         if (override != null) return override;
         return switch (org.getSubscriptionTier()) {
-            case high -> 25 * GB;
-            case base -> 5 * GB;
+            case club -> 25 * GB;
             case free -> 0;
         };
     }
@@ -293,27 +296,18 @@ public class QuotaService {
 
     private QuotaResponse.Limits resolveOrgLimits(Organization org) {
         Map<String, Object> overrides = org.getQuotaOverrides();
-        if (org.getSubscriptionTier() == OrgTier.high) {
+        // Club: the shape of a standard deal. Every number here is a default
+        // that the per-deal `quota_overrides` JSON on the org replaces, so
+        // sales can agree anything without a code change or a new tier.
+        if (org.getSubscriptionTier() == OrgTier.club) {
             return new QuotaResponse.Limits(
                 null,
                 getOverride(overrides, "max_operators_per_game", null),
                 getOverride(overrides, "max_bases_per_game", null),
                 getOverrideLong(overrides, "max_file_size_bytes", 2 * GB),
                 getOverride(overrides, "max_members", 15),
-                getOverride(overrides, "max_live_games", null),
-                getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB),
-                getOverride(overrides, "max_players_per_game", null),
-                getOverrideBoolean(overrides, LOCATION_CHECK_IN_KEY, true));
-        }
-        if (org.getSubscriptionTier() == OrgTier.base) {
-            return new QuotaResponse.Limits(
-                null,
-                getOverride(overrides, "max_operators_per_game", null),
-                getOverride(overrides, "max_bases_per_game", null),
-                getOverrideLong(overrides, "max_file_size_bytes", 2 * GB),
-                getOverride(overrides, "max_members", 10),
                 getOverride(overrides, "max_live_games", 10),
-                getOverrideLong(overrides, "max_resource_storage_bytes", 5 * GB),
+                getOverrideLong(overrides, "max_resource_storage_bytes", 25 * GB),
                 getOverride(overrides, "max_players_per_game", 200),
                 getOverrideBoolean(overrides, LOCATION_CHECK_IN_KEY, true));
         }

@@ -10,5 +10,7 @@ public record AdminOrgResponse(
     String subscriptionTier,
     String subscriptionStatus,
     int memberCount,
+    /** End of the paid club term, or null when the org has no term. */
+    Instant termEnd,
     Instant createdAt
 ) {}

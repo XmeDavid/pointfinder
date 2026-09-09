@@ -8,7 +8,8 @@ import java.util.UUID;
 public record AdminOrgDetailResponse(
     UUID id, String name, String slug, UUID createdBy, String createdByName,
     String subscriptionTier, String subscriptionStatus, String stripeCustomerId,
-    Instant gracePeriodEnd, Map<String, Object> quotaOverrides, String adminNote,
+    Instant gracePeriodEnd, Instant termEnd,
+    Map<String, Object> quotaOverrides, String adminNote,
     int memberCount, int gameCount, long resourceStorageBytes,
     List<OrgMemberResponse> members, Instant createdAt
 ) {}
