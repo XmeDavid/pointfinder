@@ -17,7 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -48,12 +51,17 @@ public class AdminOrgService {
     @Transactional
     public AdminCreateOrgResponse createOrg(CreateAdminOrgRequest request, String requestHost) {
         User admin = currentAdmin();
-        String email = request.getAdminEmail() != null ? request.getAdminEmail().trim() : "";
-        if (email.isEmpty()) {
+        // Addresses are matched and stored in lower case: an admin typing
+        // `Coach@Club.pt` for an account registered as `coach@club.pt` used to
+        // miss it and create an owner invite that address could never accept.
+        String email = OrgInviteService.normalizeEmail(request.getAdminEmail());
+        if (email == null || email.isEmpty()) {
             throw new BadRequestException("adminEmail is required", ErrorCode.ORG_ADMIN_EMAIL_INVALID);
         }
 
-        Optional<User> existing = userRepository.findByEmail(email);
+        validateQuotaOverrides(request.getQuotaOverrides());
+
+        Optional<User> existing = userRepository.findByEmailIgnoreCase(email);
 
         // Until the invitee registers, the creating admin owns the org: the
         // created_by column is NOT NULL and an org with no owner cannot be
@@ -101,13 +109,19 @@ public class AdminOrgService {
         Organization org = orgRepository.findById(orgId)
             .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
 
+        validateQuotaOverrides(request.getQuotaOverrides());
+
         if (request.getName() != null) org.setName(request.getName());
         if (request.getTier() != null) org.setSubscriptionTier(parseTier(request.getTier()));
         if (request.getStatus() != null) org.setSubscriptionStatus(parseStatus(request.getStatus()));
         if (request.getQuotaOverrides() != null) org.setQuotaOverrides(request.getQuotaOverrides());
-        if (request.getTermEnd() != null) org.setTermEnd(request.getTermEnd());
-        if (request.getGracePeriodEnd() != null) org.setGracePeriodEnd(request.getGracePeriodEnd());
-        if (request.getAdminNote() != null) org.setAdminNote(request.getAdminNote());
+        // These three are clearable, so presence — not nullness — decides
+        // whether they are touched. An admin sending `"termEnd": null` means
+        // "this club no longer has a term", which is a thing they must be able
+        // to say; omitting the key still leaves the stored value alone.
+        if (request.hasTermEnd()) org.setTermEnd(request.getTermEnd());
+        if (request.hasGracePeriodEnd()) org.setGracePeriodEnd(request.getGracePeriodEnd());
+        if (request.hasAdminNote()) org.setAdminNote(request.getAdminNote());
 
         org = orgRepository.save(org);
 
@@ -133,6 +147,52 @@ public class AdminOrgService {
             admin.getId(), orgId, newOwnerId);
 
         return organizationService.applyOwnershipTransfer(org, newOwnerId, admin);
+    }
+
+    /**
+     * The override keys this backend resolves, and what each may hold. A value
+     * outside its shape is a typo in a deal, not a server fault: read as JSON
+     * it would either take the club's quota checks down or silently resolve to
+     * the plan default. Keys outside this set pass through untouched — a deal
+     * may legitimately carry a per-deal key the product does not read yet.
+     */
+    private static final Set<String> NUMERIC_OVERRIDE_KEYS = Set.of(
+        "max_active_games",
+        "max_members",
+        "max_live_games",
+        "max_players_per_game",
+        "max_bases_per_game",
+        "max_operators_per_game",
+        "max_file_size_bytes",
+        "max_resource_storage_bytes");
+
+    private static final String BOOLEAN_OVERRIDE_KEY = "location_check_in";
+
+    /**
+     * Rejects a known override key whose value is neither null (unlimited, or
+     * the tier default for the boolean) nor of the key's own type.
+     */
+    private void validateQuotaOverrides(Map<String, Object> overrides) {
+        if (overrides == null) return;
+        List<String> bad = overrides.entrySet().stream()
+            .filter(e -> !isValidOverride(e.getKey(), e.getValue()))
+            .map(Map.Entry::getKey)
+            .sorted()
+            .toList();
+        if (!bad.isEmpty()) {
+            throw new BadRequestException(
+                "These quota overrides carry a value of the wrong type: " + String.join(", ", bad)
+                    + ". Numeric limits take a number or null; " + BOOLEAN_OVERRIDE_KEY
+                    + " takes true, false or null.",
+                ErrorCode.ORG_INVALID_QUOTA_OVERRIDE);
+        }
+    }
+
+    private boolean isValidOverride(String key, Object value) {
+        if (value == null) return true;
+        if (NUMERIC_OVERRIDE_KEYS.contains(key)) return value instanceof Number;
+        if (BOOLEAN_OVERRIDE_KEY.equals(key)) return value instanceof Boolean;
+        return true;
     }
 
     private OrgTier parseTier(String raw) {

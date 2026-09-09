@@ -121,16 +121,85 @@ public class StripeWebhookService {
      * {@code termMonths} extends the term from whichever is later — now, or
      * the term the club already has — so renewing early adds to the term
      * instead of truncating it, and renewing late does not backdate it.
+     *
+     * <p>When no {@code org_invoices} row matches, the Stripe invoice's own
+     * {@code metadata} is consulted before falling through to the personal
+     * path. Issuing an invoice sends it from Stripe and then writes the local
+     * row; a commit that fails in between leaves a club that has been billed,
+     * and has paid, with nothing here to recognise the payment — the old code
+     * reset such an org to active without extending its term, so the club paid
+     * for months it never received. The metadata Stripe carries is the same
+     * {@code orgId} and {@code termMonths} the lost row would have held, so
+     * the row is recreated and the payment applied in full.
      */
     @Transactional
     public void handleInvoicePaid(Invoice invoice) {
         OrgInvoice orgInvoice = orgInvoiceRepository.findByStripeInvoiceId(invoice.getId()).orElse(null);
+        if (orgInvoice == null) {
+            orgInvoice = recoverClubInvoiceFromMetadata(invoice);
+        }
         if (orgInvoice != null) {
             applyClubPayment(orgInvoice);
             return;
         }
         resetToActive(invoice.getCustomer());
         log.info("[WEBHOOK] invoice.paid customerId={}", invoice.getCustomer());
+    }
+
+    /**
+     * Rebuilds the {@code org_invoices} row for a club invoice Stripe knows
+     * about and this database does not, from the metadata the gateway attaches
+     * to every club invoice. Returns null when the invoice is not a club one —
+     * a personal subscription invoice carries no {@code orgId} — or when the
+     * metadata names an org that no longer exists.
+     */
+    private OrgInvoice recoverClubInvoiceFromMetadata(Invoice invoice) {
+        Map<String, String> metadata = invoice.getMetadata();
+        if (metadata == null) return null;
+        String rawOrgId = metadata.get("orgId");
+        if (rawOrgId == null || rawOrgId.isBlank()) return null;
+
+        UUID orgId;
+        try {
+            orgId = UUID.fromString(rawOrgId.trim());
+        } catch (IllegalArgumentException ex) {
+            log.warn("[WEBHOOK] invoice {} carries an unreadable orgId {}", invoice.getId(), rawOrgId);
+            return null;
+        }
+
+        Organization org = orgRepository.findById(orgId).orElse(null);
+        if (org == null) {
+            log.warn("[WEBHOOK] invoice {} names org {} which no longer exists", invoice.getId(), orgId);
+            return null;
+        }
+
+        OrgInvoice recovered = OrgInvoice.builder()
+            .organization(org)
+            .stripeInvoiceId(invoice.getId())
+            .amountCents(invoice.getAmountPaid() != null ? invoice.getAmountPaid() : 0L)
+            .currency(invoice.getCurrency() != null ? invoice.getCurrency() : "eur")
+            .description(invoice.getDescription())
+            .status("open")
+            .hostedInvoiceUrl(invoice.getHostedInvoiceUrl())
+            .invoicePdf(invoice.getInvoicePdf())
+            .termMonths(parseTermMonths(metadata.get("termMonths"), invoice.getId()))
+            .build();
+        recovered = orgInvoiceRepository.save(recovered);
+
+        log.warn("[WEBHOOK] invoice {} had no local row for org {}; recreated it from Stripe metadata "
+                + "(termMonths={})", invoice.getId(), orgId, recovered.getTermMonths());
+        return recovered;
+    }
+
+    /** Twelve months is what the issuing endpoint itself defaults to. */
+    private int parseTermMonths(String raw, String invoiceId) {
+        if (raw == null || raw.isBlank()) return 12;
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException ex) {
+            log.warn("[WEBHOOK] invoice {} carries an unreadable termMonths {}, using 12", invoiceId, raw);
+            return 12;
+        }
     }
 
     /** A club invoice Stripe will never collect: record it, leave the term alone. */

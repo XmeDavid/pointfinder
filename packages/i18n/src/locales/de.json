@@ -1034,6 +1034,7 @@
     "QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED": "Standort-Check-in ist Teil der bezahlten Pläne. Kostenlose Spiele nutzen NFC-Tags oder QR-Codes.",
     "QUOTA_RESOURCE_STORAGE_EXCEEDED": "Dieser Arbeitsbereich hat keinen Speicher mehr. Lösche einige Dateien oder wechsle den Plan.",
     "ORG_CREATOR_CANNOT_LEAVE": "Dir gehört diese Organisation. Übertrage die Inhaberschaft an ein anderes Mitglied, bevor du gehst.",
+    "ORG_INVALID_QUOTA_OVERRIDE": "Ein Limit dieses Vertrags hat einen Wert des falschen Typs. Numerische Limits nehmen eine Zahl oder „unbegrenzt“.",
     "VARIABLE_REFERENCE_UNDEFINED": "Eine Challenge verweist auf eine Variable, die nicht für jedes Team einen Wert hat.",
     "TUTORIAL_SCENARIO_UNKNOWN": "Unbekanntes Tutorial.",
     "TUTORIAL_STATUS_UNKNOWN": "Unbekannter Tutorial-Status.",
@@ -1145,6 +1146,7 @@
     "inviteStatus": {
       "pending": "Ausstehend",
       "accepted": "Angenommen",
+      "declined": "Abgelehnt",
       "expired": "Abgelaufen"
     },
     "perm": {

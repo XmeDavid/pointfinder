@@ -162,6 +162,25 @@ describe('OrgMembersPage pending invites', () => {
     const pending = screen.getByText('pending@example.com').closest('div')!.parentElement!
     expect(within(pending).getByText('Pending')).toBeInTheDocument()
   })
+
+  it('reads a declined invite as declined, in the same muted tone as expired', async () => {
+    // `declined` is the invitee's own refusal (V66). Left out of the union it
+    // rendered as the raw key, and left out of the tone rule it read as an
+    // answer still to come.
+    orgsStore.seedMembers([createOrgMember({ permissions: ALL_PERMISSIONS })])
+    orgsStore.seedInvites([
+      createOrgInvite({ id: 'invite-3', email: 'refused@example.com', status: 'declined' }),
+      createOrgInvite({ id: 'invite-4', email: 'stale@example.com', status: 'expired' }),
+    ])
+    renderPage()
+
+    const refused = (await screen.findByText('refused@example.com')).closest('div')!.parentElement!
+    const badge = within(refused).getByText('Declined')
+    expect(badge).toBeInTheDocument()
+
+    const stale = screen.getByText('stale@example.com').closest('div')!.parentElement!
+    expect(badge.className).toBe(within(stale).getByText('Expired').className)
+  })
 })
 
 describe('MemberPermissionsDialog', () => {

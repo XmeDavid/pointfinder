@@ -22,8 +22,17 @@ public class SubscriptionLifecycleService {
 
     private static final int GRACE_PERIOD_DAYS = 7;
 
+    /**
+     * The statuses a lapsed term moves out of. {@code past_due} belongs here
+     * with {@code active}: a club whose payment failed still holds a term, and
+     * leaving it out meant it never reached grace and so never froze.
+     */
+    private static final List<SubscriptionStatus> TERM_SWEEP_STATUSES =
+        List.of(SubscriptionStatus.active, SubscriptionStatus.past_due);
+
     private final UserSubscriptionRepository userSubRepository;
     private final OrganizationRepository orgRepository;
+    private final OrgInviteService orgInviteService;
 
     @Transactional
     public void startGracePeriod(UserSubscription sub) {
@@ -51,12 +60,17 @@ public class SubscriptionLifecycleService {
      * <p>Runs before {@link #freezeExpiredGracePeriods()} on the same
      * schedule, so a term that ended more than a week ago moves through grace
      * and into frozen within one hour rather than two sweeps.
+     *
+     * <p>{@code past_due} is swept alongside {@code active}. A club whose last
+     * payment attempt failed is exactly the one whose term is about to lapse;
+     * sweeping {@code active} alone left it past due forever, never entering
+     * grace and therefore never freezing.
      */
     @Transactional
     public int startGracePeriodsForExpiredTerms() {
         Instant now = Instant.now();
         List<Organization> expired = orgRepository
-            .findBySubscriptionStatusAndTermEndNotNullAndTermEndBefore(SubscriptionStatus.active, now);
+            .findBySubscriptionStatusInAndTermEndNotNullAndTermEndBefore(TERM_SWEEP_STATUSES, now);
         for (Organization org : expired) {
             org.setSubscriptionStatus(SubscriptionStatus.grace_period);
             org.setGracePeriodEnd(org.getTermEnd().plus(GRACE_PERIOD_DAYS, ChronoUnit.DAYS));
@@ -72,6 +86,7 @@ public class SubscriptionLifecycleService {
     public void sweepExpiredTermsAndGracePeriods() {
         startGracePeriodsForExpiredTerms();
         freezeExpiredGracePeriods();
+        orgInviteService.expirePendingInvites();
     }
 
     @Transactional

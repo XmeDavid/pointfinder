@@ -296,22 +296,24 @@ public class QuotaService {
         return resolveGameLimits(game).maxFileSizeBytes();
     }
 
-    public long getMaxResourceStorageBytes(Organization org) {
-        Map<String, Object> overrides = org.getQuotaOverrides();
-        Long override = getOverrideLong(overrides, "max_resource_storage_bytes", null);
-        if (override != null) return override;
-        return switch (org.getSubscriptionTier()) {
-            case club -> 25 * GB;
-            case free -> 0;
-        };
+    /**
+     * The org's storage allowance, or null for unlimited.
+     *
+     * <p>Resolved through {@link #resolveOrgLimits} like every other limit, so
+     * an explicit {@code "max_resource_storage_bytes": null} means unlimited
+     * here exactly as it does on the dashboard, in {@code enforceFileSize} and
+     * in the admin form. Reading the override map directly used to treat that
+     * null as "no override" and quietly fall back to the club's 25 GB, so a
+     * deal that agreed unlimited storage was capped anyway.
+     */
+    public Long getMaxResourceStorageBytes(Organization org) {
+        return resolveOrgLimits(org).maxResourceStorageBytes();
     }
 
-    public long getMaxPersonalResourceStorageBytes(User user) {
+    /** The personal twin, with the same null-is-unlimited contract. */
+    public Long getMaxPersonalResourceStorageBytes(User user) {
         UserSubscription sub = userSubRepository.findByUserId(user.getId()).orElse(null);
-        if (sub == null || sub.getTier() == IndividualTier.free) return 0;
-        Long override = getOverrideLong(sub.getQuotaOverrides(), "max_resource_storage_bytes", null);
-        if (override != null) return override;
-        return GB; // pro = 1GB
+        return resolvePersonalLimits(sub).maxResourceStorageBytes();
     }
 
     // --- Limit Resolution ---
@@ -383,11 +385,21 @@ public class QuotaService {
             getOverrideBoolean(overrides, LOCATION_CHECK_IN_KEY, false));
     }
 
+    /**
+     * A numeric override, read defensively. {@code quota_overrides} is free
+     * JSON on the org row: a deal typed as {@code {"max_members": "40"}} used
+     * to throw a ClassCastException out of every quota check and take the
+     * whole club down with it. A number is used, a numeric string is parsed,
+     * and anything else falls back to the plan default with a warning — a
+     * misconfigured deal degrades to the standard limits instead of breaking.
+     */
     private Integer getOverride(Map<String, Object> overrides, String key, Integer defaultValue) {
         if (overrides != null && overrides.containsKey(key)) {
             Object val = overrides.get(key);
             if (val == null) return null;
-            return ((Number) val).intValue();
+            if (val instanceof Number n) return n.intValue();
+            Long parsed = parseNumeric(val, key);
+            if (parsed != null) return parsed.intValue();
         }
         return defaultValue;
     }
@@ -402,12 +414,25 @@ public class QuotaService {
         return defaultValue;
     }
 
+    /** The 64-bit twin of {@link #getOverride}, equally defensive. */
     private Long getOverrideLong(Map<String, Object> overrides, String key, Long defaultValue) {
         if (overrides != null && overrides.containsKey(key)) {
             Object val = overrides.get(key);
             if (val == null) return null;
-            return ((Number) val).longValue();
+            if (val instanceof Number n) return n.longValue();
+            Long parsed = parseNumeric(val, key);
+            if (parsed != null) return parsed;
         }
         return defaultValue;
+    }
+
+    /** A numeric string, or null with a warning when the value is not one. */
+    private Long parseNumeric(Object val, String key) {
+        try {
+            return Long.parseLong(String.valueOf(val).trim());
+        } catch (NumberFormatException ex) {
+            log.warn("[QUOTA] override {} is not a number ({}), using the plan default", key, val);
+            return null;
+        }
     }
 }

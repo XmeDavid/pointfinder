@@ -16,7 +16,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
+    /**
+     * Email matching for the paths where the address was typed by someone
+     * else — an admin standing a club up, an invitee registering. Addresses
+     * are case-insensitive in practice, so an exact match there silently
+     * creates an invite nobody can accept.
+     */
+    Optional<User> findByEmailIgnoreCase(String email);
+
     boolean existsByEmail(String email);
+
+    boolean existsByEmailIgnoreCase(String email);
 
     List<User> findByRole(UserRole role);
 

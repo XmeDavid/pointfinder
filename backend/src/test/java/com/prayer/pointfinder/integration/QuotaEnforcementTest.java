@@ -366,7 +366,7 @@ class QuotaEnforcementTest extends IntegrationTestBase {
                 Map.of("email", another.getEmail()), String.class);
         assertEquals(HttpStatus.BAD_REQUEST, refused.getStatusCode());
         assertTrue(refused.getBody().contains("QUOTA_ORG_MEMBERS_EXCEEDED"), refused.getBody());
-        assertFalse(orgInviteRepository.existsByOrganizationIdAndEmailAndStatus(
+        assertFalse(orgInviteRepository.existsByOrganizationIdAndEmailIgnoreCaseAndStatus(
                 orgId, another.getEmail(), com.prayer.pointfinder.entity.InviteStatus.pending));
     }
 }

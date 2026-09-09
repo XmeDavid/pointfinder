@@ -69,7 +69,11 @@ export interface OrgInvite {
   orgId: string
   orgName: string
   email: string
-  status: 'pending' | 'accepted' | 'expired'
+  /**
+   * Mirrors the backend `invite_status` enum. `declined` is the invitee's own
+   * refusal (V66) and is terminal like `accepted`.
+   */
+  status: 'pending' | 'accepted' | 'declined' | 'expired'
   invitedBy: string | null
   inviterName: string | null
   createdAt: string

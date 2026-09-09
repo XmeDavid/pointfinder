@@ -1468,14 +1468,16 @@ one surface:
   shared destructive confirm dialog. On success the client switches to the
   personal workspace, because the one it was standing in no longer exists.
 - Pending invites show their status, so an `expired` invite reads as
-  expired rather than as one still awaiting an answer.
+  expired rather than as one still awaiting an answer, and a `declined` one
+  reads as refused in the same muted tone. Invites expire after 14 days.
 - **Leave** (`POST /api/orgs/{id}/leave`) for any member who did not create
   the club, behind a confirm. On success the client switches to the personal
   workspace, for the same reason a delete does.
 - **Transfer ownership** (`POST /api/orgs/{id}/transfer-ownership`) in the
   creator's place, because the backend refuses to let a creator leave. The two
   controls are therefore exclusive: whoever cannot leave is offered the move
-  that would let them, and the target list excludes the current owner.
+  that would let them, and the target list excludes the current owner. Only
+  the creator may make this move — see "Ownership transfer" below.
 - The club's **status and paid-until date** head the page
   (`ClubTermSummary`), so the facts the grace and frozen warnings act on are
   visible where membership is managed. Those warnings stay with
@@ -1511,6 +1513,17 @@ JSON `null`, and "tier default" omits the key. Byte limits are entered in
 gigabytes. An "advanced" disclosure shows the resolved JSON read-only, and a
 per-deal key the form does not manage is carried through a save rather than
 dropped. Both admin lists page through their 50 rows with prev/next.
+
+The backend validates what the form sends. A key it resolves must hold a
+number — a boolean for `location_check_in` — or `null` for unlimited;
+anything else is `400 ORG_INVALID_QUOTA_OVERRIDE` on both write paths. Keys
+outside that set are still carried through untouched, because the map is where
+a deal records things the product does not read yet.
+
+A club's **term end and grace period end, and its internal note, are
+clearable**: the form sends an explicit `null` and the backend distinguishes
+that from an absent key. Nullness alone used to mean "not sent", so once a club
+had a term end, no admin screen could take it away again.
 
 ## 11. Clubs and Invoicing
 
@@ -1549,7 +1562,19 @@ the ability to vary it.
 
 Every one is a key in the org's existing `quota_overrides` JSON, so a deal that
 agreed 40 members and three live games is one row edit, not a new tier. An
-override of `null` for a numeric key means unlimited. `free` keeps the
+override of `null` for a numeric key means unlimited — everywhere, including
+resource storage, which used to read an explicit `null` as "no override" and
+fall back to the club's 25 GB while the dashboard and the admin form both said
+unlimited. Every limit now resolves through the same `resolveOrgLimits` /
+`resolvePersonalLimits` pair, so there is one answer to what a deal grants.
+
+Reading that JSON is defensive: `quota_overrides` is a free-form column, so a
+value of the wrong type — `{"max_members": "40"}` — is read as its number if it
+is a numeric string, and otherwise logged and replaced by the plan default. It
+used to be cast unguarded, which turned one mistyped deal into a 500 on every
+quota check the club made. The admin write paths refuse such a value up front
+(`ORG_INVALID_QUOTA_OVERRIDE`); the defensive read is for rows that predate
+that. `free` keeps the
 minimal limits a lapsed or never-signed org gets: 3 members, 1 live game, 25
 bases, 50 players, 100 MB files, no storage, no location check-in.
 
@@ -1606,13 +1631,20 @@ admin drives by hand.
 Nothing from Stripe announces a term ending, because the term is a date this
 backend owns. `SubscriptionLifecycleService` sweeps hourly:
 
-1. **`startGracePeriodsForExpiredTerms`** — an org whose status is `active` and
-   whose `term_end` has passed moves to `grace_period` with `grace_period_end =
-   term_end + 7 days`. Grace is measured from the term, not from the sweep, so a
-   sweep that runs late does not hand the club extra time.
+1. **`startGracePeriodsForExpiredTerms`** — an org whose status is `active` or
+   `past_due` and whose `term_end` has passed moves to `grace_period` with
+   `grace_period_end = term_end + 7 days`. Grace is measured from the term, not
+   from the sweep, so a sweep that runs late does not hand the club extra time.
+   `past_due` is swept alongside `active` because a club whose last payment
+   attempt failed is precisely the one whose term is about to lapse; sweeping
+   `active` alone left it past due forever, never entering grace and therefore
+   never freezing.
 2. **`freezeExpiredGracePeriods`** — the pre-existing sweep: anything in
    `grace_period` past `grace_period_end` becomes `frozen`. It also covers
    personal subscriptions.
+3. **`OrgInviteService.expirePendingInvites`** — pending org invites past their
+   `expires_at` become `expired`, so a club's invite list stops showing an
+   answer that will never come.
 
 Both run in that order inside one scheduled method, so a club whose term lapsed
 more than a week ago reaches `frozen` in a single pass.
@@ -1636,6 +1668,13 @@ that can go stale.
 
 `/api/auth/**`, `/api/billing/**`, `/api/webhooks/**`, `/api/workspaces` and
 `/api/quota/**` stay open so a frozen account can see its state and pay.
+
+Two org-scoped routes are carved out of the org gate for the same reason:
+`GET /api/orgs/{id}/invoices`, because a frozen club has to reach the invoice
+it is being asked to pay, and `POST /api/orgs/{id}/leave`, because freezing a
+club must not trap the people inside it. Both are matched on the exact path
+tail *and* the method, so `POST /api/orgs/{id}/invites` on a frozen club is
+still refused. Everything else inside the org stays frozen.
 Players carry a `Player` principal rather than a `User`, so a club that lapses
 mid-event never locks players out of the game already under way.
 
@@ -1644,6 +1683,10 @@ Both refusals answer `403` with code `ACCOUNT_FROZEN`.
 ### Creating a club
 
 `POST /api/admin/orgs` takes the club's name and its administrator's email.
+The address is matched and stored in lower case: an admin typing
+`Coach@Club.pt` for an account registered as `coach@club.pt` used to miss it
+and mint an owner invite that address could never accept, because the
+invitee's own invite list is matched on their stored address.
 
 - **The address already has an account** → it gets a membership with every
   permission (`OrgPermission.ALL`) and becomes the org's `createdBy`.
@@ -1652,6 +1695,15 @@ Both refusals answer `403` with code `ACCOUNT_FROZEN`.
   creating admin is `createdBy` in the meantime, because the column is NOT NULL
   and an ownerless org cannot be administered. Accepting the invite makes the
   invitee the owner.
+
+**Invites expire after 14 days** (`org_invites.expires_at`, added in V67 and
+backfilled to `created_at + 14 days` for rows that predate it). An org invite
+carries every org permission, and an owner invite carries the club itself, so
+the token it mails is the widest credential this schema mints and cannot be
+good forever. A pending invite past its deadline is refused by accept, by the
+token lookup and by registration; the hourly sweep is what writes the
+`expired` label, because the error a refused attempt raises would roll a status
+write back with it.
 
 That second path used to be a dead end. `EmailService.sendOrgRegistrationInvite`
 has always sent `/register/{token}?org=true`, but the token endpoint behind that
@@ -1664,9 +1716,14 @@ its free personal subscription, and the membership in one transaction.
 ### Ownership transfer
 
 `POST /api/admin/orgs/{id}/transfer-ownership` (admin) and
-`POST /api/orgs/{id}/transfer-ownership` (the club's own creator, or a member
-with `MANAGE_PERMS`) set `created_by` to an existing member and grant them every
-permission. The target must already be a member: an org's owner is by definition
+`POST /api/orgs/{id}/transfer-ownership` (**the club's own creator only**) set
+`created_by` to an existing member and grant them every permission. The org-side
+route used to accept `MANAGE_PERMS` as well, which made ownership self-serve for
+anyone who could edit permissions: a member holding the bit could name
+themselves the new owner and take the club off the person who created it.
+Ownership is not something the permission editor grants itself. A club whose
+owner has genuinely gone is rescued through the admin route, which keeps its own
+authorization and its own audit line. The target must already be a member: an org's owner is by definition
 someone inside it, and silently adding them would hide a mistyped id
 (`ORG_TRANSFER_TARGET_NOT_MEMBER`).
 
@@ -1708,6 +1765,17 @@ this endpoint does not copy.)
    `grace_period_end`, and sets `term_end = max(now, current term_end) +
    termMonths`. Renewing early therefore adds to the running term instead of
    truncating it; renewing after a lapse is measured from now, not backdated.
+
+   When **no row matches**, the Stripe invoice's own `metadata` is consulted
+   before the handler falls through to the personal path. Issuing sends the
+   invoice from Stripe first and writes the local row second, so a commit that
+   fails in between leaves a club that has been billed — and has paid — with
+   nothing here to recognise the payment; the old code reset such an org to
+   `active` without extending its term, meaning the club paid for months it
+   never received. The `{orgId, termMonths}` Stripe carries is exactly what the
+   lost row would have held, so the row is recreated and the payment applied in
+   full. An invoice with no `orgId` in its metadata is a personal one and takes
+   the personal path unchanged.
 4. **Write-off.** `invoice.voided` and `invoice.marked_uncollectible` record
    `void` / `uncollectible` on the row and leave the term alone.
 

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +47,12 @@ import java.util.UUID;
  * endpoints reachable, so a frozen club's admin can still see why they are
  * frozen and settle the invoice.
  *
+ * <p>Two org-scoped routes are carved out of the org gate for the same reason:
+ * {@code GET /api/orgs/{id}/invoices} is the invoice a frozen club must reach
+ * to pay, and {@code POST /api/orgs/{id}/leave} is the door a member must be
+ * able to walk out of. Freezing a club must not trap the people in it or hide
+ * the bill that unfreezes it. Everything else inside the org stays refused.
+ *
  * <p>Players carry a {@code Player} principal, never a {@code User}, so a
  * frozen club never locks out players already in a live game.
  */
@@ -66,6 +73,16 @@ public class FrozenAccountFilter extends OncePerRequestFilter {
 
     private static final String ORGS_PREFIX = "/api/orgs/";
     private static final String GAMES_PREFIX = "/api/games/";
+
+    /**
+     * The org-scoped routes a frozen club may still use: reading the invoice
+     * that will unfreeze it, and leaving it. Keyed by the path tail after
+     * {@code /api/orgs/{id}}, valued by the method that is allowed there.
+     */
+    private static final Map<String, String> FROZEN_ORG_CARVE_OUTS = Map.of(
+        "/invoices", "GET",
+        "/leave", "POST"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -91,7 +108,7 @@ public class FrozenAccountFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (isOrgContextFrozen(path)) {
+        if (isOrgContextFrozen(path, request.getMethod())) {
             reject(response, "This organization is frozen. Please settle the outstanding invoice.");
             return;
         }
@@ -100,10 +117,11 @@ public class FrozenAccountFilter extends OncePerRequestFilter {
     }
 
     /** Resolves the org this request acts inside, if any, and reports whether it is frozen. */
-    private boolean isOrgContextFrozen(String path) {
+    private boolean isOrgContextFrozen(String path, String method) {
         if (path.startsWith(ORGS_PREFIX)) {
             UUID orgId = parseFirstSegment(path, ORGS_PREFIX);
             if (orgId == null) return false;
+            if (isFrozenOrgCarveOut(path, orgId, method)) return false;
             return orgRepository.findById(orgId)
                 .map(org -> org.getSubscriptionStatus() == SubscriptionStatus.frozen)
                 .orElse(false);
@@ -115,6 +133,17 @@ public class FrozenAccountFilter extends OncePerRequestFilter {
             return status.filter(s -> s == SubscriptionStatus.frozen).isPresent();
         }
         return false;
+    }
+
+    /**
+     * Whether this is one of the two routes a frozen club keeps: its invoice
+     * list and its exit. Matched on the exact tail and method, so nothing
+     * deeper than {@code /api/orgs/{id}/invoices} slips through.
+     */
+    private boolean isFrozenOrgCarveOut(String path, UUID orgId, String method) {
+        String tail = path.substring(ORGS_PREFIX.length() + orgId.toString().length());
+        String allowedMethod = FROZEN_ORG_CARVE_OUTS.get(tail);
+        return allowedMethod != null && allowedMethod.equalsIgnoreCase(method);
     }
 
     /** The path segment right after {@code prefix}, parsed as a UUID, or null when it is not one. */

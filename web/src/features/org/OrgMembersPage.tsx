@@ -143,7 +143,11 @@ export function OrgMembersPage() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground truncate">{invite.email}</p>
                     <StatusBadge
-                      tone={invite.status === 'expired' ? 'muted' : 'warning'}
+                      tone={
+                        invite.status === 'expired' || invite.status === 'declined'
+                          ? 'muted'
+                          : 'warning'
+                      }
                       label={t(`org.inviteStatus.${invite.status}`)}
                     />
                   </div>

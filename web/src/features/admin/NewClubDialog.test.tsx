@@ -97,7 +97,7 @@ describe('New club form', () => {
     await waitFor(() => expect(adminStore.clubCreations()).toHaveLength(1))
     const sent = adminStore.clubCreations()[0]
     expect(sent.quotaOverrides!.max_members).toBe(40)
-    expect(sent.termEnd).toBe('2027-07-31T00:00:00.000Z')
+    expect(sent.termEnd).toBe('2027-07-31T23:59:59.999Z')
     expect(sent.adminNote).toBe('Signed at the summer fair')
   })
 

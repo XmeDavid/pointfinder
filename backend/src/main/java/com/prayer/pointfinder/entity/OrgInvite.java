@@ -50,7 +50,21 @@ public class OrgInvite {
     @Builder.Default
     private boolean transferOwnership = false;
 
+    /**
+     * When this invite stops being acceptable. Set on every new invite; null
+     * on rows that predate expiry and on rows already accepted, declined or
+     * expired, which have no deadline left to keep. A null deadline never
+     * expires, so nothing already answered is disturbed.
+     */
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    /** Whether this invite's deadline has passed, as of {@code now}. */
+    public boolean isExpiredAt(Instant now) {
+        return expiresAt != null && expiresAt.isBefore(now);
+    }
 }

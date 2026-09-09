@@ -187,17 +187,26 @@ export const adminHandlers = [
   }),
 
   http.patch('/api/admin/orgs/:orgId', async ({ params, request }) => {
-    const body = (await request.json()) as UpdateClubRequest
+    const body = (await request.json()) as Record<string, unknown> & UpdateClubRequest
     clubUpdates.push({ orgId: params.orgId as string, body })
+    // The backend distinguishes an absent key from an explicit null on the
+    // three clearable fields: omitting `termEnd` leaves the term alone, while
+    // sending `"termEnd": null` clears it. `in` is what says that, so the mock
+    // and AdminOrgService.updateOrg answer a save the same way.
+    const present = (key: keyof UpdateClubRequest) => key in body
     orgDetail = {
       ...orgDetail,
       name: body.name ?? orgDetail.name,
       subscriptionTier: body.tier ?? orgDetail.subscriptionTier,
       subscriptionStatus: body.status ?? orgDetail.subscriptionStatus,
-      termEnd: body.termEnd === undefined ? orgDetail.termEnd : body.termEnd,
-      adminNote: body.adminNote === undefined ? orgDetail.adminNote : body.adminNote,
-      quotaOverrides:
-        body.quotaOverrides === undefined ? orgDetail.quotaOverrides : body.quotaOverrides,
+      termEnd: present('termEnd') ? (body.termEnd ?? null) : orgDetail.termEnd,
+      gracePeriodEnd: present('gracePeriodEnd')
+        ? (body.gracePeriodEnd ?? null)
+        : orgDetail.gracePeriodEnd,
+      adminNote: present('adminNote') ? (body.adminNote ?? null) : orgDetail.adminNote,
+      quotaOverrides: present('quotaOverrides')
+        ? ((body.quotaOverrides ?? null) as AdminOrgDetail['quotaOverrides'])
+        : orgDetail.quotaOverrides,
     }
     return HttpResponse.json({
       id: orgDetail.id,

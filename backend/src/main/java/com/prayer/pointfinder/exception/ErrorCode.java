@@ -186,6 +186,12 @@ public enum ErrorCode {
      * transfer ownership first.
      */
     ORG_CREATOR_CANNOT_LEAVE,
+    /**
+     * A club's {@code quota_overrides} carried a known key with a value of the
+     * wrong type - a string where a number belongs, say. Numeric limits take a
+     * number or null; {@code location_check_in} takes a boolean or null.
+     */
+    ORG_INVALID_QUOTA_OVERRIDE,
     /** Invoicing needs STRIPE_SECRET_KEY; this deployment has none configured. */
     INVOICE_STRIPE_NOT_CONFIGURED,
     /** The club has no billing email to invoice — no admin member and no pending invite. */

@@ -102,17 +102,24 @@ public class OrganizationService {
     }
 
     /**
-     * Hands the org to another member. Open to the current owner, to anyone
-     * holding MANAGE_PERMS, and to platform admins — a club whose owner has
-     * left must not need a support ticket to get a new one.
+     * Hands the org to another member. The club's own creator only.
+     *
+     * <p>MANAGE_PERMS used to be enough, which made ownership self-serve for
+     * anyone who could edit permissions: a member holding the bit could name
+     * themselves the new owner and take the club off the person who created
+     * it. Ownership is not a permission the permission-editor grants itself.
+     * A club whose owner has genuinely gone still has a way out — the platform
+     * admin route in {@link AdminOrgService}, which keeps its own
+     * authorization and its own audit line.
      */
     @Transactional
     public OrgResponse transferOwnership(UUID orgId, UUID newOwnerId) {
         Organization org = findOrgOrThrow(orgId);
         User currentUser = SecurityUtils.getCurrentUser();
         boolean isCreator = org.getCreatedBy().getId().equals(currentUser.getId());
-        if (!isCreator) {
-            ensureCurrentUserHasPermission(orgId, OrgPermission.MANAGE_PERMS);
+        boolean isAdmin = currentUser.getRole() == UserRole.admin;
+        if (!isCreator && !isAdmin) {
+            throw new ForbiddenException("Only the organization creator can transfer ownership");
         }
         return applyOwnershipTransfer(org, newOwnerId, currentUser);
     }

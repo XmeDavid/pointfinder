@@ -23,9 +23,13 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
 
     List<Organization> findBySubscriptionStatusAndGracePeriodEndBefore(SubscriptionStatus status, Instant before);
 
-    /** Clubs whose paid term has run out but which have not entered grace yet. */
-    List<Organization> findBySubscriptionStatusAndTermEndNotNullAndTermEndBefore(
-            SubscriptionStatus status, Instant before);
+    /**
+     * Clubs whose paid term has run out but which have not entered grace yet.
+     * Takes a list of statuses because both {@code active} and {@code past_due}
+     * clubs still hold a term that can lapse.
+     */
+    List<Organization> findBySubscriptionStatusInAndTermEndNotNullAndTermEndBefore(
+            List<SubscriptionStatus> statuses, Instant before);
 
     /**
      * The owning org's subscription status for a game, in one query, so

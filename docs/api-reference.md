@@ -1529,7 +1529,7 @@ the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
 | GET | `/orgs/:orgId` | member | Org detail |
 | PATCH | `/orgs/:orgId` | MANAGE_PERMS | Rename |
 | DELETE | `/orgs/:orgId` | creator or admin | Delete |
-| POST | `/orgs/:orgId/transfer-ownership` | creator or MANAGE_PERMS | Hand the org to another member |
+| POST | `/orgs/:orgId/transfer-ownership` | creator (or platform admin) | Hand the org to another member |
 | POST | `/orgs/:orgId/leave` | member | Remove the caller's own membership (`204`) |
 | GET | `/orgs/:orgId/invoices` | MANAGE_BILLING | The club's invoice history |
 | GET | `/orgs/:orgId/members` | member | Members |
@@ -1559,6 +1559,11 @@ the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
 The target must already be a member; otherwise `400 ORG_TRANSFER_TARGET_NOT_MEMBER`.
 The new owner is granted every permission.
 
+Only the club's **current creator** may call this route. `MANAGE_PERMS` used to
+be enough, which let a member holding that bit name themselves the owner. A
+platform admin uses `/admin/orgs/:orgId/transfer-ownership` instead, which is
+where a club whose owner has genuinely gone is rescued. Anyone else gets `403`.
+
 **POST /orgs/:orgId/leave** → `204 No Content`
 
 Removes the caller's own membership. The org's creator is refused with
@@ -1574,6 +1579,14 @@ who is not a member gets `404`.
 | GET | `/org-invites/my` | The caller's pending org invites |
 | POST | `/org-invites/:inviteId/accept` | Join the org (`200`, returns `OrgMemberResponse`) |
 | POST | `/org-invites/:inviteId/decline` | Refuse the invite (`204`) |
+
+Org invites **expire 14 days after they are created**. A pending invite past
+its `expires_at` is refused by accept, by the token lookup and by registration.
+The hourly lifecycle sweep is what moves the row to `expired`, so a club's
+pending list stops showing an answer that will never come; a refused attempt
+only refuses, because the error it raises would roll a status write back with
+it. Rows created before expiry existed were backfilled to
+`created_at + 14 days`.
 
 **POST /org-invites/:inviteId/decline** → `204 No Content`
 
@@ -1653,6 +1666,21 @@ is the org's `createdBy`, and accepting transfers ownership to them.
 Returns the updated `OrgResponse`. An unknown `tier` or `status` answers
 `400 ORG_INVALID_ENUM_VALUE`.
 
+**Absent is not null.** For `termEnd`, `gracePeriodEnd` and `adminNote`,
+omitting the key leaves the stored value alone while sending an explicit
+`null` **clears** it — the only way an admin screen can take a term back off a
+club. The other fields are applied only when non-null.
+
+`quotaOverrides` is validated on both write paths. A key the backend resolves
+must hold a number (or, for `location_check_in`, a boolean) or `null` for
+unlimited; anything else answers `400 ORG_INVALID_QUOTA_OVERRIDE`. Keys outside
+that set pass through untouched, so a per-deal key the product does not read
+yet survives a save.
+
+`adminEmail` on **POST /admin/orgs** is matched and stored in lower case, so a
+club created for `Coach@Club.pt` attaches the account registered as
+`coach@club.pt` instead of minting an invite that address can never accept.
+
 **POST /admin/orgs/:orgId/invoices**
 ```json
 {
@@ -1673,7 +1701,8 @@ contact, name = the org name, `metadata.orgId`), creates an invoice with
 Requires `STRIPE_SECRET_KEY`; without it, `400 INVOICE_STRIPE_NOT_CONFIGURED`.
 
 **Error codes**: `ORG_ADMIN_EMAIL_INVALID`, `ORG_INVALID_ENUM_VALUE`,
-`ORG_TRANSFER_TARGET_NOT_MEMBER`, `INVOICE_STRIPE_NOT_CONFIGURED`,
+`ORG_INVALID_QUOTA_OVERRIDE`, `ORG_TRANSFER_TARGET_NOT_MEMBER`,
+`INVOICE_STRIPE_NOT_CONFIGURED`,
 `INVOICE_NO_BILLING_CONTACT`, `INVOICE_STRIPE_CALL_FAILED`,
 `INVOICE_AMOUNT_INVALID` (see the Error Codes appendix below).
 
@@ -1698,6 +1727,13 @@ personal games alone. Both answer `403` with code `ACCOUNT_FROZEN`.
 
 `/api/auth/**`, `/api/billing/**`, `/api/webhooks/**`, `/api/workspaces` and
 `/api/quota/**` stay reachable so the account can see why it is frozen and pay.
+
+Two org-scoped routes are carved out of the org gate for the same reason:
+`GET /api/orgs/{id}/invoices` — the bill a frozen club has to reach in order to
+pay it — and `POST /api/orgs/{id}/leave`, so freezing a club does not trap the
+people inside it. The carve-out is matched on the exact path tail *and* the
+method: `POST /api/orgs/{id}/invites` on a frozen club is still `403`.
+
 Players are unaffected: a frozen club never locks players out of a running game.
 
 ---
@@ -1785,6 +1821,7 @@ is enforced" for the call site behind each one.
 | `QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED` | Location check-in is not part of this plan. |
 | `ORG_CREATOR_CANNOT_LEAVE` | The org's creator called `POST /orgs/:orgId/leave`. Transfer ownership first. |
 | `ORG_TRANSFER_TARGET_NOT_MEMBER` | Ownership can only move to an existing member. |
+| `ORG_INVALID_QUOTA_OVERRIDE` | A club's `quotaOverrides` carried a known key with a value of the wrong type. Numeric limits take a number or `null`; `location_check_in` takes a boolean or `null`. |
 
 ### WebSocket Error Codes
 

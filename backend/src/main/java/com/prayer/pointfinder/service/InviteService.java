@@ -81,7 +81,8 @@ public class InviteService {
 
         OrgInvite orgInvite = orgInviteRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid invite token"));
-        if (orgInvite.getStatus() != InviteStatus.pending) {
+        if (orgInvite.getStatus() != InviteStatus.pending
+                || orgInvite.isExpiredAt(java.time.Instant.now())) {
             throw new BadRequestException("Invite has already been used or expired");
         }
         return InviteTokenResponse.forOrg(

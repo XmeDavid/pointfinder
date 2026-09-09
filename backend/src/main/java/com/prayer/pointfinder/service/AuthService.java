@@ -149,11 +149,15 @@ public class AuthService {
             throw new BadRequestException("Invite has already been used or expired");
         }
 
+        if (orgInvite.isExpiredAt(Instant.now())) {
+            throw new BadRequestException("Invite has already been used or expired");
+        }
+
         if (!orgInvite.getEmail().equalsIgnoreCase(request.getEmail())) {
             throw new BadRequestException("Email does not match the invitation");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new BadRequestException("Email already registered");
         }
 

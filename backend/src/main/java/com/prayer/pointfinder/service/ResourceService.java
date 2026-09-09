@@ -78,12 +78,15 @@ public class ResourceService {
             validateFileProvided(file);
             quotaService.enforceOrgFileSizeLimit(org, file.getSize());
             enforceOrgStorageQuota(org, file.getSize());
+            // content_type is NOT NULL, and Hibernate checks that when the row
+            // is saved rather than when it reaches the database — so it has to
+            // be set before the save that mints the id the S3 key needs.
+            resource.setContentType(resolveContentType(file));
+            resource.setSizeBytes(file.getSize());
             resource = resourceRepository.save(resource); // need ID for S3 key
             String s3Key = buildS3Key(orgId.toString(), resource.getId(), file.getOriginalFilename());
             uploadToS3(s3Key, file);
             resource.setS3Key(s3Key);
-            resource.setContentType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
-            resource.setSizeBytes(file.getSize());
         }
 
         resource = resourceRepository.save(resource);
@@ -134,6 +137,9 @@ public class ResourceService {
             validateFileProvided(file);
             quotaService.enforceFileSizeLimit(game, file.getSize());
             enforceGameStorageQuota(game, file.getSize());
+            // As above: content_type must be set before the row is saved.
+            resource.setContentType(resolveContentType(file));
+            resource.setSizeBytes(file.getSize());
             resource = resourceRepository.save(resource);
             String ownerId = game.getOrganization() != null
                     ? game.getOrganization().getId().toString()
@@ -141,8 +147,6 @@ public class ResourceService {
             String s3Key = buildS3Key(ownerId, resource.getId(), file.getOriginalFilename());
             uploadToS3(s3Key, file);
             resource.setS3Key(s3Key);
-            resource.setContentType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
-            resource.setSizeBytes(file.getSize());
         }
 
         resource = resourceRepository.save(resource);
@@ -260,10 +264,17 @@ public class ResourceService {
      * feature, so — like the org member limit — they are enforced in every
      * deployment, not behind {@code app.quota.enforcement-enabled}. They carry
      * a code now so a client can tell a full workspace from a bad request.
+     *
+     * <p>The limit comes back as a {@code Long} because a club deal may agree
+     * unlimited storage, which the override map spells as an explicit
+     * {@code null}.
      */
     private void enforceOrgStorageQuota(Organization org, long uploadSize) {
-        long maxBytes = quotaService.getMaxResourceStorageBytes(org);
-        if (maxBytes <= 0) return;
+        Long maxBytes = quotaService.getMaxResourceStorageBytes(org);
+        // Null is an explicit "unlimited" override, exactly as it is for the
+        // file-size limit and on the admin form; a non-positive default is the
+        // tier that has no storage product at all.
+        if (maxBytes == null || maxBytes <= 0) return;
         long used = resourceRepository.sumSizeBytesByOrganizationId(org.getId());
         if (used + uploadSize > maxBytes) {
             throw new BadRequestException("Organization storage quota exceeded",
@@ -276,14 +287,19 @@ public class ResourceService {
         if (game.getOrganization() != null) {
             enforceOrgStorageQuota(game.getOrganization(), uploadSize);
         } else {
-            long maxBytes = quotaService.getMaxPersonalResourceStorageBytes(currentUser);
-            if (maxBytes <= 0) return;
+            Long maxBytes = quotaService.getMaxPersonalResourceStorageBytes(currentUser);
+            if (maxBytes == null || maxBytes <= 0) return;
             long used = resourceRepository.sumSizeBytesByCreatedByIdAndOrganizationIsNull(currentUser.getId());
             if (used + uploadSize > maxBytes) {
                 throw new BadRequestException("Personal storage quota exceeded",
                         ErrorCode.QUOTA_RESOURCE_STORAGE_EXCEEDED);
             }
         }
+    }
+
+    /** What the browser said the file is, or the safe default when it said nothing. */
+    private String resolveContentType(org.springframework.web.multipart.MultipartFile file) {
+        return file.getContentType() != null ? file.getContentType() : "application/octet-stream";
     }
 
     private String buildS3Key(String ownerId, UUID resourceId, String originalFilename) {

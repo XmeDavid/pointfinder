@@ -77,7 +77,7 @@ describe('Admin club detail', () => {
         name: 'Scout Group 7',
         tier: 'club',
         status: 'grace_period',
-        termEnd: '2028-06-30T00:00:00.000Z',
+        termEnd: '2028-06-30T23:59:59.999Z',
         quotaOverrides: { max_members: 40 },
         adminNote: 'Renewed by phone',
       },
@@ -109,6 +109,38 @@ describe('Admin club detail', () => {
     expect(json.tagName).toBe('PRE')
     expect(JSON.parse(json.textContent ?? '{}')).toEqual({ max_members: 15 })
     expect(screen.queryByRole('textbox', { name: /Quota Overrides/i })).not.toBeInTheDocument()
+  })
+
+  it('clears the term and the note when the admin empties them', async () => {
+    // Null is how the client says "take this off the club". The backend reads
+    // presence, not nullness, on these three fields, so a save that sends
+    // null actually clears them rather than being ignored.
+    adminStore.seedOrgDetail(
+      createAdminOrgDetail({
+        quotaOverrides: { max_members: 15 },
+        termEnd: '2027-07-31T00:00:00Z',
+        adminNote: 'Agreed by phone',
+      }),
+    )
+    const user = userEvent.setup()
+    renderDetail()
+
+    await user.clear(await screen.findByTestId('admin-org-term-end'))
+    await user.clear(screen.getByTestId('admin-org-note'))
+    await user.click(screen.getByTestId('admin-org-save'))
+
+    await waitFor(() => expect(adminStore.clubUpdates()).toHaveLength(1))
+    const body = adminStore.clubUpdates()[0].body
+    expect(body.termEnd).toBeNull()
+    expect(body.adminNote).toBeNull()
+    expect('termEnd' in body).toBe(true)
+    expect('adminNote' in body).toBe(true)
+
+    // And the club that comes back has actually lost them.
+    await screen.findByTestId('admin-org-saved')
+    await waitFor(() =>
+      expect(screen.getByTestId('admin-org-paid-until')).not.toHaveTextContent('Paid until'),
+    )
   })
 
   it('refuses to save a limit that is not a usable number', async () => {

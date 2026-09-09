@@ -58,16 +58,24 @@ class ClubDealsTest extends IntegrationTestBase {
     @Autowired private SubscriptionLifecycleService lifecycleService;
     @Autowired private StripeWebhookService webhookService;
     @Autowired private JdbcTemplate jdbcTemplate;
+    @Autowired private com.prayer.pointfinder.service.QuotaService quotaService;
+    @Autowired private com.prayer.pointfinder.service.OrgInviteService orgInviteService;
 
     /** Outbound mail is a side effect, not the thing under test. */
     @MockitoBean private EmailService emailService;
 
     @MockitoBean private StripeInvoiceGateway stripeGateway;
 
+    /** Uploads must not need object storage; only the quota decision is under test. */
+    @MockitoBean private com.prayer.pointfinder.service.ObjectStorageService objectStorageService;
+
+    @Autowired private com.prayer.pointfinder.repository.ResourceRepository resourceRepository;
+
     private User admin;
 
     @BeforeEach
     void resetOrgs() {
+        resourceRepository.deleteAll();
         orgInvoiceRepository.deleteAll();
         stripeEventRepository.deleteAll();
         orgInviteRepository.deleteAll();
@@ -574,7 +582,412 @@ class ClubDealsTest extends IntegrationTestBase {
         assertTrue(patch.getStatusCode().is4xxClientError());
     }
 
+    // ── what a frozen club may still do ──────────────────────────────
+
+    @Test
+    void aFrozenClubCanStillReachItsInvoiceAndLetAMemberWalkOut() {
+        User owner = createOperator("carve-owner-" + UUID.randomUUID() + "@test.com", "password");
+        User member = createOperator("carve-member-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Trapped Town", owner.getEmail()).org().id();
+
+        membershipRepository.save(OrgMembership.builder()
+                .organization(reload(orgId))
+                .user(member)
+                .permissions(OrgPermission.ALL)
+                .build());
+
+        stubStripeInvoice("in_test_frozen_read");
+        Map<String, Object> invoiceBody = new HashMap<>();
+        invoiceBody.put("amountCents", 49900);
+        invoiceBody.put("description", "Season");
+        as(admin, HttpMethod.POST, ADMIN_ORGS + "/" + orgId + "/invoices", invoiceBody, Map.class);
+
+        Organization org = reload(orgId);
+        org.setSubscriptionStatus(SubscriptionStatus.frozen);
+        orgRepository.save(org);
+
+        // The bill that unfreezes the club is readable while it is frozen.
+        ResponseEntity<List> invoices = as(owner, HttpMethod.GET,
+                "/api/orgs/" + orgId + "/invoices", null, List.class);
+        assertEquals(HttpStatus.OK, invoices.getStatusCode(),
+                "a frozen club must be able to reach the invoice it has to pay");
+        assertEquals(1, invoices.getBody().size());
+
+        // And a member is not locked inside it.
+        assertEquals(HttpStatus.NO_CONTENT, as(member, HttpMethod.POST,
+                "/api/orgs/" + orgId + "/leave", null, String.class).getStatusCode(),
+                "freezing a club must not trap the people in it");
+        assertFalse(membershipRepository
+                .findByOrganizationIdAndUserId(orgId, member.getId()).isPresent());
+
+        // Everything else inside the org stays refused.
+        ResponseEntity<String> members = as(owner, HttpMethod.GET,
+                "/api/orgs/" + orgId + "/members", null, String.class);
+        assertEquals(HttpStatus.FORBIDDEN, members.getStatusCode());
+        assertTrue(members.getBody().contains("ACCOUNT_FROZEN"));
+
+        assertEquals(HttpStatus.FORBIDDEN, as(owner, HttpMethod.POST,
+                "/api/orgs/" + orgId + "/invites",
+                Map.of("email", "nobody-" + UUID.randomUUID() + "@test.com"), String.class)
+                .getStatusCode(), "the carve-out is per method as well as per path");
+    }
+
+    // ── invite expiry ────────────────────────────────────────────────
+
+    @Test
+    void anInviteIsBornWithADeadlineAndIsRefusedEverywhereOnceItHasPassed() {
+        String email = "expiring-" + UUID.randomUUID() + "@test.com";
+        AdminCreateOrgResponse created = createClub("Expiring Athletic", email);
+
+        OrgInvite invite = orgInviteRepository.findById(created.inviteId()).orElseThrow();
+        assertNotNull(invite.getExpiresAt(), "every new invite carries a deadline");
+        assertTrue(invite.getExpiresAt().isAfter(Instant.now().plus(13, ChronoUnit.DAYS)));
+        assertTrue(invite.getExpiresAt().isBefore(Instant.now().plus(15, ChronoUnit.DAYS)));
+
+        invite.setExpiresAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        orgInviteRepository.saveAndFlush(invite);
+
+        // The registration page's token lookup refuses it.
+        ResponseEntity<String> lookup = restTemplate.getForEntity(
+                "/api/auth/invite/" + invite.getToken(), String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, lookup.getStatusCode());
+
+        // So does registering through it.
+        Map<String, Object> registration = new HashMap<>();
+        registration.put("email", email);
+        registration.put("name", "Too Late");
+        registration.put("password", "Str0ng!Passw0rd");
+        ResponseEntity<String> register = restTemplate.postForEntity(
+                "/api/auth/register/" + invite.getToken(), registration, String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, register.getStatusCode());
+        assertTrue(userRepository.findByEmailIgnoreCase(email).isEmpty(),
+                "an expired token creates no account");
+
+        // And so does accepting it as a signed-in account with that address.
+        User late = createOperator(email, "password");
+        ResponseEntity<String> accept = as(late, HttpMethod.POST,
+                "/api/org-invites/" + invite.getId() + "/accept", null, String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, accept.getStatusCode());
+        assertFalse(membershipRepository
+                .existsByOrganizationIdAndUserId(created.org().id(), late.getId()));
+    }
+
+    @Test
+    void theSweepMovesPendingInvitesPastTheirDeadlineToExpired() {
+        String stale = "stale-" + UUID.randomUUID() + "@test.com";
+        String fresh = "fresh-" + UUID.randomUUID() + "@test.com";
+        UUID staleId = createClub("Stale Rovers", stale).inviteId();
+        UUID freshId = createClub("Fresh Rovers", fresh).inviteId();
+
+        OrgInvite expiring = orgInviteRepository.findById(staleId).orElseThrow();
+        expiring.setExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS));
+        orgInviteRepository.saveAndFlush(expiring);
+
+        // The sweep owns the label; a refused accept only refuses, because the
+        // exception it throws would roll a status write back anyway.
+        assertEquals(1, orgInviteService.expirePendingInvites());
+
+        assertEquals(InviteStatus.expired,
+                orgInviteRepository.findById(staleId).orElseThrow().getStatus());
+        assertEquals(InviteStatus.pending,
+                orgInviteRepository.findById(freshId).orElseThrow().getStatus(),
+                "an invite still inside its window is untouched");
+    }
+
+    // ── quota overrides that are not numbers ─────────────────────────
+
+    @Test
+    void anOverrideTypedAsAStringDegradesToTheDefaultInsteadOfBreakingTheClub() {
+        User owner = createOperator("typo-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Typo Town", owner.getEmail()).org().id();
+
+        // A row written before validation existed, or by hand.
+        Organization org = reload(orgId);
+        Map<String, Object> overrides = new HashMap<>();
+        overrides.put("max_members", "40");
+        overrides.put("max_resource_storage_bytes", "not a number");
+        org.setQuotaOverrides(overrides);
+        orgRepository.saveAndFlush(org);
+
+        ResponseEntity<QuotaResponse> quota = as(owner, HttpMethod.GET,
+                "/api/quota/org/" + orgId, null, QuotaResponse.class);
+        assertEquals(HttpStatus.OK, quota.getStatusCode(),
+                "a mistyped override must not 500 the whole club");
+        assertEquals(40, quota.getBody().limits().maxMembers(), "a numeric string is read as its number");
+        assertEquals(25L * 1024 * 1024 * 1024, quota.getBody().limits().maxResourceStorageBytes(),
+                "anything else falls back to the club default");
+    }
+
+    @Test
+    void theAdminWritePathsRefuseAnOverrideWhoseValueIsTheWrongType() {
+        User owner = createOperator("valid-" + UUID.randomUUID() + "@test.com", "password");
+
+        Map<String, Object> body = createBody("Bad Deal FC", owner.getEmail());
+        body.put("quotaOverrides", Map.of("max_members", "40"));
+        ResponseEntity<String> created = as(admin, HttpMethod.POST, ADMIN_ORGS, body, String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, created.getStatusCode());
+        assertTrue(created.getBody().contains("ORG_INVALID_QUOTA_OVERRIDE"), created.getBody());
+
+        UUID orgId = createClub("Good Deal FC", owner.getEmail()).org().id();
+        Map<String, Object> patch = new HashMap<>();
+        patch.put("quotaOverrides", Map.of("location_check_in", "yes"));
+        ResponseEntity<String> patched = as(admin, HttpMethod.PATCH,
+                ADMIN_ORGS + "/" + orgId, patch, String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, patched.getStatusCode());
+        assertTrue(patched.getBody().contains("ORG_INVALID_QUOTA_OVERRIDE"), patched.getBody());
+
+        // Null and the right type are both fine, and an unknown per-deal key
+        // passes through: the product does not own every key in that map.
+        Map<String, Object> good = new HashMap<>();
+        Map<String, Object> goodOverrides = new HashMap<>();
+        goodOverrides.put("max_members", 40);
+        goodOverrides.put("max_bases_per_game", null);
+        goodOverrides.put("location_check_in", true);
+        goodOverrides.put("some_future_key", "whatever");
+        good.put("quotaOverrides", goodOverrides);
+        assertEquals(HttpStatus.OK,
+                as(admin, HttpMethod.PATCH, ADMIN_ORGS + "/" + orgId, good, OrgResponse.class)
+                        .getStatusCode());
+    }
+
+    // ── clearing a field ─────────────────────────────────────────────
+
+    @Test
+    void anAdminCanClearTheTermEndGracePeriodAndNoteBecauseNullMeansClear() {
+        User owner = createOperator("clear-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Clearable City", owner.getEmail()).org().id();
+
+        Organization org = reload(orgId);
+        org.setTermEnd(Instant.parse("2030-01-01T00:00:00Z"));
+        org.setGracePeriodEnd(Instant.parse("2030-01-08T00:00:00Z"));
+        org.setAdminNote("Agreed by phone");
+        orgRepository.saveAndFlush(org);
+
+        // A patch that names none of them leaves all three alone.
+        as(admin, HttpMethod.PATCH, ADMIN_ORGS + "/" + orgId, Map.of("name", "Still Clearable"),
+                OrgResponse.class);
+        org = reload(orgId);
+        assertNotNull(org.getTermEnd(), "an absent key changes nothing");
+        assertNotNull(org.getGracePeriodEnd());
+        assertEquals("Agreed by phone", org.getAdminNote());
+
+        // A patch that sends null for each clears it — which is the only way
+        // an admin screen can take a term back off a club.
+        Map<String, Object> clearing = new HashMap<>();
+        clearing.put("termEnd", null);
+        clearing.put("gracePeriodEnd", null);
+        clearing.put("adminNote", null);
+        ResponseEntity<OrgResponse> cleared =
+                as(admin, HttpMethod.PATCH, ADMIN_ORGS + "/" + orgId, clearing, OrgResponse.class);
+        assertEquals(HttpStatus.OK, cleared.getStatusCode());
+        assertNull(cleared.getBody().termEnd());
+
+        org = reload(orgId);
+        assertNull(org.getTermEnd());
+        assertNull(org.getGracePeriodEnd());
+        assertNull(org.getAdminNote());
+    }
+
+    // ── email case ───────────────────────────────────────────────────
+
+    @Test
+    void aClubCreatedForAMixedCaseAddressAttachesTheAccountThatAlreadyExists() {
+        String stored = "coach-" + UUID.randomUUID() + "@club.pt";
+        User coach = createOperator(stored, "password");
+
+        AdminCreateOrgResponse created =
+                createClub("Case FC", stored.toUpperCase(java.util.Locale.ROOT));
+
+        assertEquals(coach.getId(), created.adminUserId(),
+                "the account is found whatever case the admin typed");
+        assertNull(created.inviteId(), "no unacceptable invite is minted");
+        assertEquals(stored, created.adminEmail(), "the address is stored in lower case");
+        assertEquals(coach.getId(), created.org().createdBy());
+        assertTrue(membershipRepository
+                .findByOrganizationIdAndUserId(created.org().id(), coach.getId()).isPresent());
+    }
+
+    @Test
+    void anOwnerInviteMintedForAMixedCaseAddressStillReachesItsInviteeList() {
+        String email = "mixed-" + UUID.randomUUID() + "@club.pt";
+        AdminCreateOrgResponse created = createClub("Mixed Case FC", email.toUpperCase(java.util.Locale.ROOT));
+        assertNotNull(created.inviteId());
+
+        // The invitee registers later, in the case they prefer.
+        User invitee = createOperator(email, "password");
+        ResponseEntity<List> mine = as(invitee, HttpMethod.GET, "/api/org-invites/my", null, List.class);
+        assertEquals(HttpStatus.OK, mine.getStatusCode());
+        assertEquals(1, mine.getBody().size(), "the invite reaches the address it was sent to");
+    }
+
+    // ── past due terms ───────────────────────────────────────────────
+
+    @Test
+    void aPastDueClubWhoseTermLapsedStillReachesGraceAndThenFreezes() {
+        User owner = createOperator("pastdue-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Past Due Palace", owner.getEmail()).org().id();
+
+        Instant termEnd = Instant.now().minus(30, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS);
+        Organization org = reload(orgId);
+        org.setSubscriptionStatus(SubscriptionStatus.past_due);
+        org.setTermEnd(termEnd);
+        orgRepository.saveAndFlush(org);
+
+        lifecycleService.sweepExpiredTermsAndGracePeriods();
+
+        assertEquals(SubscriptionStatus.frozen, reload(orgId).getSubscriptionStatus(),
+                "a club whose payment failed must still freeze when its term runs out");
+    }
+
+    // ── a payment whose local row never landed ───────────────────────
+
+    @Test
+    void aPaidInvoiceWithNoLocalRowIsRecoveredFromTheStripeMetadata() {
+        User owner = createOperator("lostrow-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Lost Row Rangers", owner.getEmail()).org().id();
+
+        // Stripe sent and collected the invoice; the commit that would have
+        // written org_invoices failed, so nothing here knows about it.
+        Organization org = reload(orgId);
+        org.setSubscriptionStatus(SubscriptionStatus.frozen);
+        org.setStripeCustomerId("cus_test");
+        org.setTermEnd(Instant.now().minus(10, ChronoUnit.DAYS));
+        orgRepository.saveAndFlush(org);
+        assertTrue(orgInvoiceRepository.findByStripeInvoiceId("in_test_lost").isEmpty());
+
+        com.stripe.model.Invoice paid = stripeInvoice("in_test_lost");
+        paid.setMetadata(Map.of("orgId", orgId.toString(), "termMonths", "12"));
+        paid.setAmountPaid(49900L);
+        paid.setCurrency("eur");
+
+        Instant before = Instant.now();
+        webhookService.handleInvoicePaid(paid);
+
+        org = reload(orgId);
+        assertEquals(SubscriptionStatus.active, org.getSubscriptionStatus());
+        assertTrue(org.getTermEnd().isAfter(before.plus(360, ChronoUnit.DAYS)),
+                "the term the club paid for is granted, not silently dropped: " + org.getTermEnd());
+
+        OrgInvoice recovered = orgInvoiceRepository.findByStripeInvoiceId("in_test_lost").orElseThrow();
+        assertEquals("paid", recovered.getStatus());
+        assertEquals(12, recovered.getTermMonths());
+        assertEquals(49900L, recovered.getAmountCents());
+        assertEquals(orgId, recovered.getOrganization().getId());
+    }
+
+    @Test
+    void aPersonalInvoiceWithNoOrgMetadataStillTakesThePersonalPath() {
+        com.stripe.model.Invoice paid = stripeInvoice("in_test_personal");
+        paid.setMetadata(Map.of());
+
+        // No org names this customer, so nothing club-shaped is created.
+        webhookService.handleInvoicePaid(paid);
+
+        assertTrue(orgInvoiceRepository.findByStripeInvoiceId("in_test_personal").isEmpty());
+    }
+
+    // ── who may hand a club over ─────────────────────────────────────
+
+    @Test
+    void aMemberWithManagePermsCannotMakeThemselvesTheOwner() {
+        User owner = createOperator("keeps-" + UUID.randomUUID() + "@test.com", "password");
+        User manager = createOperator("manager-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Held Tight FC", owner.getEmail()).org().id();
+
+        membershipRepository.save(OrgMembership.builder()
+                .organization(reload(orgId))
+                .user(manager)
+                .permissions(OrgPermission.MANAGE_PERMS.getBit() | OrgPermission.OPERATE_GAMES.getBit())
+                .build());
+
+        ResponseEntity<String> grab = as(manager, HttpMethod.POST,
+                "/api/orgs/" + orgId + "/transfer-ownership",
+                Map.of("userId", manager.getId().toString()), String.class);
+
+        assertEquals(HttpStatus.FORBIDDEN, grab.getStatusCode(),
+                "editing permissions is not the same as taking the club");
+        assertEquals(owner.getId(), reload(orgId).getCreatedBy().getId());
+
+        // The platform admin route is unaffected.
+        assertEquals(HttpStatus.OK, as(admin, HttpMethod.POST,
+                ADMIN_ORGS + "/" + orgId + "/transfer-ownership",
+                Map.of("userId", manager.getId().toString()), OrgResponse.class).getStatusCode());
+        assertEquals(manager.getId(), reload(orgId).getCreatedBy().getId());
+    }
+
+    // ── unlimited storage ────────────────────────────────────────────
+
+    @Test
+    void aClubWhoseDealSaysUnlimitedStorageUploadsPastTheTwentyFiveGigabyteDefault() {
+        User owner = createOperator("storage-" + UUID.randomUUID() + "@test.com", "password");
+        UUID orgId = createClub("Unlimited United", owner.getEmail()).org().id();
+
+        when(objectStorageService.isEnabled()).thenReturn(true);
+
+        // The club is already well past the club default, without one byte of
+        // this test's own being written: the row states the usage.
+        Organization org = reload(orgId);
+        resourceRepository.save(com.prayer.pointfinder.entity.Resource.builder()
+                .organization(org)
+                .type(com.prayer.pointfinder.entity.ResourceType.file)
+                .name("The season archive")
+                .contentType("application/octet-stream")
+                .s3Key("resources/seed")
+                .sizeBytes(30L * 1024 * 1024 * 1024)
+                .createdBy(owner)
+                .build());
+
+        // With the club default of 25 GB, the next upload is refused.
+        ResponseEntity<String> refused = uploadOrgResource(owner, orgId, "Over the default");
+        assertEquals(HttpStatus.BAD_REQUEST, refused.getStatusCode());
+        assertTrue(refused.getBody().contains("QUOTA_RESOURCE_STORAGE_EXCEEDED"), refused.getBody());
+
+        // The deal says unlimited, which the override map spells as an
+        // explicit null — the same spelling the file-size limit already read
+        // that way, and the same one the admin form sends.
+        Map<String, Object> unlimited = new HashMap<>();
+        unlimited.put("max_resource_storage_bytes", null);
+        org = reload(orgId);
+        org.setQuotaOverrides(unlimited);
+        orgRepository.saveAndFlush(org);
+
+        assertNull(quotaService.getMaxResourceStorageBytes(reload(orgId)),
+                "null means unlimited, not 'no override'");
+
+        ResponseEntity<String> allowed = uploadOrgResource(owner, orgId, "Past the default");
+        assertEquals(HttpStatus.CREATED, allowed.getStatusCode(), allowed.getBody());
+    }
+
     // ── fixtures ─────────────────────────────────────────────────────
+
+    /** One small file into the club's resource library, through the real endpoint. */
+    private ResponseEntity<String> uploadOrgResource(User user, UUID orgId, String name) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("name", name);
+        metadata.put("type", "file");
+
+        org.springframework.http.HttpHeaders metadataHeaders = new org.springframework.http.HttpHeaders();
+        metadataHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+
+        org.springframework.util.MultiValueMap<String, Object> parts =
+                new org.springframework.util.LinkedMultiValueMap<>();
+        parts.add("metadata", new HttpEntity<>(metadata, metadataHeaders));
+        org.springframework.http.HttpHeaders fileHeaders = new org.springframework.http.HttpHeaders();
+        fileHeaders.setContentType(org.springframework.http.MediaType.TEXT_PLAIN);
+        parts.add("file", new HttpEntity<>(
+                new org.springframework.core.io.ByteArrayResource("hello".getBytes()) {
+                    @Override
+                    public String getFilename() {
+                        return "hello.txt";
+                    }
+                }, fileHeaders));
+
+        org.springframework.http.HttpHeaders headers = headersWithAuth(operatorAuthHeader(user));
+        headers.setContentType(org.springframework.http.MediaType.MULTIPART_FORM_DATA);
+
+        return restTemplate.exchange("/api/orgs/" + orgId + "/resources", HttpMethod.POST,
+                new HttpEntity<>(parts, headers), String.class);
+    }
 
     private AdminCreateOrgResponse createClub(String name, String adminEmail) {
         ResponseEntity<AdminCreateOrgResponse> created = as(admin, HttpMethod.POST, ADMIN_ORGS,

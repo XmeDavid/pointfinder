@@ -13,7 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -29,9 +32,18 @@ public class OrgInviteService {
     private final QuotaService quotaService;
     private final EmailService emailService;
 
+    /**
+     * How long an invite stays acceptable. A club invite carries every org
+     * permission — an owner invite carries the club itself — so the token it
+     * mails is the widest credential this schema mints and cannot be good
+     * forever. Two weeks is how long a sales-led onboarding actually takes.
+     */
+    static final int INVITE_VALID_DAYS = 14;
+
     @Transactional(timeout = 10)
-    public OrgInviteResponse createInvite(UUID orgId, String email, String requestHost) {
+    public OrgInviteResponse createInvite(UUID orgId, String rawEmail, String requestHost) {
         User currentUser = SecurityUtils.getCurrentUser();
+        String email = normalizeEmail(rawEmail);
         organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.INVITE_MEMBERS);
 
         Organization org = orgRepository.findById(orgId)
@@ -41,14 +53,14 @@ public class OrgInviteService {
         quotaService.enforceOrgMemberLimit(org);
 
         // Check if email is already a member
-        userRepository.findByEmail(email).ifPresent(existingUser -> {
+        userRepository.findByEmailIgnoreCase(email).ifPresent(existingUser -> {
             if (membershipRepository.existsByOrganizationIdAndUserId(orgId, existingUser.getId())) {
                 throw new BadRequestException("This user is already a member of the organization");
             }
         });
 
         // Check for existing pending invite
-        if (orgInviteRepository.existsByOrganizationIdAndEmailAndStatus(orgId, email, InviteStatus.pending)) {
+        if (orgInviteRepository.existsByOrganizationIdAndEmailIgnoreCaseAndStatus(orgId, email, InviteStatus.pending)) {
             throw new BadRequestException("A pending invite already exists for this email");
         }
 
@@ -64,12 +76,13 @@ public class OrgInviteService {
                 .status(InviteStatus.pending)
                 .defaultPermissions(OrgPermission.OPERATE_GAMES.getBit())
                 .invitedBy(inviter)
+                .expiresAt(defaultExpiry())
                 .build();
 
         invite = orgInviteRepository.saveAndFlush(invite);
 
         // Send appropriate email based on whether user exists
-        boolean userExists = userRepository.findByEmail(email).isPresent();
+        boolean userExists = userRepository.findByEmailIgnoreCase(email).isPresent();
         if (userExists) {
             emailService.sendOrgInvite(email, org.getName(), inviter.getName(), requestHost);
         } else {
@@ -92,7 +105,8 @@ public class OrgInviteService {
      * has just created the org, and the invitee is its first member.
      */
     @Transactional(timeout = 10)
-    public OrgInvite createOwnerInvite(Organization org, String email, User admin, String requestHost) {
+    public OrgInvite createOwnerInvite(Organization org, String rawEmail, User admin, String requestHost) {
+        String email = normalizeEmail(rawEmail);
         OrgInvite invite = OrgInvite.builder()
                 .organization(org)
                 .email(email)
@@ -101,6 +115,7 @@ public class OrgInviteService {
                 .defaultPermissions(OrgPermission.ALL)
                 .transferOwnership(true)
                 .invitedBy(admin)
+                .expiresAt(defaultExpiry())
                 .build();
         invite = orgInviteRepository.saveAndFlush(invite);
 
@@ -124,7 +139,7 @@ public class OrgInviteService {
     @Transactional(readOnly = true)
     public List<OrgInviteResponse> getMyOrgInvites() {
         User currentUser = SecurityUtils.getCurrentUser();
-        return orgInviteRepository.findByEmailAndStatus(currentUser.getEmail(), InviteStatus.pending)
+        return orgInviteRepository.findByEmailIgnoreCaseAndStatus(currentUser.getEmail(), InviteStatus.pending)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -146,6 +161,8 @@ public class OrgInviteService {
         if (invite.getStatus() != InviteStatus.pending) {
             throw new BadRequestException("This invitation has already been processed.");
         }
+
+        rejectIfExpired(invite);
 
         Organization org = invite.getOrganization();
 
@@ -225,6 +242,8 @@ public class OrgInviteService {
             throw new BadRequestException("This invitation has already been processed.");
         }
 
+        rejectIfExpired(invite);
+
         Organization org = invite.getOrganization();
 
         if (membershipRepository.existsByOrganizationIdAndUserId(org.getId(), user.getId())) {
@@ -283,7 +302,59 @@ public class OrgInviteService {
         if (invite.getStatus() != InviteStatus.pending) {
             throw new BadRequestException("Invite has already been used or expired");
         }
+        if (invite.isExpiredAt(Instant.now())) {
+            throw new BadRequestException("Invite has already been used or expired");
+        }
         return toResponse(invite);
+    }
+
+    /**
+     * Refuses an invite whose deadline has passed. Lazy rather than only
+     * swept, so a token that goes stale between two hourly sweeps is dead the
+     * moment it is used rather than up to an hour later.
+     *
+     * <p>It refuses without marking the row. Marking it here would be undone
+     * anyway: the exception rolls the accepting transaction back, taking the
+     * status write with it. {@link #expirePendingInvites()} owns the label,
+     * and it runs on its own transaction with nothing to roll it back.
+     */
+    private void rejectIfExpired(OrgInvite invite) {
+        if (!invite.isExpiredAt(Instant.now())) return;
+        log.info("[ORG_INVITE] operation=rejectExpired orgId={} inviteId={} expiresAt={}",
+                invite.getOrganization().getId(), invite.getId(), invite.getExpiresAt());
+        throw new BadRequestException("This invitation has expired.");
+    }
+
+    /**
+     * Moves every pending invite past its deadline to {@code expired}, so a
+     * club's own invite list stops showing an answer that will never come.
+     * Called from the hourly lifecycle sweep.
+     */
+    @Transactional(timeout = 30)
+    public int expirePendingInvites() {
+        List<OrgInvite> stale = orgInviteRepository
+                .findByStatusAndExpiresAtNotNullAndExpiresAtBefore(InviteStatus.pending, Instant.now());
+        for (OrgInvite invite : stale) {
+            invite.setStatus(InviteStatus.expired);
+            orgInviteRepository.save(invite);
+            log.info("[ORG_INVITE] operation=expireInvite orgId={} inviteId={} expiresAt={}",
+                    invite.getOrganization().getId(), invite.getId(), invite.getExpiresAt());
+        }
+        return stale.size();
+    }
+
+    private Instant defaultExpiry() {
+        return Instant.now().plus(INVITE_VALID_DAYS, ChronoUnit.DAYS);
+    }
+
+    /**
+     * Addresses are stored and matched in lower case. A club created for
+     * {@code Coach@Club.pt} whose owner registered as {@code coach@club.pt}
+     * otherwise gets an invite neither their invite list nor their
+     * registration can ever match.
+     */
+    static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     private OrgInviteResponse toResponse(OrgInvite invite) {
