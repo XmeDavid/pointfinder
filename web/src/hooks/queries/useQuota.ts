@@ -19,13 +19,3 @@ export function useQuota() {
   })
 }
 
-/**
- * Location check-in is a paid feature. Only an explicit `false` from the
- * server locks it: while the quota is loading, on an older server, or when
- * signed out, the operator keeps the full method picker and the server has
- * the last word.
- */
-export function useLocationCheckInAllowed(): boolean {
-  const { data } = useQuota()
-  return data?.limits.locationCheckIn !== false
-}

@@ -340,7 +340,7 @@ public class GameService {
     }
 
     private GameResponse toResponse(Game game) {
-        return GameResponseMapper.toResponse(game);
+        return GameResponseMapper.toResponse(game, quotaService.effectiveLocationCheckInAllowed(game));
     }
 
     private String validateTileSource(String tileSource) {

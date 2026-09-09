@@ -778,7 +778,7 @@ public class GameImportExportService {
     // ── Utility helpers ──────────────────────────────────────────────
 
     private GameResponse toResponse(Game game) {
-        return GameResponseMapper.toResponse(game);
+        return GameResponseMapper.toResponse(game, quotaService.effectiveLocationCheckInAllowed(game));
     }
 
     private String generateUniqueJoinCode() {

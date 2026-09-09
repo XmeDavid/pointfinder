@@ -3,7 +3,12 @@ package com.prayer.pointfinder.service;
 import com.prayer.pointfinder.IntegrationTestBase;
 import com.prayer.pointfinder.dto.request.CreateBaseRequest;
 import com.prayer.pointfinder.dto.request.UpdateBaseRequest;
+import com.prayer.pointfinder.dto.request.GameImportRequest;
 import com.prayer.pointfinder.dto.request.UpdateGameRequest;
+import com.prayer.pointfinder.dto.export.BaseExportDto;
+import com.prayer.pointfinder.dto.export.GameExportDto;
+import com.prayer.pointfinder.dto.export.GameMetadataDto;
+import com.prayer.pointfinder.dto.response.GameResponse;
 import com.prayer.pointfinder.dto.response.BaseResponse;
 import com.prayer.pointfinder.dto.response.QuotaResponse;
 import com.prayer.pointfinder.entity.AnswerType;
@@ -48,6 +53,8 @@ class LocationCheckInEntitlementTest extends IntegrationTestBase {
     private GameService gameService;
     @Autowired
     private GameReadinessValidator readinessValidator;
+    @Autowired
+    private GameImportExportService importExportService;
     @Autowired
     private QuotaService quotaService;
     @Autowired
@@ -172,6 +179,49 @@ class LocationCheckInEntitlementTest extends IntegrationTestBase {
         BadRequestException error = assertThrows(BadRequestException.class,
                 () -> readinessValidator.validateGoLivePrerequisites(game));
         assertEquals(ErrorCode.QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED, codeOf(error));
+    }
+
+    private GameImportRequest importWithLocationBase() {
+        GameImportRequest request = new GameImportRequest();
+        request.setGameData(GameExportDto.builder()
+                .exportVersion("1.0")
+                .game(GameMetadataDto.builder().name("Imported").defaultCheckInMethod("NFC").build())
+                .bases(List.of(BaseExportDto.builder()
+                        .tempId("b1").name("Clearing").lat(41.1).lng(-8.6)
+                        .checkInMethod("LOCATION").checkInRadiusM(20).build()))
+                .challenges(List.of())
+                .assignments(List.of())
+                .teams(List.of())
+                .build());
+        return request;
+    }
+
+    @Test
+    void freeTierCannotImportAGameWithLocationBases() {
+        signedInOperator("free-import", IndividualTier.free, null);
+
+        BadRequestException error = assertThrows(BadRequestException.class,
+                () -> importExportService.importGame(importWithLocationBase()));
+        assertEquals(ErrorCode.QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED, codeOf(error));
+    }
+
+    @Test
+    void proTierImportsLocationBases() {
+        signedInOperator("pro-import", IndividualTier.pro, null);
+
+        GameResponse imported = importExportService.importGame(importWithLocationBase());
+        assertTrue(imported.locationCheckInAllowed());
+    }
+
+    @Test
+    void gameResponseCarriesTheEffectiveEntitlement() {
+        User free = signedInOperator("free-game", IndividualTier.free, null);
+        Game game = createGame(free, "Free game", GameStatus.setup);
+        assertFalse(gameService.getGame(game.getId()).locationCheckInAllowed());
+
+        User pro = signedInOperator("pro-game", IndividualTier.pro, null);
+        Game proGame = createGame(pro, "Pro game", GameStatus.setup);
+        assertTrue(gameService.getGame(proGame.getId()).locationCheckInAllowed());
     }
 
     @Test

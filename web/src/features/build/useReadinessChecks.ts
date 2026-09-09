@@ -7,8 +7,12 @@ import { useGame } from '@/hooks/queries/useGames'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useVariableCompleteness } from '@/hooks/queries/useVariables'
-import { useLocationCheckInAllowed } from '@/hooks/queries/useQuota'
-import { isValidCheckInRadiusM, resolveCheckInMethod, resolveCheckInRadiusM } from '@/types/checkIn'
+import {
+  isLocationCheckInAllowed,
+  isValidCheckInRadiusM,
+  resolveCheckInMethod,
+  resolveCheckInRadiusM,
+} from '@/types/checkIn'
 
 export interface ReadinessCheck {
   label: string
@@ -33,7 +37,7 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
   const { data: completeness } = useVariableCompleteness(gameId)
 
   const defaultRadius = game?.defaultCheckInRadiusM
-  const locationAllowed = useLocationCheckInAllowed()
+  const locationAllowed = isLocationCheckInAllowed(game)
 
   return useMemo(() => {
     const baseList = bases ?? []

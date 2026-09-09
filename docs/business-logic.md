@@ -161,10 +161,16 @@ org tier may only build `NFC` and `QR` bases; `pro`, `base` and `high` include
 `QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED` wherever one comes into being (base create,
 base update to location, the game default, import) and again in the go-live
 readiness check, so a plan downgrade cannot leave a live game the plan no longer
-covers. Like the other quotas it is behind `QUOTA_ENFORCEMENT_ENABLED`; the quota
-endpoints report `limits.locationCheckIn` regardless so the web client can lock
-the method picker and show the plan hint. The `location_check_in` boolean quota
-override grants it to a single account.
+covers. A location base written while the plan covered it is kept (grandfathered) after
+a downgrade: it stays visible and editable, and only going live is blocked until
+the base changes method or the plan is restored. Like the other quotas the gate
+is behind `QUOTA_ENFORCEMENT_ENABLED`. `GameResponse.locationCheckInAllowed`
+carries the effective answer for that game (its owner's plan, and `true`
+whenever enforcement is off) so the web client locks the method picker, shows the
+plan hint and adds the readiness item only when the server would refuse. The
+quota endpoints report `limits.locationCheckIn` as the plan's own entitlement for
+the billing page. The `location_check_in` boolean quota override grants it to a
+single account.
 
 Per-base fields: `check_in_method` and `check_in_radius_m` (null inherits the
 game default). Game fields: `default_check_in_method` and

@@ -106,7 +106,8 @@ public class PracticeGameService {
         seed(game.getId(), scenarioId, request.getLat(), request.getLng());
         PracticeGames.bindProgressRow(progressRepository, userId, scenarioId, game.getId());
 
-        return GameResponseMapper.toResponse(gameRepository.findById(game.getId()).orElse(game));
+        Game saved = gameRepository.findById(game.getId()).orElse(game);
+        return GameResponseMapper.toResponse(saved, quotaService.effectiveLocationCheckInAllowed(saved));
     }
 
     /** Clears the practice marker under the normal active-game quota. */
@@ -121,7 +122,8 @@ public class PracticeGameService {
         quotaService.enforceActiveGameLimit(game.getCreatedBy());
         game.setTutorialScenario(null);
         game.setTutorialExpiresAt(null);
-        return GameResponseMapper.toResponse(gameRepository.save(game));
+        Game kept = gameRepository.save(game);
+        return GameResponseMapper.toResponse(kept, quotaService.effectiveLocationCheckInAllowed(kept));
     }
 
     // ── Seeding ───────────────────────────────────────────────────────────

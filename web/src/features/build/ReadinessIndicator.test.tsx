@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -11,7 +11,6 @@ import { createMockChallenge, resetChallengeCounter } from '@/test/factories/cha
 import { createMockTeam, resetTeamCounter } from '@/test/factories/team'
 import { createMockAssignment, resetAssignmentCounter } from '@/test/factories/assignment'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { useAuthStore } from '@/lib/auth/store'
 import ReadinessIndicator from './ReadinessIndicator'
 
 function createWrapper() {
@@ -458,12 +457,11 @@ describe('ReadinessIndicator expansion lives in the workspace store', () => {
 })
 
 describe('ReadinessIndicator location check-in entitlement', () => {
-  afterEach(() => useAuthStore.setState({ isAuthenticated: false, accessToken: null }))
-
-  function setupLocationGameOnPlan(locationCheckIn: boolean) {
-    const accessToken = `header.${btoa(JSON.stringify({ exp: 4102444800 })).replace(/=+$/, '')}.signature`
-    useAuthStore.setState({ isAuthenticated: true, accessToken })
+  function setupLocationGameOnPlan(locationCheckInAllowed: boolean) {
     server.use(
+      http.get('/api/games/:id', ({ params }) =>
+        HttpResponse.json(createMockGame({ id: String(params.id), locationCheckInAllowed })),
+      ),
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
           createMockBase({
@@ -487,35 +485,10 @@ describe('ReadinessIndicator location check-in entitlement', () => {
       http.get('/api/games/:gameId/team-variables/completeness', () =>
         HttpResponse.json({ complete: true, errors: [] }),
       ),
-      http.get('/api/quota/personal', () =>
-        HttpResponse.json({
-          context: 'personal',
-          orgId: null,
-          tier: locationCheckIn ? 'pro' : 'free',
-          limits: {
-            maxActiveGames: 1,
-            maxOperatorsPerGame: 1,
-            maxBasesPerGame: 25,
-            maxFileSizeBytes: 1,
-            maxMembers: null,
-            maxLiveGames: null,
-            maxPlayersPerGame: 50,
-            maxResourceStorageBytes: 0,
-            locationCheckIn,
-          },
-          usage: {
-            currentActiveGames: 0,
-            currentMembers: null,
-            currentLiveGames: null,
-            currentResourceStorageBytes: 0,
-          },
-          overrides: null,
-        }),
-      ),
     )
   }
 
-  it('adds a failing plan check when a free game holds a location base', async () => {
+  it('adds a failing plan check when the game excludes location check-in', async () => {
     const user = userEvent.setup()
     setupLocationGameOnPlan(false)
 
@@ -530,7 +503,7 @@ describe('ReadinessIndicator location check-in entitlement', () => {
     expect(await screen.findByText('Location check-in included in your plan')).toBeInTheDocument()
   })
 
-  it('shows no plan check on a paid plan', async () => {
+  it('shows no plan check when the game includes it', async () => {
     setupLocationGameOnPlan(true)
 
     render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {

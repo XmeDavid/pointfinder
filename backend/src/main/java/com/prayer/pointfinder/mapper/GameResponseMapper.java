@@ -19,6 +19,14 @@ public final class GameResponseMapper {
     }
 
     public static GameResponse toResponse(Game game) {
+        return toResponse(game, null);
+    }
+
+    /**
+     * @param locationCheckInAllowed the game's effective location check-in
+     *        entitlement from {@code QuotaService}, or null when unresolved.
+     */
+    public static GameResponse toResponse(Game game, Boolean locationCheckInAllowed) {
         List<UUID> operatorIds = game.getOperators().stream()
                 .map(User::getId)
                 .toList();
@@ -45,7 +53,8 @@ public final class GameResponseMapper {
                         : com.prayer.pointfinder.entity.CheckInMethod.NFC.name(),
                 game.getDefaultCheckInRadiusM() != null ? game.getDefaultCheckInRadiusM() : 15,
                 game.getTutorialScenario(),
-                game.getTutorialExpiresAt()
+                game.getTutorialExpiresAt(),
+                locationCheckInAllowed
         );
     }
 }

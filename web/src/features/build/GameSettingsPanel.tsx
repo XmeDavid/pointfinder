@@ -7,7 +7,6 @@ import { exportFile } from '@/lib/exportFile'
 import { useNavigate } from 'react-router-dom'
 import { SlideDrawer } from '@/components/layout/SlideDrawer'
 import { useGame } from '@/hooks/queries/useGames'
-import { useLocationCheckInAllowed } from '@/hooks/queries/useQuota'
 import { useUpdateGame, useUpdateGameStatus, useDeleteGame } from '@/hooks/mutations/useGameMutations'
 import { isPracticeGame, practiceHoursLeft } from '@/features/tutorials/practiceGame'
 import { PracticeGameChoices } from '@/features/tutorials/PracticeGameChoices'
@@ -26,7 +25,7 @@ import {
   MIN_CHECK_IN_RADIUS_M,
   parseCheckInRadiusInput,
 } from '@/types/checkIn'
-import type { CheckInMethod } from '@/types/checkIn'
+import { isLocationCheckInAllowed, type CheckInMethod } from '@/types/checkIn'
 
 const tileSources: Array<{ value: TileSource; label: string }> = [
   { value: 'osm', label: 'OpenStreetMap' },
@@ -142,7 +141,7 @@ export default function GameSettingsPanel({
   const [localUniform, setLocalUniform] = useState<boolean | null>(null)
   const [localBroadcast, setLocalBroadcast] = useState<boolean | null>(null)
   const methodLabel = useCheckInMethodLabel()
-  const locationAllowed = useLocationCheckInAllowed()
+  const locationAllowed = isLocationCheckInAllowed(game)
   const [radiusDraft, setRadiusDraft] = useState<string | null>(null)
   const [radiusError, setRadiusError] = useState(false)
 
@@ -390,12 +389,15 @@ export default function GameSettingsPanel({
                   <button
                     key={method}
                     type="button"
-                    disabled={checkInLocked || updateGame.isPending || locked}
+                    disabled={checkInLocked || updateGame.isPending}
+                    aria-disabled={locked || undefined}
                     aria-describedby={locked ? 'checkin-location-plan' : undefined}
                     aria-pressed={isActive}
                     data-testid={`checkin-default-method-${method.toLowerCase()}`}
-                    onClick={() => updateGame.mutate({ defaultCheckInMethod: method })}
-                    className={`min-h-11 flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                    onClick={() => {
+                      if (!locked) updateGame.mutate({ defaultCheckInMethod: method })
+                    }}
+                    className={`min-h-11 flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${
                       isActive
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -406,7 +408,7 @@ export default function GameSettingsPanel({
                 )
               })}
             </div>
-            {!locationAllowed && (
+            {!locationAllowed && defaultMethod !== 'LOCATION' && (
               <p
                 id="checkin-location-plan"
                 data-testid="checkin-location-plan"

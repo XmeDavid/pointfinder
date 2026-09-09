@@ -78,6 +78,8 @@ export interface Game {
   tutorialScenario?: string | null
   /** When the server ends a practice game; null or absent for a normal game. */
   tutorialExpiresAt?: string | null
+  /** Whether this game may use location check-in, as the server will enforce it; absent on older servers. */
+  locationCheckInAllowed?: boolean | null
 }
 
 export interface Base {

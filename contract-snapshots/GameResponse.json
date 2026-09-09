@@ -20,5 +20,6 @@
   "defaultCheckInMethod": "NFC",
   "defaultCheckInRadiusM": 15,
   "tutorialScenario": null,
-  "tutorialExpiresAt": null
+  "tutorialExpiresAt": null,
+  "locationCheckInAllowed": null
 }

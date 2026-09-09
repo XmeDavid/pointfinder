@@ -48,6 +48,19 @@ export function resolveCheckInMethod(value: unknown): CheckInMethod {
   return value === 'QR' || value === 'LOCATION' ? value : 'NFC'
 }
 
+/**
+ * Location check-in is a paid feature. The server resolves it per game, for
+ * the plan that owns the game and only when it actually enforces it. Only an
+ * explicit `false` locks the method picker: while the game is loading or on
+ * an older server the operator keeps every method and the server has the
+ * last word.
+ */
+export function isLocationCheckInAllowed(
+  game: { locationCheckInAllowed?: boolean | null } | null | undefined,
+): boolean {
+  return game?.locationCheckInAllowed !== false
+}
+
 /** Base radius when set, otherwise the game default. Never null. */
 export function resolveCheckInRadiusM(
   baseRadiusM: number | null | undefined,

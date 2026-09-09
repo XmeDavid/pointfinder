@@ -178,6 +178,15 @@ public class QuotaService {
     }
 
     /**
+     * What the server will actually do: with enforcement off every plan may
+     * use location check-in. The game response carries this so the client
+     * mirrors the server instead of guessing from the viewer's workspace.
+     */
+    public boolean effectiveLocationCheckInAllowed(Game game) {
+        return !enforcementEnabled || isLocationCheckInAllowed(game);
+    }
+
+    /**
      * Rejects a LOCATION base (or a LOCATION game default) on a plan that
      * does not include it. Called when a base is created or switched to
      * location, when the game default changes, on import, and again at

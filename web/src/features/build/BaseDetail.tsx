@@ -11,7 +11,6 @@ import { BaseAssignmentSection } from './assignments/BaseAssignmentSection'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { useGame } from '@/hooks/queries/useGames'
-import { useLocationCheckInAllowed } from '@/hooks/queries/useQuota'
 import { getStyleUrl } from '@/lib/tile-sources'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { NfcStatusBadge } from '@/components/status'
@@ -31,7 +30,7 @@ import {
   parseCheckInRadiusInput,
   resolveCheckInRadiusM,
 } from '@/types/checkIn'
-import type { CheckInMethod } from '@/types/checkIn'
+import { isLocationCheckInAllowed, type CheckInMethod } from '@/types/checkIn'
 
 interface BaseDetailProps {
   baseId: string
@@ -57,7 +56,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   // Local form state
   const methodLabel = useCheckInMethodLabel()
-  const locationAllowed = useLocationCheckInAllowed()
+  const locationAllowed = isLocationCheckInAllowed(game)
   const [localName, setLocalName] = useState(base?.name ?? '')
   const [localDescription, setLocalDescription] = useState(base?.description ?? '')
   const [localLat, setLocalLat] = useState(base?.lat?.toString() ?? '')
@@ -264,11 +263,13 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
                     key={method}
                     type="button"
                     aria-pressed={isActive}
-                    disabled={locked}
+                    aria-disabled={locked || undefined}
                     aria-describedby={locked ? 'base-checkin-location-plan' : undefined}
                     data-testid={`base-checkin-method-${method.toLowerCase()}`}
-                    onClick={() => setLocalMethod(method)}
-                    className={`min-h-11 flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                    onClick={() => {
+                      if (!locked) setLocalMethod(method)
+                    }}
+                    className={`min-h-11 flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${
                       isActive
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -284,7 +285,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
                 {t('checkIn.inheritsDefault')}
               </p>
             )}
-            {!locationAllowed && (
+            {!locationAllowed && localMethod !== 'LOCATION' && (
               <p
                 id="base-checkin-location-plan"
                 data-testid="base-checkin-location-plan"
