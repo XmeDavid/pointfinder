@@ -111,18 +111,18 @@ export function AdminOrgDetail({ orgId, onBack }: Props) {
         <div className="grid grid-cols-2 gap-4 text-sm">
           {org.stripeCustomerId && (
             <div>
-              <p className="text-muted-foreground">Stripe customer ID</p>
+              <p className="text-muted-foreground">{t('admin.stripeCustomerId')}</p>
               <p className="text-foreground font-mono text-xs">{org.stripeCustomerId}</p>
             </div>
           )}
           {org.gracePeriodEnd && (
             <div>
-              <p className="text-muted-foreground">Grace period end</p>
+              <p className="text-muted-foreground">{t('admin.gracePeriodEnd')}</p>
               <p className="text-foreground">{new Date(org.gracePeriodEnd).toLocaleDateString(i18n.language)}</p>
             </div>
           )}
           <div>
-            <p className="text-muted-foreground">Joined</p>
+            <p className="text-muted-foreground">{t('admin.joined')}</p>
             <p className="text-foreground">{new Date(org.createdAt).toLocaleDateString(i18n.language)}</p>
           </div>
         </div>

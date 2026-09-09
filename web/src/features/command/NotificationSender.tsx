@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { X, Send } from 'lucide-react'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -17,6 +18,7 @@ export function NotificationSender({ gameId }: { gameId: string }) {
   )
   const isMobile = useIsMobile()
 
+  const { t } = useTranslation()
   const { data: teams = [] } = useTeams(gameId)
   const { data: notifications = [] } = useNotifications(gameId)
   const sendMutation = useSendNotification(gameId)
@@ -87,10 +89,10 @@ export function NotificationSender({ gameId }: { gameId: string }) {
           onChange={(e) => setSelectedTeamId(e.target.value)}
           className="w-full bg-muted border border-border/50 rounded px-2 py-1.5 text-xs mb-3"
         >
-          <option value="">Select team...</option>
-          {teams.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
+          <option value="">{t('command.notify.selectTeam')}</option>
+          {teams.map((team) => (
+            <option key={team.id} value={team.id}>
+              {team.name}
             </option>
           ))}
         </select>
@@ -101,7 +103,7 @@ export function NotificationSender({ gameId }: { gameId: string }) {
         data-testid="notif-message"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="Type your message..."
+        placeholder={t('command.notify.placeholder')}
         rows={3}
         className="w-full bg-muted border border-border/50 rounded px-2 py-1.5 text-sm resize-none mb-2 placeholder:text-muted-foreground"
       />
@@ -115,7 +117,7 @@ export function NotificationSender({ gameId }: { gameId: string }) {
         loading={sendMutation.isPending}
       >
         <Send size={14} />
-        {sentFeedback ? 'Sent!' : 'Send'}
+        {sentFeedback ? t('command.notify.sent') : t('command.notify.send')}
       </Button>
 
       {/* Recent notifications */}

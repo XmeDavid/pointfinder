@@ -1,6 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import { StatusBadge } from './StatusBadge'
 import {
-  locationSignalLabel,
+  locationSignalLabelKey,
   locationSignalTone,
   type LocationSignalStatus,
 } from './locationSignalStatus'
@@ -14,13 +15,15 @@ export function LocationSignalBadge({
   status,
   className,
 }: LocationSignalBadgeProps) {
+  const { t } = useTranslation()
+  const label = t(locationSignalLabelKey[status])
   return (
     <StatusBadge
       tone={locationSignalTone[status]}
-      label={locationSignalLabel[status]}
+      label={label}
       size="sm"
       className={className}
-      aria-label={`Location signal: ${locationSignalLabel[status]}`}
+      aria-label={t('status.locationSignalAria', { label })}
     />
   )
 }

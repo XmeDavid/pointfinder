@@ -3,11 +3,12 @@ import type { StatusBadgeTone } from './StatusBadge'
 
 export type ActivityEventStatus = ActivityEvent['type']
 
-export const activityEventLabel: Record<ActivityEventStatus, string> = {
-  check_in: 'Check in',
-  submission: 'Submission',
-  approval: 'Approval',
-  rejection: 'Rejection',
+/** Translation keys; render with `t(activityEventLabelKey[status])`. */
+export const activityEventLabelKey: Record<ActivityEventStatus, string> = {
+  check_in: 'status.activity.check_in',
+  submission: 'status.activity.submission',
+  approval: 'status.activity.approval',
+  rejection: 'status.activity.rejection',
 }
 
 export const activityEventTone: Record<ActivityEventStatus, StatusBadgeTone> = {

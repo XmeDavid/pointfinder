@@ -111,7 +111,7 @@ export function TeamVariablesEditor({ gameId, challengeId, teams }: TeamVariable
   }
 
   if (teams.length === 0) {
-    return <p className="text-sm text-muted-foreground">Create teams first to define variables.</p>
+    return <p className="text-sm text-muted-foreground">{t('teamVariables.noTeams')}</p>
   }
 
   return (

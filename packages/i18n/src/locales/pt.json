@@ -158,7 +158,12 @@
     "tier": "Plano",
     "status": "Estado",
     "member": "membro",
-    "members": "membros"
+    "members": "membros",
+    "stripeCustomerId": "ID de cliente Stripe",
+    "gracePeriodEnd": "Fim do período de tolerância",
+    "joined": "Registo",
+    "billingCycle": "Ciclo de faturação",
+    "periodEnd": "Fim do período"
   },
   "game": {
     "export": "Exportar Jogo",
@@ -203,7 +208,35 @@
   "status": {
     "setup": "Configuração",
     "live": "Em Direto",
-    "ended": "Terminado"
+    "ended": "Terminado",
+    "baseProgress": {
+      "not_visited": "Não visitada",
+      "checked_in": "Check-in feito",
+      "submitted": "Submetido",
+      "completed": "Concluída",
+      "rejected": "Rejeitado"
+    },
+    "baseProgressAria": "Progresso da base: {{label}}",
+    "sync": {
+      "online": "Online",
+      "offline": "Offline",
+      "sync_pending": "Sincronização pendente",
+      "sync_failed": "Sincronização falhou"
+    },
+    "syncAria": "Estado da ligação: {{label}}",
+    "activity": {
+      "check_in": "Check-in",
+      "submission": "Submissão",
+      "approval": "Aprovação",
+      "rejection": "Rejeição"
+    },
+    "activityAria": "Evento de atividade: {{label}}",
+    "locationSignal": {
+      "active": "Ativo",
+      "stale": "Desatualizado",
+      "unknown": "Sem sinal"
+    },
+    "locationSignalAria": "Sinal de localização: {{label}}"
   },
   "lifecycle": {
     "goLive": "Iniciar Jogo",
@@ -603,7 +636,9 @@
     "markCompletedSuccess": "Desafio marcado como concluído.",
     "reviewerHintLabel": "Dica para o revisor",
     "viewFullscreen": "Ver em ecrã inteiro",
-    "openReview": "Rever submissão: {{team}} — {{challenge}}"
+    "openReview": "Rever submissão: {{team}} — {{challenge}}",
+    "expectedRaw": "Esperado (original)",
+    "expectedAnswer": "Resposta esperada"
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",
@@ -1052,7 +1087,8 @@
     "attachFile": "Anexar ficheiro",
     "pickResource": "Selecionar um recurso",
     "gameResources": "Recursos do jogo",
-    "orgResources": "Recursos da organização"
+    "orgResources": "Recursos da organização",
+    "untitledDocument": "Documento sem título"
   },
   "billing": {
     "title": "Faturação & Plano",
@@ -1176,7 +1212,23 @@
       "reasonPlaceholder": "p. ex. leitor NFC avariado",
       "cancel": "Cancelar",
       "sending": "A enviar...",
-      "confirm": "Confirmar"
+      "confirm": "Confirmar",
+      "selectBase": "Seleciona a base..."
+    },
+    "feed": {
+      "allTeams": "Todas as equipas"
+    },
+    "notify": {
+      "selectTeam": "Seleciona a equipa...",
+      "placeholder": "Escreve a tua mensagem...",
+      "send": "Enviar",
+      "sent": "Enviado!"
+    },
+    "leaderboard": {
+      "noLocation": "Sem dados de localização",
+      "lastSeenNow": "Visto agora mesmo",
+      "lastSeen_one": "Visto há 1 min",
+      "lastSeen_other": "Visto há {{count}} min"
     }
   },
   "review": {
@@ -1328,7 +1380,24 @@
       "needsPinAndLocation": "Para revelar bases, fixa este desafio a uma base e torna-o preso ao local.",
       "noHiddenBases": "Ainda não há bases escondidas para revelar. Esconde uma base na sua visibilidade primeiro.",
       "claimedBy": "Já revelada por “{{challenge}}”"
-    }
+    },
+    "baseSubtitle": {
+      "challenges_one": "1 desafio",
+      "challenges_other": "{{count}} desafios",
+      "allTeams": "{{challenges}} · Todas as equipas",
+      "teamSpecific": "{{challenges}} · {{count}} por equipa"
+    },
+    "fixedChallengeTitle": "Desafio fixo",
+    "fixedChallengeNote": "Impede a atribuição aleatória",
+    "previewNeedsTeam": "Cria pelo menos uma equipa para pré-visualizar",
+    "selectTriggerBase": "Seleciona uma base...",
+    "stageTransition": {
+      "scheduled": "Agendada {{time}}",
+      "trigger": "Gatilho: {{base}}",
+      "manual": "Manual"
+    },
+    "unknownBase": "Base desconhecida",
+    "gameNotFound": "Jogo não encontrado"
   },
   "command2": {
     "empty": {
@@ -1859,7 +1928,10 @@
     "locationRadius": "Raios de localização entre 5 e 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Os anéis de localização não se sobrepõem",
     "locationBoundAssigned": "Desafios ligados a um local atribuídos a uma base ({{ok}}/{{total}})",
-    "legacyAppsNote": "As apps antigas de iOS e Android não conseguem concluir bases QR ou de localização."
+    "legacyAppsNote": "As apps antigas de iOS e Android não conseguem concluir bases QR ou de localização.",
+    "ready": "Pronto para arrancar",
+    "remaining_one": "Falta {{count}} item",
+    "remaining_other": "Faltam {{count}} itens"
   },
   "tutorials": {
     "menu": "Tutoriais",

@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import {
   locationSignalDotClass,
-  locationSignalLabel,
+  locationSignalLabelKey,
   type LocationSignalStatus,
 } from '@/components/status'
 import { cn } from '@/lib/utils'
@@ -23,13 +25,12 @@ function computeStaleness(updatedAt: string | undefined): LocationSignalStatus {
   return 'unknown'
 }
 
-function formatLastSeen(updatedAt: string | undefined): string {
-  if (!updatedAt) return 'No location data'
+function formatLastSeen(updatedAt: string | undefined, t: TFunction): string {
+  if (!updatedAt) return t('command.leaderboard.noLocation')
   const ageMs = Date.now() - new Date(updatedAt).getTime()
   const mins = Math.floor(ageMs / 60_000)
-  if (mins < 1) return 'Last seen just now'
-  if (mins === 1) return 'Last seen 1 min ago'
-  return `Last seen ${mins} min ago`
+  if (mins < 1) return t('command.leaderboard.lastSeenNow')
+  return t('command.leaderboard.lastSeen', { count: mins })
 }
 
 const rankBorderClass: Record<number, string> = {
@@ -39,6 +40,7 @@ const rankBorderClass: Record<number, string> = {
 }
 
 export function Leaderboard({ gameId }: { gameId: string }) {
+  const { t } = useTranslation()
   const { data: entries = [] } = useLeaderboard(gameId)
   const { data: locations = [] } = useTeamLocations(gameId)
   const leaderboardOpen = useWorkspaceStore((s) => s.leaderboardOpen)
@@ -153,7 +155,7 @@ export function Leaderboard({ gameId }: { gameId: string }) {
                       locationSignalDotClass[locationSignal],
                     )}
                     data-signal={locationSignal}
-                    title={`${locationSignalLabel[locationSignal]} — ${formatLastSeen(teamLastSeen.get(entry.teamId))}`}
+                    title={`${t(locationSignalLabelKey[locationSignal])} — ${formatLastSeen(teamLastSeen.get(entry.teamId), t)}`}
                   />
                   <span className="text-sm font-bold text-primary tabular-nums">
                     {entry.points}

@@ -116,7 +116,7 @@ export function GameWorkspace() {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <p className="text-destructive" data-testid="workspace-error">
-          {gameError?.message ?? 'Game not found'}
+          {gameError?.message ?? t('build.gameNotFound')}
         </p>
       </div>
     )

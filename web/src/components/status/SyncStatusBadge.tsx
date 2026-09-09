@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { StatusBadge } from './StatusBadge'
 import type { StatusBadgeTone } from './StatusBadge'
 
@@ -10,11 +11,11 @@ const syncStatusTone: Record<SyncStatus, StatusBadgeTone> = {
   sync_failed: 'destructive',
 }
 
-const syncStatusLabel: Record<SyncStatus, string> = {
-  online: 'Online',
-  offline: 'Offline',
-  sync_pending: 'Sync pending',
-  sync_failed: 'Sync failed',
+const syncStatusLabelKey: Record<SyncStatus, string> = {
+  online: 'status.sync.online',
+  offline: 'status.sync.offline',
+  sync_pending: 'status.sync.sync_pending',
+  sync_failed: 'status.sync.sync_failed',
 }
 
 export interface SyncStatusBadgeProps {
@@ -23,12 +24,14 @@ export interface SyncStatusBadgeProps {
 }
 
 export function SyncStatusBadge({ status, className }: SyncStatusBadgeProps) {
+  const { t } = useTranslation()
+  const label = t(syncStatusLabelKey[status])
   return (
     <StatusBadge
       tone={syncStatusTone[status]}
-      label={syncStatusLabel[status]}
+      label={label}
       className={className}
-      aria-label={`Connection status: ${syncStatusLabel[status]}`}
+      aria-label={t('status.syncAria', { label })}
     />
   )
 }

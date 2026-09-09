@@ -328,7 +328,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
           </h3>
         </div>
         {players.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No members yet</p>
+          <p className="text-xs text-muted-foreground">{t('teams.noMembers')}</p>
         ) : (
           <div className="space-y-2">
             {players.map((player) => (

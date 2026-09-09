@@ -217,7 +217,7 @@ export default function StageDetail({
                 data-testid="trigger-base-select"
                 className="w-full h-8 px-3 text-sm rounded-md bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring"
               >
-                <option value="">Select a base...</option>
+                <option value="">{t('build.selectTriggerBase')}</option>
                 {previousStageBases.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}

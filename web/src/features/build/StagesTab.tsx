@@ -39,20 +39,21 @@ function useStageSubtitle(
 }
 
 function useTransitionSummary(stage: Stage, bases: Base[]) {
+  const { t } = useTranslation()
   return useMemo(() => {
     if (stage.transitionType === 'scheduled' && stage.scheduledAt) {
       const time = new Date(stage.scheduledAt).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
       })
-      return `Scheduled ${time}`
+      return t('build.stageTransition.scheduled', { time })
     }
     if (stage.transitionType === 'trigger' && stage.triggerBaseId) {
       const base = bases.find((b) => b.id === stage.triggerBaseId)
-      return `Trigger: ${base?.name ?? 'Unknown base'}`
+      return t('build.stageTransition.trigger', { base: base?.name ?? t('build.unknownBase') })
     }
-    return 'Manual'
-  }, [stage.transitionType, stage.scheduledAt, stage.triggerBaseId, bases])
+    return t('build.stageTransition.manual')
+  }, [stage.transitionType, stage.scheduledAt, stage.triggerBaseId, bases, t])
 }
 
 function StageListItem({

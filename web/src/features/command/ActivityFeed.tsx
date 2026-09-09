@@ -8,7 +8,7 @@ import {
   ActivityEventBadge,
   StatusBadge,
   activityEventBorderClass,
-  activityEventLabel,
+  activityEventLabelKey,
   activityEventTone,
 } from '@/components/status'
 import { useActivityFeed } from '@/hooks/queries/useMonitoring'
@@ -158,6 +158,7 @@ export function ActivityFeed({
   mobileExpanded?: boolean
   onMobileExpandedChange?: (expanded: boolean) => void
 }) {
+  const { t } = useTranslation()
   const { data: events = [] } = useActivityFeed(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const { data: bases = [] } = useBases(gameId)
@@ -305,7 +306,7 @@ export function ActivityFeed({
               >
                 <StatusBadge
                   tone={isActive ? activityEventTone[type] : 'muted'}
-                  label={activityEventLabel[type]}
+                  label={t(activityEventLabelKey[type])}
                   size="sm"
                 />
               </button>
@@ -320,7 +321,7 @@ export function ActivityFeed({
           onChange={(e) => setTeamFilter(e.target.value || null)}
           className="bg-muted border-border text-muted-foreground text-xs rounded px-2 py-1 w-full"
         >
-          <option value="">All teams</option>
+          <option value="">{t('command.feed.allTeams')}</option>
           {teams.map((team) => (
             <option key={team.id} value={team.id}>
               {team.name}

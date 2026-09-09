@@ -39,6 +39,7 @@ function ChallengeListItem({
   bases,
   teams,
 }: ChallengeListItemProps) {
+  const { t } = useTranslation()
   const challengeAssignments = assignments.filter(
     (a) => a.challengeId === challenge.id,
   )
@@ -98,7 +99,7 @@ function ChallengeListItem({
       {/* Team summary */}
       <div className="mt-1 flex items-center gap-1">
         {isUnassigned ? null : isGlobal ? (
-          <span className="text-[10px] text-muted-foreground">All teams</span>
+          <span className="text-[10px] text-muted-foreground">{t('build.assignments.allTeams')}</span>
         ) : (
           <div className="flex items-center gap-0.5">
             {teams

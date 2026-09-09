@@ -1,6 +1,7 @@
 import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useBases } from '@/hooks/queries/useBases'
 import { useGame } from '@/hooks/queries/useGames'
@@ -23,24 +24,21 @@ interface BasesTabProps {
 }
 
 
-function getBaseSubtitle(base: Base, assignments: Assignment[]): string {
+function getBaseSubtitle(base: Base, assignments: Assignment[], t: TFunction): string {
   const baseAssignments = assignments.filter((a) => a.baseId === base.id)
-  const uniqueChallenges = new Set(baseAssignments.map((a) => a.challengeId))
-  const challengeCount = uniqueChallenges.size
-
   if (baseAssignments.length === 0) return ''
 
-  const challengeText =
-    challengeCount === 1 ? '1 challenge' : `${challengeCount} challenges`
+  const challenges = t('build.baseSubtitle.challenges', {
+    count: new Set(baseAssignments.map((a) => a.challengeId)).size,
+  })
 
   const allGlobal = baseAssignments.every((a) => !a.teamId)
-  if (allGlobal) return `${challengeText} \u00B7 All teams`
+  if (allGlobal) return t('build.baseSubtitle.allTeams', { challenges })
 
   const teamSpecificCount = new Set(
     baseAssignments.filter((a) => a.teamId).map((a) => a.teamId),
   ).size
-
-  return `${challengeText} \u00B7 ${teamSpecificCount} team-specific`
+  return t('build.baseSubtitle.teamSpecific', { challenges, count: teamSpecificCount })
 }
 
 interface BaseListItemProps {
@@ -195,7 +193,7 @@ export function BasesTab({ gameId }: BasesTabProps) {
               base={base}
               isSelected={selectedBaseId === base.id}
               onSelect={() => selectBase(base.id)}
-              subtitle={getBaseSubtitle(base, assignments)}
+              subtitle={getBaseSubtitle(base, assignments, t)}
               numbered={!!game?.enforceBaseOrder}
             />
           ))}

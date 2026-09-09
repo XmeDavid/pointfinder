@@ -412,8 +412,8 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
       {/* Fixed Challenge */}
       <section className="border-t border-border pt-4 mt-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-foreground">Fixed Challenge</h3>
-          <span className="text-xs text-muted-foreground">Prevents random assignment</span>
+          <h3 className="text-sm font-semibold text-foreground">{t('build.fixedChallengeTitle')}</h3>
+          <span className="text-xs text-muted-foreground">{t('build.fixedChallengeNote')}</span>
         </div>
         {fixedChallenge ? (
           <div className="bg-muted rounded-lg p-3 flex items-center justify-between">

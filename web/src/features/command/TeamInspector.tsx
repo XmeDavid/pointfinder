@@ -216,7 +216,7 @@ export function TeamInspector({ gameId }: { gameId: string }) {
               onChange={(e) => setSelectedBaseId(e.target.value)}
               className="w-full rounded border border-border/50 bg-muted px-2 py-1 text-xs"
             >
-              <option value="">Select base...</option>
+              <option value="">{t('command.rescue.selectBase')}</option>
               {bases.map((base) => (
                 <option key={base.id} value={base.id}>
                   {base.name}
@@ -256,7 +256,7 @@ export function TeamInspector({ gameId }: { gameId: string }) {
               onChange={(e) => setSelectedBaseId(e.target.value)}
               className="w-full rounded border border-border/50 bg-muted px-2 py-1 text-xs"
             >
-              <option value="">Select base...</option>
+              <option value="">{t('command.rescue.selectBase')}</option>
               {bases
                 .filter((base) => base.hidden)
                 .map((base) => (
@@ -301,7 +301,7 @@ export function TeamInspector({ gameId }: { gameId: string }) {
               }}
               className="w-full rounded border border-border/50 bg-muted px-2 py-1 text-xs"
             >
-              <option value="">Select base...</option>
+              <option value="">{t('command.rescue.selectBase')}</option>
               {bases.map((base) => (
                 <option key={base.id} value={base.id}>
                   {base.name}
@@ -315,7 +315,7 @@ export function TeamInspector({ gameId }: { gameId: string }) {
                 onChange={(e) => setSelectedChallengeId(e.target.value)}
                 className="w-full rounded border border-border/50 bg-muted px-2 py-1 text-xs"
               >
-                <option value="">Select challenge...</option>
+                <option value="">{t('command.rescue.selectChallenge')}</option>
                 {challenges.map((challenge) => (
                   <option key={challenge.id} value={challenge.id}>
                     {challenge.title}

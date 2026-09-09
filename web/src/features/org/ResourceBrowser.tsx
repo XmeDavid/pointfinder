@@ -108,7 +108,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
 
   const handleNewDocument = useCallback(() => {
     const metadata = JSON.stringify({
-      name: 'Untitled document',
+      name: t('resources.untitledDocument'),
       type: 'document',
       folderId: currentFolderId,
       content: '',
@@ -123,7 +123,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
         setDocContent(resource.content ?? '')
       },
     })
-  }, [orgId, currentFolderId, createOrgResource, createGameResource])
+  }, [orgId, currentFolderId, createOrgResource, createGameResource, t])
 
   const handleRenameStart = (resource: Resource) => {
     setRenamingId(resource.id)

@@ -2,10 +2,11 @@ import type { StatusBadgeTone } from './StatusBadge'
 
 export type LocationSignalStatus = 'active' | 'stale' | 'unknown'
 
-export const locationSignalLabel: Record<LocationSignalStatus, string> = {
-  active: 'Active',
-  stale: 'Stale',
-  unknown: 'No signal',
+/** Translation keys; render with `t(locationSignalLabelKey[status])`. */
+export const locationSignalLabelKey: Record<LocationSignalStatus, string> = {
+  active: 'status.locationSignal.active',
+  stale: 'status.locationSignal.stale',
+  unknown: 'status.locationSignal.unknown',
 }
 
 export const locationSignalTone: Record<LocationSignalStatus, StatusBadgeTone> = {

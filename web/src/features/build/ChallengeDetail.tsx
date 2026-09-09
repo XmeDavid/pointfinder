@@ -463,7 +463,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 )}
                 title={
                   sortedTeams.length === 0
-                    ? 'Create at least one team to preview'
+                    ? t('build.previewNeedsTeam')
                     : undefined
                 }
               >

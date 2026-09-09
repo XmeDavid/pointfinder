@@ -389,7 +389,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
             >
               <div>
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {hasTemplateRefs ? 'Expected (raw)' : 'Expected answer'}
+                  {hasTemplateRefs ? t('submissions.expectedRaw') : t('submissions.expectedAnswer')}
                 </span>
                 <div className="mt-0.5 px-2 py-1 bg-muted rounded border border-border font-mono text-xs text-foreground">
                   {challenge.correctAnswer.join(', ')}

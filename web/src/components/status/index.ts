@@ -23,7 +23,7 @@ export { ActivityEventBadge } from './ActivityEventBadge'
 export type { ActivityEventBadgeProps } from './ActivityEventBadge'
 export {
   activityEventBorderClass,
-  activityEventLabel,
+  activityEventLabelKey,
   activityEventTone,
 } from './activityEventStatus'
 export type { ActivityEventStatus } from './activityEventStatus'
@@ -32,7 +32,7 @@ export { LocationSignalBadge } from './LocationSignalBadge'
 export type { LocationSignalBadgeProps } from './LocationSignalBadge'
 export {
   locationSignalDotClass,
-  locationSignalLabel,
+  locationSignalLabelKey,
   locationSignalTone,
 } from './locationSignalStatus'
 export type { LocationSignalStatus } from './locationSignalStatus'

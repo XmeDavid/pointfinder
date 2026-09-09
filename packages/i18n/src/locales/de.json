@@ -158,7 +158,12 @@
     "tier": "Plan",
     "status": "Status",
     "member": "Mitglied",
-    "members": "Mitglieder"
+    "members": "Mitglieder",
+    "stripeCustomerId": "Stripe-Kunden-ID",
+    "gracePeriodEnd": "Ende der Nachfrist",
+    "joined": "Beigetreten",
+    "billingCycle": "Abrechnungszeitraum",
+    "periodEnd": "Ende des Zeitraums"
   },
   "game": {
     "export": "Spiel exportieren",
@@ -203,7 +208,35 @@
   "status": {
     "setup": "Setup",
     "live": "Live",
-    "ended": "Beendet"
+    "ended": "Beendet",
+    "baseProgress": {
+      "not_visited": "Nicht besucht",
+      "checked_in": "Eingecheckt",
+      "submitted": "Eingereicht",
+      "completed": "Abgeschlossen",
+      "rejected": "Abgelehnt"
+    },
+    "baseProgressAria": "Stationsfortschritt: {{label}}",
+    "sync": {
+      "online": "Online",
+      "offline": "Offline",
+      "sync_pending": "Synchronisierung ausstehend",
+      "sync_failed": "Synchronisierung fehlgeschlagen"
+    },
+    "syncAria": "Verbindungsstatus: {{label}}",
+    "activity": {
+      "check_in": "Check-in",
+      "submission": "Einreichung",
+      "approval": "Freigabe",
+      "rejection": "Ablehnung"
+    },
+    "activityAria": "Aktivitätsereignis: {{label}}",
+    "locationSignal": {
+      "active": "Aktiv",
+      "stale": "Veraltet",
+      "unknown": "Kein Signal"
+    },
+    "locationSignalAria": "Standortsignal: {{label}}"
   },
   "lifecycle": {
     "goLive": "Live schalten",
@@ -603,7 +636,9 @@
     "markCompletedSuccess": "Aufgabe als abgeschlossen markiert.",
     "reviewerHintLabel": "Hinweis für Prüfer",
     "viewFullscreen": "Vollbild anzeigen",
-    "openReview": "Einreichung prüfen: {{team}} — {{challenge}}"
+    "openReview": "Einreichung prüfen: {{team}} — {{challenge}}",
+    "expectedRaw": "Erwartet (roh)",
+    "expectedAnswer": "Erwartete Antwort"
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",
@@ -1052,7 +1087,8 @@
     "attachFile": "Datei anhängen",
     "pickResource": "Ressource auswählen",
     "gameResources": "Spiel-Ressourcen",
-    "orgResources": "Organisations-Ressourcen"
+    "orgResources": "Organisations-Ressourcen",
+    "untitledDocument": "Unbenanntes Dokument"
   },
   "billing": {
     "title": "Abrechnung & Plan",
@@ -1176,7 +1212,23 @@
       "reasonPlaceholder": "z. B. NFC-Lesegerät defekt",
       "cancel": "Abbrechen",
       "sending": "Wird gesendet...",
-      "confirm": "Bestätigen"
+      "confirm": "Bestätigen",
+      "selectBase": "Station auswählen..."
+    },
+    "feed": {
+      "allTeams": "Alle Teams"
+    },
+    "notify": {
+      "selectTeam": "Team auswählen...",
+      "placeholder": "Nachricht eingeben...",
+      "send": "Senden",
+      "sent": "Gesendet!"
+    },
+    "leaderboard": {
+      "noLocation": "Keine Standortdaten",
+      "lastSeenNow": "Zuletzt gesehen: gerade eben",
+      "lastSeen_one": "Zuletzt gesehen vor 1 Min.",
+      "lastSeen_other": "Zuletzt gesehen vor {{count}} Min."
     }
   },
   "review": {
@@ -1328,7 +1380,24 @@
       "needsPinAndLocation": "Um Stationen aufzudecken, fixiere diese Challenge an einer Station und mache sie ortsgebunden.",
       "noHiddenBases": "Noch keine versteckten Stationen zum Aufdecken. Verstecke zuerst eine Station über ihre Sichtbarkeit.",
       "claimedBy": "Wird bereits von „{{challenge}}“ aufgedeckt"
-    }
+    },
+    "baseSubtitle": {
+      "challenges_one": "1 Challenge",
+      "challenges_other": "{{count}} Challenges",
+      "allTeams": "{{challenges}} · Alle Teams",
+      "teamSpecific": "{{challenges}} · {{count}} je Team"
+    },
+    "fixedChallengeTitle": "Feste Challenge",
+    "fixedChallengeNote": "Verhindert zufällige Zuordnung",
+    "previewNeedsTeam": "Lege mindestens ein Team an, um die Vorschau zu sehen",
+    "selectTriggerBase": "Station auswählen...",
+    "stageTransition": {
+      "scheduled": "Geplant {{time}}",
+      "trigger": "Auslöser: {{base}}",
+      "manual": "Manuell"
+    },
+    "unknownBase": "Unbekannte Station",
+    "gameNotFound": "Spiel nicht gefunden"
   },
   "command2": {
     "empty": {
@@ -1859,7 +1928,10 @@
     "locationRadius": "Standortradien zwischen 5 und 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Standortringe überschneiden sich nicht",
     "locationBoundAssigned": "Ortsgebundene Challenges einer Basis zugewiesen ({{ok}}/{{total}})",
-    "legacyAppsNote": "Die alten iOS- und Android-Apps können QR- und Standort-Basen nicht abschließen."
+    "legacyAppsNote": "Die alten iOS- und Android-Apps können QR- und Standort-Basen nicht abschließen.",
+    "ready": "Startbereit",
+    "remaining_one": "Noch {{count}} Punkt offen",
+    "remaining_other": "Noch {{count}} Punkte offen"
   },
   "tutorials": {
     "menu": "Tutorials",

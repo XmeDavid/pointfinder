@@ -112,24 +112,24 @@ export function AdminUserDetail({ userId, onBack }: Props) {
         <div className="grid grid-cols-2 gap-4 text-sm mb-4">
           {user.billingCycle && (
             <div>
-              <p className="text-muted-foreground">Billing cycle</p>
+              <p className="text-muted-foreground">{t('admin.billingCycle')}</p>
               <p className="text-foreground capitalize">{user.billingCycle}</p>
             </div>
           )}
           {user.currentPeriodEnd && (
             <div>
-              <p className="text-muted-foreground">Period end</p>
+              <p className="text-muted-foreground">{t('admin.periodEnd')}</p>
               <p className="text-foreground">{new Date(user.currentPeriodEnd).toLocaleDateString(i18n.language)}</p>
             </div>
           )}
           {user.gracePeriodEnd && (
             <div>
-              <p className="text-muted-foreground">Grace period end</p>
+              <p className="text-muted-foreground">{t('admin.gracePeriodEnd')}</p>
               <p className="text-foreground">{new Date(user.gracePeriodEnd).toLocaleDateString(i18n.language)}</p>
             </div>
           )}
           <div>
-            <p className="text-muted-foreground">Joined</p>
+            <p className="text-muted-foreground">{t('admin.joined')}</p>
             <p className="text-foreground">{new Date(user.createdAt).toLocaleDateString(i18n.language)}</p>
           </div>
         </div>

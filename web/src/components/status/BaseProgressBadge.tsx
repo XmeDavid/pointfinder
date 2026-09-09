@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { StatusBadge } from './StatusBadge'
 import type { StatusBadgeTone } from './StatusBadge'
 import type { BaseStatus } from '@/types'
@@ -12,12 +13,12 @@ const baseProgressTone: Record<BaseProgressStatus, StatusBadgeTone> = {
   rejected: 'destructive',
 }
 
-const baseProgressLabel: Record<BaseProgressStatus, string> = {
-  not_visited: 'Not visited',
-  checked_in: 'Checked in',
-  submitted: 'Submitted',
-  completed: 'Completed',
-  rejected: 'Rejected',
+const baseProgressLabelKey: Record<BaseProgressStatus, string> = {
+  not_visited: 'status.baseProgress.not_visited',
+  checked_in: 'status.baseProgress.checked_in',
+  submitted: 'status.baseProgress.submitted',
+  completed: 'status.baseProgress.completed',
+  rejected: 'status.baseProgress.rejected',
 }
 
 export interface BaseProgressBadgeProps {
@@ -29,12 +30,14 @@ export function BaseProgressBadge({
   status,
   className,
 }: BaseProgressBadgeProps) {
+  const { t } = useTranslation()
+  const label = t(baseProgressLabelKey[status])
   return (
     <StatusBadge
       tone={baseProgressTone[status]}
-      label={baseProgressLabel[status]}
+      label={label}
       className={className}
-      aria-label={`Base progress: ${baseProgressLabel[status]}`}
+      aria-label={t('status.baseProgressAria', { label })}
     />
   )
 }

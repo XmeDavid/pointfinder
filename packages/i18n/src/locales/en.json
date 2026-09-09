@@ -158,7 +158,12 @@
     "tier": "Tier",
     "status": "Status",
     "member": "member",
-    "members": "members"
+    "members": "members",
+    "stripeCustomerId": "Stripe customer ID",
+    "gracePeriodEnd": "Grace period end",
+    "joined": "Joined",
+    "billingCycle": "Billing cycle",
+    "periodEnd": "Period end"
   },
   "game": {
     "export": "Export Game",
@@ -203,7 +208,35 @@
   "status": {
     "setup": "Setup",
     "live": "Live",
-    "ended": "Ended"
+    "ended": "Ended",
+    "baseProgress": {
+      "not_visited": "Not visited",
+      "checked_in": "Checked in",
+      "submitted": "Submitted",
+      "completed": "Completed",
+      "rejected": "Rejected"
+    },
+    "baseProgressAria": "Base progress: {{label}}",
+    "sync": {
+      "online": "Online",
+      "offline": "Offline",
+      "sync_pending": "Sync pending",
+      "sync_failed": "Sync failed"
+    },
+    "syncAria": "Connection status: {{label}}",
+    "activity": {
+      "check_in": "Check in",
+      "submission": "Submission",
+      "approval": "Approval",
+      "rejection": "Rejection"
+    },
+    "activityAria": "Activity event: {{label}}",
+    "locationSignal": {
+      "active": "Active",
+      "stale": "Stale",
+      "unknown": "No signal"
+    },
+    "locationSignalAria": "Location signal: {{label}}"
   },
   "lifecycle": {
     "goLive": "Go Live",
@@ -603,7 +636,9 @@
     "markCompletedSuccess": "Challenge marked as completed.",
     "reviewerHintLabel": "Reviewer hint",
     "viewFullscreen": "View fullscreen",
-    "openReview": "Review submission: {{team}} — {{challenge}}"
+    "openReview": "Review submission: {{team}} — {{challenge}}",
+    "expectedRaw": "Expected (raw)",
+    "expectedAnswer": "Expected answer"
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",
@@ -1052,7 +1087,8 @@
     "attachFile": "Attach file",
     "pickResource": "Select a resource",
     "gameResources": "Game resources",
-    "orgResources": "Organization resources"
+    "orgResources": "Organization resources",
+    "untitledDocument": "Untitled document"
   },
   "billing": {
     "title": "Billing & Plan",
@@ -1176,7 +1212,23 @@
       "reasonPlaceholder": "e.g. NFC reader broken",
       "cancel": "Cancel",
       "sending": "Sending...",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "selectBase": "Select base..."
+    },
+    "feed": {
+      "allTeams": "All teams"
+    },
+    "notify": {
+      "selectTeam": "Select team...",
+      "placeholder": "Type your message...",
+      "send": "Send",
+      "sent": "Sent!"
+    },
+    "leaderboard": {
+      "noLocation": "No location data",
+      "lastSeenNow": "Last seen just now",
+      "lastSeen_one": "Last seen 1 min ago",
+      "lastSeen_other": "Last seen {{count}} min ago"
     }
   },
   "review": {
@@ -1328,7 +1380,24 @@
       "needsPinAndLocation": "To reveal bases, pin this challenge to a base and make it location bound.",
       "noHiddenBases": "No hidden bases to reveal yet. Hide a base in its visibility setting first.",
       "claimedBy": "Already revealed by “{{challenge}}”"
-    }
+    },
+    "baseSubtitle": {
+      "challenges_one": "1 challenge",
+      "challenges_other": "{{count}} challenges",
+      "allTeams": "{{challenges}} · All teams",
+      "teamSpecific": "{{challenges}} · {{count}} team-specific"
+    },
+    "fixedChallengeTitle": "Fixed Challenge",
+    "fixedChallengeNote": "Prevents random assignment",
+    "previewNeedsTeam": "Create at least one team to preview",
+    "selectTriggerBase": "Select a base...",
+    "stageTransition": {
+      "scheduled": "Scheduled {{time}}",
+      "trigger": "Trigger: {{base}}",
+      "manual": "Manual"
+    },
+    "unknownBase": "Unknown base",
+    "gameNotFound": "Game not found"
   },
   "command2": {
     "empty": {
@@ -1859,7 +1928,10 @@
     "locationRadius": "Location radii between 5 and 200 m ({{ok}}/{{total}})",
     "locationOverlap": "Location rings do not overlap",
     "locationBoundAssigned": "Location-bound challenges assigned to a base ({{ok}}/{{total}})",
-    "legacyAppsNote": "The legacy iOS and Android apps cannot complete QR or location bases."
+    "legacyAppsNote": "The legacy iOS and Android apps cannot complete QR or location bases.",
+    "ready": "Ready to launch",
+    "remaining_one": "{{count}} item remaining",
+    "remaining_other": "{{count}} items remaining"
   },
   "tutorials": {
     "menu": "Tutorials",

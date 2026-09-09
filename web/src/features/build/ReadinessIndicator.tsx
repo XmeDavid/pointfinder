@@ -95,8 +95,8 @@ export default function ReadinessIndicator({
             </svg>
             <span className="text-sm text-muted-foreground leading-tight">
               {allPassed
-                ? 'Ready to launch'
-                : `${total - passed} items remaining`}
+                ? t('readiness.ready')
+                : t('readiness.remaining', { count: total - passed })}
             </span>
           </button>
 
