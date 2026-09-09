@@ -1553,6 +1553,40 @@ override of `null` for a numeric key means unlimited. `free` keeps the
 minimal limits a lapsed or never-signed org gets: 3 members, 1 live game, 25
 bases, 50 players, 100 MB files, no storage, no location check-in.
 
+### Where each limit is enforced
+
+`QuotaService` resolves every limit through one place — the owning
+organization's plan when the game has one, otherwise the creator's personal
+plan — and the call sites are:
+
+| Limit | Enforced at | Code |
+|---|---|---|
+| Active games | Personal game creation, and reviving an ended game | `QUOTA_ACTIVE_GAMES_EXCEEDED` |
+| Live games | Org game `setup → live` | `QUOTA_LIVE_GAMES_EXCEEDED` |
+| Bases per game | `BaseService.createBase`, and the whole batch on game import | `QUOTA_BASES_PER_GAME_EXCEEDED` |
+| Operators per game | Operator invite creation, invite acceptance, registration through a game invite, `GameService.addOperator` | `QUOTA_OPERATORS_PER_GAME_EXCEEDED` |
+| Players per game | Player join | `QUOTA_PLAYERS_PER_GAME_EXCEEDED` |
+| File size | Chunked upload session creation, the direct media submission, org and game resource uploads | `QUOTA_FILE_SIZE_EXCEEDED` |
+| Members | Org invite creation and direct member add | `QUOTA_ORG_MEMBERS_EXCEEDED` |
+| Resource storage | Org and game resource uploads | `QUOTA_RESOURCE_STORAGE_EXCEEDED` |
+| Location check-in | Base create/update, game default change, import, go-live | `QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED` |
+
+An import is weighed as a whole before the game row is written, so a template
+that does not fit is refused once rather than failing partway through and
+rolling back work the operator has already watched start.
+
+The operator limit is checked at acceptance as well as at invite time: an
+invite sent while the game had room can otherwise be accepted long after other
+operators have filled it.
+
+Everything in that table is behind `app.quota.enforcement-enabled` **except**
+the member limit and the resource storage limit. Those two are always on. A
+seat count and real bytes in object storage are what a club deal buys, not a
+product feature a deployment can choose to leave switched off; they carry codes
+so a client can tell them from a validation error, but no switch turns them
+off. Storage is also the only limit measured against a running total rather
+than a count, so it is checked as `used + uploadSize > max`.
+
 Postgres still carries the retired `base` and `high` labels in the `org_tier`
 type. V65 migrated every row off them; dropping the labels would mean rewriting
 the type and every column that uses it, for no benefit once no row and no Java
@@ -1630,6 +1664,24 @@ with `MANAGE_PERMS`) set `created_by` to an existing member and grant them every
 permission. The target must already be a member: an org's owner is by definition
 someone inside it, and silently adding them would hide a mistyped id
 (`ORG_TRANSFER_TARGET_NOT_MEMBER`).
+
+### Leaving and declining
+
+`POST /api/orgs/{id}/leave` removes the caller's own membership. It exists
+alongside `DELETE /orgs/{id}/members/{userId}`, which already allowed a member
+to remove themselves, because that route asks a member to know their own user
+id and reads like an administrative removal. The creator is refused with
+`ORG_CREATOR_CANNOT_LEAVE`: `organizations.created_by` is NOT NULL and an
+ownerless org cannot be administered, so they transfer ownership first.
+
+`POST /api/org-invites/{inviteId}/decline` is the other half of accept. It
+marks the invite `declined` rather than deleting it, so the org still sees what
+it sent and a later accept of the same invite is refused as already processed.
+`declined` is a new label on the `invite_status` type (V66), terminal like
+`accepted`. Only the addressee may decline, matched on email
+case-insensitively; someone else's invite answers `403` and an unknown id
+`404`. (Accept answers `400` for the wrong addressee — an older inconsistency
+this endpoint does not copy.)
 
 ### The invoice lifecycle
 

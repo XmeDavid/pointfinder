@@ -1530,6 +1530,7 @@ the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
 | PATCH | `/orgs/:orgId` | MANAGE_PERMS | Rename |
 | DELETE | `/orgs/:orgId` | creator or admin | Delete |
 | POST | `/orgs/:orgId/transfer-ownership` | creator or MANAGE_PERMS | Hand the org to another member |
+| POST | `/orgs/:orgId/leave` | member | Remove the caller's own membership (`204`) |
 | GET | `/orgs/:orgId/invoices` | MANAGE_BILLING | The club's invoice history |
 | GET | `/orgs/:orgId/members` | member | Members |
 | DELETE | `/orgs/:orgId/members/:userId` | MANAGE_PERMS | Remove a member |
@@ -1558,6 +1559,30 @@ the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
 The target must already be a member; otherwise `400 ORG_TRANSFER_TARGET_NOT_MEMBER`.
 The new owner is granted every permission.
 
+**POST /orgs/:orgId/leave** → `204 No Content`
+
+Removes the caller's own membership. The org's creator is refused with
+`400 ORG_CREATOR_CANNOT_LEAVE` — they must transfer ownership first. A caller
+who is not a member gets `404`.
+
+### Org invites (the invitee's side)
+
+**Base path**: `/api` · **Auth**: Operator
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/org-invites/my` | The caller's pending org invites |
+| POST | `/org-invites/:inviteId/accept` | Join the org (`200`, returns `OrgMemberResponse`) |
+| POST | `/org-invites/:inviteId/decline` | Refuse the invite (`204`) |
+
+**POST /org-invites/:inviteId/decline** → `204 No Content`
+
+Marks a pending invite `declined`. Terminal: a later accept of the same invite
+answers `400`, and so does a second decline. Only the addressee may decline,
+matched on email case-insensitively — someone else's invite is `403` and an
+unknown id is `404`. The row is kept rather than deleted so the org still sees
+what it sent.
+
 **GET /orgs/:orgId/invoices** → array of `OrgInvoiceResponse`
 ```json
 [{
@@ -1573,6 +1598,9 @@ The new owner is granted every permission.
 ### Admin: clubs and invoicing
 
 **Base path**: `/api/admin` · **Auth**: `ROLE_ADMIN`, enforced by SecurityConfig for the whole tree
+
+An authenticated operator asking for anything under `/api/admin/**` gets
+`403 Forbidden`, not `401`. A caller with no token at all still gets `401`.
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -1739,6 +1767,25 @@ All error responses include a machine-readable `code` field in addition to the h
 | `ASSIGNMENT_DUPLICATE` | 409 | A bulk set names the same base and team (or the same base as "All Teams") twice. |
 | `ASSIGNMENT_CHALLENGE_REPEATED` | 409 | A bulk set puts the same challenge at two bases within one column (a team, or "All Teams"). |
 
+### Quota and Organization Error Codes
+
+Every quota code is a `400`. See `docs/business-logic.md` § "Where each limit
+is enforced" for the call site behind each one.
+
+| Code | Meaning |
+|------|---------|
+| `QUOTA_ACTIVE_GAMES_EXCEEDED` | The operator is at their plan's active-game limit. |
+| `QUOTA_LIVE_GAMES_EXCEEDED` | The org is at its live-game limit; taking another game live is refused. |
+| `QUOTA_BASES_PER_GAME_EXCEEDED` | Creating a base, or importing a game whose bases do not fit. The import is refused before anything is written. |
+| `QUOTA_OPERATORS_PER_GAME_EXCEEDED` | Inviting an operator, accepting a game invite, registering through one, or adding an operator directly. |
+| `QUOTA_PLAYERS_PER_GAME_EXCEEDED` | The game is at its player limit. |
+| `QUOTA_FILE_SIZE_EXCEEDED` | The upload is larger than the plan's per-file cap. Emitted at chunked-session creation, on a direct media submission, and on a resource upload. |
+| `QUOTA_ORG_MEMBERS_EXCEEDED` | The org is at its member limit. Always enforced, regardless of `app.quota.enforcement-enabled`. |
+| `QUOTA_RESOURCE_STORAGE_EXCEEDED` | The upload would push the workspace past its storage allowance. Always enforced, as above. |
+| `QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED` | Location check-in is not part of this plan. |
+| `ORG_CREATOR_CANNOT_LEAVE` | The org's creator called `POST /orgs/:orgId/leave`. Transfer ownership first. |
+| `ORG_TRANSFER_TARGET_NOT_MEMBER` | Ownership can only move to an existing member. |
+
 ### WebSocket Error Codes
 
 WebSocket errors are transmitted via STOMP ERROR frames and do not use HTTP status codes. The error `code` appears in the STOMP ERROR header.
@@ -1757,7 +1804,7 @@ Validation errors and generic failures that do not emit a specific `ErrorCode`:
 |---|---|
 | 400 | Validation failure (missing/invalid field, constraint violation without a specific code) |
 | 401 | Missing or expired JWT token |
-| 403 | Operator does not have access to the game (distinct from 400 `MARK_COMPLETED_REQUIRES_CHECKIN` etc.) |
+| 403 | The caller is authenticated but not allowed: no access to the game, the wrong role for the path (an operator asking for `/api/admin/**`), or someone else's org invite |
 | 404 | Resource not found (team, base, game, etc. does not exist) |
 | 409 | Conflict that does not fit the error code taxonomy (rare; usually a code is emitted instead) |
 | 429 | Rate limited (e.g., password reset requests) |
