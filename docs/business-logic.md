@@ -1587,6 +1587,11 @@ so a client can tell them from a validation error, but no switch turns them
 off. Storage is also the only limit measured against a running total rather
 than a count, so it is checked as `used + uploadSize > max`.
 
+`QUOTA_ENFORCEMENT_ENABLED` defaults to `false`, so on a deployment that has
+not turned it on the switchable limits are computed and reported to the
+dashboard but never refuse anything. Turning it on is a product decision, not a
+migration.
+
 Postgres still carries the retired `base` and `high` labels in the `org_tier`
 type. V65 migrated every row off them; dropping the labels would mean rewriting
 the type and every column that uses it, for no benefit once no row and no Java

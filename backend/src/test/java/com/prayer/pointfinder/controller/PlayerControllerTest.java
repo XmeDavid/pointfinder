@@ -66,6 +66,11 @@ class PlayerControllerTest {
     @MockitoBean
     private FileStorageService fileStorageService;
 
+    // PlayerController now checks the plan's per-file cap before storing a
+    // media submission, so the slice has to supply the service that answers it.
+    @MockitoBean
+    private com.prayer.pointfinder.service.QuotaService quotaService;
+
     // Added by the audit-findings wave to PlayerController; the slice must mock them too.
 
     @MockitoBean

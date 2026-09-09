@@ -54,6 +54,8 @@ class AuthServiceTest {
     @Mock private EmailChangeTokenRepository emailChangeTokenRepository;
     @Mock private UserSubscriptionRepository userSubRepository;
 
+    // Registering through a game invite answers to the per-game operator limit.
+    @Mock private QuotaService quotaService;
     @InjectMocks private AuthService authService;
 
     private User testUser;

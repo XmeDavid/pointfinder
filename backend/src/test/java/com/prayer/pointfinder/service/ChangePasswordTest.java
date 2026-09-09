@@ -34,6 +34,8 @@ class ChangePasswordTest {
     @Mock private EmailService emailService;
     @Mock private LoginAttemptService loginAttemptService;
 
+    // Registering through a game invite answers to the per-game operator limit.
+    @Mock private QuotaService quotaService;
     @InjectMocks private AuthService authService;
 
     private User testUser;

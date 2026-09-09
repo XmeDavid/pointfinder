@@ -291,11 +291,7 @@ public class QuotaService {
         return limits.maxMembers() != null ? limits.maxMembers() : Integer.MAX_VALUE;
     }
 
-    public long getMaxFileSizeBytes(Game game) {
-        Long max = getMaxFileSizeBytesOrNull(game);
-        return max != null ? max : Long.MAX_VALUE;
-    }
-
+    /** Null means unlimited — an explicit {@code null} override. */
     private Long getMaxFileSizeBytesOrNull(Game game) {
         return resolveGameLimits(game).maxFileSizeBytes();
     }

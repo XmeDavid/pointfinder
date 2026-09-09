@@ -37,6 +37,10 @@ class InviteServiceTest {
     private EmailService emailService;
     @Mock
     private GameAccessService gameAccessService;
+    // Game invites now answer to the per-game operator limit, both when the
+    // invite is created and when it is accepted.
+    @Mock
+    private QuotaService quotaService;
 
     @InjectMocks
     private InviteService inviteService;

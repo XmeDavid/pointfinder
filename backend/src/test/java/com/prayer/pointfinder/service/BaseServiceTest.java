@@ -51,6 +51,10 @@ class BaseServiceTest {
     private com.prayer.pointfinder.repository.GameTagRepository gameTagRepository;
     @Mock
     private ResourceEmbedService resourceEmbedService;
+    // createBase now checks the per-game base limit on every call, not only
+    // when the base is location-bound.
+    @Mock
+    private QuotaService quotaService;
 
     @InjectMocks
     private BaseService baseService;
