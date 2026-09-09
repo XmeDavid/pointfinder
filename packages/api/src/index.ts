@@ -1,5 +1,5 @@
 export * from './types'
-export { ApiError, isApiError } from './errors'
+export { ApiError, ERROR_CODES, isApiError } from './errors'
 export type { ErrorCode, ClientErrorCode } from './errors'
 export { HttpClient } from './http'
 export type { HttpClientOptions, HttpMethod, RequestOptions } from './http'

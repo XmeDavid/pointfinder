@@ -57,3 +57,23 @@ describe("getApiValidationErrors", () => {
   });
 });
 
+
+describe("backend error codes", () => {
+  it("every ErrorCode has a translation under errors.*", async () => {
+    const { ERROR_CODES } = await import("@pointfinder/api");
+    const { resources } = await import("@pointfinder/i18n");
+    const errors = (resources.en.translation as { errors: Record<string, string> }).errors;
+    const missing = ERROR_CODES.filter((code) => !errors[code]);
+    expect(missing).toEqual([]);
+  });
+
+  it("prefers the localized message for a known code", () => {
+    const error = { response: { data: { code: "RATE_LIMITED", message: "raw server text" } } };
+    expect(getApiErrorMessage(error)).toBe("Too many attempts. Wait a moment and try again.");
+  });
+
+  it("falls back to the server message for an unknown code", () => {
+    const error = { response: { data: { code: "SOMETHING_NEW", message: "raw server text" } } };
+    expect(getApiErrorMessage(error)).toBe("raw server text");
+  });
+});
