@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -7,6 +7,10 @@ import i18n from '@/i18n'
 import { adminStore, createAdminOrg } from '@/test/msw/handlers/admin'
 import { AdminPanel } from './AdminPanel'
 import { GIB } from './clubLimits'
+
+// These forms type through many fields with user-event; on a loaded CI host that
+// brushes the default 5 s per-test budget, so give them room without hiding a hang.
+vi.setConfig({ testTimeout: 20_000 })
 
 function renderPanel() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
