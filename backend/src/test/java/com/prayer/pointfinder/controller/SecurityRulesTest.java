@@ -37,7 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({
     AuthController.class,
     GameController.class,
-    PlayerController.class
+    PlayerController.class,
+    AdminOrgController.class
 })
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class})
 @TestPropertySource(properties = {
@@ -63,6 +64,11 @@ class SecurityRulesTest {
 
     @MockitoBean
     private com.prayer.pointfinder.repository.UserSubscriptionRepository userSubscriptionRepository;
+
+    // FrozenAccountFilter also resolves the org a request acts inside, so the
+    // slice has to mock the repository that answers that.
+    @MockitoBean
+    private com.prayer.pointfinder.repository.OrganizationRepository organizationRepository;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -101,6 +107,12 @@ class SecurityRulesTest {
     @MockitoBean
 
     private com.prayer.pointfinder.service.PlayerPushTokenService playerPushTokenService;
+
+    @MockitoBean
+    private com.prayer.pointfinder.service.AdminOrgService adminOrgService;
+
+    @MockitoBean
+    private com.prayer.pointfinder.service.OrgInvoiceService orgInvoiceService;
 
     private static final String OPERATOR_TOKEN = "operator-jwt";
     private static final String PLAYER_TOKEN = "player-jwt";
@@ -176,6 +188,25 @@ class SecurityRulesTest {
     void operatorTokenAccessToGamesPassesSecurity() throws Exception {
         MvcResult result = mockMvc.perform(get("/api/games")
                         .header("Authorization", "Bearer " + OPERATOR_TOKEN))
+                .andReturn();
+        int statusCode = result.getResponse().getStatus();
+        assertNotEquals(401, statusCode, "Should not be unauthorized");
+        assertNotEquals(403, statusCode, "Should not be forbidden");
+    }
+
+    @Test
+    void operatorTokenAccessToAdminTreeReturns403() throws Exception {
+        // Club creation, deal terms and invoicing sit behind /api/admin/**,
+        // gated at the filter chain rather than per controller method.
+        mockMvc.perform(get("/api/admin/orgs/" + UUID.randomUUID() + "/invoices")
+                        .header("Authorization", "Bearer " + OPERATOR_TOKEN))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminTokenAccessToAdminTreePassesSecurity() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/admin/orgs/" + UUID.randomUUID() + "/invoices")
+                        .header("Authorization", "Bearer " + ADMIN_TOKEN))
                 .andReturn();
         int statusCode = result.getResponse().getStatus();
         assertNotEquals(401, statusCode, "Should not be unauthorized");
