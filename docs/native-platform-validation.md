@@ -154,7 +154,15 @@ and removes that file. If interrupted, retain the file and rerun verification.
 - Per-challenge camera-only versus library policy needs an agreed backend field;
   the current feature offers both. Upload progress checkpoints exist, but the
   feature currently displays queue state rather than a per-file progress bar.
-- Finish signing/store checks and web hosting path migration described in
+- Store release as `0.9.10` on top of the published `0.9.7` apps: identifier,
+  team, capabilities, `targetSdk` 36, 16 KB alignment, and version codes are
+  configured (see `mobile/README.md` § Identity and release). Still to do by
+  hand: confirm in both consoles that nothing above Android `versionCode` 19
+  or iOS `0.9.7` was ever uploaded, create `keystore.properties` from the
+  legacy upload key, place the production `google-services.json`, and run the
+  16 KB check on the built bundle. Sessions do not carry over from the legacy
+  apps, so ship between games.
+- Web hosting path migration described in
   [frontend consolidation](frontend-consolidation.md). No production deployment
   or store release was performed by this work.
 # Safe-area follow-up (2026-09-05)

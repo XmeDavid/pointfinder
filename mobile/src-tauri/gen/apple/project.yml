@@ -52,7 +52,7 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 1.0.0
+        CFBundleShortVersionString: 0.9.10
         CFBundleVersion: "20"
     entitlements:
       path: pointfinder-mobile_iOS/pointfinder-mobile_iOS.entitlements

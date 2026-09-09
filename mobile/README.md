@@ -49,12 +49,35 @@ bun run tauri ios dev                         # Mac only
 
 ## Identity and release
 
-`tauri.conf.json` holds the identifier, version 1.0.0, Android `versionCode`
-20 and iOS `bundleVersion` 20. The published apps are at 19, so the first
-Tauri release must ship at 20 or higher on both.
+`tauri.conf.json` holds the identifier `com.prayer.pointfinder` (the same as
+both published apps), version `0.9.10`, Android `versionCode` 20 and iOS
+`bundleVersion` 20. The published apps are `0.9.7` with Android `versionCode`
+19 and iOS build 1, so this release is accepted as an update by both stores as
+long as nothing higher was ever uploaded (check the Play and App Store Connect
+consoles before shipping). Bump `version`, `versionCode` and `bundleVersion`
+together for every store release; `tauri android build` writes them into
+`tauri.properties`, and `gen/apple/project.yml` plus the generated `Info.plist`
+carry the iOS copy.
 
-Android release signing reads `src-tauri/gen/android/keystore.properties`,
-which points at the existing upload keystore. Never commit it.
+Play requires `targetSdk` 36 (Android 16) and 16 KB page-aligned native
+libraries. `gen/android/app/build.gradle.kts` targets 36 and
+`src-tauri/.cargo/config.toml` pins the alignment for every Android target.
+
+Android release signing reads `src-tauri/gen/android/keystore.properties`
+(git-ignored) with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`.
+`storeFile` must be the upload key the legacy app used
+(`android-app/app-key.jks`, same alias), otherwise Play refuses the bundle.
+Without the file, release builds are unsigned. Never commit it.
+
+iOS uses the same team `ZQ6CKMW9NA` and the same capabilities as the legacy
+app: push, NFC tag reading, and associated domains for both hosts. Export for
+the store with `bun run tauri ios build --export-method app-store-connect`;
+the `debugging` method in `ExportOptions.plist` is for device installs.
+
+Signing in on the new app is a fresh start: the Tauri secure store uses its
+own Keychain service and Keystore prefs, so nobody's session carries over
+from `0.9.7`. Players re-enter their join code and get a new player record on
+their existing team; team progress is unaffected. Release between games.
 
 Firebase: place the environment's `google-services.json` in
 `src-tauri/gen/android/app/`. The Google Services Gradle plugin is applied
