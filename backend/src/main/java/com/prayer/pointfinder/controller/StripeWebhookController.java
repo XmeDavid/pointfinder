@@ -47,7 +47,12 @@ public class StripeWebhookController {
     @PostMapping("/stripe")
     public ResponseEntity<String> handleStripeWebhook(
             @RequestBody String payload,
-            @RequestHeader("Stripe-Signature") String sigHeader) {
+            @RequestHeader(value = "Stripe-Signature", required = false) String sigHeader) {
+        // Stripe always signs; a call without the header is not Stripe and
+        // deserves a 400, not the 500 a missing required header produces.
+        if (sigHeader == null || sigHeader.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing signature");
+        }
 
         Event event;
         try {
