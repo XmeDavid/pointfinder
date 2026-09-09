@@ -131,23 +131,7 @@ export function limitsToOverrides(state: LimitState): Record<string, number | bo
   return overrides
 }
 
-/** True when the form and the stored JSON say the same thing. */
-export function limitsMatchOverrides(
-  state: LimitState,
-  overrides: Record<string, unknown> | null | undefined,
-): boolean {
-  const next = limitsToOverrides(state)
-  const current: Record<string, unknown> = {}
-  for (const key of Object.keys(overrides ?? {})) {
-    if (FIELDS_BY_KEY.has(key)) current[key] = (overrides as Record<string, unknown>)[key]
-  }
-  const keys = new Set([...Object.keys(next), ...Object.keys(current)])
-  for (const key of keys) {
-    if (!(key in next) || !(key in current)) return false
-    if (next[key] !== current[key]) return false
-  }
-  return true
-}
+
 
 /**
  * Overrides the form cannot express — a per-deal key outside the club shape.

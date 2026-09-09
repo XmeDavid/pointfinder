@@ -14,6 +14,7 @@ public interface OrgInviteRepository extends JpaRepository<OrgInvite, UUID> {
     Optional<OrgInvite> findByToken(String token);
 
     List<OrgInvite> findByOrganizationIdAndStatus(UUID orgId, InviteStatus status);
+    List<OrgInvite> findByOrganizationIdAndStatusInOrderByCreatedAtDesc(UUID orgId, java.util.Collection<InviteStatus> statuses);
 
     List<OrgInvite> findByEmailIgnoreCaseAndStatus(String email, InviteStatus status);
 

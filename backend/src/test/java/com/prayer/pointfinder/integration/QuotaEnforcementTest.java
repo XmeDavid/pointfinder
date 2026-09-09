@@ -77,6 +77,16 @@ class QuotaEnforcementTest extends IntegrationTestBase {
                 new HttpEntity<>(body, headersWithAuth(operatorAuthHeader(user))), type);
     }
 
+    /** Creates a club owned by {@code owner} through the admin route and returns its id. */
+    private UUID createOrgAsAdmin(User owner, String name) {
+        User admin = createAdmin("admin-" + UUID.randomUUID() + "@test.com", "password");
+        ResponseEntity<Map> created = as(admin, HttpMethod.POST, "/api/admin/orgs",
+                Map.of("name", name, "adminEmail", owner.getEmail()), Map.class);
+        assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        Map<?, ?> org = (Map<?, ?>) created.getBody().get("org");
+        return UUID.fromString((String) org.get("id"));
+    }
+
     private <T> ResponseEntity<T> asPlayer(Player player, HttpMethod method, String path, Object body, Class<T> type) {
         return restTemplate.exchange(path, method,
                 new HttpEntity<>(body, headersWithAuth(playerAuthHeader(player))), type);
@@ -320,15 +330,12 @@ class QuotaEnforcementTest extends IntegrationTestBase {
     @Test
     void anOrgInviteIsRefusedWithACodeOnceTheMemberLimitIsReached() {
         User owner = operator("members");
-        ResponseEntity<OrgResponse> org =
-                as(owner, HttpMethod.POST, "/api/orgs", Map.of("name", "Small Club"), OrgResponse.class);
-        assertEquals(HttpStatus.CREATED, org.getStatusCode());
-        UUID orgId = org.getBody().id();
+        UUID orgId = createOrgAsAdmin(owner, "Small Club");
 
         User invitee = operator("members-invitee");
         String invitePath = "/api/orgs/" + orgId + "/invites";
 
-        // A free org allows three members and holds one: there is room.
+        // A club allows fifteen members and holds one: there is room.
         assertEquals(HttpStatus.CREATED,
                 as(owner, HttpMethod.POST, invitePath, Map.of("email", invitee.getEmail()), String.class)
                         .getStatusCode());
@@ -353,9 +360,7 @@ class QuotaEnforcementTest extends IntegrationTestBase {
         // rejection; the always-on half is asserted by the property this class
         // sets being irrelevant to the branch under test.
         User owner = operator("seats");
-        ResponseEntity<OrgResponse> org =
-                as(owner, HttpMethod.POST, "/api/orgs", Map.of("name", "Seat Club"), OrgResponse.class);
-        UUID orgId = org.getBody().id();
+        UUID orgId = createOrgAsAdmin(owner, "Seat Club");
 
         var organization = orgRepository.findById(orgId).orElseThrow();
         organization.setQuotaOverrides(Map.of("max_members", 1));

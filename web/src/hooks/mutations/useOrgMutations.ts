@@ -1,16 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { organizationsApi } from '../../lib/api/organizations'
 
-export function useCreateOrg() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (name: string) => organizationsApi.create(name),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['workspaces'] })
-    },
-  })
-}
-
 export function useUpdateOrg(orgId: string) {
   const qc = useQueryClient()
   return useMutation({

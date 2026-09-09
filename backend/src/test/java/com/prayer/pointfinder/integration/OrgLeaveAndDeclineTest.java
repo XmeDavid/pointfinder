@@ -57,10 +57,17 @@ class OrgLeaveAndDeclineTest extends IntegrationTestBase {
 
     /** Creates an org owned by {@code owner} and returns its id. */
     private UUID createOrg(User owner, String name) {
-        ResponseEntity<OrgResponse> created =
-                as(owner, HttpMethod.POST, "/api/orgs", Map.of("name", name), OrgResponse.class);
+        return createOrgAsAdmin(owner, name);
+    }
+
+    /** Creates a club owned by {@code owner} through the admin route and returns its id. */
+    private UUID createOrgAsAdmin(User owner, String name) {
+        User admin = createAdmin("admin-" + UUID.randomUUID() + "@test.com", "password");
+        ResponseEntity<Map> created = as(admin, HttpMethod.POST, "/api/admin/orgs",
+                Map.of("name", name, "adminEmail", owner.getEmail()), Map.class);
         assertEquals(HttpStatus.CREATED, created.getStatusCode());
-        return created.getBody().id();
+        Map<?, ?> org = (Map<?, ?>) created.getBody().get("org");
+        return UUID.fromString((String) org.get("id"));
     }
 
     /** Invites {@code email} into the org and returns the pending invite id. */

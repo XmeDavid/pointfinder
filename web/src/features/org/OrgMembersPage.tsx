@@ -155,13 +155,15 @@ export function OrgMembersPage() {
                     {t('org.invitedBy', 'Invited by')} {invite.inviterName ?? t('common.unknown', 'Unknown')}
                   </p>
                 </div>
-                <button
-                  onClick={() => revokeInvite.mutate(invite.id)}
-                  disabled={revokeInvite.isPending}
-                  className="text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
-                >
-                  {t('org.revokeInvite', 'Revoke')}
-                </button>
+                {invite.status === 'pending' && (
+                  <button
+                    onClick={() => revokeInvite.mutate(invite.id)}
+                    disabled={revokeInvite.isPending}
+                    className="text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
+                  >
+                    {t('org.revokeInvite', 'Revoke')}
+                  </button>
+                )}
               </div>
             ))}
           </div>

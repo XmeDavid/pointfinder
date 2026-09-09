@@ -1525,7 +1525,7 @@ the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
 
 | Method | Path | Permission | Description |
 |--------|------|------------|-------------|
-| POST | `/orgs` | any operator | Create a free org |
+| POST | `/orgs` | admin role | Create a bare free org (fixtures only; clubs go through `/admin/orgs`) |
 | GET | `/orgs/:orgId` | member | Org detail |
 | PATCH | `/orgs/:orgId` | MANAGE_PERMS | Rename |
 | DELETE | `/orgs/:orgId` | creator or admin | Delete |
@@ -1533,10 +1533,10 @@ the backend only maps `STRIPE_PRICE_PRO_MONTHLY` and `STRIPE_PRICE_PRO_ANNUAL`.
 | POST | `/orgs/:orgId/leave` | member | Remove the caller's own membership (`204`) |
 | GET | `/orgs/:orgId/invoices` | MANAGE_BILLING | The club's invoice history |
 | GET | `/orgs/:orgId/members` | member | Members |
-| DELETE | `/orgs/:orgId/members/:userId` | MANAGE_PERMS | Remove a member |
+| DELETE | `/orgs/:orgId/members/:userId` | INVITE_MEMBERS | Remove a member |
 | PATCH | `/orgs/:orgId/members/:userId/permissions` | MANAGE_PERMS | Set a member's permission bitmask |
 | POST | `/orgs/:orgId/invites` | INVITE_MEMBERS | Invite by email |
-| GET | `/orgs/:orgId/invites` | INVITE_MEMBERS | Pending invites |
+| GET | `/orgs/:orgId/invites` | INVITE_MEMBERS | Pending, expired and declined invites, newest first |
 | DELETE | `/orgs/:orgId/invites/:inviteId` | INVITE_MEMBERS | Revoke |
 
 **OrgResponse** (returned by create, get, patch, and both transfer routes)
@@ -1700,6 +1700,10 @@ contact, name = the org name, `metadata.orgId`), creates an invoice with
 `collection_method=send_invoice` and one line item, finalizes it, and sends it.
 Requires `STRIPE_SECRET_KEY`; without it, `400 INVOICE_STRIPE_NOT_CONFIGURED`.
 
+Validation: `amountCents` ≥ 1 (the whole deal price, not a monthly rate),
+`currency` a three-letter code (default `eur`), `description` 1–500 characters,
+`dueDays` ≥ 1 (default 30), `termMonths` ≥ 1 (default 12).
+
 **Error codes**: `ORG_ADMIN_EMAIL_INVALID`, `ORG_INVALID_ENUM_VALUE`,
 `ORG_INVALID_QUOTA_OVERRIDE`, `ORG_TRANSFER_TARGET_NOT_MEMBER`,
 `INVOICE_STRIPE_NOT_CONFIGURED`,
@@ -1822,6 +1826,12 @@ is enforced" for the call site behind each one.
 | `ORG_CREATOR_CANNOT_LEAVE` | The org's creator called `POST /orgs/:orgId/leave`. Transfer ownership first. |
 | `ORG_TRANSFER_TARGET_NOT_MEMBER` | Ownership can only move to an existing member. |
 | `ORG_INVALID_QUOTA_OVERRIDE` | A club's `quotaOverrides` carried a known key with a value of the wrong type. Numeric limits take a number or `null`; `location_check_in` takes a boolean or `null`. |
+| `ORG_ADMIN_EMAIL_INVALID` | `POST /admin/orgs` was given a blank or malformed club-admin email. |
+| `ORG_INVALID_ENUM_VALUE` | `PATCH /admin/orgs/:id` was given a `tier` or `status` outside the enum. |
+| `INVOICE_STRIPE_NOT_CONFIGURED` | Invoicing needs `STRIPE_SECRET_KEY`; it is unset. |
+| `INVOICE_NO_BILLING_CONTACT` | The club has no owner with an email to bill. |
+| `INVOICE_STRIPE_CALL_FAILED` | Stripe refused or failed the customer or invoice call; nothing was persisted. |
+| `INVOICE_AMOUNT_INVALID` | `amountCents` was below one cent. |
 
 ### WebSocket Error Codes
 

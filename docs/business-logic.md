@@ -1443,10 +1443,11 @@ the landing page, the billing tab and `/org/create`.
 
 ### Which billing controls a workspace member sees
 
-The personal workspace always shows its own plan and portal. In an **org
-workspace, subscription controls appear only for a member holding
-`MANAGE_BILLING`** (bit 32); other members see the club information block
-and their usage, and no upgrade or portal control at all.
+The personal workspace always shows its own plan and portal. An **org
+workspace shows no subscription controls to anyone**: there is no club
+checkout and no club portal. Every member sees the club information block,
+the status and paid-until date, and their usage; a member holding
+`MANAGE_BILLING` (bit 32) additionally sees the club's invoice list.
 
 ### The active workspace is a device preference, validated against the server
 
@@ -1462,14 +1463,15 @@ when the org is gone** and adopting a rename made elsewhere.
 The members page owns club settings, so every membership decision sits on
 one surface:
 
-- **Rename** (`PATCH /api/orgs/{id}`) for a member holding `MANAGE_PERMS`,
-  or the club's creator.
+- **Rename** (`PATCH /api/orgs/{id}`) for a member holding `MANAGE_PERMS`.
+  The creator always holds every permission, so the creator can always rename.
 - **Delete** (`DELETE /api/orgs/{id}`) for the creator only, behind the
   shared destructive confirm dialog. On success the client switches to the
   personal workspace, because the one it was standing in no longer exists.
-- Pending invites show their status, so an `expired` invite reads as
-  expired rather than as one still awaiting an answer, and a `declined` one
-  reads as refused in the same muted tone. Invites expire after 14 days.
+- The invite list carries pending, expired and declined invites, newest
+  first, so an `expired` invite reads as expired rather than as one still
+  awaiting an answer, and a `declined` one reads as refused in the same muted
+  tone. Only a pending invite can be revoked. Invites expire after 14 days.
 - **Leave** (`POST /api/orgs/{id}/leave`) for any member who did not create
   the club, behind a confirm. On success the client switches to the personal
   workspace, for the same reason a delete does.

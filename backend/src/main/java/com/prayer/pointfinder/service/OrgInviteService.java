@@ -130,7 +130,10 @@ public class OrgInviteService {
     @Transactional(readOnly = true)
     public List<OrgInviteResponse> getOrgInvites(UUID orgId) {
         organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.INVITE_MEMBERS);
-        return orgInviteRepository.findByOrganizationIdAndStatus(orgId, InviteStatus.pending)
+        // Accepted invites are members; everything else is worth a glance so an
+        // expired or declined invite reads as such instead of vanishing.
+        return orgInviteRepository.findByOrganizationIdAndStatusInOrderByCreatedAtDesc(
+                        orgId, List.of(InviteStatus.pending, InviteStatus.expired, InviteStatus.declined))
                 .stream()
                 .map(this::toResponse)
                 .toList();

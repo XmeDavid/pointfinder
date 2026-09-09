@@ -34,6 +34,12 @@ public class OrganizationService {
     @Transactional
     public OrgResponse createOrg(CreateOrgRequest request) {
         User currentUser = SecurityUtils.getCurrentUser();
+        // Clubs are sales-led: an operator never creates an organization for
+        // themselves. This bare route stays for admins and fixtures; the club
+        // deal itself goes through AdminOrgService.
+        if (currentUser.getRole() != UserRole.admin) {
+            throw new ForbiddenException("Organizations are created by PointFinder");
+        }
         String slug = generateUniqueSlug(request.getName());
 
         Organization org = Organization.builder()
