@@ -1,12 +1,11 @@
 import apiClient from './client'
 import type { CheckoutResponse, UserSubscription, InvoiceListResponse } from '../../types/billing'
+import type { CheckoutCycle } from '../pricing'
 
 export const billingApi = {
-  createCheckout: (plan: string, cycle: string, orgId?: string) =>
-    apiClient.post<CheckoutResponse>('/billing/checkout', { plan, cycle, orgId }).then(r => r.data),
-
-  createOrgCheckout: (orgName: string, plan: string, cycle: string) =>
-    apiClient.post<CheckoutResponse>('/billing/org-checkout', { orgName, plan, cycle }).then(r => r.data),
+  // Personal plans only. Clubs are sales-led: there is no self-serve org checkout.
+  createCheckout: (plan: string, cycle: CheckoutCycle) =>
+    apiClient.post<CheckoutResponse>('/billing/checkout', { plan, cycle }).then(r => r.data),
 
   createPortal: () =>
     apiClient.post<{ url: string }>('/billing/portal').then(r => r.data),

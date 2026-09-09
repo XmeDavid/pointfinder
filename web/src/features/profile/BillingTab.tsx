@@ -6,8 +6,13 @@ import { useQuota } from '../../hooks/queries/useQuota'
 import { useBillingStatus } from '../../hooks/queries/useBillingStatus'
 import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
 import { useInvoices } from '@/hooks/queries/useInvoices'
+import { useWorkspaces } from '@/hooks/queries/useWorkspaces'
 import type { Invoice } from '@/types/billing'
 import { StatusBadge as SemanticStatusBadge, type StatusBadgeTone } from '@/components/status'
+import { BillingCycleToggle } from '@/components/ui/billing-cycle-toggle'
+import { CHECKOUT_CYCLE, formatPrice, PERSONAL_PRICE_EUR, type BillingCycleOption } from '@/lib/pricing'
+import { contactHref } from '@/lib/contact'
+import { hasPermission, OrgPermission } from '@/types/organization'
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -199,21 +204,31 @@ export function BillingTab() {
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
   const { data: billingStatus } = useBillingStatus()
+  const { data: workspaces } = useWorkspaces()
   const unlimitedLabel = t('billingProgress.unlimited')
   const checkout = useCreateCheckout()
   const portal = useCreatePortal()
   const orgPortal = useCreateOrgPortal()
+  const [cycle, setCycle] = useState<BillingCycleOption>('monthly')
 
   const invoicesQuery = useInvoices()
   const allInvoices = invoicesQuery.data?.pages.flatMap((p) => p.invoices) ?? []
 
   const isOrg = active.type === 'org'
   const tier = quota?.tier ?? 'free'
-  const isPaying = tier !== 'free'
-  const isClubOrg = isOrg && tier === 'base'
-  const isHighOrg = isOrg && tier === 'high'
   const isProPersonal = !isOrg && tier === 'pro'
-  const showUpgradeSection = !isPaying || isClubOrg
+
+  // Club subscriptions are sold and invoiced by us, so only a member who holds
+  // MANAGE_BILLING ever sees subscription controls in an org workspace.
+  const orgWorkspace =
+    active.type === 'org'
+      ? workspaces?.organizations.find((org) => org.id === active.orgId)
+      : undefined
+  const canManageBilling = isOrg
+    ? orgWorkspace != null && hasPermission(orgWorkspace.permissions, OrgPermission.MANAGE_BILLING)
+    : true
+  const showPersonalUpgrade = !isOrg && !isProPersonal
+  const showManageSubscription = canManageBilling && tier !== 'free'
 
   return (
     <>
@@ -222,12 +237,13 @@ export function BillingTab() {
           {t('billing.currentPlan', 'Current plan')}
         </p>
         <p className="text-xl font-semibold text-foreground capitalize">{tier}</p>
-        {(isPaying && !isClubOrg) && (
+        {showManageSubscription && (
           <button
-            onClick={() => isOrg && active.type === 'org'
+            onClick={() => active.type === 'org'
               ? orgPortal.mutate(active.orgId)
               : portal.mutate()}
             disabled={portal.isPending || orgPortal.isPending}
+            data-testid="billing-manage-subscription"
             className="mt-4 text-sm text-primary hover:underline disabled:opacity-50"
           >
             {t('billing.manageSub', 'Manage subscription')}
@@ -250,116 +266,76 @@ export function BillingTab() {
         </div>
       )}
 
-      {showUpgradeSection && (
-        <div className="space-y-4 max-w-lg">
+      {showPersonalUpgrade && (
+        <div className="space-y-4 max-w-lg" data-testid="billing-personal-upgrade">
           <h2 className="text-lg font-semibold text-foreground">
             {t('billing.upgrade', 'Upgrade')}
           </h2>
 
-          {!isOrg && !isProPersonal && (
-            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">Pro</p>
-                <p className="text-sm text-muted-foreground">
-                  {t(
-                    'billing.proDesc',
-                    'Unlimited games, up to 5 operators, unlimited bases',
-                  )}
-                </p>
+          <div className="rounded-xl border border-border p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="font-medium text-foreground">{t('billing.proPlan')}</p>
+                <p className="text-sm text-muted-foreground">{t('billing.proDesc')}</p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-foreground">
-                  €0.99
-                  <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                </p>
-                <button
-                  onClick={() => checkout.mutate({ plan: 'pro', cycle: 'monthly' })}
-                  disabled={checkout.isPending}
-                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
-                >
-                  {t('billing.subscribe', 'Subscribe')}
-                </button>
-              </div>
+              <BillingCycleToggle
+                value={cycle}
+                onChange={setCycle}
+                label={t('billing.billingCycleLabel')}
+                monthlyLabel={t('billing.monthly')}
+                yearlyLabel={t('billing.yearly')}
+                className="shrink-0"
+              />
             </div>
-          )}
 
-          {isOrg && !isPaying && (
-            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
+            <div className="mt-4 flex items-end justify-between gap-4">
               <div>
-                <p className="font-medium text-foreground">{t('billing.clubPlan', 'Club')}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t('billing.clubDesc', '10 members, 10 live games')}
+                <p className="text-lg font-bold text-foreground" data-testid="billing-pro-price">
+                  {formatPrice(PERSONAL_PRICE_EUR[cycle], i18n.language)}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {cycle === 'yearly' ? t('billing.perYear') : t('billing.perMonth')}
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground" data-testid="billing-pro-savings">
+                  {cycle === 'yearly' ? t('billing.yearlySavings') : t('billing.yearlyOffer')}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-foreground">
-                  €25
-                  <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
-                </p>
-                <button
-                  onClick={() =>
-                    checkout.mutate({
-                      plan: 'org-base',
-                      cycle: 'annual',
-                      orgId: active.type === 'org' ? active.orgId : undefined,
-                    })
-                  }
-                  disabled={checkout.isPending}
-                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
-                >
-                  {t('billing.subscribe', 'Subscribe')}
-                </button>
-              </div>
+              <button
+                onClick={() => checkout.mutate({ plan: 'pro', cycle: CHECKOUT_CYCLE[cycle] })}
+                disabled={checkout.isPending}
+                data-testid="billing-subscribe-pro"
+                className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
+              >
+                {t('billing.subscribe', 'Subscribe')}
+              </button>
             </div>
-          )}
 
-          {(isOrg && (!isPaying || isClubOrg)) && !isHighOrg && (
-            <div className="rounded-xl border border-border p-6 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">{t('billing.institutionPlan', 'Institution')}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t('billing.institutionDesc', '25 members, unlimited games')}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-foreground">
-                  €99.99
-                  <span className="text-sm font-normal text-muted-foreground">/{t('billing.year', 'yr')}</span>
-                </p>
-                <button
-                  onClick={() =>
-                    checkout.mutate({
-                      plan: 'org-high',
-                      cycle: 'annual',
-                      orgId: active.type === 'org' ? active.orgId : undefined,
-                    })
-                  }
-                  disabled={checkout.isPending}
-                  className="mt-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm disabled:opacity-50"
-                >
-                  {isClubOrg
-                    ? t('billing.upgradeToInstitution', 'Upgrade to Institution')
-                    : t('billing.subscribe', 'Subscribe')}
-                </button>
-              </div>
-            </div>
-          )}
+            {checkout.isError && (
+              <p className="mt-3 text-sm text-destructive" role="alert">
+                {t('common.serverError')}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
-      {(isHighOrg || isProPersonal) && (
-        <div className="rounded-xl border border-border p-6 mb-8 max-w-md">
-          <button
-            onClick={() => isOrg && active.type === 'org'
-              ? orgPortal.mutate(active.orgId)
-              : portal.mutate()}
-            disabled={portal.isPending || orgPortal.isPending}
-            className="text-sm text-primary hover:underline disabled:opacity-50"
-          >
-            {t('billing.manageSub', 'Manage subscription')}
-          </button>
-        </div>
-      )}
+      {/* Clubs are sales-led: no self-serve club checkout lives in the product. */}
+      <div className="mt-8 rounded-xl border border-border p-6 max-w-lg" data-testid="billing-club-info">
+        <h2 className="text-lg font-semibold text-foreground">{t('billing.clubPlan', 'Club')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('billing.clubDesc')}</p>
+        <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+          <li>{t('billing.clubIncludesMembers')}</li>
+          <li>{t('billing.clubIncludesResources')}</li>
+          <li>{t('billing.clubIncludesInvoice')}</li>
+        </ul>
+        <a
+          href={contactHref()}
+          data-testid="billing-club-contact"
+          className="mt-4 inline-flex text-sm text-primary hover:underline"
+        >
+          {t('billing.clubContact')}
+        </a>
+      </div>
 
       {quota && (
         <div className="mt-8 max-w-md">

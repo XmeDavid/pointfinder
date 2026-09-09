@@ -1,6 +1,7 @@
 import { openExternal } from '@/platform/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { billingApi } from '../../lib/api/billing'
+import type { CheckoutCycle } from '../../lib/pricing'
 
 function invalidateBillingCaches(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['workspaces'] })
@@ -12,8 +13,8 @@ function invalidateBillingCaches(qc: ReturnType<typeof useQueryClient>) {
 export function useCreateCheckout() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ plan, cycle, orgId }: { plan: string; cycle: string; orgId?: string }) =>
-      billingApi.createCheckout(plan, cycle, orgId),
+    mutationFn: ({ plan, cycle }: { plan: string; cycle: CheckoutCycle }) =>
+      billingApi.createCheckout(plan, cycle),
     onSuccess: (data) => {
       invalidateBillingCaches(qc)
       return openExternal(data.url)

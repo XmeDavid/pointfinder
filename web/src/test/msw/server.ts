@@ -14,6 +14,9 @@ import { submissionsHandlers } from './handlers/submissions'
 import { rescueHandlers } from './handlers/rescue'
 import { notificationsHandlers } from './handlers/notifications'
 import { tutorialsHandlers } from './handlers/tutorials'
+import { billingHandlers } from './handlers/billing'
+import { workspacesHandlers } from './handlers/workspaces'
+import { orgsHandlers } from './handlers/orgs'
 
 export const server = setupServer(
   ...authHandlers,
@@ -31,4 +34,7 @@ export const server = setupServer(
   ...rescueHandlers,
   ...notificationsHandlers,
   ...tutorialsHandlers,
+  ...billingHandlers,
+  ...workspacesHandlers,
+  ...orgsHandlers,
 )

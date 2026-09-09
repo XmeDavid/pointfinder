@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle } from 'lucide-react'
@@ -9,9 +9,7 @@ import { SurfacePanel } from '@/components/layout/SurfacePanel'
 export function BillingSuccessPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
   const qc = useQueryClient()
-  const isNewOrg = params.get('new_org') === 'true'
 
   useEffect(() => {
     qc.invalidateQueries({ queryKey: ['workspaces'] })
@@ -27,9 +25,7 @@ export function BillingSuccessPage() {
           <CheckCircle className="h-16 w-16 text-success" />
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-2">
-          {isNewOrg
-            ? t('billing.orgCreated', 'Organization created!')
-            : t('billing.successTitle', 'Subscription activated!')}
+          {t('billing.successTitle', 'Subscription activated!')}
         </h1>
         <p className="text-muted-foreground mb-8">
           {t('billing.successDesc', 'Your subscription is now active.')}
