@@ -56,6 +56,8 @@ class GameImportExportServiceTest {
     private StageRepository stageRepository;
     @Mock
     private QuotaService quotaService;
+    @Mock
+    private OrganizationService organizationService;
 
     private GameImportExportService service;
 
@@ -86,7 +88,8 @@ class GameImportExportServiceTest {
                 gameAccessService,
                 gameTagRepository,
                 stageRepository,
-                quotaService
+                quotaService,
+                organizationService
         );
         // Default stub: no existing tags for any game (exportGame calls this)
         org.mockito.Mockito.lenient()

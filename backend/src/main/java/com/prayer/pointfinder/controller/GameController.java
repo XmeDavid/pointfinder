@@ -29,9 +29,14 @@ public class GameController {
     private final GameService gameService;
     private final GameImportExportService gameImportExportService;
 
+    /**
+     * One workspace at a time: without {@code orgId} the caller's personal
+     * games, with it the organization's games (members only).
+     */
     @GetMapping
-    public ResponseEntity<List<GameResponse>> getAllGames() {
-        return ResponseEntity.ok(gameService.getAllGames());
+    public ResponseEntity<List<GameResponse>> getAllGames(
+            @RequestParam(name = "orgId", required = false) UUID orgId) {
+        return ResponseEntity.ok(gameService.getAllGames(orgId));
     }
 
     @GetMapping("/{id}")

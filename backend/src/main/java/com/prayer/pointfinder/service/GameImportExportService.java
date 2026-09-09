@@ -45,6 +45,7 @@ public class GameImportExportService {
     private final GameTagRepository gameTagRepository;
     private final StageRepository stageRepository;
     private final QuotaService quotaService;
+    private final OrganizationService organizationService;
 
     @Transactional(readOnly = true)
     public GameExportDto exportGame(UUID gameId) {
@@ -263,6 +264,7 @@ public class GameImportExportService {
                         : 15)
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
+                .organization(resolveImportOrg(request.getOrgId()))
                 .build();
         newGame.getOperators().add(currentUser);
         // An imported file may carry location bases from a plan that had them.
@@ -541,6 +543,17 @@ public class GameImportExportService {
     }
 
     // ── Validation helpers ───────────────────────────────────────────
+
+    /**
+     * Imports into an organization when the caller asked for one and may
+     * create games there; null means the personal workspace.
+     */
+    private Organization resolveImportOrg(UUID orgId) {
+        if (orgId == null) return null;
+        Organization org = organizationService.findOrgOrThrow(orgId);
+        organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.CREATE_GAMES);
+        return org;
+    }
 
     private void validateImportData(GameExportDto data) {
         if (!"1.0".equals(data.getExportVersion())) {

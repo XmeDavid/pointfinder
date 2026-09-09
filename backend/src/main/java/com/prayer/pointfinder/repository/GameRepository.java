@@ -35,6 +35,15 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
     @Query("SELECT g FROM Game g WHERE g.createdBy.id = :userId OR :userId IN (SELECT o.id FROM g.operators o)")
     List<Game> findByOperatorOrCreator(@Param("userId") UUID userId);
 
+    /**
+     * The personal workspace: games the caller created or operates that belong
+     * to no organization. Org games are listed separately, per workspace, so
+     * the dashboard shows one workspace at a time.
+     */
+    @Query("SELECT g FROM Game g WHERE g.organization IS NULL "
+            + "AND (g.createdBy.id = :userId OR :userId IN (SELECT o.id FROM g.operators o))")
+    List<Game> findPersonalByOperatorOrCreator(@Param("userId") UUID userId);
+
     @Query("SELECT g FROM Game g JOIN g.operators o WHERE o.id = :userId")
     List<Game> findByOperatorId(@Param("userId") UUID userId);
 
@@ -107,4 +116,6 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
     long countOperatorsByGameId(@Param("gameId") UUID gameId);
 
     List<Game> findByOrganizationIdIn(List<UUID> orgIds);
+
+    List<Game> findByOrganizationId(UUID orgId);
 }

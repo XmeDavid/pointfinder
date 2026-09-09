@@ -24,7 +24,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -40,7 +39,6 @@ import java.util.UUID;
 public class GameService {
 
     private final GameRepository gameRepository;
-    private final OrgMembershipRepository orgMembershipRepository;
     private final UserRepository userRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
@@ -50,6 +48,7 @@ public class GameService {
     private final GameReadinessValidator gameReadinessValidator;
     private final QuotaService quotaService;
     private final UserTutorialProgressRepository progressRepository;
+    private final OrganizationService organizationService;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -61,31 +60,27 @@ public class GameService {
 
     // ── Read ─────────────────────────────────────────────────────────
 
+    /**
+     * Lists one workspace at a time, mirroring the operator's workspace
+     * switcher. {@code orgId} null means the personal workspace: games the
+     * caller created or operates that belong to no organization. With an
+     * {@code orgId} it is that organization's games, for members that may
+     * operate them.
+     */
     @Transactional(readOnly = true)
-    public List<GameResponse> getAllGames() {
+    public List<GameResponse> getAllGames(UUID orgId) {
         User currentUser = SecurityUtils.getCurrentUser();
         UUID userId = currentUser.getId();
-        currentUser = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        // All users (including admin) see only their own games
-        List<Game> personalGames = gameRepository.findByOperatorOrCreator(currentUser.getId());
-
-        // Org games (from all orgs user is member of)
-        List<UUID> orgIds = orgMembershipRepository.findByUserId(currentUser.getId()).stream()
-                .map(m -> m.getOrganization().getId())
-                .toList();
-        List<Game> orgGames = orgIds.isEmpty() ? List.of() :
-                gameRepository.findByOrganizationIdIn(orgIds);
-
-        // Merge, deduplicating by game ID
-        Set<UUID> seen = new java.util.HashSet<>();
-        List<Game> merged = new java.util.ArrayList<>(personalGames);
-        personalGames.forEach(g -> seen.add(g.getId()));
-        orgGames.stream()
-                .filter(g -> seen.add(g.getId()))
-                .forEach(merged::add);
-        List<Game> games = merged;
+        List<Game> games;
+        if (orgId == null) {
+            games = gameRepository.findPersonalByOperatorOrCreator(userId);
+        } else {
+            organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.OPERATE_GAMES);
+            games = gameRepository.findByOrganizationId(orgId);
+        }
         return games.stream().map(this::toResponse).toList();
     }
 
@@ -122,9 +117,18 @@ public class GameService {
         // through this dialog. The flag is honoured only while that run is in
         // progress; anything else is a normal game under the normal quota.
         boolean practice = PracticeGames.isFirstGameRun(progressRepository, userId, request.getTutorialScenario());
+        // A tutorial create is always personal: the request asked for a practice
+        // game, so an orgId the dialog happened to carry is ignored rather
+        // than parking a tutorial game in an organization. This holds even
+        // when the run has since finished and this becomes a normal game.
+        boolean tutorialCreate = request.getTutorialScenario() != null
+                && !request.getTutorialScenario().isBlank();
+        Organization organization = tutorialCreate ? null : resolveCreateOrg(request.getOrgId());
         if (practice) {
             PracticeGames.ensureNoActivePracticeGame(gameRepository, userId);
-        } else {
+        } else if (organization == null) {
+            // Org games live under the org's live-game limit, checked at
+            // go-live; only personal games count against this one.
             quotaService.enforceActiveGameLimit(currentUser);
         }
 
@@ -141,6 +145,7 @@ public class GameService {
                 .defaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
+                .organization(organization)
                 .tutorialScenario(practice ? PracticeGames.FIRST_GAME : null)
                 .tutorialExpiresAt(practice ? PracticeGames.expiry() : null)
                 .build();
@@ -227,7 +232,13 @@ public class GameService {
 
     @Transactional(timeout = 10)
     public void deleteGame(UUID id) {
-        gameAccessService.ensureCurrentUserCanAccessGame(id);
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        gameAccessService.ensureCurrentUserCanAccessGame(game);
+        if (game.getOrganization() != null) {
+            organizationService.ensureCurrentUserHasPermission(
+                    game.getOrganization().getId(), OrgPermission.DELETE_GAMES);
+        }
         gameRepository.deleteById(id);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -286,6 +297,11 @@ public class GameService {
         }
 
         if (target == GameStatus.live) {
+            // An org game is bounded by the org plan's live-game limit rather
+            // than the creator's personal active-game quota.
+            if (game.getOrganization() != null) {
+                quotaService.enforceOrgLiveGameLimit(game.getOrganization());
+            }
             gameReadinessValidator.validateGoLivePrerequisites(game);
 
             if (game.getStartDate() == null) {
@@ -329,6 +345,17 @@ public class GameService {
     }
 
     // ── Private helpers ──────────────────────────────────────────────
+
+    /**
+     * Resolves the target organization for a new game, rejecting a caller that
+     * is not a member with {@code CREATE_GAMES}. Admins bypass, as everywhere.
+     */
+    private Organization resolveCreateOrg(UUID orgId) {
+        if (orgId == null) return null;
+        Organization org = organizationService.findOrgOrThrow(orgId);
+        organizationService.ensureCurrentUserHasPermission(orgId, OrgPermission.CREATE_GAMES);
+        return org;
+    }
 
     private void validateStatusTransition(GameStatus current, GameStatus target) {
         if (current == target) {

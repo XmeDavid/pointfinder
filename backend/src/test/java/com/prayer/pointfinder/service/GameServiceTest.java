@@ -40,7 +40,7 @@ class GameServiceTest {
     @Mock
     private GameRepository gameRepository;
     @Mock
-    private OrgMembershipRepository orgMembershipRepository;
+    private com.prayer.pointfinder.service.OrganizationService organizationService;
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -114,11 +114,12 @@ class GameServiceTest {
                 gameAccessService,
                 gameTagRepository,
                 stageRepository,
-                quotaService
+                quotaService,
+                organizationService
         );
 
         gameService = new GameService(
-                gameRepository, orgMembershipRepository, userRepository,
+                gameRepository, userRepository,
                 gameAccessService, fileStorageService,
                 eventBroadcaster, challengeAssignmentService,
                 new GameProgressResetService(submissionRepository, checkInRepository,
@@ -126,7 +127,7 @@ class GameServiceTest {
                 new GameReadinessValidator(baseRepository, challengeRepository,
                         teamRepository, assignmentRepository, teamVariableService, stageRepository,
                         quotaService),
-                quotaService, progressRepository
+                quotaService, progressRepository, organizationService
         );
 
         // Default stub: exportGame calls this to build the tags section

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @ValidDateRange(startDateField = "startDate", endDateField = "endDate")
@@ -45,4 +46,12 @@ public class CreateGameRequest {
      */
     @jakarta.validation.constraints.Size(max = 64)
     private String tutorialScenario;
+
+    /**
+     * Creates the game inside this organization instead of the caller's
+     * personal workspace. The caller must be a member with
+     * {@code CREATE_GAMES}. Ignored while {@code tutorialScenario} is set:
+     * practice games are always personal.
+     */
+    private UUID orgId;
 }

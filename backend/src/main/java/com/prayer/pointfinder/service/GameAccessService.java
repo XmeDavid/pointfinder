@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.entity.OrgPermission;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.entity.UserRole;
@@ -54,11 +55,15 @@ public class GameAccessService {
             return;
         }
 
-        // Check if org member (for org games)
+        // Org games are visible to the org's members that may operate games.
+        // OPERATE_GAMES is granted to every member by default, so this keeps
+        // the previous "any member" behaviour while letting an owner revoke it.
         if (game.getOrganization() != null) {
-            boolean isOrgMember = orgMembershipRepository.existsByOrganizationIdAndUserId(
-                game.getOrganization().getId(), currentUserId);
-            if (isOrgMember) {
+            boolean canOperate = orgMembershipRepository
+                    .findByOrganizationIdAndUserId(game.getOrganization().getId(), currentUserId)
+                    .map(m -> m.hasPermission(OrgPermission.OPERATE_GAMES))
+                    .orElse(false);
+            if (canOperate) {
                 return;
             }
         }
