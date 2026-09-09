@@ -18,8 +18,7 @@ type Detail = { type: 'user'; id: string } | { type: 'org'; id: string } | null
 const TIER_TONES: Record<string, StatusBadgeTone> = {
   free: 'muted',
   pro: 'info',
-  base: 'override',
-  high: 'warning',
+  club: 'override',
 }
 
 const STATUS_TONES: Record<string, StatusBadgeTone> = {

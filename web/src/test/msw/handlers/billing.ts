@@ -8,7 +8,6 @@ interface RecordedCheckout {
 
 let checkouts: RecordedCheckout[] = []
 let portals = 0
-let orgPortals: string[] = []
 let status: UserSubscription | null = null
 let invoices: InvoiceListResponse = { invoices: [], hasMore: false }
 
@@ -20,7 +19,6 @@ export const billingStore = {
   reset(): void {
     checkouts = []
     portals = 0
-    orgPortals = []
     status = null
     invoices = { invoices: [], hasMore: false }
   },
@@ -37,9 +35,6 @@ export const billingStore = {
   portalCount(): number {
     return portals
   },
-  orgPortals(): string[] {
-    return [...orgPortals]
-  },
 }
 
 export const billingHandlers = [
@@ -52,12 +47,6 @@ export const billingHandlers = [
   http.post('/api/billing/portal', () => {
     portals += 1
     return HttpResponse.json({ url: 'https://portal.example/session' })
-  }),
-
-  http.post('/api/billing/org-portal', async ({ request }) => {
-    const body = (await request.json()) as { orgId: string }
-    orgPortals.push(body.orgId)
-    return HttpResponse.json({ url: 'https://portal.example/org' })
   }),
 
   http.get('/api/billing/status', () =>

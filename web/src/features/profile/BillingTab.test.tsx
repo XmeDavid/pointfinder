@@ -103,7 +103,7 @@ describe('BillingTab in an org workspace', () => {
     useWorkspaceContext.setState({
       active: { type: 'org', orgId: 'org-1', orgName: 'Scout Group 42' },
     })
-    workspacesStore.seedOrgQuota(createQuota({ context: 'org', orgId: 'org-1', tier: 'base' }))
+    workspacesStore.seedOrgQuota(createQuota({ context: 'org', orgId: 'org-1', tier: 'club' }))
   })
 
   it('hides upgrade and subscription controls from a member without MANAGE_BILLING', async () => {
@@ -115,16 +115,14 @@ describe('BillingTab in an org workspace', () => {
     expect(screen.queryByTestId('billing-manage-subscription')).not.toBeInTheDocument()
   })
 
-  it('shows the subscription portal to a member who holds MANAGE_BILLING', async () => {
+  it('offers no self-serve portal even to a member who holds MANAGE_BILLING', async () => {
     workspacesStore.seedOrganizations([
       createOrgWorkspace({ permissions: OrgPermission.OPERATE_GAMES | OrgPermission.MANAGE_BILLING }),
     ])
-    const user = userEvent.setup()
     renderTab()
 
-    const manage = await screen.findByTestId('billing-manage-subscription')
-    await user.click(manage)
-
-    await waitFor(() => expect(billingStore.orgPortals()).toEqual(['org-1']))
+    // A club is invoiced by us; there is no org billing portal to open.
+    await waitFor(() => expect(screen.getByTestId('billing-club-info')).toBeInTheDocument())
+    expect(screen.queryByTestId('billing-manage-subscription')).not.toBeInTheDocument()
   })
 })

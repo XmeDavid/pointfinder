@@ -1,5 +1,6 @@
 import apiClient from './client'
 import type { Organization, OrgInvite, OrgMember } from '../../types/organization'
+import type { OrgInvoice } from '../../types/billing'
 
 export const organizationsApi = {
   create: (name: string) =>
@@ -13,6 +14,18 @@ export const organizationsApi = {
 
   delete: (orgId: string) =>
     apiClient.delete(`/orgs/${orgId}`),
+
+  /** Hand the club to an existing member. The target must already be a member. */
+  transferOwnership: (orgId: string, userId: string) =>
+    apiClient.post<Organization>(`/orgs/${orgId}/transfer-ownership`, { userId }).then(r => r.data),
+
+  /** A non-creator member removes themself. The creator transfers ownership instead. */
+  leave: (orgId: string) =>
+    apiClient.post(`/orgs/${orgId}/leave`),
+
+  /** The club's own invoice history. Needs MANAGE_BILLING. */
+  listInvoices: (orgId: string) =>
+    apiClient.get<OrgInvoice[]>(`/orgs/${orgId}/invoices`).then(r => r.data),
 
   getMembers: (orgId: string) =>
     apiClient.get<OrgMember[]>(`/orgs/${orgId}/members`).then(r => r.data),
@@ -38,4 +51,8 @@ export const organizationsApi = {
 
   acceptOrgInvite: (inviteId: string) =>
     apiClient.post<OrgMember>(`/org-invites/${inviteId}/accept`).then(r => r.data),
+
+  /** The invitee turns a pending invite down. */
+  declineOrgInvite: (inviteId: string) =>
+    apiClient.post(`/org-invites/${inviteId}/decline`),
 }

@@ -1,20 +1,20 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { billingApi } from '@/lib/api/billing'
 import { useAuthStore } from '@/lib/auth/store'
-import { useWorkspaceContext } from '@/stores/workspaceContext'
 
+/**
+ * The caller's own Stripe invoices. Personal only: a club is invoiced by us and
+ * reads its invoices from `useOrgInvoices` instead.
+ */
 export function useInvoices() {
   const { isAuthenticated, accessToken } = useAuthStore()
-  const { active } = useWorkspaceContext()
-  const orgId = active.type === 'org' ? active.orgId : undefined
 
   return useInfiniteQuery({
-    queryKey: ['invoices', orgId],
+    queryKey: ['invoices'],
     queryFn: ({ pageParam }) =>
       billingApi.getInvoices({
         limit: 10,
         startingAfter: pageParam ?? undefined,
-        orgId,
       }),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => {

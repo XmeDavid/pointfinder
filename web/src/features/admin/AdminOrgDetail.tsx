@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { adminApi } from '@/lib/api/admin'
+import type { UpdateClubRequest } from '@/types/admin'
+import type { OrgTier, SubscriptionStatus } from '@/types/organization'
 import { Spinner } from '@/components/feedback/Spinner'
 import { Button } from '@/components/ui/button'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
 import { EmptyState } from '@/components/feedback/EmptyState'
 
-const ORG_TIERS = ['free', 'base', 'high']
+const ORG_TIERS = ['free', 'club'] as const
 const SUBSCRIPTION_STATUSES = ['active', 'past_due', 'grace_period', 'frozen', 'cancelled']
 
 interface Props {
@@ -50,8 +52,7 @@ export function AdminOrgDetail({ orgId, onBack }: Props) {
   }
 
   const override = useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      adminApi.overrideOrgSubscription(orgId, data),
+    mutationFn: (data: UpdateClubRequest) => adminApi.updateClub(orgId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'org', orgId] })
       queryClient.invalidateQueries({ queryKey: ['admin', 'orgs'] })
@@ -71,7 +72,12 @@ export function AdminOrgDetail({ orgId, onBack }: Props) {
         return
       }
     }
-    override.mutate({ tier, status, quotaOverrides, adminNote: adminNote || null })
+    override.mutate({
+      tier: tier as OrgTier,
+      status: status as SubscriptionStatus,
+      quotaOverrides: quotaOverrides as UpdateClubRequest['quotaOverrides'],
+      adminNote: adminNote || null,
+    })
   }
 
   const formatBytes = (bytes: number) => {

@@ -33,10 +33,11 @@ function createOrganization(overrides: Partial<Organization> = {}): Organization
     name: 'Scout Group 42',
     slug: 'scout-group-42',
     createdBy: 'user-1',
-    subscriptionTier: 'base',
+    subscriptionTier: 'club',
     subscriptionStatus: 'active',
     memberCount: 4,
     quotaOverrides: null,
+    termEnd: '2027-07-31T00:00:00Z',
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,
   }

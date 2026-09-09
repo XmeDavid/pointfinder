@@ -32,14 +32,3 @@ export function useCreatePortal() {
     },
   })
 }
-
-export function useCreateOrgPortal() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (orgId: string) => billingApi.createOrgPortal(orgId),
-    onSuccess: (data) => {
-      invalidateBillingCaches(qc)
-      return openExternal(data.url)
-    },
-  })
-}

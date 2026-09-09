@@ -26,10 +26,11 @@ export function createOrgWorkspace(overrides: Partial<OrgWorkspace> = {}): OrgWo
     id: 'org-1',
     name: 'Scout Group 42',
     slug: 'scout-group-42',
-    tier: 'base',
+    tier: 'club',
     status: 'active',
     memberCount: 4,
     liveGames: 0,
+    termEnd: '2027-07-31T00:00:00Z',
     // OPERATE_GAMES | CREATE_GAMES only: no billing, no permission management.
     permissions: 3,
     ...overrides,
@@ -53,13 +54,13 @@ let workspace: Workspace = {
   organizations: [],
 }
 let personalQuota: QuotaResponse = createQuota()
-let orgQuota: QuotaResponse = createQuota({ context: 'org', orgId: 'org-1', tier: 'base' })
+let orgQuota: QuotaResponse = createQuota({ context: 'org', orgId: 'org-1', tier: 'club' })
 
 export const workspacesStore = {
   reset(): void {
     workspace = { personal: { tier: 'free', status: 'active', activeGames: 0 }, organizations: [] }
     personalQuota = createQuota()
-    orgQuota = createQuota({ context: 'org', orgId: 'org-1', tier: 'base' })
+    orgQuota = createQuota({ context: 'org', orgId: 'org-1', tier: 'club' })
   },
   seed(next: Workspace): void {
     workspace = next

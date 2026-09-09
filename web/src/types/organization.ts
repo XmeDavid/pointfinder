@@ -7,6 +7,8 @@ export interface Organization {
   subscriptionStatus: SubscriptionStatus
   memberCount: number
   quotaOverrides: Record<string, unknown> | null
+  /** End of the paid club term ("paid until"), or null when the org has no term. */
+  termEnd: string | null
   createdAt: string
 }
 
@@ -19,7 +21,7 @@ export interface OrgMember {
   joinedAt: string
 }
 
-export type OrgTier = 'free' | 'base' | 'high'
+export type OrgTier = 'free' | 'club'
 export type IndividualTier = 'free' | 'pro'
 export type SubscriptionStatus = 'active' | 'past_due' | 'grace_period' | 'frozen' | 'cancelled'
 export type BillingCycle = 'monthly' | 'annual' | 'lifetime'
@@ -58,6 +60,8 @@ export interface OrgWorkspace {
   memberCount: number
   liveGames: number
   permissions: number
+  /** End of the paid club term ("paid until"), or null when the org has no term. */
+  termEnd: string | null
 }
 
 export interface OrgInvite {

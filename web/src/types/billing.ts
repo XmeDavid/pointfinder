@@ -1,3 +1,5 @@
+import type { SubscriptionStatus } from './organization'
+
 export interface QuotaResponse {
   context: 'personal' | 'org'
   orgId: string | null
@@ -5,6 +7,30 @@ export interface QuotaResponse {
   limits: QuotaLimits
   usage: QuotaUsage
   overrides: Record<string, unknown> | null
+  /** The workspace's subscription status. Absent on older servers. */
+  status?: SubscriptionStatus
+  /** End of the paid club term ("paid until"), or null when there is no term. */
+  termEnd?: string | null
+}
+
+/**
+ * One club invoice as both the admin panel and the club's own billing tab show
+ * it. Amounts are in the smallest currency unit, as Stripe reports them.
+ */
+export interface OrgInvoice {
+  id: string
+  orgId: string
+  stripeInvoiceId: string
+  amountCents: number
+  currency: string
+  description: string
+  status: 'draft' | 'open' | 'paid' | 'void' | 'uncollectible'
+  hostedInvoiceUrl: string | null
+  invoicePdf: string | null
+  dueAt: string | null
+  paidAt: string | null
+  termMonths: number
+  createdAt: string
 }
 
 export interface QuotaLimits {

@@ -4,15 +4,13 @@ import { ChevronDown, ChevronUp, Download } from 'lucide-react'
 import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { useQuota } from '../../hooks/queries/useQuota'
 import { useBillingStatus } from '../../hooks/queries/useBillingStatus'
-import { useCreateCheckout, useCreatePortal, useCreateOrgPortal } from '../../hooks/mutations/useBillingMutations'
+import { useCreateCheckout, useCreatePortal } from '../../hooks/mutations/useBillingMutations'
 import { useInvoices } from '@/hooks/queries/useInvoices'
-import { useWorkspaces } from '@/hooks/queries/useWorkspaces'
 import type { Invoice } from '@/types/billing'
 import { StatusBadge as SemanticStatusBadge, type StatusBadgeTone } from '@/components/status'
 import { BillingCycleToggle } from '@/components/ui/billing-cycle-toggle'
 import { CHECKOUT_CYCLE, formatPrice, PERSONAL_PRICE_EUR, type BillingCycleOption } from '@/lib/pricing'
 import { contactHref } from '@/lib/contact'
-import { hasPermission, OrgPermission } from '@/types/organization'
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -204,11 +202,9 @@ export function BillingTab() {
   const { active } = useWorkspaceContext()
   const { data: quota } = useQuota()
   const { data: billingStatus } = useBillingStatus()
-  const { data: workspaces } = useWorkspaces()
   const unlimitedLabel = t('billingProgress.unlimited')
   const checkout = useCreateCheckout()
   const portal = useCreatePortal()
-  const orgPortal = useCreateOrgPortal()
   const [cycle, setCycle] = useState<BillingCycleOption>('monthly')
 
   const invoicesQuery = useInvoices()
@@ -218,17 +214,10 @@ export function BillingTab() {
   const tier = quota?.tier ?? 'free'
   const isProPersonal = !isOrg && tier === 'pro'
 
-  // Club subscriptions are sold and invoiced by us, so only a member who holds
-  // MANAGE_BILLING ever sees subscription controls in an org workspace.
-  const orgWorkspace =
-    active.type === 'org'
-      ? workspaces?.organizations.find((org) => org.id === active.orgId)
-      : undefined
-  const canManageBilling = isOrg
-    ? orgWorkspace != null && hasPermission(orgWorkspace.permissions, OrgPermission.MANAGE_BILLING)
-    : true
   const showPersonalUpgrade = !isOrg && !isProPersonal
-  const showManageSubscription = canManageBilling && tier !== 'free'
+  // Only a personal subscription has a Stripe portal. A club is invoiced by us,
+  // so its billing members get the invoice list, not a self-serve portal.
+  const showManageSubscription = !isOrg && isProPersonal
 
   return (
     <>
@@ -239,10 +228,8 @@ export function BillingTab() {
         <p className="text-xl font-semibold text-foreground capitalize">{tier}</p>
         {showManageSubscription && (
           <button
-            onClick={() => active.type === 'org'
-              ? orgPortal.mutate(active.orgId)
-              : portal.mutate()}
-            disabled={portal.isPending || orgPortal.isPending}
+            onClick={() => portal.mutate()}
+            disabled={portal.isPending}
             data-testid="billing-manage-subscription"
             className="mt-4 text-sm text-primary hover:underline disabled:opacity-50"
           >
