@@ -1032,6 +1032,8 @@
     "QUOTA_FILE_SIZE_EXCEEDED": "Diese Datei ist größer, als dein Plan erlaubt.",
     "QUOTA_PLAYERS_PER_GAME_EXCEEDED": "Dieses Spiel hat das Spielerlimit deines Plans erreicht.",
     "QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED": "Standort-Check-in ist Teil der bezahlten Pläne. Kostenlose Spiele nutzen NFC-Tags oder QR-Codes.",
+    "QUOTA_RESOURCE_STORAGE_EXCEEDED": "Dieser Arbeitsbereich hat keinen Speicher mehr. Lösche einige Dateien oder wechsle den Plan.",
+    "ORG_CREATOR_CANNOT_LEAVE": "Dir gehört diese Organisation. Übertrage die Inhaberschaft an ein anderes Mitglied, bevor du gehst.",
     "VARIABLE_REFERENCE_UNDEFINED": "Eine Challenge verweist auf eine Variable, die nicht für jedes Team einen Wert hat.",
     "TUTORIAL_SCENARIO_UNKNOWN": "Unbekanntes Tutorial.",
     "TUTORIAL_STATUS_UNKNOWN": "Unbekannter Tutorial-Status.",

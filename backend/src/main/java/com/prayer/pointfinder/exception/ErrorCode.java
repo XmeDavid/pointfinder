@@ -124,6 +124,12 @@ public enum ErrorCode {
     QUOTA_PLAYERS_PER_GAME_EXCEEDED,
     /** Location check-in is a paid feature; the free tier may only use NFC and QR bases. */
     QUOTA_LOCATION_CHECK_IN_NOT_ALLOWED,
+    /**
+     * The upload would push the workspace past its resource storage
+     * allowance. Like the member limit, this one is always enforced — it
+     * bounds real bytes in object storage, not a product feature.
+     */
+    QUOTA_RESOURCE_STORAGE_EXCEEDED,
 
     // ── Variables ─────────────────────────────────────────────────────────
     /**
@@ -174,6 +180,12 @@ public enum ErrorCode {
     ORG_INVALID_ENUM_VALUE,
     /** Ownership can only move to someone who is already a member of the org. */
     ORG_TRANSFER_TARGET_NOT_MEMBER,
+    /**
+     * The org's creator cannot walk out of their own org — an ownerless org
+     * cannot be administered, and {@code created_by} is NOT NULL. They must
+     * transfer ownership first.
+     */
+    ORG_CREATOR_CANNOT_LEAVE,
     /** Invoicing needs STRIPE_SECRET_KEY; this deployment has none configured. */
     INVOICE_STRIPE_NOT_CONFIGURED,
     /** The club has no billing email to invoice — no admin member and no pending invite. */

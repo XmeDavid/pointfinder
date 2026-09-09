@@ -79,6 +79,16 @@ public class OrganizationController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * A member's own way out of an org. The creator is refused with
+     * {@code ORG_CREATOR_CANNOT_LEAVE} — they transfer ownership first.
+     */
+    @PostMapping("/{orgId}/leave")
+    public ResponseEntity<Void> leaveOrg(@PathVariable UUID orgId) {
+        membershipService.leaveOrg(orgId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{orgId}/members/{userId}/permissions")
     public ResponseEntity<OrgMemberResponse> updatePermissions(@PathVariable UUID orgId,
                                                                 @PathVariable UUID userId,

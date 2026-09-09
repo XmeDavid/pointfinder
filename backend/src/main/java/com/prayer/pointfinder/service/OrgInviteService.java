@@ -4,6 +4,7 @@ import com.prayer.pointfinder.dto.response.OrgInviteResponse;
 import com.prayer.pointfinder.dto.response.OrgMemberResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.*;
 import com.prayer.pointfinder.security.SecurityUtils;
@@ -172,6 +173,38 @@ public class OrgInviteService {
         log.info("[ORG_INVITE] operation=acceptInvite orgId={} userId={} inviteId={}", org.getId(), userId, inviteId);
 
         return toMemberResponse(membership, currentUser);
+    }
+
+    /**
+     * The other half of {@link #acceptInvite}: the invitee refuses. The row is
+     * marked {@code declined} rather than deleted, so the org still sees what
+     * it sent and a later accept of the same invite is refused like any other
+     * processed one.
+     *
+     * <p>Only the addressee may decline, matched on email case-insensitively
+     * exactly as accept does. Someone else's invite is a {@code 403}, and an
+     * invite id that names nothing is a {@code 404}.
+     */
+    @Transactional(timeout = 10)
+    public void declineInvite(UUID inviteId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        OrgInvite invite = orgInviteRepository.findById(inviteId)
+                .orElseThrow(() -> new ResourceNotFoundException("OrgInvite", inviteId));
+
+        if (!invite.getEmail().equalsIgnoreCase(currentUser.getEmail())) {
+            throw new ForbiddenException("This invitation is not for you.");
+        }
+
+        if (invite.getStatus() != InviteStatus.pending) {
+            throw new BadRequestException("This invitation has already been processed.");
+        }
+
+        invite.setStatus(InviteStatus.declined);
+        orgInviteRepository.save(invite);
+
+        log.info("[ORG_INVITE] operation=declineInvite orgId={} userId={} inviteId={}",
+                invite.getOrganization().getId(), currentUser.getId(), inviteId);
     }
 
     /**

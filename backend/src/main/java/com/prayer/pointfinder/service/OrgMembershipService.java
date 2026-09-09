@@ -3,6 +3,7 @@ package com.prayer.pointfinder.service;
 import com.prayer.pointfinder.dto.response.OrgMemberResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.OrgMembershipRepository;
 import com.prayer.pointfinder.repository.OrganizationRepository;
@@ -86,6 +87,37 @@ public class OrgMembershipService {
 
         membershipRepository.deleteByOrganizationIdAndUserId(orgId, userId);
         log.info("[ORG] operation=removeMember orgId={} userId={} operator={}", orgId, userId, currentUser.getId());
+    }
+
+    /**
+     * The member's own way out. {@code DELETE /orgs/{id}/members/{userId}} can
+     * already do this for a member removing themselves, but a club member
+     * should not have to know their own user id — nor read a route that looks
+     * like an administrative removal — to walk away.
+     *
+     * <p>The creator is refused: {@code organizations.created_by} is NOT NULL
+     * and an ownerless org cannot be administered, so they transfer ownership
+     * first ({@code POST /orgs/{id}/transfer-ownership}).
+     */
+    @Transactional
+    public void leaveOrg(UUID orgId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        Organization org = orgRepository.findById(orgId)
+            .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
+
+        if (!membershipRepository.existsByOrganizationIdAndUserId(orgId, currentUser.getId())) {
+            throw new ResourceNotFoundException("Membership not found");
+        }
+
+        if (org.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new BadRequestException(
+                "Transfer ownership before leaving the organization",
+                ErrorCode.ORG_CREATOR_CANNOT_LEAVE);
+        }
+
+        membershipRepository.deleteByOrganizationIdAndUserId(orgId, currentUser.getId());
+        log.info("[ORG] operation=leaveOrg orgId={} userId={}", orgId, currentUser.getId());
     }
 
     @Transactional

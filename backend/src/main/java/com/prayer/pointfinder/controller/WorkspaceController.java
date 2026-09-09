@@ -47,4 +47,11 @@ public class WorkspaceController {
     public ResponseEntity<OrgMemberResponse> acceptOrgInvite(@PathVariable UUID inviteId) {
         return ResponseEntity.ok(orgInviteService.acceptInvite(inviteId));
     }
+
+    /** Refuse an invite. Terminal: the invite can no longer be accepted. */
+    @PostMapping("/org-invites/{inviteId}/decline")
+    public ResponseEntity<Void> declineOrgInvite(@PathVariable UUID inviteId) {
+        orgInviteService.declineInvite(inviteId);
+        return ResponseEntity.noContent().build();
+    }
 }
