@@ -20,6 +20,7 @@ import { parseTagUrl } from '@pointfinder/game-core'
 import { scanQr } from '@/platform/qr'
 import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
 import { IntroductionPrompt } from '@/features/player/components/IntroductionPrompt'
+import { UnverifiedAccountNotice } from '@/features/player/components/UnverifiedAccountNotice'
 import { lightColorValues } from '@/generated/colorValues'
 import { CHECK_IN_RADIUS_FILL_LAYER_ID, CHECK_IN_RADIUS_LINE_LAYER_ID, CHECK_IN_RADIUS_SOURCE_ID, radiusCollection } from '@/features/player/mapShapes'
 
@@ -167,6 +168,7 @@ export default function PlayerMap() {
           </div>
         </div>
         <IntroductionPrompt />
+        <UnverifiedAccountNotice />
         <div className="pointer-events-auto">
           <SyncBanner fromCache={game.fromCache} pending={game.pending} needsAuth={game.needsAuth} onRetry={(id) => void game.retry(id)} onDiscard={(id) => void game.discard(id)} />
         </div>

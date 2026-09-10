@@ -8,11 +8,16 @@ import lombok.Data;
 /** Attach the calling guest participation to an account, creating the account first when asked. */
 @Data
 public class PlayerAccountLinkRequest {
-    @NotBlank @Email @Size(max = 255)
+    /** Credentials, or {@code accountAccessToken} for a phone that is already signed in. */
+    @Email @Size(max = 255)
     private String email;
 
-    @NotBlank @Size(max = 128)
+    @Size(max = 128)
     private String password;
+
+    /** The player app's account session token; links without retyping credentials. */
+    @Size(max = 4096)
+    private String accountAccessToken;
 
     /** Required when {@code createAccount} is true. */
     @Size(max = 255)

@@ -1,28 +1,22 @@
 package com.prayer.pointfinder.service;
 
 import com.prayer.pointfinder.dto.request.PlayerAccountLinkRequest;
+import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerRecoverRequest;
 import com.prayer.pointfinder.dto.response.PlayerAccountResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
-import com.prayer.pointfinder.entity.EmailChangeToken;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
-import com.prayer.pointfinder.entity.IndividualTier;
 import com.prayer.pointfinder.entity.Player;
-import com.prayer.pointfinder.entity.SubscriptionStatus;
 import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.entity.User;
-import com.prayer.pointfinder.entity.UserRole;
-import com.prayer.pointfinder.entity.UserSubscription;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ErrorCode;
-import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.UserRepository;
-import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +24,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,53 +40,51 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PlayerAccountService {
 
-    private static final long VERIFICATION_TOKEN_EXPIRY_MS = 24L * 60 * 60 * 1000;
-
     private final PlayerRepository playerRepository;
     private final UserRepository userRepository;
     private final TeamRepository teamRepository;
     private final GameRepository gameRepository;
-    private final UserSubscriptionRepository userSubRepository;
-    private final EmailChangeTokenRepository emailChangeTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
     private final JwtTokenProvider tokenProvider;
-    private final EmailService emailService;
     private final AuthService authService;
+    private final PlayerJoinService playerJoinService;
 
     @Transactional(readOnly = true)
     public PlayerAccountResponse account(Player authPlayer) {
-        Player player = load(authPlayer);
-        User user = player.getUser();
-        if (user == null) return PlayerAccountResponse.guest();
-        return new PlayerAccountResponse(true, user.getEmail(), user.getName(), Boolean.TRUE.equals(user.getEmailVerified()));
+        return toResponse(load(authPlayer).getUser());
     }
 
+    /**
+     * Links the calling guest row to an account: the phone's signed-in account
+     * (by its access token), credentials, or a brand-new participant account.
+     */
     @Transactional(timeout = 10)
     public PlayerAccountResponse link(Player authPlayer, PlayerAccountLinkRequest request, String requestHost) {
         Player player = load(authPlayer);
-        String email = request.getEmail().trim();
-
         UUID gameId = player.getGame().getId();
         User user;
-        if (request.isCreateAccount()) {
+        if (request.getAccountAccessToken() != null && !request.getAccountAccessToken().isBlank()) {
+            user = userFromAccessToken(request.getAccountAccessToken());
+        } else if (request.isCreateAccount()) {
             // Refuse before creating anything, so a rollback never leaves a sent welcome mail behind.
             if (player.getUser() != null) {
                 throw new ConflictException("This participation already belongs to an account", ErrorCode.PLAYER_ALREADY_LINKED);
             }
-            user = createParticipant(email, request.getName(), request.getPassword(), requestHost);
+            requireCredentials(request);
+            user = authService.createParticipant(request.getEmail().trim(), request.getName(), request.getPassword(), requestHost);
         } else {
-            user = authenticate(email, request.getPassword());
-            if (player.getUser() != null) {
-                if (player.getUser().getId().equals(user.getId())) {
-                    return new PlayerAccountResponse(true, user.getEmail(), user.getName(), Boolean.TRUE.equals(user.getEmailVerified()));
-                }
-                throw new ConflictException("This participation already belongs to another account", ErrorCode.PLAYER_ALREADY_LINKED);
-            }
-            playerRepository.findByUserIdAndGameId(user.getId(), gameId).ifPresent(existing -> {
-                throw alreadyInGame(existing, player);
-            });
+            requireCredentials(request);
+            user = authenticate(request.getEmail().trim(), request.getPassword());
         }
+
+        if (player.getUser() != null) {
+            if (player.getUser().getId().equals(user.getId())) return toResponse(user);
+            throw new ConflictException("This participation already belongs to another account", ErrorCode.PLAYER_ALREADY_LINKED);
+        }
+        playerRepository.findByUserIdAndGameId(user.getId(), gameId).ifPresent(existing -> {
+            throw alreadyInGame(existing, player);
+        });
 
         player.setUser(user);
         try {
@@ -108,37 +97,86 @@ public class PlayerAccountService {
         }
         log.info("[ACCOUNT] operation=link playerId={} userId={} gameId={} created={}",
                 player.getId(), user.getId(), gameId, request.isCreateAccount());
-        return new PlayerAccountResponse(true, user.getEmail(), user.getName(), Boolean.TRUE.equals(user.getEmailVerified()));
+        return toResponse(user);
     }
 
-    /**
-     * Same response shape as join, for the account's existing row. The recovering
-     * device becomes the participation's device, so its push registration and a
-     * later guest rejoin on this device both resolve to the same participation.
-     */
+    /** The row becomes a guest again. Progress stays with the team; the phone keeps playing. */
+    @Transactional(timeout = 10)
+    public PlayerAccountResponse unlink(Player authPlayer) {
+        Player player = load(authPlayer);
+        if (player.getUser() != null) {
+            log.info("[ACCOUNT] operation=unlink playerId={} userId={}", player.getId(), player.getUser().getId());
+            player.setUser(null);
+            playerRepository.save(player);
+        }
+        return PlayerAccountResponse.guest();
+    }
+
+    /** Same response shape as join, for the account's existing row, with credentials in the body. */
     @Transactional(timeout = 10)
     public PlayerAuthResponse recover(PlayerRecoverRequest request) {
         User user = authenticate(request.getEmail().trim(), request.getPassword());
-        Game game = resolveGame(request);
+        Game game = resolveGame(request.getJoinCode(), request.getGameId());
+        return recoverFor(user, game, request.getDeviceId());
+    }
+
+    /** Same, for a phone that is already signed in. */
+    @Transactional(timeout = 10)
+    public PlayerAuthResponse recoverForAccount(User authUser, UUID gameId, String deviceId) {
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new BadRequestException("User not found"));
+        return recoverFor(user, resolveGame(null, gameId), deviceId);
+    }
+
+    /**
+     * The only join a signed-in phone uses: an account that already plays this game
+     * gets its participation back, anyone else joins as a guest would and the new
+     * row is linked at once. So a signed-in phone can never become a second competitor.
+     */
+    @Transactional(timeout = 10)
+    public PlayerAuthResponse joinForAccount(User authUser, String joinCode, String displayName, String deviceId) {
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new BadRequestException("User not found"));
+        Game game = resolveGame(joinCode, null);
+        if (playerRepository.findByUserIdAndGameId(user.getId(), game.getId()).isPresent()) {
+            return recoverFor(user, game, deviceId);
+        }
+        PlayerJoinRequest join = new PlayerJoinRequest();
+        join.setJoinCode(joinCode.trim());
+        join.setDisplayName(displayName);
+        join.setDeviceId(deviceId);
+        PlayerAuthResponse joined = playerJoinService.joinTeam(join);
+        Player player = playerRepository.findById(joined.player().id()).orElseThrow(() -> new BadRequestException("Join failed, please try again"));
+        if (player.getUser() != null && !player.getUser().getId().equals(user.getId())) {
+            // The phone's existing guest row here already belongs to someone else's account.
+            throw new BadRequestException("This device already belongs to another account's participation in this game",
+                    ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
+        }
+        player.setUser(user);
+        try {
+            playerRepository.saveAndFlush(player);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException("This account already plays in this game", ErrorCode.ACCOUNT_ALREADY_IN_GAME);
+        }
+        log.info("[ACCOUNT] operation=joinForAccount playerId={} userId={} gameId={}", player.getId(), user.getId(), game.getId());
+        return joined;
+    }
+
+    // --- helpers ---
+
+    private PlayerAuthResponse recoverFor(User user, Game game, String deviceId) {
         if (game.getStatus() == GameStatus.ended) {
             throw new BadRequestException("Game has ended");
         }
         Player player = playerRepository.findByUserIdAndGameId(user.getId(), game.getId())
                 .orElseThrow(() -> new BadRequestException("This account has not joined this game", ErrorCode.NO_PARTICIPATION_FOUND));
 
-        releaseDevice(request.getDeviceId(), game.getId(), player);
-        player.setDeviceId(request.getDeviceId());
-        // The new phone registers its own push token; the old one must not keep receiving.
-        player.setPushToken(null);
-        player.setPushPlatform(null);
+        releaseDevice(deviceId, game.getId(), player);
+        player.setDeviceId(deviceId);
         player = playerRepository.save(player);
         Team team = player.getTeam();
         log.info("[ACCOUNT] operation=recover playerId={} userId={} gameId={}", player.getId(), user.getId(), game.getId());
         String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
         return PlayerAuthResponse.of(jwt, player, team, game);
     }
-
-    // --- helpers ---
 
     /**
      * A device holds one identity per game, which join enforces. Switching a phone to
@@ -160,6 +198,17 @@ public class PlayerAccountService {
     private Player load(Player authPlayer) {
         return playerRepository.findById(authPlayer.getId())
                 .orElseThrow(() -> new BadRequestException("Player not found"));
+    }
+
+    private static PlayerAccountResponse toResponse(User user) {
+        if (user == null) return PlayerAccountResponse.guest();
+        return new PlayerAccountResponse(true, user.getEmail(), user.getName(), Boolean.TRUE.equals(user.getEmailVerified()));
+    }
+
+    private static void requireCredentials(PlayerAccountLinkRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank() || request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new BadRequestException("Email and password are required");
+        }
     }
 
     private ConflictException alreadyInGame(Player existing, Player claiming) {
@@ -185,58 +234,32 @@ public class PlayerAccountService {
         return user;
     }
 
-    private User createParticipant(String email, String name, String password, String requestHost) {
-        if (name == null || name.isBlank()) {
-            throw new BadRequestException("Name is required to create an account");
+    /** The phone's account session, presented in the body of a player-token call. */
+    private User userFromAccessToken(String accessToken) {
+        try {
+            if (!tokenProvider.validateToken(accessToken) || !"user".equals(tokenProvider.getTokenType(accessToken))) {
+                throw new BadRequestException("Invalid account session", ErrorCode.INVALID_CREDENTIALS);
+            }
+            UUID userId = tokenProvider.getUserIdFromToken(accessToken);
+            User user = userRepository.findById(userId).orElseThrow(() -> new BadRequestException("Invalid account session", ErrorCode.INVALID_CREDENTIALS));
+            int current = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+            if (tokenProvider.getTokenVersion(accessToken) < current) {
+                throw new BadRequestException("Invalid account session", ErrorCode.INVALID_CREDENTIALS);
+            }
+            return user;
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid account session", ErrorCode.INVALID_CREDENTIALS);
         }
-        if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new BadRequestException("Email already registered", ErrorCode.EMAIL_ALREADY_TAKEN);
-        }
-        authService.validatePassword(password);
-
-        User user = userRepository.save(User.builder()
-                .email(email)
-                .name(name.trim())
-                .passwordHash(passwordEncoder.encode(password))
-                .role(UserRole.participant)
-                .emailVerified(false)
-                .build());
-        // Every account owns a free personal plan row so billing lookups never miss.
-        userSubRepository.save(UserSubscription.builder()
-                .user(user)
-                .tier(IndividualTier.free)
-                .status(SubscriptionStatus.active)
-                .build());
-
-        EmailChangeToken token = emailChangeTokenRepository.save(EmailChangeToken.builder()
-                .user(user)
-                .newEmail(email)
-                .token(UUID.randomUUID().toString())
-                .expiresAt(Instant.now().plusMillis(VERIFICATION_TOKEN_EXPIRY_MS))
-                .build());
-        // Only mail once the account is really there: the surrounding transaction can still roll back.
-        String verificationToken = token.getToken();
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    emailService.sendParticipantVerification(email, verificationToken, requestHost);
-                }
-            });
-        } else {
-            emailService.sendParticipantVerification(email, verificationToken, requestHost);
-        }
-        return user;
     }
 
-    private Game resolveGame(PlayerRecoverRequest request) {
-        if (request.getJoinCode() != null && !request.getJoinCode().isBlank()) {
-            return teamRepository.findByJoinCode(request.getJoinCode().trim())
+    private Game resolveGame(String joinCode, UUID gameId) {
+        if (joinCode != null && !joinCode.isBlank()) {
+            return teamRepository.findByJoinCode(joinCode.trim())
                     .map(Team::getGame)
                     .orElseThrow(() -> new BadRequestException("Invalid join code"));
         }
-        if (request.getGameId() != null) {
-            return gameRepository.findById(request.getGameId())
+        if (gameId != null) {
+            return gameRepository.findById(gameId)
                     .orElseThrow(() -> new BadRequestException("Game not found"));
         }
         throw new BadRequestException("A join code or game is required");

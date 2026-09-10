@@ -22,9 +22,9 @@ public class Player {
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
-    /** Denormalized from the team so the one-participation-per-account index can exist. Nullable in the schema for one release (see V73). */
+    /** Denormalized from the team so the one-participation-per-account index can exist. */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_id")
+    @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
     /** The account this participation belongs to, once claimed. Null for guests. */

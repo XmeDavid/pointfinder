@@ -25,6 +25,10 @@ export const playerFixtures = {
     { baseId: 'b2', challengeTitle: 'Granite boulder', lat: 40.091, lng: -8.871, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'checked_in', checkedInAt: '2026-09-05T09:30:00Z', challengeId: 'c2', submissionStatus: null },
     { baseId: 'b3', challengeTitle: 'Chapel', lat: 40.092, lng: -8.872, nfcLinked: false, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'submitted', checkedInAt: '2026-09-05T09:40:00Z', challengeId: 'c3', submissionStatus: 'pending' },
   ],
+  accountToken: `header.${btoa(JSON.stringify({ exp: 4102444800 })).replace(/=+$/, '')}.signature`,
+  accountMe: { id: 'u-ana', email: 'ana@example.com', name: 'Ana', role: 'participant', emailVerified: false, participations: [
+    { playerId: 'p9', gameId: 'g1', gameName: 'Serra da Estrela', gameStatus: 'live', teamId: 'team9', teamName: 'Owls', teamColor: '#8b5cf6', joinedAt: '2026-09-05T08:00:00Z' },
+  ] },
   files: [
     { id: 'r1', gameId: 'g1', type: 'file', name: 'Site map.pdf', contentType: 'application/pdf', content: null, sizeBytes: 245760, sharedWithPlayers: true, downloadUrl: 'https://files.example.test/site-map.pdf?sig=1', createdAt: '2026-09-04T08:00:00Z' },
     { id: 'r2', gameId: 'g1', type: 'document', name: 'Camp rules', contentType: 'text/html', content: '<p>Stay with your team at all times.</p>', sizeBytes: 0, sharedWithPlayers: true, downloadUrl: null, createdAt: '2026-09-04T08:05:00Z' },
@@ -55,6 +59,35 @@ export const playerHandlers = [
   }),
   http.get('/api/player/games/:gameId/files', () => HttpResponse.json(playerFixtures.files)),
   http.get('/api/player/account', () => HttpResponse.json({ linked: false, email: null, name: null, emailVerified: false })),
+  http.delete('/api/player/account/link', () => HttpResponse.json({ linked: false, email: null, name: null, emailVerified: false })),
+  http.post('/api/auth/participant/register', async ({ request }) => {
+    const body = (await request.json()) as { email: string; name: string; password: string }
+    if (body.email === 'taken@example.com') return HttpResponse.json({ status: 400, message: 'Email already registered', code: 'EMAIL_ALREADY_TAKEN' }, { status: 400 })
+    return HttpResponse.json({ accessToken: playerFixtures.accountToken, refreshToken: 'refresh-ana', user: { id: 'u-ana', email: body.email, name: body.name, role: 'participant', createdAt: '2026-09-05T08:00:00Z' } })
+  }),
+  http.get('/api/account/me', ({ request }) => {
+    if (request.headers.get('Authorization') !== `Bearer ${playerFixtures.accountToken}`) return HttpResponse.json({ status: 401, message: 'Unauthorized' }, { status: 401 })
+    return HttpResponse.json(playerFixtures.accountMe)
+  }),
+  http.post('/api/account/join', async ({ request }) => {
+    const body = (await request.json()) as { joinCode: string; displayName: string; deviceId: string }
+    if (body.joinCode === 'BADCODE') return HttpResponse.json({ status: 400, message: 'Invalid join code', code: 'INVALID_JOIN_CODE' }, { status: 400 })
+    // FALCONS1 is where Ana already plays: same row comes back. Anything else joins fresh.
+    const existing = body.joinCode === 'FALCONS1'
+    return HttpResponse.json({
+      token: existing ? 'recovered-token' : 'joined-token',
+      player: { id: existing ? 'p9' : 'p2', displayName: existing ? 'Ana' : body.displayName, deviceId: body.deviceId },
+      team: existing ? { id: 'team9', name: 'Owls', color: '#8b5cf6' } : { id: 'team1', name: 'Falcons', color: '#22c55e' },
+      game: { id: 'g1', name: 'Serra da Estrela', description: '', status: 'live', tileSource: 'osm' },
+    })
+  }),
+  http.post('/api/account/participations/:gameId/recover', async ({ params, request }) => {
+    const body = (await request.json()) as { deviceId: string }
+    return HttpResponse.json({ token: 'recovered-token', player: { id: 'p9', displayName: 'Ana', deviceId: body.deviceId }, team: { id: 'team9', name: 'Owls', color: '#8b5cf6' }, game: { id: String(params.gameId), name: 'Serra da Estrela', description: '', status: 'live', tileSource: 'osm' } })
+  }),
+  http.post('/api/account/resend-verification', () => HttpResponse.json({ message: 'sent' })),
+  http.delete('/api/account', () => new HttpResponse(null, { status: 204 })),
+  http.post('/api/auth/logout', () => new HttpResponse(null, { status: 204 })),
   http.post('/api/player/account/link', async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string; name?: string; createAccount: boolean }
     if (body.email === 'taken@example.com') return HttpResponse.json({ status: 400, message: 'Email already registered', code: 'EMAIL_ALREADY_TAKEN' }, { status: 400 })

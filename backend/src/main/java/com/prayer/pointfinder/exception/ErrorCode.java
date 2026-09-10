@@ -106,8 +106,6 @@ public enum ErrorCode {
     DEVICE_ALREADY_IN_DIFFERENT_TEAM,
     /** Wrong email or password on a call that keeps the player session (link, recover). */
     INVALID_CREDENTIALS,
-    /** A participant (registered player) account tried to sign in to the operator surface. */
-    PARTICIPANT_ACCOUNT,
     /** The account already has a participation in this game (details: teamId, teamName, sameTeam). */
     ACCOUNT_ALREADY_IN_GAME,
     /** This participation is already linked to a different account. */

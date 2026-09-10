@@ -7,7 +7,7 @@ import { ChevronLeft } from 'lucide-react'
 import { SUPPORTED_LANGUAGES, type Language } from '@pointfinder/i18n'
 import { Alert, Button, ConfirmDeleteDialog, Label, Select } from '@/components'
 import { GameStatusBadge } from '@/components/status'
-import { useAuth, useServices } from '@/app/player/services'
+import { useAccountSession, useAuth, useServices } from '@/app/player/services'
 import { getDeviceId } from '@/app/player/device'
 import { describeError } from '@/app/player/errors'
 import { getThemePreference, setThemePreference, type ThemePreference } from '@/lib/theme'
@@ -40,7 +40,7 @@ function Row({ label, value, testId }: { label: string; value: React.ReactNode; 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const auth = useAuth()
-  const { client } = useServices()
+  const { client, account: accountServices } = useServices()
   const navigate = useNavigate()
   const game = usePlayerGame()
   const [theme, setTheme] = useState<ThemePreference>(() => getThemePreference())
@@ -63,7 +63,23 @@ export default function SettingsScreen() {
     return () => { alive = false; off() }
   }, [])
 
-  const account = useQuery({ queryKey: ['account'], queryFn: () => client.api.player.account(), enabled: auth.kind === 'player' })
+  const link = useQuery({ queryKey: ['account', 'link'], queryFn: () => client.api.player.account(), enabled: auth.kind === 'player' })
+  const session = useAccountSession()
+  const [accountAction, setAccountAction] = useState<'signOut' | 'unlink' | 'delete' | null>(null)
+  const [verificationSent, setVerificationSent] = useState(false)
+
+  async function resendVerification() {
+    try { await accountServices.api.account.resendVerification(); setVerificationSent(true) } catch (err) { setError(describeError(err, t)) }
+  }
+  async function unlink() {
+    setAccountAction(null)
+    try { await client.api.player.unlinkAccount(); await link.refetch() } catch (err) { setError(describeError(err, t)) }
+  }
+  async function deleteUserAccount() {
+    setAccountAction(null)
+    setBusy(true)
+    try { await accountServices.api.account.delete(); await accountServices.session.logout(); await link.refetch() } catch (err) { setError(describeError(err, t)) } finally { setBusy(false) }
+  }
 
   if (auth.kind !== 'player') return null
 
@@ -147,12 +163,30 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title={t('settings.account')}>
-        {!account.data ? (
-          <Row label={t('settings.account')} value={account.isError ? t('common.offline') : '…'} testId="settings-account-unknown" />
-        ) : account.data.linked ? (
-          <div className="flex flex-col gap-1 px-4 py-3" data-testid="settings-account-linked">
-            <p className="text-sm"><span className="text-muted-foreground">{t('settings.savedTo')}</span> <span className="font-medium">{account.data.email}</span></p>
-            {!account.data.emailVerified && <p className="text-xs text-muted-foreground">{t('settings.emailUnverified')}</p>}
+        {!link.data ? (
+          <Row label={t('settings.account')} value={link.isError ? t('common.offline') : '…'} testId="settings-account-unknown" />
+        ) : link.data.linked ? (
+          <div className="flex flex-col gap-2 px-4 py-3" data-testid="settings-account-linked">
+            <p className="text-sm"><span className="text-muted-foreground">{t('settings.savedTo')}</span> <span className="font-medium">{link.data.email}</span></p>
+            {!link.data.emailVerified && (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground" data-testid="settings-account-unverified">
+                <span>{verificationSent ? t('account.verificationSent') : t('settings.emailUnverified')}</span>
+                {!verificationSent && session.kind === 'operator' && <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => void resendVerification()} data-testid="settings-resend-verification">{t('account.resendVerification')}</Button>}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button type="button" variant="outline" size="sm" onClick={() => setAccountAction('unlink')} data-testid="settings-unlink">{t('account.unlink')}</Button>
+              {session.kind === 'operator' && <Button type="button" variant="outline" size="sm" onClick={() => setAccountAction('signOut')} data-testid="settings-sign-out">{t('account.signOut')}</Button>}
+              {session.kind === 'operator' && session.role === 'participant' && <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => setAccountAction('delete')} data-testid="settings-delete-account">{t('account.deleteAccount')}</Button>}
+            </div>
+          </div>
+        ) : session.kind === 'operator' ? (
+          <div className="flex flex-col gap-2 px-4 py-3" data-testid="settings-account-signed-in">
+            <p className="text-sm"><span className="text-muted-foreground">{t('account.signedInAs')}</span> <span className="font-medium">{session.email}</span></p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link to="/account" className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground" data-testid="settings-save-progress">{t('account.saveToAccount', { email: session.email })}</Link>
+              <Button type="button" variant="outline" size="sm" onClick={() => setAccountAction('signOut')} data-testid="settings-sign-out">{t('account.signOut')}</Button>
+            </div>
           </div>
         ) : (
           <Link to="/account" className="flex min-h-12 flex-col justify-center px-4 py-2.5" data-testid="settings-save-progress">
@@ -180,6 +214,32 @@ export default function SettingsScreen() {
         <BrandLockup size={20} className="mx-auto pt-2 text-sm text-muted-foreground" textClassName="font-medium" />
       </div>
 
+      <ConfirmDeleteDialog
+        open={accountAction === 'signOut'}
+        onCancel={() => setAccountAction(null)}
+        onConfirm={() => { setAccountAction(null); void accountServices.signOut() }}
+        title={t('account.signOutConfirmTitle')}
+        description={t('account.signOutConfirm')}
+        confirmLabel={t('account.signOut')}
+        variant="default"
+      />
+      <ConfirmDeleteDialog
+        open={accountAction === 'unlink'}
+        onCancel={() => setAccountAction(null)}
+        onConfirm={() => void unlink()}
+        title={t('account.unlinkTitle')}
+        description={t('account.unlinkConfirm')}
+        confirmLabel={t('account.unlink')}
+        variant="default"
+      />
+      <ConfirmDeleteDialog
+        open={accountAction === 'delete'}
+        onCancel={() => setAccountAction(null)}
+        onConfirm={() => void deleteUserAccount()}
+        title={t('account.deleteAccountTitle')}
+        description={t('account.deleteAccountConfirm')}
+        confirmLabel={t('account.deleteAccount')}
+      />
       <ConfirmDeleteDialog
         open={leaving}
         title={game.pending.length > 0 ? t('settings.leaveGameUnsyncedTitle') : t('settings.leaveGameTitle')}

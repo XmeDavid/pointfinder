@@ -17,7 +17,7 @@ export function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<false | { role?: string }>(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,8 +29,8 @@ export function ResetPasswordPage() {
     }
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/auth/reset-password`, { token, password });
-      setSuccess(true);
+      const { data } = await axios.post<{ role?: string }>(`${API_URL}/auth/reset-password`, { token, password });
+      setSuccess({ role: data?.role });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.message) {
         setError(err.response.data.message);
@@ -56,9 +56,13 @@ export function ResetPasswordPage() {
               <div className="rounded-md bg-primary/10 p-3 text-sm text-primary">
                 {t("auth.resetPasswordSuccess")}
               </div>
-              <Link to="/login" className="block text-center text-sm text-muted-foreground hover:underline">
-                {t("auth.backToSignIn")}
-              </Link>
+              {success.role === "participant" ? (
+                <p className="text-center text-sm text-muted-foreground" data-testid="reset-participant-hint">{t("auth.resetPasswordParticipant")}</p>
+              ) : (
+                <Link to="/login" className="block text-center text-sm text-muted-foreground hover:underline">
+                  {t("auth.backToSignIn")}
+                </Link>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

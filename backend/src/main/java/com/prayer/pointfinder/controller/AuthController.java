@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.*;
+import com.prayer.pointfinder.dto.response.PasswordResetResponse;
 import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.InviteTokenResponse;
 import com.prayer.pointfinder.dto.response.MessageResponse;
@@ -112,6 +113,21 @@ public class AuthController {
         return ResponseEntity.ok(playerAccountService.recover(request));
     }
 
+    /** PF-02: self-serve participant signup from the player app. The account starts unverified. */
+    @PostMapping("/participant/register")
+    public ResponseEntity<AuthResponse> registerParticipant(
+            @Valid @RequestBody ParticipantRegisterRequest request,
+            @RequestHeader(value = "X-Forwarded-Host", required = false) String forwardedHost,
+            HttpServletRequest httpRequest) {
+        String ip = resolveClientIp(httpRequest);
+        if (!playerJoinRateLimiter.tryAcquire(ip, request.getDeviceId())) {
+            log.warn("[AUTH] operation=participantRegister result=rateLimited ip={} deviceId={}", ip, request.getDeviceId());
+            throw new RateLimitExceededException("Too many attempts. Please try again shortly.");
+        }
+        AuthResponse response = authService.registerParticipant(request.getEmail().trim(), request.getName(), request.getPassword(), forwardedHost);
+        return ResponseEntity.ok(response);
+    }
+
     private String resolveClientIp(HttpServletRequest request) {
         // Prefer X-Forwarded-For (first hop) from the reverse proxy; fall back
         // to the direct remote addr when the app is hit without nginx in
@@ -195,9 +211,10 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        authService.resetPassword(request.getToken(), request.getPassword());
-        return ResponseEntity.ok(new MessageResponse("Password has been reset successfully."));
+    public ResponseEntity<PasswordResetResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        com.prayer.pointfinder.entity.UserRole role = authService.resetPassword(request.getToken(), request.getPassword());
+        // The web page sends participants back to the app instead of the operator sign-in.
+        return ResponseEntity.ok(new PasswordResetResponse("Password has been reset successfully.", role.name()));
     }
 
     @PostMapping("/change-password")

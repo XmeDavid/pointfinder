@@ -88,6 +88,9 @@ public class SecurityConfig {
                 // STOMP/native handlers can perform auth after the socket opens.
                 .requestMatchers("/ws/**", "/ws-native").permitAll()
                 .requestMatchers("/api/player/**").hasRole("PLAYER")
+                // PF-01: the account behind a player. Operators can play too, so every
+                // account role is admitted; the controller only ever acts on the caller.
+                .requestMatchers("/api/account/**").hasAnyRole("ADMIN", "OPERATOR", "PARTICIPANT")
                 // Platform administration — club creation, deal terms,
                 // invoicing, ownership transfer. Gated at the filter chain so
                 // no controller can accidentally ship an unguarded method.

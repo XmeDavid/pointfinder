@@ -23,6 +23,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronization;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +41,7 @@ public class AuthService {
 
     private static final int MAX_ACTIVE_RESET_TOKENS = 3;
     private static final long RESET_TOKEN_EXPIRY_MS = 3_600_000; // 1 hour
+    private static final long VERIFICATION_TOKEN_EXPIRY_MS = 24L * 60 * 60 * 1000;
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -72,11 +75,8 @@ public class AuthService {
         }
 
         loginAttemptService.recordSuccess(request.getEmail());
-        // PF-01: a participant account lives inside the player app. It never gets an
-        // operator session, so the operator surface, org invites and billing stay out of reach.
-        if (user.getRole() == UserRole.participant) {
-            throw new BadRequestException("This is a player account", ErrorCode.PARTICIPANT_ACCOUNT);
-        }
+        // A participant account signs in here too (the player app keeps it signed in);
+        // the operator-only security default is what keeps that token harmless elsewhere.
         return generateAuthResponse(user);
     }
 
@@ -98,7 +98,8 @@ public class AuthService {
             throw new BadRequestException("Email does not match the invitation");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        User parked = unverifiedParticipantFor(request.getEmail());
+        if (parked == null && userRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new BadRequestException("Email already registered");
         }
 
@@ -111,13 +112,14 @@ public class AuthService {
 
         validatePassword(request.getPassword());
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .name(request.getName())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.operator)
-                .build();
-        user = userRepository.save(user);
+        User user = parked != null
+                ? takeOverUnverifiedParticipant(parked, request.getName(), request.getPassword(), UserRole.operator)
+                : userRepository.save(User.builder()
+                        .email(request.getEmail())
+                        .name(request.getName())
+                        .passwordHash(passwordEncoder.encode(request.getPassword()))
+                        .role(UserRole.operator)
+                        .build());
 
         invite.setStatus(InviteStatus.accepted);
         inviteRepository.save(invite);
@@ -128,11 +130,13 @@ public class AuthService {
         }
 
         // Create free-tier subscription row so checkout webhooks can find it
-        userSubRepository.save(UserSubscription.builder()
-                .user(user)
-                .tier(IndividualTier.free)
-                .status(SubscriptionStatus.active)
-                .build());
+        if (parked == null) {
+            userSubRepository.save(UserSubscription.builder()
+                    .user(user)
+                    .tier(IndividualTier.free)
+                    .status(SubscriptionStatus.active)
+                    .build());
+        }
 
         return generateAuthResponse(user);
     }
@@ -162,25 +166,29 @@ public class AuthService {
             throw new BadRequestException("Email does not match the invitation");
         }
 
-        if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
+        User parked = unverifiedParticipantFor(request.getEmail());
+        if (parked == null && userRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new BadRequestException("Email already registered");
         }
 
         validatePassword(request.getPassword());
 
-        User user = userRepository.save(User.builder()
-                .email(request.getEmail())
-                .name(request.getName())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.operator)
-                .build());
-
-        userSubRepository.save(UserSubscription.builder()
-                .user(user)
-                .tier(IndividualTier.free)
-                .status(SubscriptionStatus.active)
-                .build());
-
+        User user;
+        if (parked != null) {
+            user = takeOverUnverifiedParticipant(parked, request.getName(), request.getPassword(), UserRole.operator);
+        } else {
+            user = userRepository.save(User.builder()
+                    .email(request.getEmail())
+                    .name(request.getName())
+                    .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .role(UserRole.operator)
+                    .build());
+            userSubRepository.save(UserSubscription.builder()
+                    .user(user)
+                    .tier(IndividualTier.free)
+                    .status(SubscriptionStatus.active)
+                    .build());
+        }
         orgInviteService.acceptInviteByToken(inviteToken, user);
 
         return generateAuthResponse(user);
@@ -189,7 +197,9 @@ public class AuthService {
     @Transactional(timeout = 10)
     public void requestRegistration(String email, String requestHost) {
         // Silent return if already registered — no email enumeration
-        if (userRepository.existsByEmail(email)) {
+        if (unverifiedParticipantFor(email) == null && userRepository.existsByEmailIgnoreCase(email)) {
+            // An unverified participant that merely parked this address does not count:
+            // the mailed link is exactly what lets the real owner take it over.
             return;
         }
 
@@ -271,7 +281,7 @@ public class AuthService {
     }
 
     @Transactional(timeout = 10)
-    public void resetPassword(String token, String newPassword) {
+    public UserRole resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BadRequestException("Invalid reset token"));
 
@@ -302,6 +312,7 @@ public class AuthService {
 
         // Delete all refresh tokens to log out all sessions
         refreshTokenRepository.deleteByUserId(user.getId());
+        return user.getRole();
     }
 
     /**
@@ -379,6 +390,97 @@ public class AuthService {
         if (!password.chars().anyMatch(Character::isDigit)) {
             throw new BadRequestException("Password must contain at least one digit");
         }
+    }
+
+    /**
+     * PF-02: self-serve signup from the player app. The account starts unverified and
+     * a verification mail goes out after commit; verification never gates play.
+     */
+    @Transactional(timeout = 10)
+    public AuthResponse registerParticipant(String email, String name, String password, String requestHost) {
+        return generateAuthResponse(createParticipant(email, name, password, requestHost));
+    }
+
+    /** Creates an unverified participant and schedules its verification mail for after commit. */
+    @Transactional(timeout = 10)
+    public User createParticipant(String email, String name, String password, String requestHost) {
+        if (name == null || name.isBlank()) {
+            throw new BadRequestException("Name is required to create an account");
+        }
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new BadRequestException("Email already registered", ErrorCode.EMAIL_ALREADY_TAKEN);
+        }
+        validatePassword(password);
+
+        User user = userRepository.save(User.builder()
+                .email(email)
+                .name(name.trim())
+                .passwordHash(passwordEncoder.encode(password))
+                .role(UserRole.participant)
+                .emailVerified(false)
+                .build());
+        // Every account owns a free personal plan row so billing lookups never miss.
+        userSubRepository.save(UserSubscription.builder()
+                .user(user)
+                .tier(IndividualTier.free)
+                .status(SubscriptionStatus.active)
+                .build());
+        sendVerificationAfterCommit(user, requestHost);
+        return user;
+    }
+
+    /** Issues a fresh verification link for a signed-in, still unverified account. */
+    @Transactional(timeout = 10)
+    public void resendVerification(User authUser, String requestHost) {
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new BadRequestException("User not found"));
+        if (Boolean.TRUE.equals(user.getEmailVerified())) return;
+        emailChangeTokenRepository.invalidateAllForUser(user.getId());
+        sendVerificationAfterCommit(user, requestHost);
+    }
+
+    private void sendVerificationAfterCommit(User user, String requestHost) {
+        EmailChangeToken token = emailChangeTokenRepository.save(EmailChangeToken.builder()
+                .user(user)
+                .newEmail(user.getEmail())
+                .token(UUID.randomUUID().toString())
+                .expiresAt(Instant.now().plusMillis(VERIFICATION_TOKEN_EXPIRY_MS))
+                .build());
+        String email = user.getEmail();
+        String verificationToken = token.getToken();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    emailService.sendParticipantVerification(email, verificationToken, requestHost);
+                }
+            });
+        } else {
+            emailService.sendParticipantVerification(email, verificationToken, requestHost);
+        }
+    }
+
+    /** An address is only "taken" for registration when its owner proved the mailbox. */
+    private User unverifiedParticipantFor(String email) {
+        return userRepository.findByEmailIgnoreCase(email)
+                .filter(u -> u.getRole() == UserRole.participant && !Boolean.TRUE.equals(u.getEmailVerified()))
+                .orElse(null);
+    }
+
+    /**
+     * A mailed invite token proves control of the address, so whoever parked it as an
+     * unverified participant loses it: new credentials, the invited role, and every
+     * token minted for the parked account stops working. Linked participations stay
+     * with the account, which now belongs to the mailbox owner.
+     */
+    private User takeOverUnverifiedParticipant(User parked, String name, String password, UserRole role) {
+        parked.setName(name);
+        parked.setPasswordHash(passwordEncoder.encode(password));
+        parked.setRole(role);
+        parked.setEmailVerified(true);
+        bumpTokenVersion(parked);
+        refreshTokenRepository.deleteByUserId(parked.getId());
+        emailChangeTokenRepository.invalidateAllForUser(parked.getId());
+        return userRepository.save(parked);
     }
 
     private AuthResponse generateAuthResponse(User user) {

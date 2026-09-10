@@ -113,7 +113,8 @@
     "registrationEmailSent": "We've sent you an email with a link to continue your registration. Please check your inbox.",
     "sendRegistrationLink": "Continue",
     "registrationRequestFailed": "Something went wrong. Please try again.",
-    "emailPlaceholder": "email@example.com"
+    "emailPlaceholder": "email@example.com",
+    "resetPasswordParticipant": "Done. Open the PointFinder app on your phone and sign in with your new password."
   },
   "nav": {
     "games": "Games",
@@ -577,7 +578,8 @@
     "unlockOverrideRemoveConfirmTitle": "Remove unlock override?",
     "unlockOverrideRemoveConfirmDescription": "This will re-hide the base {{base}} for this team. The history row is preserved on the audit trail.",
     "manualCheckInReasonLabel": "Operator reason (optional)",
-    "manualCheckInReasonPlaceholder": "e.g. NFC failure, GPS issue, device problem"
+    "manualCheckInReasonPlaceholder": "e.g. NFC failure, GPS issue, device problem",
+    "hasAccount": "Account"
   },
   "notifications": {
     "description": "Send messages to teams in the field",
@@ -1025,7 +1027,6 @@
     "BASE_ORDER_DEPENDENCY_CONFLICT": "A base must be unlocked by an earlier base in the route. Update its unlock rule or the route order.",
     "DEVICE_ALREADY_IN_DIFFERENT_TEAM": "This phone already belongs to another team in this game.",
     "INVALID_CREDENTIALS": "Wrong email or password.",
-    "PARTICIPANT_ACCOUNT": "This is a player account. Open the PointFinder app to play.",
     "ACCOUNT_ALREADY_IN_GAME": "This account already plays in this game on another phone.",
     "PLAYER_ALREADY_LINKED": "This participation already belongs to an account.",
     "NO_PARTICIPATION_FOUND": "This account hasn't joined that game.",
@@ -1568,7 +1569,8 @@
       "openSettings": "Open settings",
       "orEnterCode": "Or enter the code manually",
       "cameraDisabled": "Camera access is off. Enable it in settings to scan codes.",
-      "practiceFull": "This practice game already has its one player."
+      "practiceFull": "This practice game already has its one player.",
+      "signedInHint": "This phone will get your game back if this account already plays it."
     },
     "login": {
       "title": "Operator sign in",
@@ -1785,7 +1787,32 @@
       "switchBlocked_other": "You have {{count}} unsynced actions. Let them sync first, then try again.",
       "back": "Back to settings",
       "emailConfirmedTitle": "Email confirmed",
-      "emailConfirmedBody": "Your PointFinder account is ready. You can now get your games back on any phone from the PointFinder app."
+      "emailConfirmedBody": "Your PointFinder account is ready. You can now get your games back on any phone from the PointFinder app.",
+      "signedInAs": "Signed in as",
+      "notYou": "Not you? Sign out",
+      "signOut": "Sign out",
+      "signOutConfirmTitle": "Sign out?",
+      "signOutConfirm": "Your game stays on this phone. Sign in again to get it back on another phone.",
+      "saveToAccount": "Save this game to {{email}}",
+      "saveToAccountHint": "Your team and progress stay exactly as they are.",
+      "unlink": "Remove this game from my account",
+      "unlinkTitle": "Remove from account?",
+      "unlinkConfirm": "This game stays on this phone as a guest. You can save it again later.",
+      "deleteAccount": "Delete my account",
+      "deleteAccountTitle": "Delete account?",
+      "deleteAccountConfirm": "Your games stay with their teams as a guest. This cannot be undone.",
+      "resendVerification": "Resend email",
+      "verificationSent": "Email sent. Check your inbox.",
+      "verifyBanner": "Confirm your email to get your games back on any phone.",
+      "myGames": "Your games",
+      "noGames": "This account has not joined any game yet.",
+      "getBack": "Get this game back",
+      "createAccountTitle": "Create your account",
+      "signInTitle": "Sign in",
+      "continueAsGuest": "Continue as guest",
+      "orSignIn": "Have an account? Sign in",
+      "orCreate": "New here? Create an account",
+      "joinAs": "Joining as"
     },
     "recover": {
       "title": "Get your game back",

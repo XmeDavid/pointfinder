@@ -39,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     GameController.class,
     PlayerController.class,
     PlayerAccountController.class,
+    AccountController.class,
     AdminOrgController.class
 })
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class})
@@ -64,6 +65,8 @@ class SecurityRulesTest {
     private JwtTokenProvider tokenProvider;
     @MockitoBean
     private com.prayer.pointfinder.service.PlayerAccountService playerAccountService;
+    @MockitoBean
+    private com.prayer.pointfinder.service.AccountService accountService;
 
     @MockitoBean
     private com.prayer.pointfinder.repository.UserSubscriptionRepository userSubscriptionRepository;
@@ -218,6 +221,20 @@ class SecurityRulesTest {
             mockMvc.perform(get(path).header("Authorization", "Bearer " + PARTICIPANT_TOKEN))
                     .andExpect(status().isForbidden());
         }
+    }
+
+    @Test
+    void accountRoutesAdmitEveryAccountRoleButNoPlayerToken() throws Exception {
+        org.mockito.Mockito.when(accountService.me(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new com.prayer.pointfinder.dto.response.AccountMeResponse(UUID.randomUUID(), "x@test.com", "X", "participant", true, java.util.List.of()));
+        for (String token : new String[] {PARTICIPANT_TOKEN, OPERATOR_TOKEN, ADMIN_TOKEN}) {
+            mockMvc.perform(get("/api/account/me").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+        }
+        mockMvc.perform(get("/api/account/me").header("Authorization", "Bearer " + PLAYER_TOKEN))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/account/me"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

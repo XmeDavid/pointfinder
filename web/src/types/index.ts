@@ -158,6 +158,8 @@ export interface Player {
   teamId: string;
   deviceId: string;
   displayName: string;
+  /** PF-01: saved to an account. Never the address. */
+  hasAccount?: boolean;
 }
 
 export interface Assignment {

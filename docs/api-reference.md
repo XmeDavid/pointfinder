@@ -47,6 +47,7 @@
 | POST | `/auth/request-registration` | None | Request operator registration (sends link if eligible) |
 | POST | `/auth/player/join` | None | Join a team via join code; returns player JWT |
 | POST | `/auth/player/recover` | None | PF-01: an account recovers its existing participation on this device; same shape and rate limit as join |
+| POST | `/auth/participant/register` | None | PF-02: self-serve participant signup `{ email, name, password, deviceId }`; returns the JWT pair (the player app keeps it). Unverified until the mailed link is opened. `EMAIL_ALREADY_TAKEN`, `RATE_LIMITED` |
 
 ### Key Payloads
 
@@ -605,7 +606,8 @@ All three endpoints emit an `operator_override` activity event via the standard 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | `/player/account` | Player | `{ linked, email, name, emailVerified }` for the calling participation |
-| POST | `/player/account/link` | Player | `{ email, password, name?, createAccount }`. Links the calling player row to the account **in place**: the player id and token do not change. `createAccount=true` creates a `participant` user (unverified until the mailed link is opened) and sends the verification mail. Errors: `EMAIL_ALREADY_TAKEN` (400), `INVALID_CREDENTIALS` (400), `PLAYER_ALREADY_LINKED` (409), `ACCOUNT_ALREADY_IN_GAME` (409, `errors: { teamId, teamName, sameTeam }`) |
+| DELETE | `/player/account/link` | Player | Unlink: the row becomes a guest again; the phone keeps playing |
+| POST | `/player/account/link` | Player | `{ email?, password?, name?, createAccount, accountAccessToken? }` (credentials, or the phone's account session token). Links the calling player row to the account **in place**: the player id and token do not change. `createAccount=true` creates a `participant` user (unverified until the mailed link is opened) and sends the verification mail. Errors: `EMAIL_ALREADY_TAKEN` (400), `INVALID_CREDENTIALS` (400), `PLAYER_ALREADY_LINKED` (409), `ACCOUNT_ALREADY_IN_GAME` (409, `errors: { teamId, teamName, sameTeam }`) |
 
 
 | Method | Path | Auth | Description |
@@ -875,6 +877,16 @@ Upload-specific errors include optional classification fields in the standard er
 | GET | `/games/:gameId/files/:filename` | Operator | Download any file in game |
 
 Supported content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/png`, `image/webp`, `image/heic`.
+
+**The signed-in account (PF-01)** — base path `/api/account`, bearer: the account's user token. Any account role; every call acts on the caller only. Password reset now answers `{ message, role }` so the web page can send participants back to the app.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/account/me` | Account | `{ id, email, name, role, emailVerified, participations: [{ playerId, gameId, gameName, gameStatus, teamId, teamName, teamColor, joinedAt }] }`. No scores |
+| POST | `/account/join` | Account | `{ joinCode, displayName, deviceId }`. If the account already plays that game → same as recover; else guest-join rules, and the new row is linked. A signed-in phone never becomes a second competitor. Join rate limiter |
+| POST | `/account/participations/:gameId/recover` | Account | `{ deviceId }`. Recover without a password |
+| POST | `/account/resend-verification` | Account | New verification link if the address is still unconfirmed. Rate limited |
+| DELETE | `/account` | Account (participant only) | Deletes the user; participations stay behind as guests |
 
 **Organizer resources visible to a team** (files and rich documents from the resource library):
 

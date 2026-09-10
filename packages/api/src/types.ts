@@ -45,11 +45,13 @@ export interface PlayerAuthResponse {
 
 /** PF-02: attach the calling guest participation to an account, creating it first when asked. */
 export interface PlayerAccountLinkRequest {
-  email: string
-  password: string
+  email?: string
+  password?: string
   /** Required with `createAccount`. */
   name?: string
   createAccount: boolean
+  /** The phone's account session token: links without retyping credentials. */
+  accountAccessToken?: string
 }
 
 /** PF-01: recover an account's existing participation on this device. One of joinCode/gameId. */
@@ -59,6 +61,40 @@ export interface PlayerRecoverRequest {
   deviceId: string
   joinCode?: string
   gameId?: EntityId
+}
+
+export interface ParticipantRegisterRequest {
+  email: string
+  name: string
+  password: string
+  deviceId: string
+}
+
+export interface AccountJoinRequest {
+  joinCode: string
+  displayName: string
+  deviceId: string
+}
+
+export interface AccountParticipation {
+  playerId: EntityId
+  gameId: EntityId
+  gameName: string
+  gameStatus: GameStatus
+  teamId: EntityId
+  teamName: string
+  teamColor: string
+  joinedAt: IsoDateTime
+}
+
+/** The signed-in account as the player app sees it. Never carries scores. */
+export interface AccountMeResponse {
+  id: EntityId
+  email: string
+  name: string
+  role: UserRole
+  emailVerified: boolean
+  participations: AccountParticipation[]
 }
 
 export interface PlayerAccountResponse {

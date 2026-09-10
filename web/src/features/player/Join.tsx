@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { QrCode } from 'lucide-react'
-import { useServices } from '@/app/player/services'
+import { useAccountSession, useServices } from '@/app/player/services'
 import { getDeviceId } from '@/app/player/device'
 import { describeError } from '@/app/player/errors'
 import { Alert, Button, Input, Label } from '@/components'
@@ -20,7 +20,8 @@ type ScanError = { code: string; message: string }
 
 export default function Join() {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
-  const { client } = useServices()
+  const { client, account } = useServices()
+  const session = useAccountSession()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [joinCode, setJoinCode] = useState(() => parseJoinCode(params.get('code')) ?? params.get('code') ?? '')
@@ -77,7 +78,10 @@ export default function Join() {
     setError(null)
     try {
       const deviceId = await getDeviceId()
-      const res = await client.api.auth.playerJoin({ joinCode: joinCode.trim().toUpperCase(), displayName: displayName.trim(), deviceId })
+      const body = { joinCode: joinCode.trim().toUpperCase(), displayName: displayName.trim(), deviceId }
+      // A signed-in phone joins as its account: it gets its own participation back
+      // if the account already plays this game, and never becomes a second competitor.
+      const res = session.kind === 'operator' ? await account.api.account.join(body) : await client.api.auth.playerJoin(body)
       await client.session.setPlayer(res)
       navigate('/', { replace: true })
     } catch (err) {
@@ -113,6 +117,12 @@ export default function Join() {
           <p className="text-center text-xs text-muted-foreground">{t('join.orEnterCode')}</p>
         </div>
       )}
+      {session.kind === 'operator' && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3" data-testid="join-signed-in">
+          <span className="min-w-0 text-sm"><span className="text-muted-foreground">{t('account.joinAs')}</span> <span className="block truncate font-medium">{session.email}</span></span>
+          <Button type="button" variant="ghost" size="sm" onClick={() => void account.signOut()} data-testid="join-sign-out">{t('account.signOut')}</Button>
+        </div>
+      )}
       <form className="flex flex-col gap-4" onSubmit={submit}>
         <div className="flex flex-col gap-2">
           <Label htmlFor="f-codeLabel">{t('join.codeLabel')}</Label>
@@ -125,7 +135,18 @@ export default function Join() {
         {error && <Alert variant="destructive" role="alert">{error}</Alert>}
         <Button size="lg" type="submit" className="text-base" disabled={busy || !joinCode.trim() || !displayName.trim()} data-testid="player-join-submit-btn">{t('join.join')}</Button>
       </form>
-      <Link to="/join/recover" className="text-center text-sm text-primary underline" data-testid="player-join-recover-link">{t('recover.link')}</Link>
+      {session.kind === 'operator' ? (
+        <>
+          <p className="text-center text-xs text-muted-foreground">{t('join.signedInHint')}</p>
+          <Link to="/join/recover" className="text-center text-sm text-primary underline" data-testid="player-join-recover-link">{t('account.myGames')}</Link>
+        </>
+      ) : (
+        <>
+          <Link to="/join/account?mode=signIn&next=/join" className="text-center text-sm text-primary underline" data-testid="player-join-sign-in-link">{t('account.orSignIn')}</Link>
+          <Link to="/join/account?next=/join" className="text-center text-sm text-primary underline" data-testid="player-join-create-link">{t('account.orCreate')}</Link>
+          <Link to="/join/recover" className="text-center text-sm text-primary underline" data-testid="player-join-recover-link">{t('recover.link')}</Link>
+        </>
+      )}
     </Screen>
   )
 }

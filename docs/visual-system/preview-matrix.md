@@ -20,7 +20,7 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Player map check-in radius rings and method-aware scan control | pending | n/a | n/a |
 | Player map chrome and detail states | pending | yes | yes |
 | Player documents: list, empty, error, cached offline, file vs document rows, inline document | pending | n/a | n/a |
-| Player account: save progress (create / sign in), linked, conflict switch dialog, switch blocked, recover on a second phone | pending | n/a | n/a |
+| Player account: signed-in join, create / sign in before joining, save this game to the account, linked with resend / unlink / sign out / delete, conflict switch dialog, switch blocked, my games list, unverified map notice | pending | n/a | n/a |
 | Operator stats, review cards, and rescue actions | partial | yes | yes |
 | Operator setup readiness, resources, and launch | partial | yes | yes |
 | Operator game library and workspace switching | partial | yes | yes |

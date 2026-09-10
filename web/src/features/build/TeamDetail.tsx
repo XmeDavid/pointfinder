@@ -13,6 +13,7 @@ import { useUpdateTeam, useDeleteTeam, useRemovePlayer } from '@/hooks/mutations
 import { useWorkspaceStore } from '@/stores/workspace'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import type { Assignment } from '@/types/v2'
@@ -338,8 +339,9 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
                 data-testid={`player-${player.id}`}
               >
                 <div>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                     {player.displayName}
+                    {player.hasAccount && <Badge variant="info" data-testid={`player-account-${player.id}`}>{t('teams.hasAccount')}</Badge>}
                   </p>
                   <p className="text-xs text-muted-foreground font-mono">
                     {player.deviceId}

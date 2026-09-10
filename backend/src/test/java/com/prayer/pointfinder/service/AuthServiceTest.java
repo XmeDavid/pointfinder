@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -116,25 +117,6 @@ class AuthServiceTest {
         }
 
         @Test
-        void loginRefusesParticipantAccountsWithATypedCode() {
-            // PF-01: a registered player never gets an operator session, even with the right password.
-            com.prayer.pointfinder.entity.User participant = com.prayer.pointfinder.entity.User.builder()
-                    .id(java.util.UUID.randomUUID()).email("ana@example.com").name("Ana").passwordHash("hash")
-                    .role(com.prayer.pointfinder.entity.UserRole.participant).build();
-            when(loginAttemptService.isBlocked("ana@example.com")).thenReturn(false);
-            when(userRepository.findByEmail("ana@example.com")).thenReturn(Optional.of(participant));
-            when(passwordEncoder.matches("Secret123", "hash")).thenReturn(true);
-
-            LoginRequest request = new LoginRequest();
-            request.setEmail("ana@example.com");
-            request.setPassword("Secret123");
-
-            BadRequestException ex = assertThrows(BadRequestException.class, () -> authService.login(request));
-            assertEquals(com.prayer.pointfinder.exception.ErrorCode.PARTICIPANT_ACCOUNT, ex.getErrorCode());
-            verify(refreshTokenRepository, never()).save(any());
-        }
-
-        @Test
         void loginRecordsFailureOnBadCredentials() {
             when(loginAttemptService.isBlocked("operator@example.com")).thenReturn(false);
             when(userRepository.findByEmail("operator@example.com")).thenReturn(Optional.of(testUser));
@@ -195,7 +177,7 @@ class AuthServiceTest {
                     .build();
 
             when(inviteRepository.findByToken("tok123")).thenReturn(Optional.of(invite));
-            when(userRepository.existsByEmail("dup@test.com")).thenReturn(true);
+            when(userRepository.existsByEmailIgnoreCase("dup@test.com")).thenReturn(true);
 
             RegisterRequest request = new RegisterRequest();
             request.setEmail("dup@test.com");
@@ -239,7 +221,7 @@ class AuthServiceTest {
                     .build();
 
             when(inviteRepository.findByToken("invite-token")).thenReturn(Optional.of(invite));
-            when(userRepository.existsByEmail("invited@example.com")).thenReturn(false);
+            when(userRepository.existsByEmailIgnoreCase("invited@example.com")).thenReturn(false);
             when(passwordEncoder.encode(anyString())).thenReturn("encoded");
             when(userRepository.save(any(User.class))).thenAnswer(inv -> {
                 User u = inv.getArgument(0);
@@ -401,6 +383,72 @@ class AuthServiceTest {
 
             // Oldest token should have been deleted
             verify(refreshTokenRepository).delete(existingTokens.get(0));
+        }
+    }
+
+    @org.junit.jupiter.api.Nested
+    class Participants {
+        @Test
+        void registerParticipantCreatesAnUnverifiedAccountAndMailsTheLink() {
+            when(userRepository.existsByEmailIgnoreCase("ana@example.com")).thenReturn(false);
+            when(passwordEncoder.encode("Secret123")).thenReturn("hash");
+            when(userRepository.save(any(com.prayer.pointfinder.entity.User.class))).thenAnswer(inv -> { var u = (com.prayer.pointfinder.entity.User) inv.getArgument(0); if (u.getId() == null) u.setId(java.util.UUID.randomUUID()); return u; });
+            when(emailChangeTokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tokenProvider.generateAccessToken(any(), any(), any(), org.mockito.ArgumentMatchers.anyInt())).thenReturn("access");
+            when(tokenProvider.generateRefreshTokenString()).thenReturn("refresh");
+
+            var response = authService.registerParticipant("ana@example.com", "Ana", "Secret123", "app.example.test");
+
+            assertEquals("participant", response.user().role());
+            org.mockito.ArgumentCaptor<com.prayer.pointfinder.entity.User> saved = org.mockito.ArgumentCaptor.forClass(com.prayer.pointfinder.entity.User.class);
+            verify(userRepository, org.mockito.Mockito.atLeastOnce()).save(saved.capture());
+            assertEquals(com.prayer.pointfinder.entity.UserRole.participant, saved.getValue().getRole());
+            assertEquals(Boolean.FALSE, saved.getValue().getEmailVerified());
+            verify(userSubRepository).save(any());
+            verify(emailService).sendParticipantVerification(eq("ana@example.com"), any(), eq("app.example.test"));
+        }
+
+        @Test
+        void inviteRegistrationTakesOverAnUnverifiedParticipantThatParkedTheAddress() {
+            // Someone created a participant with the club owner's address from a game; the mailed invite wins.
+            com.prayer.pointfinder.entity.User parked = com.prayer.pointfinder.entity.User.builder()
+                    .id(java.util.UUID.randomUUID()).email("owner@club.test").name("Mallory").passwordHash("old")
+                    .role(com.prayer.pointfinder.entity.UserRole.participant).emailVerified(false).tokenVersion(0).build();
+            com.prayer.pointfinder.entity.OperatorInvite invite = com.prayer.pointfinder.entity.OperatorInvite.builder()
+                    .email("owner@club.test").token("invite-token").status(com.prayer.pointfinder.entity.InviteStatus.pending).build();
+            when(inviteRepository.findByToken("invite-token")).thenReturn(Optional.of(invite));
+            when(userRepository.findByEmailIgnoreCase("owner@club.test")).thenReturn(Optional.of(parked));
+            when(passwordEncoder.encode("Owner123")).thenReturn("new-hash");
+            when(userRepository.save(any(com.prayer.pointfinder.entity.User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(inviteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tokenProvider.generateAccessToken(any(), any(), any(), org.mockito.ArgumentMatchers.anyInt())).thenReturn("access");
+            when(tokenProvider.generateRefreshTokenString()).thenReturn("refresh");
+            com.prayer.pointfinder.dto.request.RegisterRequest request = new com.prayer.pointfinder.dto.request.RegisterRequest();
+            request.setEmail("owner@club.test"); request.setName("Owner"); request.setPassword("Owner123");
+
+            var response = authService.register("invite-token", request);
+
+            assertEquals("operator", response.user().role());
+            assertEquals("Owner", parked.getName());
+            assertEquals("new-hash", parked.getPasswordHash());
+            assertEquals(Boolean.TRUE, parked.getEmailVerified());
+            assertEquals(1, parked.getTokenVersion(), "every token the parker minted stops working");
+            verify(refreshTokenRepository).deleteByUserId(parked.getId());
+            verify(userSubRepository, never()).save(any());
+        }
+
+        @Test
+        void inviteRegistrationStillRefusesAVerifiedAddress() {
+            com.prayer.pointfinder.entity.OperatorInvite invite = com.prayer.pointfinder.entity.OperatorInvite.builder()
+                    .email("real@club.test").token("invite-token").status(com.prayer.pointfinder.entity.InviteStatus.pending).build();
+            when(inviteRepository.findByToken("invite-token")).thenReturn(Optional.of(invite));
+            when(userRepository.findByEmailIgnoreCase("real@club.test")).thenReturn(Optional.of(
+                    com.prayer.pointfinder.entity.User.builder().id(java.util.UUID.randomUUID()).email("real@club.test").role(com.prayer.pointfinder.entity.UserRole.participant).emailVerified(true).build()));
+            when(userRepository.existsByEmailIgnoreCase("real@club.test")).thenReturn(true);
+            com.prayer.pointfinder.dto.request.RegisterRequest request = new com.prayer.pointfinder.dto.request.RegisterRequest();
+            request.setEmail("real@club.test"); request.setName("X"); request.setPassword("Owner123");
+
+            assertThrows(BadRequestException.class, () -> authService.register("invite-token", request));
         }
     }
 }

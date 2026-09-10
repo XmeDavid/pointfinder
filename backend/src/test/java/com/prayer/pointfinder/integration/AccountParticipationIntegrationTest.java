@@ -197,14 +197,82 @@ class AccountParticipationIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void participantAccountsCannotSignInToTheOperatorSurface() {
+    void participantAccountsSignInButReachNothingOperatorsHave() {
         String email = "ana-" + UUID.randomUUID() + "@example.com";
         PlayerAuthResponse guest = join(falcons, "Ana", "device-a");
         assertEquals(HttpStatus.OK, link(guest.token(), signup(email, "Ana"), PlayerAccountResponse.class).getStatusCode());
 
         ResponseEntity<Map> login = restTemplate.postForEntity("/api/auth/login", Map.of("email", email, "password", "Secret123"), Map.class);
-        assertEquals(HttpStatus.BAD_REQUEST, login.getStatusCode());
-        assertEquals("PARTICIPANT_ACCOUNT", login.getBody().get("code"));
+        assertEquals(HttpStatus.OK, login.getStatusCode());
+        String accessToken = (String) login.getBody().get("accessToken");
+        HttpHeaders asAccount = bearer(accessToken);
+        assertEquals(HttpStatus.FORBIDDEN, restTemplate.exchange("/api/games", HttpMethod.GET, new HttpEntity<>(asAccount), String.class).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, restTemplate.exchange("/api/orgs", HttpMethod.GET, new HttpEntity<>(asAccount), String.class).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, restTemplate.exchange("/api/billing/status", HttpMethod.GET, new HttpEntity<>(asAccount), String.class).getStatusCode());
+        assertEquals(HttpStatus.OK, restTemplate.exchange("/api/account/me", HttpMethod.GET, new HttpEntity<>(asAccount), String.class).getStatusCode());
+    }
+
+    private HttpHeaders account(String email) {
+        ResponseEntity<Map> login = restTemplate.postForEntity("/api/auth/login", Map.of("email", email, "password", "Secret123"), Map.class);
+        assertEquals(HttpStatus.OK, login.getStatusCode());
+        return bearer((String) login.getBody().get("accessToken"));
+    }
+
+    @Test
+    void aSignedInPhoneNeverBecomesASecondCompetitor() {
+        String email = "ana-" + UUID.randomUUID() + "@example.com";
+        // Create the account first, from the app, without any game.
+        ResponseEntity<Map> registered = restTemplate.postForEntity("/api/auth/participant/register",
+                Map.of("email", email, "name", "Ana", "password", "Secret123", "deviceId", "device-a"), Map.class);
+        assertEquals(HttpStatus.OK, registered.getStatusCode());
+        HttpHeaders asAna = bearer((String) registered.getBody().get("accessToken"));
+
+        // Joining while signed in creates a linked row.
+        ResponseEntity<PlayerAuthResponse> first = restTemplate.exchange("/api/account/join", HttpMethod.POST,
+                new HttpEntity<>(Map.of("joinCode", falcons.getJoinCode(), "displayName", "Ana", "deviceId", "device-a"), asAna), PlayerAuthResponse.class);
+        assertEquals(HttpStatus.OK, first.getStatusCode());
+        assertNotNull(playerRepository.findById(first.getBody().player().id()).orElseThrow().getUser());
+
+        // The same account on another phone, with a different team's code, gets the same row back.
+        ResponseEntity<PlayerAuthResponse> second = restTemplate.exchange("/api/account/join", HttpMethod.POST,
+                new HttpEntity<>(Map.of("joinCode", owls.getJoinCode(), "displayName", "Ana", "deviceId", "device-b"), asAna), PlayerAuthResponse.class);
+        assertEquals(HttpStatus.OK, second.getStatusCode());
+        assertEquals(first.getBody().player().id(), second.getBody().player().id());
+        assertEquals(falcons.getId(), second.getBody().team().id());
+        assertEquals(1, playerRepository.countByGameId(game.getId()));
+
+        // /me lists the participation without any score.
+        ResponseEntity<Map> me = restTemplate.exchange("/api/account/me", HttpMethod.GET, new HttpEntity<>(asAna), Map.class);
+        assertEquals(HttpStatus.OK, me.getStatusCode());
+        java.util.List<Map<String, Object>> parts = (java.util.List<Map<String, Object>>) me.getBody().get("participations");
+        assertEquals(1, parts.size());
+        assertEquals("Falcons", parts.get(0).get("teamName"));
+        assertEquals(Boolean.FALSE, me.getBody().get("emailVerified"));
+
+        // Recover by session, no password.
+        ResponseEntity<PlayerAuthResponse> recovered = restTemplate.exchange("/api/account/participations/" + game.getId() + "/recover", HttpMethod.POST,
+                new HttpEntity<>(Map.of("deviceId", "device-c"), asAna), PlayerAuthResponse.class);
+        assertEquals(HttpStatus.OK, recovered.getStatusCode());
+        assertEquals(first.getBody().player().id(), recovered.getBody().player().id());
+
+        // Unlink from the phone, then the row is a guest again and /me is empty.
+        ResponseEntity<PlayerAccountResponse> unlinked = restTemplate.exchange("/api/player/account/link", HttpMethod.DELETE, new HttpEntity<>(bearer(recovered.getBody().token())), PlayerAccountResponse.class);
+        assertEquals(HttpStatus.OK, unlinked.getStatusCode());
+        assertFalse(unlinked.getBody().linked());
+        me = restTemplate.exchange("/api/account/me", HttpMethod.GET, new HttpEntity<>(asAna), Map.class);
+        assertEquals(0, ((java.util.List<?>) me.getBody().get("participations")).size());
+
+        // Link it back through the session token in the body, no password.
+        ResponseEntity<PlayerAccountResponse> relinked = restTemplate.exchange("/api/player/account/link", HttpMethod.POST,
+                new HttpEntity<>(Map.of("accountAccessToken", asAna.getFirst("Authorization").substring(7), "createAccount", false), bearer(recovered.getBody().token())), PlayerAccountResponse.class);
+        assertEquals(HttpStatus.OK, relinked.getStatusCode());
+        assertEquals(email, relinked.getBody().email());
+
+        // Deleting the account leaves the participation behind as a guest.
+        assertEquals(HttpStatus.NO_CONTENT, restTemplate.exchange("/api/account", HttpMethod.DELETE, new HttpEntity<>(asAna), Void.class).getStatusCode());
+        Player left = playerRepository.findById(first.getBody().player().id()).orElseThrow();
+        assertEquals(null, left.getUser());
+        assertTrue(userRepository.findByEmailIgnoreCase(email).isEmpty());
     }
 
     @Test

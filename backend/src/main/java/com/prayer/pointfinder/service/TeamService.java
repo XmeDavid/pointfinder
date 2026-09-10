@@ -112,6 +112,7 @@ public class TeamService {
                         .teamId(p.getTeam().getId())
                         .deviceId(p.getDeviceId())
                         .displayName(p.getDisplayName())
+                        .hasAccount(p.getUser() != null)
                         .build())
                 .toList();
     }

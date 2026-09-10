@@ -113,7 +113,8 @@
     "registrationEmailSent": "Enviámos-lhe um email com um link para continuar o registo. Verifique a sua caixa de entrada.",
     "sendRegistrationLink": "Continuar",
     "registrationRequestFailed": "Algo correu mal. Por favor, tente novamente.",
-    "emailPlaceholder": "email@exemplo.com"
+    "emailPlaceholder": "email@exemplo.com",
+    "resetPasswordParticipant": "Feito. Abre a app PointFinder no telemóvel e inicia sessão com a nova palavra-passe."
   },
   "nav": {
     "games": "Jogos",
@@ -577,7 +578,8 @@
     "unlockOverrideRemoveConfirmTitle": "Remover substituição?",
     "unlockOverrideRemoveConfirmDescription": "A base {{base}} voltará a ficar oculta para esta equipa. O histórico é preservado na auditoria.",
     "manualCheckInReasonLabel": "Motivo do operador (opcional)",
-    "manualCheckInReasonPlaceholder": "ex. Falha de NFC, problema de GPS, avaria no dispositivo"
+    "manualCheckInReasonPlaceholder": "ex. Falha de NFC, problema de GPS, avaria no dispositivo",
+    "hasAccount": "Conta"
   },
   "notifications": {
     "description": "Enviar mensagens para as equipas no terreno",
@@ -1025,7 +1027,6 @@
     "BASE_ORDER_DEPENDENCY_CONFLICT": "Uma base tem de ser desbloqueada por uma base anterior no percurso. Atualiza a regra de desbloqueio ou a ordem do percurso.",
     "DEVICE_ALREADY_IN_DIFFERENT_TEAM": "Este telemóvel já pertence a outra equipa neste jogo.",
     "INVALID_CREDENTIALS": "Email ou palavra-passe errados.",
-    "PARTICIPANT_ACCOUNT": "Esta é uma conta de jogador. Abre a app PointFinder para jogar.",
     "ACCOUNT_ALREADY_IN_GAME": "Esta conta já está a jogar este jogo noutro telemóvel.",
     "PLAYER_ALREADY_LINKED": "Esta participação já pertence a uma conta.",
     "NO_PARTICIPATION_FOUND": "Esta conta não entrou nesse jogo.",
@@ -1568,7 +1569,8 @@
       "openSettings": "Abrir definições",
       "orEnterCode": "Ou introduz o código manualmente",
       "cameraDisabled": "O acesso à câmara está desligado. Ativa-o nas definições para ler códigos.",
-      "practiceFull": "Este jogo de treino já tem o seu único jogador."
+      "practiceFull": "Este jogo de treino já tem o seu único jogador.",
+      "signedInHint": "Este telemóvel recupera o teu jogo se esta conta já o estiver a jogar."
     },
     "login": {
       "title": "Entrar como operador",
@@ -1785,7 +1787,32 @@
       "switchBlocked_other": "Tens {{count}} ações por sincronizar. Deixa-as sincronizar e tenta de novo.",
       "back": "Voltar às definições",
       "emailConfirmedTitle": "Email confirmado",
-      "emailConfirmedBody": "A tua conta PointFinder está pronta. Já podes recuperar os teus jogos em qualquer telemóvel a partir da app PointFinder."
+      "emailConfirmedBody": "A tua conta PointFinder está pronta. Já podes recuperar os teus jogos em qualquer telemóvel a partir da app PointFinder.",
+      "signedInAs": "Sessão iniciada como",
+      "notYou": "Não és tu? Terminar sessão",
+      "signOut": "Terminar sessão",
+      "signOutConfirmTitle": "Terminar sessão?",
+      "signOutConfirm": "O teu jogo fica neste telemóvel. Inicia sessão de novo para o recuperar noutro telemóvel.",
+      "saveToAccount": "Guardar este jogo em {{email}}",
+      "saveToAccountHint": "A tua equipa e o progresso ficam exatamente como estão.",
+      "unlink": "Remover este jogo da minha conta",
+      "unlinkTitle": "Remover da conta?",
+      "unlinkConfirm": "Este jogo fica neste telemóvel como convidado. Podes guardá-lo de novo mais tarde.",
+      "deleteAccount": "Eliminar a minha conta",
+      "deleteAccountTitle": "Eliminar conta?",
+      "deleteAccountConfirm": "Os teus jogos ficam com as equipas como convidado. Não é possível anular.",
+      "resendVerification": "Reenviar email",
+      "verificationSent": "Email enviado. Vê a tua caixa de entrada.",
+      "verifyBanner": "Confirma o teu email para recuperares os teus jogos em qualquer telemóvel.",
+      "myGames": "Os teus jogos",
+      "noGames": "Esta conta ainda não entrou em nenhum jogo.",
+      "getBack": "Recuperar este jogo",
+      "createAccountTitle": "Cria a tua conta",
+      "signInTitle": "Iniciar sessão",
+      "continueAsGuest": "Continuar como convidado",
+      "orSignIn": "Tens conta? Inicia sessão",
+      "orCreate": "Novo por aqui? Cria uma conta",
+      "joinAs": "A entrar como"
     },
     "recover": {
       "title": "Recuperar o teu jogo",

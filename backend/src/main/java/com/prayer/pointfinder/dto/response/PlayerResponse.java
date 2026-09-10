@@ -7,5 +7,7 @@ public record PlayerResponse(
         UUID id,
         UUID teamId,
         String deviceId,
-        String displayName
+        String displayName,
+        /** PF-01: the participation is saved to an account. Never the address. */
+        boolean hasAccount
 ) {}

@@ -4,8 +4,10 @@ import { createPlatformServices } from '@/platform'
 import { apiOrigin } from '@/platform/config'
 import type { PlatformServices } from '@/platform/contracts'
 import { createMediaService, type PlayerMediaService } from './media'
+import { createAccountServices, type AccountServices } from './account'
+import { secrets } from '@/platform'
 
-export interface AppServices { client: PointFinderClient; queue: OfflineQueue; media: PlayerMediaService }
+export interface AppServices { client: PointFinderClient; queue: OfflineQueue; media: PlayerMediaService; account: AccountServices }
 type OwnedAction = PendingAction & { playerId?: string }
 
 /** Each session sees and replays only its own durable actions. */
@@ -30,6 +32,9 @@ export async function createServices(platform?: PlatformServices): Promise<AppSe
   const p = platform ?? await createPlatformServices()
   const client = createClient({ baseUrl: apiOrigin(), fetch: p.fetch, tokenStore: p.tokens, socketFactory: p.socketFactory })
   await client.session.restore()
+  // The account session is restored right after the player one, before any runtime starts.
+  const account = createAccountServices({ baseUrl: apiOrigin(), fetch: p.fetch, secrets: p.secrets ?? secrets })
+  await account.session.restore()
   if (p.media.prune) {
     const allActions = await p.queue.list()
     const retained = allActions.flatMap((action) => action.type === 'submission' ? (action.media ?? []).map((item) => item.id) : [])
@@ -84,7 +89,7 @@ export async function createServices(platform?: PlatformServices): Promise<AppSe
       if (action.type === 'submission') await Promise.allSettled((action.media ?? []).map((item) => p.media.remove(item.id)))
     },
   })
-  return { client, queue, media: createMediaService(p.media, queue, () => client.session.current) }
+  return { client, queue, media: createMediaService(p.media, queue, () => client.session.current), account }
 }
 let services: Promise<AppServices> | undefined
 export function getServices(): Promise<AppServices> {

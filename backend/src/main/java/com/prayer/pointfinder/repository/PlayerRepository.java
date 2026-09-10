@@ -16,6 +16,8 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
 
     Optional<Player> findByUserIdAndGameId(UUID userId, UUID gameId);
 
+    List<Player> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
     long countByTeamId(UUID teamId);
 
     Optional<Player> findByDeviceIdAndTeamId(String deviceId, UUID teamId);
@@ -37,6 +39,10 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
 
     @Query("SELECT COUNT(DISTINCT p.id) FROM Player p WHERE p.team.game.id = :gameId")
     long countByGameId(@Param("gameId") UUID gameId);
+
+    @Modifying
+    @Query("UPDATE Player p SET p.user = NULL WHERE p.user.id = :userId")
+    void unlinkAllForUser(@Param("userId") UUID userId);
 
     @Modifying
     @Query("UPDATE Player p SET p.pushToken = NULL WHERE p.pushToken = :token")

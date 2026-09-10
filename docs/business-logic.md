@@ -1148,7 +1148,7 @@ The `type` claim is used by `JwtAuthenticationFilter` to route to the correct us
 | `ADMIN` | Global | All games, all users, global operator management |
 | `OPERATOR` | Game-scoped | Only games they created or were added to as an operator |
 | `PLAYER` | Game-scoped | Only `/api/player/**` endpoints; scoped to their team and game |
-| `PARTICIPANT` | Account | A registered player's user account. `POST /api/auth/login` refuses it (`PARTICIPANT_ACCOUNT`), so it never holds a session; its credentials are only accepted in the body of the player-token link and recover calls. Every route outside `/api/auth/**` answers 403 because the security default is operator-only |
+| `PARTICIPANT` | Account | A registered player's user account. It signs in like any account (the player app keeps the pair) and reaches only `/api/auth/**` and `/api/account/**`; every operator route answers 403 because the security default is operator-only. An unverified participant that merely parked an address loses it to whoever registers through a mailed invite for that address |
 
 **Game-scoped access**: Operators can only access a game if they are its creator or appear in the `game_operators` join table. `GameService.getAllGames()` filters by this for non-admin users.
 
@@ -1157,6 +1157,7 @@ The `type` claim is used by `JwtAuthenticationFilter` to route to the correct us
 - `/api/broadcast/**` — public
 - `/ws/**` — public at HTTP level (JWT validated in WebSocket interceptor)
 - `/api/player/**` — requires `ROLE_PLAYER`
+- `/api/account/**` — any account role (`ADMIN`, `OPERATOR`, `PARTICIPANT`); the player app's account session (PF-01)
 - `/api/games/**`, `/api/invites/**`, `/api/users/**` — requires `ROLE_ADMIN` or `ROLE_OPERATOR`
 - everything else (`/api/orgs/**`, `/api/billing/**`, workspaces, quota, org invites, future controllers) — requires `ROLE_ADMIN` or `ROLE_OPERATOR` (default since 2026-09-10; it used to be `authenticated()`)
 

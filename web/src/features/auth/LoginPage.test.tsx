@@ -56,8 +56,8 @@ afterEach(() => useAuthStore.setState({ user: null, isAuthenticated: false, acce
 
 describe('LoginPage', () => {
   it('refuses a participant account and explains where to play', async () => {
-    // The backend refuses before any session exists; the page must show the pointer, not "invalid credentials".
-    server.use(http.post('/api/auth/login', () => HttpResponse.json({ status: 400, message: 'This is a player account', code: 'PARTICIPANT_ACCOUNT' }, { status: 400 })))
+    // The backend issues tokens (the player app needs them); the operator surface sends the account away.
+    server.use(http.post('/api/auth/login', () => HttpResponse.json({ accessToken, user: { id: 'user-2', email: 'ana@example.com', name: 'Ana', role: 'participant', createdAt: '2026-01-01T00:00:00Z' } })))
     mount()
     await signIn()
     expect(await screen.findByText(/This is a player account/)).toBeInTheDocument()

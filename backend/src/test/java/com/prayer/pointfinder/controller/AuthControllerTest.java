@@ -126,6 +126,24 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void participantRegisterReturnsTheAuthPairAndIsRateLimitedLikeJoin() throws Exception {
+        String body = "{\"email\":\"ana@example.com\",\"name\":\"Ana\",\"password\":\"Secret123\",\"deviceId\":\"device-a\"}";
+        when(authService.registerParticipant(eq("ana@example.com"), eq("Ana"), eq("Secret123"), any())).thenReturn(
+                com.prayer.pointfinder.dto.response.AuthResponse.builder().accessToken("at").refreshToken("rt")
+                        .user(com.prayer.pointfinder.dto.response.UserResponse.builder().id(UUID.randomUUID()).email("ana@example.com").name("Ana").role("participant").build()).build());
+
+        mockMvc.perform(post("/api/auth/participant/register").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("at"))
+                .andExpect(jsonPath("$.user.role").value("participant"));
+        verify(playerJoinRateLimiter).tryAcquire(any(), eq("device-a"));
+
+        when(playerJoinRateLimiter.tryAcquire(any(), any())).thenReturn(false);
+        mockMvc.perform(post("/api/auth/participant/register").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isTooManyRequests());
+    }
+
     // ── Player Join tests ─────────────────────────────────────────────
 
     @Test

@@ -15,6 +15,7 @@ const Documents = lazy(() => import('@/features/player/DocumentsScreen'))
 const Document = lazy(() => import('@/features/player/DocumentScreen'))
 const Account = lazy(() => import('@/features/player/AccountScreen'))
 const Recover = lazy(() => import('@/features/player/RecoverScreen'))
+const AccountSignIn = lazy(() => import('@/features/player/AccountSignInScreen'))
 const Welcome = lazy(() => import('@/features/auth/Welcome'))
 const Landing = lazy(() => import('@/features/public/LandingPage').then((m) => ({ default: m.LandingPage })))
 
@@ -50,6 +51,7 @@ function OperatorAlias() {
 export const playerRoutes = [
   { path: '/join', element: <JoinRoute /> },
   { path: '/join/recover', element: <JoinRoute><Recover /></JoinRoute> },
+  { path: '/join/account', element: <JoinRoute><AccountSignIn /></JoinRoute> },
   { path: '/list', element: <PlayerRoute><Logbook /></PlayerRoute> },
   { path: '/base/:baseId', element: <PlayerRoute><Base /></PlayerRoute> },
   { path: '/settings', element: <PlayerRoute><Settings /></PlayerRoute> },

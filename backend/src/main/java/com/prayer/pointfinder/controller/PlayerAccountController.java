@@ -54,6 +54,12 @@ public class PlayerAccountController {
         return ResponseEntity.ok(playerAccountService.link(player, request, forwardedHost));
     }
 
+    /** The row becomes a guest again; the phone keeps playing. */
+    @org.springframework.web.bind.annotation.DeleteMapping("/link")
+    public ResponseEntity<PlayerAccountResponse> unlink() {
+        return ResponseEntity.ok(playerAccountService.unlink(SecurityUtils.getCurrentPlayer()));
+    }
+
     private static String resolveClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {

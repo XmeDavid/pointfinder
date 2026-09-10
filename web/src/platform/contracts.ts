@@ -17,6 +17,8 @@ export interface PlatformServices {
   tokens: TokenStore
   queue: QueueStore
   cache: GameCache
+  /** Secret storage for the account session; defaults to the platform's secrets store. */
+  secrets?: KeyValueStore
   settings: KeyValueStore
   socketFactory: SocketFactory
   media: MediaStore

@@ -92,23 +92,35 @@ Documents render inline through `RichContent`. Reached from the map header
 `documents-offline-hint`, `document-<id>`, `document-body`,
 `document-missing`.
 
-Component: AccountScreen / RecoverScreen / Settings Account section
+Component: AccountCredentialsForm / AccountSignInScreen / AccountScreen / RecoverScreen / Settings Account section / UnverifiedAccountNotice
 Status: canonical
-Location: `web/src/features/player/AccountScreen.tsx`, `web/src/features/player/RecoverScreen.tsx`, `web/src/features/player/SettingsScreen.tsx`
-Modes: Player Field (Settings → Account, `/account`), Auth (`/join/recover`)
-States: unlinked (create / sign in tabs, password hint), linked (email, unverified
-hint), taken email, wrong password, already linked, account already plays
-elsewhere (switch dialog), switch blocked by queued actions, recover not
-found, busy, offline error.
-Notes: PF-01/PF-02 first slice. Credentials are used once; the player
-session never changes principal and the operator-wins native routing is
-untouched. Recover replaces the session and is refused while the offline
-queue is non-empty. The operator web login refuses `participant` accounts
-with a pointer to the player app. Test ids: `settings-save-progress`,
-`settings-account-linked`, `account-mode-create`, `account-mode-signin`,
+Location: `web/src/features/player/components/AccountCredentialsForm.tsx`, `web/src/features/player/AccountSignInScreen.tsx`, `web/src/features/player/AccountScreen.tsx`, `web/src/features/player/RecoverScreen.tsx`, `web/src/features/player/SettingsScreen.tsx`, `web/src/features/player/components/UnverifiedAccountNotice.tsx`
+Modes: Player Field (Settings → Account, `/account`, map notice), Auth (`/join`, `/join/account`, `/join/recover`)
+States: phone without an account (create / sign in toggle, password hint,
+taken email, wrong password), signed in and this game unlinked ("Save this
+game to {email}", "Not you? Sign out"), linked (email, unverified hint with
+Resend, unlink, sign out, delete account for participants), account already
+plays elsewhere (switch dialog), switch blocked by queued actions, Join
+signed-in header with sign-out, Recover as a list of the account's games
+(empty, ended games disabled) or a sign-in prompt, unverified notice under
+the map header, offline error with retry.
+Notes: PF-01/PF-02 second slice. The account session is held by the player
+app next to the player session (`web/src/app/player/account.ts`) and never
+enters the operator store, so the native operator-wins routing is
+untouched. A signed-in phone joins through `/api/account/join` and can never
+become a second competitor. Recover replaces the player session and is
+refused while the offline queue is non-empty. Test ids: `join-signed-in`,
+`join-sign-out`, `player-join-sign-in-link`, `player-join-create-link`,
+`player-join-recover-link`, `account-mode-create`, `account-mode-signin`,
 `account-email`, `account-name`, `account-password`, `account-submit`,
-`account-linked`, `account-unverified`, `recover-email`, `recover-password`,
-`recover-code`, `recover-submit`, `player-join-recover-link`.
+`account-save-to`, `account-save`, `account-not-you`, `account-linked`,
+`account-unverified`, `recover-sign-in`, `recover-list`,
+`recover-game-<id>`, `recover-btn-<id>`, `recover-empty`,
+`recover-sign-out`, `settings-account-unknown`, `settings-account-linked`,
+`settings-account-signed-in`, `settings-account-unverified`,
+`settings-resend-verification`, `settings-save-progress`, `settings-unlink`,
+`settings-sign-out`, `settings-delete-account`, `player-unverified-notice`,
+`player-account-<id>` (operator roster badge), `reset-participant-hint`.
 
 Component: BrandMark / BrandLockup / BrandTile
 Status: canonical

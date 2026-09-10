@@ -4,7 +4,6 @@ import com.prayer.pointfinder.dto.request.PlayerAccountLinkRequest;
 import com.prayer.pointfinder.dto.request.PlayerRecoverRequest;
 import com.prayer.pointfinder.dto.response.PlayerAccountResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
-import com.prayer.pointfinder.entity.EmailChangeToken;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
@@ -14,12 +13,10 @@ import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ErrorCode;
-import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.UserRepository;
-import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,13 +57,11 @@ class PlayerAccountServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private TeamRepository teamRepository;
     @Mock private GameRepository gameRepository;
-    @Mock private UserSubscriptionRepository userSubRepository;
-    @Mock private EmailChangeTokenRepository emailChangeTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private LoginAttemptService loginAttemptService;
     @Mock private JwtTokenProvider tokenProvider;
-    @Mock private EmailService emailService;
     @Mock private AuthService authService;
+    @Mock private PlayerJoinService playerJoinService;
 
     @InjectMocks private PlayerAccountService service;
 
@@ -88,7 +83,6 @@ class PlayerAccountServiceTest {
         when(playerRepository.save(any(Player.class))).thenAnswer(inv -> inv.getArgument(0));
         when(playerRepository.saveAndFlush(any(Player.class))).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.save(any(User.class))).thenAnswer(inv -> { User u = inv.getArgument(0); if (u.getId() == null) u.setId(UUID.randomUUID()); return u; });
-        when(emailChangeTokenRepository.save(any(EmailChangeToken.class))).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.findByEmailIgnoreCase("ana@example.com")).thenReturn(Optional.of(ana));
         when(passwordEncoder.matches("Secret123", "hash")).thenReturn(true);
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
@@ -132,7 +126,7 @@ class PlayerAccountServiceTest {
         assertEquals("ana@example.com", account.email());
         assertSame(ana, guest.getUser(), "the existing row is linked, no new row");
         verify(loginAttemptService).recordSuccess("ana@example.com");
-        verify(emailService, never()).sendParticipantVerification(any(), any(), any());
+        verify(authService, never()).createParticipant(any(), any(), any(), any());
     }
 
     @Test
@@ -186,34 +180,25 @@ class PlayerAccountServiceTest {
     // ── link by creating an account ──────────────────────────────────
 
     @Test
-    void linkBySignupCreatesAnUnverifiedParticipantAndMailsTheLink() {
-        when(userRepository.existsByEmailIgnoreCase("new@example.com")).thenReturn(false);
+    void linkBySignupCreatesTheParticipantThroughAuthAndLinksIt() {
+        User nia = User.builder().id(UUID.randomUUID()).email("new@example.com").name("Nia").role(UserRole.participant).emailVerified(false).build();
+        when(authService.createParticipant("new@example.com", "Nia", "Secret123", "app.example.test")).thenReturn(nia);
 
         PlayerAccountResponse account = service.link(authPlayer(), signup("new@example.com", "Nia", "Secret123"), "app.example.test");
 
         assertTrue(account.linked());
         assertFalse(account.emailVerified());
-        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(saved.capture());
-        assertEquals(UserRole.participant, saved.getValue().getRole());
-        assertEquals(Boolean.FALSE, saved.getValue().getEmailVerified());
-        assertEquals("encoded", saved.getValue().getPasswordHash());
-        verify(authService).validatePassword("Secret123");
-        verify(userSubRepository).save(any());
-        ArgumentCaptor<EmailChangeToken> token = ArgumentCaptor.forClass(EmailChangeToken.class);
-        verify(emailChangeTokenRepository).save(token.capture());
-        assertEquals("new@example.com", token.getValue().getNewEmail());
-        verify(emailService).sendParticipantVerification(eq("new@example.com"), eq(token.getValue().getToken()), eq("app.example.test"));
-        assertSame(saved.getValue(), guest.getUser());
+        assertSame(nia, guest.getUser());
     }
 
     @Test
-    void linkBySignupRefusesATakenEmail() {
-        when(userRepository.existsByEmailIgnoreCase("ana@example.com")).thenReturn(true);
+    void linkBySignupPassesATakenEmailRefusalThrough() {
+        when(authService.createParticipant(any(), any(), any(), any()))
+                .thenThrow(new BadRequestException("Email already registered", ErrorCode.EMAIL_ALREADY_TAKEN));
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> service.link(authPlayer(), signup("ana@example.com", "Ana", "Secret123"), null));
         assertEquals(ErrorCode.EMAIL_ALREADY_TAKEN, ex.getErrorCode());
-        verify(userRepository, never()).save(any());
+        assertNull(guest.getUser());
     }
 
     @Test
@@ -221,8 +206,7 @@ class PlayerAccountServiceTest {
         guest.setUser(ana);
         assertThrows(ConflictException.class,
                 () -> service.link(authPlayer(), signup("new@example.com", "Nia", "Secret123"), null));
-        verify(userRepository, never()).save(any());
-        verify(emailService, never()).sendParticipantVerification(any(), any(), any());
+        verify(authService, never()).createParticipant(any(), any(), any(), any());
     }
 
     // ── recover ──────────────────────────────────────────────────────
@@ -273,7 +257,6 @@ class PlayerAccountServiceTest {
     void recoverRetiresTheGuestRowThatPhoneHadInThisGame() {
         // Ana joined the Owls as a guest on phone B, then recovers her Falcons participation there.
         guest.setUser(ana);
-        guest.setPushToken("old-phone-token");
         Player ghost = Player.builder().id(UUID.randomUUID()).team(owls).game(game).deviceId("device-b").displayName("Ana again").build();
         when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.of(guest));
         when(playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc("device-b", game.getId())).thenReturn(Optional.of(ghost));
@@ -282,7 +265,6 @@ class PlayerAccountServiceTest {
 
         assertEquals(guest.getId(), auth.player().id());
         verify(playerRepository).delete(ghost);
-        assertNull(guest.getPushToken(), "the old phone's push registration is dropped");
     }
 
     @Test
@@ -319,5 +301,108 @@ class PlayerAccountServiceTest {
         bad.setPassword("wrong");
         assertEquals(ErrorCode.INVALID_CREDENTIALS, assertThrows(BadRequestException.class, () -> service.recover(bad)).getErrorCode());
         verify(teamRepository, never()).findByJoinCode(any());
+    }
+
+    // ── signed-in phone ──────────────────────────────────────────────
+
+    private void sessionToken(String token, User user) {
+        when(tokenProvider.validateToken(token)).thenReturn(true);
+        when(tokenProvider.getTokenType(token)).thenReturn("user");
+        when(tokenProvider.getUserIdFromToken(token)).thenReturn(user.getId());
+        when(tokenProvider.getTokenVersion(token)).thenReturn(0);
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+    }
+
+    @Test
+    void linkByAccountSessionNeedsNoPassword() {
+        sessionToken("access-ana", ana);
+        PlayerAccountLinkRequest r = new PlayerAccountLinkRequest();
+        r.setAccountAccessToken("access-ana");
+
+        PlayerAccountResponse account = service.link(authPlayer(), r, null);
+
+        assertTrue(account.linked());
+        assertSame(ana, guest.getUser());
+        verify(passwordEncoder, never()).matches(any(), any());
+    }
+
+    @Test
+    void linkByAccountSessionRejectsAPlayerTokenOrAStaleOne() {
+        when(tokenProvider.validateToken("player-jwt")).thenReturn(true);
+        when(tokenProvider.getTokenType("player-jwt")).thenReturn("player");
+        PlayerAccountLinkRequest r = new PlayerAccountLinkRequest();
+        r.setAccountAccessToken("player-jwt");
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, assertThrows(BadRequestException.class, () -> service.link(authPlayer(), r, null)).getErrorCode());
+
+        ana.setTokenVersion(3);
+        sessionToken("old-access", ana);
+        r.setAccountAccessToken("old-access");
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, assertThrows(BadRequestException.class, () -> service.link(authPlayer(), r, null)).getErrorCode());
+        assertNull(guest.getUser());
+    }
+
+    @Test
+    void unlinkMakesTheRowAGuestAgain() {
+        guest.setUser(ana);
+        PlayerAccountResponse account = service.unlink(authPlayer());
+        assertFalse(account.linked());
+        assertNull(guest.getUser());
+        verify(playerRepository).save(guest);
+    }
+
+    @Test
+    void joinForAccountRecoversWhenTheAccountAlreadyPlaysThatGame() {
+        guest.setUser(ana);
+        when(userRepository.findById(ana.getId())).thenReturn(Optional.of(ana));
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.of(guest));
+
+        PlayerAuthResponse auth = service.joinForAccount(ana, "FALC01", "Ana", "device-b");
+
+        assertEquals(guest.getId(), auth.player().id());
+        assertEquals("device-b", guest.getDeviceId());
+        verify(playerJoinService, never()).joinTeam(any());
+    }
+
+    @Test
+    void joinForAccountJoinsAsAGuestWouldAndLinksTheNewRow() {
+        when(userRepository.findById(ana.getId())).thenReturn(Optional.of(ana));
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.empty());
+        Player fresh = Player.builder().id(UUID.randomUUID()).team(falcons).game(game).deviceId("device-b").displayName("Ana").build();
+        when(playerJoinService.joinTeam(any())).thenReturn(PlayerAuthResponse.of("jwt-new", fresh, falcons, game));
+        when(playerRepository.findById(fresh.getId())).thenReturn(Optional.of(fresh));
+
+        PlayerAuthResponse auth = service.joinForAccount(ana, "FALC01", "Ana", "device-b");
+
+        assertEquals(fresh.getId(), auth.player().id());
+        assertSame(ana, fresh.getUser(), "the new row is linked at once");
+        ArgumentCaptor<com.prayer.pointfinder.dto.request.PlayerJoinRequest> join = ArgumentCaptor.forClass(com.prayer.pointfinder.dto.request.PlayerJoinRequest.class);
+        verify(playerJoinService).joinTeam(join.capture());
+        assertEquals("FALC01", join.getValue().getJoinCode());
+        assertEquals("device-b", join.getValue().getDeviceId());
+    }
+
+    @Test
+    void joinForAccountNeverTakesOverAnotherAccountsRowOnThatPhone() {
+        when(userRepository.findById(ana.getId())).thenReturn(Optional.of(ana));
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.empty());
+        User bob = User.builder().id(UUID.randomUUID()).email("bob@example.com").build();
+        Player bobs = Player.builder().id(UUID.randomUUID()).team(falcons).game(game).user(bob).deviceId("device-b").displayName("Bob").build();
+        when(playerJoinService.joinTeam(any())).thenReturn(PlayerAuthResponse.of("jwt", bobs, falcons, game));
+        when(playerRepository.findById(bobs.getId())).thenReturn(Optional.of(bobs));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.joinForAccount(ana, "FALC01", "Ana", "device-b"));
+        assertEquals(ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM, ex.getErrorCode());
+        assertSame(bob, bobs.getUser());
+    }
+
+    @Test
+    void recoverForAccountUsesTheSessionNotAPassword() {
+        guest.setUser(ana);
+        when(userRepository.findById(ana.getId())).thenReturn(Optional.of(ana));
+        when(gameRepository.findById(game.getId())).thenReturn(Optional.of(game));
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.of(guest));
+
+        assertEquals(guest.getId(), service.recoverForAccount(ana, game.getId(), "device-b").player().id());
+        verify(passwordEncoder, never()).matches(any(), any());
     }
 }

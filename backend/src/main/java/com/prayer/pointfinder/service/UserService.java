@@ -33,6 +33,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PushTokenService pushTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final com.prayer.pointfinder.repository.PlayerRepository playerRepository;
     private final GameRepository gameRepository;
     private final EmailChangeTokenRepository emailChangeTokenRepository;
     private final EmailService emailService;
@@ -69,6 +70,9 @@ public class UserService {
 
         // Delete all refresh tokens for this user
         refreshTokenRepository.deleteByUserId(userId);
+
+        // PF-01: linked participations stay behind as guests; the team keeps its progress.
+        playerRepository.unlinkAllForUser(userId);
 
         // Remove user from all operator memberships (game_operators join table)
         for (Game game : user.getOperatedGames()) {

@@ -3,98 +3,93 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
-import { renderPlayer } from '@/features/player/test/renderPlayer'
+import { accountAuth, renderPlayer } from '@/features/player/test/renderPlayer'
+import { playerFixtures } from '@/test/msw/handlers/player'
 import AccountScreen from './AccountScreen'
 
-async function fill(email: string, password: string, name?: string) {
-  await userEvent.clear(await screen.findByTestId('account-email'))
-  await userEvent.type(screen.getByTestId('account-email'), email)
-  if (name !== undefined) {
-    await userEvent.clear(screen.getByTestId('account-name'))
-    await userEvent.type(screen.getByTestId('account-name'), name)
-  }
-  await userEvent.type(screen.getByTestId('account-password'), password)
-  await userEvent.click(screen.getByTestId('account-submit'))
-}
-
 describe('AccountScreen', () => {
-  it('creates an account and links the current participation without changing the session', async () => {
-    const linkBody = vi.fn()
-    server.use(http.post('/api/player/account/link', async ({ request }) => {
-      const body = await request.json()
-      linkBody(body)
-      return HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: false })
-    }))
-    const { services } = await renderPlayer(<AccountScreen />, { route: '/account' })
-    const before = services.client.session.current
-    expect(await screen.findByTestId('account-name')).toHaveValue('David')
-    await fill('ana@example.com', 'Secret123', 'Ana')
-    expect(await screen.findByTestId('account-linked')).toHaveTextContent('ana@example.com')
-    expect(screen.getByTestId('account-unverified')).toBeInTheDocument()
-    expect(linkBody).toHaveBeenCalledWith({ email: 'ana@example.com', password: 'Secret123', name: 'Ana', createAccount: true })
-    expect(services.client.session.current).toEqual(before)
-  })
-
-  it('signs in to an existing account instead when asked', async () => {
+  it('saves the current participation to the signed-in account by session token, without changing the player session', async () => {
     const linkBody = vi.fn()
     server.use(http.post('/api/player/account/link', async ({ request }) => {
       linkBody(await request.json())
-      return HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: true })
+      return HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: false })
     }))
-    await renderPlayer(<AccountScreen />, { route: '/account' })
-    await userEvent.click(await screen.findByTestId('account-mode-signin'))
-    expect(screen.queryByTestId('account-name')).not.toBeInTheDocument()
-    await fill('ana@example.com', 'Secret123')
-    await screen.findByTestId('account-linked')
-    expect(linkBody).toHaveBeenCalledWith({ email: 'ana@example.com', password: 'Secret123', createAccount: false })
-    expect(screen.queryByTestId('account-unverified')).not.toBeInTheDocument()
+    const { services } = await renderPlayer(<AccountScreen />, { route: '/account', account: accountAuth })
+    const before = services.client.session.current
+    expect(await screen.findByTestId('account-save-to')).toHaveTextContent('ana@example.com')
+    await userEvent.click(screen.getByTestId('account-save'))
+    expect(await screen.findByTestId('account-linked')).toHaveTextContent('ana@example.com')
+    expect(screen.getByTestId('account-unverified')).toBeInTheDocument()
+    expect(linkBody).toHaveBeenCalledWith({ accountAccessToken: playerFixtures.accountToken, createAccount: false })
+    expect(services.client.session.current).toEqual(before)
   })
 
-  it('explains a taken email and a wrong password', async () => {
+  it('creates the account first when the phone is not signed in, then links', async () => {
+    const linkBody = vi.fn()
+    // Signing in refreshes the account queries, so the participation must answer "linked" once it is.
+    server.use(
+      http.post('/api/player/account/link', async ({ request }) => {
+        linkBody(await request.json())
+        return HttpResponse.json({ linked: true, email: 'nia@example.com', name: 'Nia', emailVerified: false })
+      }),
+      http.get('/api/player/account', () => linkBody.mock.calls.length
+        ? HttpResponse.json({ linked: true, email: 'nia@example.com', name: 'Nia', emailVerified: false })
+        : HttpResponse.json({ linked: false, email: null, name: null, emailVerified: false })),
+    )
+    const { services } = await renderPlayer(<AccountScreen />, { route: '/account' })
+    expect(await screen.findByTestId('account-name')).toHaveValue('David')
+    await userEvent.clear(screen.getByTestId('account-email'))
+    await userEvent.type(screen.getByTestId('account-email'), 'nia@example.com')
+    await userEvent.clear(screen.getByTestId('account-name'))
+    await userEvent.type(screen.getByTestId('account-name'), 'Nia')
+    await userEvent.type(screen.getByTestId('account-password'), 'Secret123')
+    await userEvent.click(screen.getByTestId('account-submit'))
+    expect(await screen.findByTestId('account-linked')).toHaveTextContent('nia@example.com')
+    // The phone stays signed in afterwards.
+    expect(services.account.session.current).toMatchObject({ kind: 'operator', email: 'nia@example.com' })
+    expect(linkBody).toHaveBeenCalledWith({ accountAccessToken: playerFixtures.accountToken, createAccount: false })
+  })
+
+  it('explains a taken email when creating', async () => {
     await renderPlayer(<AccountScreen />, { route: '/account' })
-    await fill('taken@example.com', 'Secret123', 'Ana')
+    await userEvent.type(await screen.findByTestId('account-email'), 'taken@example.com')
+    await userEvent.type(screen.getByTestId('account-password'), 'Secret123')
+    await userEvent.click(screen.getByTestId('account-submit'))
     expect(await screen.findByRole('alert')).toHaveTextContent('That email already has an account. Sign in instead.')
-    await userEvent.click(screen.getByTestId('account-mode-signin'))
-    await userEvent.clear(screen.getByTestId('account-password'))
-    await fill('ana@example.com', 'wrong')
-    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.')
   })
 
   it('offers to switch this phone when the account already plays elsewhere, and recovers on confirm', async () => {
-    const { services } = await renderPlayer(<AccountScreen />, { route: '/account', path: '/account' })
-    await userEvent.click(await screen.findByTestId('account-mode-signin'))
-    await fill('elsewhere@example.com', 'Secret123')
+    server.use(http.post('/api/player/account/link', () => HttpResponse.json({ status: 409, message: 'x', code: 'ACCOUNT_ALREADY_IN_GAME', errors: { teamId: 'team9', teamName: 'Owls', sameTeam: 'false' } }, { status: 409 })))
+    const { services } = await renderPlayer(<AccountScreen />, { route: '/account', path: '/account', account: accountAuth })
+    await userEvent.click(await screen.findByTestId('account-save'))
     expect(await screen.findByText('You already play this game')).toBeInTheDocument()
-    expect(screen.getByText(/already playing as Owls on another phone/)).toBeInTheDocument()
     await userEvent.click(screen.getByTestId('confirm-action-btn'))
     await waitFor(() => expect(services.client.session.current).toMatchObject({ kind: 'player', playerId: 'p9', teamName: 'Owls' }))
     expect(await screen.findByTestId('elsewhere')).toBeInTheDocument()
   })
 
   it('refuses to switch phones while actions are still queued', async () => {
+    server.use(http.post('/api/player/account/link', () => HttpResponse.json({ status: 409, message: 'x', code: 'ACCOUNT_ALREADY_IN_GAME', errors: { teamId: 'team9', teamName: 'Owls', sameTeam: 'false' } }, { status: 409 })))
     const { services } = await renderPlayer(<AccountScreen />, {
-      route: '/account',
+      route: '/account', account: accountAuth,
       pending: [{ type: 'check_in', id: 'q1', gameId: 'g1', baseId: 'b2', proof: { type: 'nfc', token: 't' }, createdAt: '2026-09-05T09:00:00Z', attempts: 0, nextAttemptAt: Date.now() + 60_000, state: 'pending' }],
     })
-    await userEvent.click(await screen.findByTestId('account-mode-signin'))
-    await fill('elsewhere@example.com', 'Secret123')
+    await userEvent.click(await screen.findByTestId('account-save'))
     expect(await screen.findByRole('alert')).toHaveTextContent('You have 1 unsynced action.')
-    expect(screen.queryByText('You already play this game')).not.toBeInTheDocument()
     expect(services.client.session.current).toMatchObject({ playerId: 'p1' })
   })
 
-  it('offers a retry when the account cannot be loaded, e.g. offline', async () => {
-    server.use(http.get('/api/player/account', () => HttpResponse.error()))
-    await renderPlayer(<AccountScreen />, { route: '/account' })
-    expect(await screen.findByRole('alert')).toHaveTextContent("Offline")
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
-    expect(screen.queryByTestId('account-submit')).not.toBeInTheDocument()
+  it('lets a wrong account sign out before saving', async () => {
+    const { services } = await renderPlayer(<AccountScreen />, { route: '/account', account: accountAuth })
+    await userEvent.click(await screen.findByTestId('account-not-you'))
+    await waitFor(() => expect(services.account.session.current.kind).toBe('none'))
+    expect(await screen.findByTestId('account-submit')).toBeInTheDocument()
   })
 
-  it('shows the linked account instead of the form when already saved', async () => {
-    server.use(http.get('/api/player/account', () => HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: true })))
+  it('offers a retry when the participation cannot be loaded, e.g. offline', async () => {
+    server.use(http.get('/api/player/account', () => HttpResponse.error()))
     await renderPlayer(<AccountScreen />, { route: '/account' })
-    expect(await screen.findByTestId('account-linked')).toHaveTextContent('ana@example.com')
-    expect(screen.queryByTestId('account-submit')).not.toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Offline')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 })
