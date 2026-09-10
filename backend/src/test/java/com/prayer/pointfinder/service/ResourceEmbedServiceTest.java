@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,6 +67,7 @@ class ResourceEmbedServiceTest {
     private Resource staffRota;
     private Resource otherGameFile;
     private Resource sharedDocument;
+    private Resource orgFile;
 
     @BeforeEach
     void setUp() {
@@ -79,11 +81,21 @@ class ResourceEmbedServiceTest {
         otherGameFile = file("Other map.pdf", otherGame, true);
         sharedDocument = Resource.builder().id(UUID.randomUUID()).game(game).type(ResourceType.document)
                 .name("Rules").contentType("text/html").sizeBytes(0L).sharedWithPlayers(true)
-                .content("<p>Be kind.</p><span data-resource-id=\"" + sharedMap.getId() + "\"></span>").build();
+                .content("<p>Be kind.</p><span data-resource-id=\"" + sharedMap.getId() + "\"></span>"
+                        + "<span data-resource-id=\"" + staffRota.getId() + "\"></span>").build();
+        orgFile = Resource.builder().id(UUID.randomUUID()).game(null).type(ResourceType.file).name("Club handbook.pdf")
+                .contentType("application/pdf").s3Key("k/handbook").sizeBytes(99L).sharedWithPlayers(true).build();
 
-        for (Resource r : List.of(sharedMap, baseClue, staffRota, otherGameFile, sharedDocument)) {
+        List<Resource> all = List.of(sharedMap, baseClue, staffRota, otherGameFile, sharedDocument, orgFile);
+        for (Resource r : all) {
             when(resourceRepository.findById(r.getId())).thenReturn(Optional.of(r));
         }
+        when(resourceRepository.findAllById(any())).thenAnswer(inv -> {
+            Iterable<UUID> ids = inv.getArgument(0);
+            List<Resource> out = new java.util.ArrayList<>();
+            for (UUID id : ids) all.stream().filter(r -> r.getId().equals(id)).findFirst().ifPresent(out::add);
+            return out;
+        });
         when(resourceRepository.findByGameIdAndSharedWithPlayersTrue(gameId)).thenReturn(List.of(sharedMap, sharedDocument));
         when(checkInRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
         when(submissionRepository.findByTeamId(teamId)).thenReturn(List.of());
@@ -117,6 +129,39 @@ class ResourceEmbedServiceTest {
 
         assertTrue(rules.content().contains("data-resource-url=\"https://s3/k/Site map.pdf\""), rules.content());
         assertTrue(rules.content().contains("data-resource-name=\"Site map.pdf\""), rules.content());
+        // The staff rota is referenced by the document but not visible: the placeholder stays inert, no URL.
+        assertTrue(rules.content().contains("data-resource-id=\"" + staffRota.getId() + "\"></span>"), rules.content());
+        assertFalse(rules.content().contains("Staff rota"), rules.content());
+    }
+
+    @Test
+    void anotherTeamsCheckInUnlocksNothingForThisTeam() {
+        // The embed exists behind a base, but this team never checked in there.
+        Base mill = Base.builder().id(UUID.randomUUID()).game(game).build();
+        when(resourceEmbedRepository.findResourceIdsByBaseIdIn(List.of(mill.getId()))).thenReturn(List.of(baseClue.getId()));
+        when(checkInRepository.findByGameIdAndTeamId(gameId, teamId)).thenReturn(List.of());
+
+        assertTrue(service.getPlayerVisibleResources(gameId, teamId).stream().noneMatch(r -> r.id().equals(baseClue.getId())));
+        assertThrows(ForbiddenException.class, () -> service.getDownloadUrlForPlayer(gameId, teamId, baseClue.getId()));
+    }
+
+    @Test
+    void organizationResourcesEmbeddedInABaseDoNotReachPlayers() {
+        Base mill = Base.builder().id(UUID.randomUUID()).game(game).build();
+        when(checkInRepository.findByGameIdAndTeamId(gameId, teamId))
+                .thenReturn(List.of(CheckIn.builder().game(game).team(team).base(mill).build()));
+        when(resourceEmbedRepository.findResourceIdsByBaseIdIn(List.of(mill.getId())))
+                .thenReturn(List.of(orgFile.getId(), otherGameFile.getId(), baseClue.getId()));
+
+        List<UUID> ids = service.getPlayerVisibleResources(gameId, teamId).stream().map(ResourceResponse::id).toList();
+
+        assertEquals(List.of(sharedMap.getId(), sharedDocument.getId(), baseClue.getId()), ids);
+        assertThrows(ForbiddenException.class, () -> service.getDownloadUrlForPlayer(gameId, teamId, orgFile.getId()));
+    }
+
+    @Test
+    void downloadAnswersAnUnknownIdLikeAForbiddenOne() {
+        assertThrows(ForbiddenException.class, () -> service.getDownloadUrlForPlayer(gameId, teamId, UUID.randomUUID()));
     }
 
     @Test

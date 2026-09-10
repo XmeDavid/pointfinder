@@ -42,6 +42,15 @@ describe('DocumentsScreen', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('keeps the offline state when the list is served again from memory', async () => {
+    vi.spyOn(platform.gameCache, 'load').mockResolvedValue({ stateVersion: 0, fetchedAt: '2026-09-05T09:00:00Z', snapshot: playerFixtures.files })
+    server.use(http.get('/api/player/games/:gameId/files', () => HttpResponse.error()))
+    const { queryClient } = await renderPlayer(<DocumentsScreen />)
+    await screen.findByTestId('documents-offline-hint')
+    const data = queryClient.getQueryData<{ fromCache: boolean; fetchedAt: number }>(['documents', playerAuth.gameId])
+    expect(data).toMatchObject({ fromCache: true, fetchedAt: Date.parse('2026-09-05T09:00:00Z') })
+  })
+
   it('opens a file through the system opener on native', async () => {
     vi.spyOn(runtime, 'isNative').mockReturnValue(true)
     const open = vi.spyOn(navigation, 'openExternal').mockResolvedValue()
@@ -64,6 +73,7 @@ describe('DocumentsScreen', () => {
     expect(load).toHaveBeenCalledWith(`files:${playerAuth.playerId}:${playerAuth.gameId}`)
     expect(screen.getByTestId('document-r1')).toHaveTextContent('Needs a connection')
     expect(screen.getByTestId('document-r1').querySelector('a')).toBeNull()
+    expect(screen.getByRole('button', { name: /Site map\.pdf/ })).toHaveAttribute('aria-disabled', 'true')
     // Documents still open: their content came with the cached list.
     await userEvent.click(screen.getByRole('link', { name: /Camp rules/ }))
     expect(await screen.findByTestId('document-body')).toHaveTextContent('Stay with your team at all times.')

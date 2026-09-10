@@ -1770,6 +1770,7 @@
       "open": "Open",
       "openFailed": "Couldn't open this file.",
       "needsConnection": "Needs a connection",
+      "unavailable": "Unavailable right now",
       "notFound": "This document is no longer available."
     },
     "result": {

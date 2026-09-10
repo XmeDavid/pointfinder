@@ -45,7 +45,7 @@ export function SubmissionResult({ outcome, feedback, completionContent, unlocke
       {showUnlocked && (
         <div className="rounded-lg border border-border bg-card p-4">
           <h3 className="mb-2 text-sm font-semibold">{t('result.unlockedInformation')}</h3>
-          <RichContent html={completionContent ?? ''} className="prose prose-sm max-w-none text-foreground" />
+          <RichContent html={completionContent ?? ''} className="prose prose-sm max-w-none text-foreground dark:prose-invert" />
         </div>
       )}
       <Link to="/" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}>{t('result.backToMap')}</Link>

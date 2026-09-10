@@ -4,7 +4,6 @@ import com.prayer.pointfinder.dto.response.ResourceResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ForbiddenException;
-import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
 import com.prayer.pointfinder.repository.CheckInRepository;
@@ -107,10 +106,12 @@ public class ResourceEmbedService {
     }
 
     /**
-     * Enriches HTML by replacing data-resource-id placeholders with download URLs
-     * and metadata data-attributes so players can render embedded resources.
+     * Replaces data-resource-id placeholders with download URLs and metadata so
+     * players can render embedded resources. Only ids in {@code visible} are
+     * resolved; any other reference stays an inert placeholder, so a document
+     * cannot hand out a link to a file the team may not see.
      */
-    public String enrichHtmlForPlayer(String html) {
+    public String enrichHtmlForPlayer(String html, Map<UUID, Resource> visible) {
         if (html == null || html.isBlank()) return html;
 
         StringBuffer result = new StringBuffer();
@@ -120,10 +121,8 @@ public class ResourceEmbedService {
             String uuidStr = matcher.group(1);
             String replacement = matcher.group(0); // default: leave as-is
             try {
-                UUID resourceId = UUID.fromString(uuidStr);
-                Optional<Resource> opt = resourceRepository.findById(resourceId);
-                if (opt.isPresent()) {
-                    Resource r = opt.get();
+                Resource r = visible.get(UUID.fromString(uuidStr));
+                if (r != null) {
                     StringBuilder attrs = new StringBuilder();
                     attrs.append("data-resource-id=\"").append(uuidStr).append("\"");
                     attrs.append(" data-resource-name=\"").append(escapeAttr(r.getName())).append("\"");
@@ -134,7 +133,7 @@ public class ResourceEmbedService {
                             String url = objectStorageService.generatePresignedUrl(r.getS3Key());
                             attrs.append(" data-resource-url=\"").append(escapeAttr(url)).append("\"");
                         } catch (Exception e) {
-                            log.warn("[EMBED] Failed to generate presigned URL for resource {}: {}", resourceId, e.getMessage());
+                            log.warn("[EMBED] Failed to generate presigned URL for resource {}: {}", uuidStr, e.getMessage());
                         }
                     }
                     replacement = attrs.toString();
@@ -156,7 +155,8 @@ public class ResourceEmbedService {
      */
     @Transactional(readOnly = true)
     public List<ResourceResponse> getPlayerVisibleResources(UUID gameId, UUID teamId) {
-        return visibleResources(gameId, teamId).values().stream().map(this::toPlayerResponse).toList();
+        Map<UUID, Resource> visible = visibleResources(gameId, teamId);
+        return visible.values().stream().map(r -> toPlayerResponse(r, visible)).toList();
     }
 
     /**
@@ -165,13 +165,9 @@ public class ResourceEmbedService {
      */
     @Transactional(readOnly = true)
     public String getDownloadUrlForPlayer(UUID gameId, UUID teamId, UUID resourceId) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
-
-        if (resource.getGame() == null || !resource.getGame().getId().equals(gameId)) {
-            throw new ForbiddenException("Resource does not belong to this game");
-        }
-        if (!visibleResources(gameId, teamId).containsKey(resourceId)) {
+        // One answer for missing, other-game and not-visible: a player must not be able to enumerate ids.
+        Resource resource = visibleResources(gameId, teamId).get(resourceId);
+        if (resource == null) {
             throw new ForbiddenException("Resource is not available to this team");
         }
         if (resource.getType() != ResourceType.file || resource.getS3Key() == null) {
@@ -194,20 +190,27 @@ public class ResourceEmbedService {
                 .map(c -> c.getBase().getId())
                 .distinct()
                 .toList();
-        if (!unlockedBaseIds.isEmpty()) {
-            for (UUID id : resourceEmbedRepository.findResourceIdsByBaseIdIn(unlockedBaseIds)) {
-                resourceRepository.findById(id).ifPresent(r -> resources.put(r.getId(), r));
-            }
-        }
-
         List<UUID> unlockedChallengeIds = submissionRepository.findByTeamId(teamId).stream()
                 .filter(s -> s.getTeam().getGame().getId().equals(gameId))
                 .map(s -> s.getChallenge().getId())
                 .distinct()
                 .toList();
-        if (!unlockedChallengeIds.isEmpty()) {
-            for (UUID id : resourceEmbedRepository.findResourceIdsByChallengeIdIn(unlockedChallengeIds)) {
-                resourceRepository.findById(id).ifPresent(r -> resources.put(r.getId(), r));
+
+        Set<UUID> embedIds = new LinkedHashSet<>();
+        if (!unlockedBaseIds.isEmpty()) embedIds.addAll(resourceEmbedRepository.findResourceIdsByBaseIdIn(unlockedBaseIds));
+        if (!unlockedChallengeIds.isEmpty()) embedIds.addAll(resourceEmbedRepository.findResourceIdsByChallengeIdIn(unlockedChallengeIds));
+        embedIds.removeAll(resources.keySet());
+
+        // Embeds can point at organization resources or, after an import, at another
+        // organization's files. Only this game's own resources reach players.
+        if (!embedIds.isEmpty()) {
+            Map<UUID, Resource> loaded = new HashMap<>();
+            for (Resource r : resourceRepository.findAllById(embedIds)) {
+                if (r.getGame() != null && r.getGame().getId().equals(gameId)) loaded.put(r.getId(), r);
+            }
+            for (UUID id : embedIds) {
+                Resource r = loaded.get(id);
+                if (r != null) resources.put(id, r);
             }
         }
 
@@ -221,7 +224,7 @@ public class ResourceEmbedService {
         return value.replace("&", "&amp;").replace("\"", "&quot;");
     }
 
-    private ResourceResponse toPlayerResponse(Resource r) {
+    private ResourceResponse toPlayerResponse(Resource r, Map<UUID, Resource> visible) {
         // Player-facing: never expose S3 key or operator content; generate download URL
         String downloadUrl = null;
         if (r.getType() == ResourceType.file && r.getS3Key() != null && objectStorageService.isEnabled()) {
@@ -239,7 +242,7 @@ public class ResourceEmbedService {
                 r.getType(),
                 r.getName(),
                 r.getContentType(),
-                r.getType() == ResourceType.document ? enrichHtmlForPlayer(r.getContent()) : null,
+                r.getType() == ResourceType.document ? enrichHtmlForPlayer(r.getContent(), visible) : null,
                 r.getSizeBytes(),
                 r.getSharedWithPlayers(),
                 downloadUrl,

@@ -78,9 +78,11 @@ Component: DocumentsScreen / DocumentScreen
 Status: canonical
 Location: `web/src/features/player/DocumentsScreen.tsx`, `web/src/features/player/DocumentScreen.tsx`
 Modes: Player Field
-States: loading, empty, error with retry, cached offline (files marked
-"Needs a connection", documents still open), file opening (busy), document
-missing, long names (truncated rows, wrapping title).
+States: loading, empty, error with retry (only when nothing is shown yet),
+cached offline (file rows become focusable `aria-disabled` buttons reading
+"Needs a connection", documents still open), storage off ("Unavailable right
+now"), file opening (busy), document missing, long names (truncated rows,
+wrapping title). Document bodies use `dark:prose-invert`.
 Notes: Lists what the team may see now: resources shared with players plus
 embeds behind the team's check-ins and submissions, in backend order. Files
 open in a new tab in the browser and through the system opener on native; a

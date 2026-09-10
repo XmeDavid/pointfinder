@@ -1770,6 +1770,7 @@
       "open": "Öffnen",
       "openFailed": "Diese Datei konnte nicht geöffnet werden.",
       "needsConnection": "Verbindung erforderlich",
+      "unavailable": "Derzeit nicht verfügbar",
       "notFound": "Dieses Dokument ist nicht mehr verfügbar."
     },
     "result": {

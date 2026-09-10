@@ -345,7 +345,7 @@ function BaseContent() {
                 {challenge.description && <CardDescription>{challenge.description}</CardDescription>}
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
-                {challenge.content && <RichContent html={challenge.content} className="prose prose-sm max-w-none text-foreground" />}
+                {challenge.content && <RichContent html={challenge.content} className="prose prose-sm max-w-none text-foreground dark:prose-invert" />}
 
                 {!gameLive && (status === 'checked_in' || status === 'rejected') && (
                   <Alert variant="info" data-testid="player-game-not-live">
@@ -373,7 +373,7 @@ function BaseContent() {
                   <div className="flex flex-col gap-2">
                     <Alert variant="info" className="bg-success/10 text-success">{t('challenge.done')}</Alert>
                     {(lastSubmission?.completionContent ?? challenge.completionContent) && (
-                      <RichContent html={lastSubmission?.completionContent ?? challenge.completionContent ?? ''} className="prose prose-sm max-w-none text-foreground" />
+                      <RichContent html={lastSubmission?.completionContent ?? challenge.completionContent ?? ''} className="prose prose-sm max-w-none text-foreground dark:prose-invert" />
                     )}
                   </div>
                 )}
