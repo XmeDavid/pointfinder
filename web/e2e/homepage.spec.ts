@@ -148,11 +148,21 @@ test('the hero keeps the whole scene in view and every illustration is the impor
     expect(box!.width / box!.height, `${width}px hero aspect`).toBeLessThanOrEqual(2.05)
     expect(await overflowFree(page)).toBe(true)
   }
-  for (const src of ['step-plan', 'step-explore', 'step-checkin', 'guide-pointing', 'workspace-preview', 'forest-footer']) {
+  for (const src of ['step-plan-mascot-v2', 'step-explore-mascot-v2', 'step-checkin-mascot-v2', 'guide-pointing-mascot-v2', 'workspace-preview', 'forest-footer']) {
     const image = page.locator(`img[src="/landing/illustrated/${src}.webp"]`)
     await image.scrollIntoViewIfNeeded()
     await expect(image).toHaveJSProperty('complete', true)
     expect(await image.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  }
+  for (const width of [390, 768, 1280, 1600]) {
+    await page.setViewportSize({ width, height: 844 })
+    for (const dark of [false, true]) {
+      await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark)
+      for (const section of ['how-it-works', 'organizers']) {
+        await page.locator(`#${section}`).scrollIntoViewIfNeeded()
+        await page.locator(`#${section}`).screenshot({ path: `test-results/mascot-${section}-${width}-${dark ? 'dark' : 'light'}.png`, animations: 'disabled' })
+      }
+    }
   }
   await expect(page.getByTestId('landing-map-attribution').getByRole('link', { name: 'OpenStreetMap' })).toHaveAttribute('href', 'https://www.openstreetmap.org/copyright')
   await expect(page.getByTestId('landing-map-attribution').getByRole('link', { name: 'CARTO' })).toHaveAttribute('href', 'https://carto.com/attributions')

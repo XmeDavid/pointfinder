@@ -1,11 +1,28 @@
-# Landing mascot clothing replacement
+# PointFinder landing mascot artwork
 
-Built-in image generation edited each original character illustration separately, using the user's three-outfit lineup as clothing reference. The page layout, colors, copy, pricing and interaction design stay unchanged.
+The landing page uses the approved PointFinder T-shirts, green cap, navy trousers,
+boots and backpacks. The three step dioramas and organizer guide now join the
+previously integrated hero. Page layout, marketing colors, pricing and navigation
+are preserved. The checkpoint uses the approved NFC plate and engraved logo.
 
-- `source/hero.png`: cream/green-cap main mascot, rust-shirt companion and charcoal-shirt background explorer. Imported to the existing hero WebP.
-- `source/step-plan.png`, `source/step-explore.png`, `source/step-checkin.png`, `source/guide-pointing.png`: generated replacements awaiting genuine alpha extraction before import. The generator painted checkerboards despite transparency instructions; these are not usable transparent assets yet.
-- `source/step-checkin-nfc.png`: approved checkpoint revision with an NFC tap plate and the canonical PointFinder mark engraved into the post. This supersedes the QR variant for eventual integration. Background extraction remains pending. `nfc-edit-prompt.txt` records the edit instructions.
-- The original forest footer and real workspace screenshot contain no uniforms and remain unchanged.
-- `prompts.json`: generation instructions. Original artwork is preserved in `../landing-illustrated-v1/source/`.
+## Source and export
 
-Integration status: only the hero is imported into the website. The four cutouts are saved source artwork awaiting background removal; the NFC revision is the selected check-in source. Alt text for the still-displayed original cutouts stays unchanged until replacement.
+- `source/`: approved clothing edits; `step-checkin-nfc.png` supersedes the QR variant.
+- `cutouts/`: selected transparent PNGs, extracted with the built-in image generation tool.
+- `cutout-assets.json`: generated source paths, shipping filenames and encoded sizes.
+- `prompts.json`, `nfc-edit-prompt.txt`, `extraction-prompts.json`: generation/edit provenance.
+- `web/public/landing/illustrated/*-mascot-v2.webp`: 800 px WebPs with real alpha.
+  New URLs prevent browsers from reusing the old uniform cutouts. The square guide
+  has transparent side margins; CSS preserves its existing portrait layout slot.
+- Original scout assets remain in `artifacts/landing-illustrated-v1/source/` and git history.
+- The hero, empty forest footer and workspace screenshot are retained.
+
+Integration status: all four replacement cutouts are integrated. Alt text matches
+those illustrations in English, Portuguese and German. No pending extraction remains.
+
+## Verification — 2026-09-10
+
+One final pass: browser and native frontend builds (including TypeScript), ESLint,
+8 landing-page tests, 25 localization tests, and all 6 homepage Playwright tests passed.
+Reviewed mobile and desktop captures in both themes. `review/` retains organizer
+section previews; Playwright captures the three step illustrations at 390–1600 px.

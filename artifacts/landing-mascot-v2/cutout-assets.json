@@ -1,0 +1,30 @@
+[
+  {
+    "name": "step-plan",
+    "generatedSource": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-940883dc-3a8b-4e4e-95a1-fd00100cee64.png",
+    "file": "web/public/landing/illustrated/step-plan-mascot-v2.webp",
+    "alpha": true,
+    "bytes": 124120
+  },
+  {
+    "name": "step-explore",
+    "generatedSource": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-752ed3cb-3cf7-415a-b1bf-d260364b94ac.png",
+    "file": "web/public/landing/illustrated/step-explore-mascot-v2.webp",
+    "alpha": true,
+    "bytes": 187628
+  },
+  {
+    "name": "step-checkin",
+    "generatedSource": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-49df8e74-2757-463e-9230-3e45b30ee187.png",
+    "file": "web/public/landing/illustrated/step-checkin-mascot-v2.webp",
+    "alpha": true,
+    "bytes": 154378
+  },
+  {
+    "name": "guide-pointing",
+    "generatedSource": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-76899e64-890b-4193-8c6f-c6753927122a.png",
+    "file": "web/public/landing/illustrated/guide-pointing-mascot-v2.webp",
+    "alpha": true,
+    "bytes": 51150
+  }
+]

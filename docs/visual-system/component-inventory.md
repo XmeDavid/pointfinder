@@ -771,7 +771,8 @@ Page structure and palette:
   `atlasMint`) so canonical buttons, badges and cards keep their shape. The
   evergreen and cream bands are the same in both themes; only the pricing band
   follows the app theme. See `design-system/decisions.md`.
-- Artwork is owned by `artifacts/landing-illustrated-v1/` and imported to
+- Mascot clothing artwork is owned by `artifacts/landing-mascot-v2/`; original scenery
+  and workspace assets remain in `artifacts/landing-illustrated-v1/`. Artwork is imported to
   `web/public/landing/illustrated/`. The workspace screenshot shows a fictional
   game in Costa de Lavos, Portugal, and carries an OpenStreetMap / CARTO
   attribution caption (test id `landing-map-attribution`).

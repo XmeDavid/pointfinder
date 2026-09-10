@@ -817,18 +817,18 @@
       "title": "Ein bisschen Planung. Ganz viel Abenteuer.",
       "planTitle": "Baue dein Spiel",
       "planBody": "Setze Posten und füge in Minuten Aufgaben auf einer Karte hinzu.",
-      "planAlt": "Eine Leiterin kniet über einer Karte und setzt einen grünen Pin.",
+      "planAlt": "Das PointFinder-Maskottchen im cremefarbenen T-Shirt und mit grüner Kappe kniet über einer Karte und setzt einen grünen Pin.",
       "exploreTitle": "Erkundet gemeinsam",
       "exploreBody": "Geht raus, folgt der Karte und löst Aufgaben als Team.",
-      "exploreAlt": "Zwei Pfadfinder gehen mit einem Handy durch den Wald, ein Kartenpin liegt vor ihnen.",
+      "exploreAlt": "Zwei Entdecker in PointFinder-T-Shirts gehen mit einem Handy durch den Wald, ein Kartenpin liegt vor ihnen.",
       "checkInTitle": "Macht jeden Halt zum Erlebnis",
       "checkInBody": "Scannt Posten, schaltet Aufgaben frei und schafft bleibende Erinnerungen.",
-      "checkInAlt": "Ein Pfadfinder hält sein Handy an den QR-Code eines Holzpfostens, eine neue Aufgabenkarte erscheint."
+      "checkInAlt": "Das PointFinder-Maskottchen hält sein Handy an die NFC-Plakette eines Holzpfostens, eine neue Aufgabenkarte erscheint."
     },
     "organizers": {
       "title": "Draußen im Gelände. Immer im Bild.",
       "body": "Setze Posten, verknüpfe Aufgaben und verfolge deine Teams aus einem Arbeitsbereich.",
-      "guideAlt": "Ein Pfadfinderguide mit Rucksack zeigt auf den Arbeitsbereich.",
+      "guideAlt": "Das PointFinder-Maskottchen mit Rucksack und cremefarbenem T-Shirt zeigt auf den Arbeitsbereich.",
       "screenshotAlt": "Der PointFinder-Command-Arbeitsbereich: eine Live-Karte von Costa de Lavos mit vier nummerierten Posten, Team-Statistiken, einem Live-Aktivitätsfeed und einer Rangliste.",
       "caption": "Der Live-Command-Arbeitsbereich mit einem fiktiven Spiel in Costa de Lavos, Portugal.",
       "attribution": "Kartendaten © {{osm}}-Mitwirkende, © {{carto}}",

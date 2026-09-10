@@ -21,18 +21,19 @@ const WELCOME_STILL = "/onboarding/stories/participant-map.webp";
 const WELCOME_ROUTE = "/welcome";
 const ORGANIZER_GATE_ROUTE = "/welcome?role=organizer";
 
-// Illustrations are owned by artifacts/landing-illustrated-v1 and imported as
+// Mascot artwork is owned by artifacts/landing-mascot-v2; the original scenery
+// and workspace remain in artifacts/landing-illustrated-v1. Imported as
 // independent layers: the hero scene, the empty forest, the guide cutout, the
 // three step dioramas and the (separately replaceable) workspace screenshot.
 const ART = {
   hero: { src: "/landing/illustrated/hero.webp", width: 1536, height: 1024 },
   forest: { src: "/landing/illustrated/forest-footer.webp", width: 1536, height: 1024 },
-  guide: { src: "/landing/illustrated/guide-pointing.webp", width: 800, height: 1200 },
+  guide: { src: "/landing/illustrated/guide-pointing-mascot-v2.webp", width: 800, height: 800 },
   workspace: { src: "/landing/illustrated/workspace-preview.webp", width: 1440, height: 900 },
   steps: [
-    { src: "/landing/illustrated/step-plan.webp", width: 800, height: 800 },
-    { src: "/landing/illustrated/step-explore.webp", width: 800, height: 800 },
-    { src: "/landing/illustrated/step-checkin.webp", width: 800, height: 800 },
+    { src: "/landing/illustrated/step-plan-mascot-v2.webp", width: 800, height: 800 },
+    { src: "/landing/illustrated/step-explore-mascot-v2.webp", width: 800, height: 800 },
+    { src: "/landing/illustrated/step-checkin-mascot-v2.webp", width: 800, height: 800 },
   ],
 } as const;
 

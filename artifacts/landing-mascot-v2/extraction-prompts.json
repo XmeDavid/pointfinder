@@ -1,0 +1,6 @@
+{
+  "mode": "built-in image_gen edit",
+  "stepImages": "Remove the background from this image. Keep all foreground subjects unchanged and fully intact, with clean, smooth edges. Make the background transparent.",
+  "guideFinal": "Create a square 1024x1024 transparent PNG cutout of this exact PointFinder guide. Keep the full character, his exact cream T-shirt and green cap, backpack, boots, and single pointing hand unchanged. Center the complete tall character in the square with generous empty transparent margins on both sides. No checkerboard, no scenery, no halo, no gradient, no ground shadow. Actual transparent alpha outside the silhouette; fully opaque character. Change only the background and canvas padding.",
+  "guideNotes": "Portrait extraction attempts introduced halos or distorted the arm and were rejected. The selected square output was inspected and contains real alpha. Source is source/guide-pointing.png."
+}

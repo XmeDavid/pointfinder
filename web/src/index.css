@@ -208,6 +208,9 @@ body {
   z-index: 1;
   width: 34%;
   height: auto;
+  /* The square cutout has transparent side padding; preserve the portrait slot. */
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
 }
 .landing-workspace-caption {
   padding-top: 0.75rem;

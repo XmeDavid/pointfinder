@@ -817,18 +817,18 @@
       "title": "A little planning. A lot of adventure.",
       "planTitle": "Build your game",
       "planBody": "Place bases and add challenges on a map in minutes.",
-      "planAlt": "A scout leader kneeling over a map and placing a green pin.",
+      "planAlt": "The PointFinder mascot in a cream T-shirt and green cap, kneeling over a map and placing a green pin.",
       "exploreTitle": "Explore together",
       "exploreBody": "Get outside, follow the map and complete challenges as a team.",
-      "exploreAlt": "Two scouts walking through the forest with a phone and a map pin ahead.",
+      "exploreAlt": "Two explorers walking through the forest in PointFinder T-shirts, with a phone and a map pin ahead.",
       "checkInTitle": "Make every stop count",
       "checkInBody": "Scan bases, unlock challenges and create lasting memories.",
-      "checkInAlt": "A scout holding a phone up to the QR code on a wooden base post, with a new challenge card appearing."
+      "checkInAlt": "The PointFinder mascot holding a phone up to the NFC plate on a wooden checkpoint post, with a new challenge card appearing."
     },
     "organizers": {
       "title": "Out in the field. Always in the loop.",
       "body": "Place bases, connect challenges and follow your teams from one workspace.",
-      "guideAlt": "A scout guide with a backpack pointing at the workspace.",
+      "guideAlt": "The PointFinder mascot guide with a backpack and cream T-shirt pointing at the workspace.",
       "screenshotAlt": "The PointFinder Command workspace: a live map of Costa de Lavos with four numbered bases, team stats, a live activity feed and a leaderboard.",
       "caption": "The live Command workspace with a fictional game in Costa de Lavos, Portugal.",
       "attribution": "Map data © {{osm}} contributors, © {{carto}}",

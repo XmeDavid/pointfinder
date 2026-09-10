@@ -817,18 +817,18 @@
       "title": "Um pouco de planeamento. Muita aventura.",
       "planTitle": "Constrói o teu jogo",
       "planBody": "Coloca bases e adiciona desafios num mapa em minutos.",
-      "planAlt": "Um dirigente ajoelhado sobre um mapa a colocar um pino verde.",
+      "planAlt": "A mascote do PointFinder de T-shirt creme e boné verde, ajoelhada sobre um mapa a colocar um pino verde.",
       "exploreTitle": "Explorem juntos",
       "exploreBody": "Saiam para a rua, sigam o mapa e completem desafios em equipa.",
-      "exploreAlt": "Dois escuteiros a caminhar pela floresta com um telemóvel e um pino no mapa mais à frente.",
+      "exploreAlt": "Dois exploradores de T-shirts PointFinder a caminhar pela floresta com um telemóvel e um pino no mapa mais à frente.",
       "checkInTitle": "Faz cada paragem contar",
       "checkInBody": "Lê as bases, desbloqueia desafios e cria memórias que ficam.",
-      "checkInAlt": "Um escuteiro a encostar o telemóvel ao código QR de um poste de base, com um novo cartão de desafio a aparecer."
+      "checkInAlt": "A mascote do PointFinder a aproximar o telemóvel da placa NFC de um poste de madeira, com um novo cartão de desafio a aparecer."
     },
     "organizers": {
       "title": "No terreno. Sempre a par.",
       "body": "Coloca bases, liga desafios e acompanha as tuas equipas a partir de um único espaço de trabalho.",
-      "guideAlt": "Um guia escuteiro com mochila a apontar para o espaço de trabalho.",
+      "guideAlt": "A mascote guia do PointFinder de mochila e T-shirt creme a apontar para o espaço de trabalho.",
       "screenshotAlt": "O espaço de trabalho Command do PointFinder: um mapa em direto da Costa de Lavos com quatro bases numeradas, estatísticas das equipas, um feed de atividade em direto e uma classificação.",
       "caption": "O espaço de trabalho Command em direto, com um jogo fictício na Costa de Lavos, Portugal.",
       "attribution": "Dados do mapa © colaboradores do {{osm}}, © {{carto}}",
