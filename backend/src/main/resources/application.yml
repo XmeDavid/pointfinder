@@ -110,12 +110,41 @@ app:
     needs-attention-threshold-minutes: ${APP_UPLOADS_NEEDS_ATTENTION_THRESHOLD_MINUTES:15}
     chunk:
       enabled: ${APP_UPLOADS_CHUNK_ENABLED:true}
+      # auto (S3 when storage type is s3, else local) | s3 | local. Two active
+      # backends need s3 or a shared upload volume.
+      store: ${APP_UPLOADS_CHUNK_STORE:auto}
       default-size-bytes: ${APP_UPLOADS_CHUNK_DEFAULT_SIZE_BYTES:8388608}
       max-size-bytes: ${APP_UPLOADS_CHUNK_MAX_SIZE_BYTES:16777216}
       session-ttl-seconds: ${APP_UPLOADS_CHUNK_SESSION_TTL_SECONDS:86400}
     limits:
       max-active-sessions-per-player: ${APP_UPLOADS_MAX_ACTIVE_SESSIONS_PER_PLAYER:3}
       max-active-bytes-per-game: ${APP_UPLOADS_MAX_ACTIVE_BYTES_PER_GAME:17179869184}
+    # Local, bounded scratch space used to assemble chunks at completion and
+    # to render thumbnails; never shared between instances.
+    temp-path: ${APP_UPLOADS_TEMP_PATH:${java.io.tmpdir}/pointfinder-assembly}
+  # Identity of this process for job leases, presence rows and outbox rows.
+  # Defaults to the container hostname. Two replicas must not share a value.
+  instance-id: ${APP_INSTANCE_ID:}
+  # Two-active-backend coordination. Every default is safe for one instance;
+  # see docs/ha-application-readiness.md for the rollout gates.
+  ha:
+    outbox:
+      enabled: ${APP_HA_OUTBOX_ENABLED:true}
+      listen-enabled: ${APP_HA_OUTBOX_LISTEN_ENABLED:true}
+      poll-interval-ms: ${APP_HA_OUTBOX_POLL_INTERVAL_MS:1000}
+      batch-size: ${APP_HA_OUTBOX_BATCH_SIZE:500}
+      retention-minutes: ${APP_HA_OUTBOX_RETENTION_MINUTES:10}
+      cursor-retention-hours: ${APP_HA_OUTBOX_CURSOR_RETENTION_HOURS:24}
+    presence:
+      store: ${APP_HA_PRESENCE_STORE:db}          # db | memory
+      heartbeat-interval-ms: ${APP_HA_PRESENCE_HEARTBEAT_INTERVAL_MS:15000}
+      ttl-seconds: ${APP_HA_PRESENCE_TTL_SECONDS:45}
+    rate-limit:
+      store: ${APP_HA_RATE_LIMIT_STORE:db}        # db | memory
+      retention-hours: ${APP_HA_RATE_LIMIT_RETENTION_HOURS:24}
+    jobs:
+      coordinated: ${APP_HA_JOBS_COORDINATED:true}
+      default-lease-seconds: ${APP_HA_JOBS_DEFAULT_LEASE_SECONDS:120}
 
 management:
   endpoints:

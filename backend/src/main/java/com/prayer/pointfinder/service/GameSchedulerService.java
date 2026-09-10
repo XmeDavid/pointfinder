@@ -12,7 +12,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +25,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class GameSchedulerService {
+
+    // Triggers live in com.prayer.pointfinder.service.jobs.ScheduledJobs and run
+    // through ScheduledJobCoordinator, so with two instances each job executes on
+    // one of them per tick. The bodies below stay idempotent regardless: game and
+    // stage transitions use conditional updates that change a row at most once.
 
     private final GameRepository gameRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -52,17 +56,17 @@ public class GameSchedulerService {
      * setup or live. Ended games keep their content and no longer count
      * anywhere, so a late "keep" still works.
      */
-    @Scheduled(fixedRate = 60000)
     @Transactional(timeout = 10)
     public void expirePracticeGames() {
+        Instant now = Instant.now();
         List<Game> expired = gameRepository.findByTutorialScenarioIsNotNullAndTutorialExpiresAtBeforeAndStatusNot(
-                Instant.now(), GameStatus.ended);
+                now, GameStatus.ended);
         for (Game game : expired) {
             log.info("Ending expired practice game '{}' (id={}, scenario={})",
                     game.getName(), game.getId(), game.getTutorialScenario());
-            game.setStatus(GameStatus.ended);
-            gameRepository.save(game);
-            eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
+            if (gameRepository.endPracticeGameIfExpired(game.getId(), now) == 1) {
+                eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
+            }
         }
     }
 
@@ -70,25 +74,23 @@ public class GameSchedulerService {
      * Runs every 60 seconds to check for live games that have passed their end date
      * and automatically transitions them to ended.
      */
-    @Scheduled(fixedRate = 60000)
     @Transactional(timeout = 10)
     public void autoEndGames() {
-        List<Game> expiredGames = gameRepository.findByStatusAndEndDateBefore(
-                GameStatus.live, Instant.now());
+        Instant now = Instant.now();
+        List<Game> expiredGames = gameRepository.findByStatusAndEndDateBefore(GameStatus.live, now);
 
         for (Game game : expiredGames) {
             log.info("Auto-ending game '{}' (id={}) - end date {} has passed",
                     game.getName(), game.getId(), game.getEndDate());
-            game.setStatus(GameStatus.ended);
-            gameRepository.save(game);
-            eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
+            if (gameRepository.endGameIfLiveAndDue(game.getId(), now) == 1) {
+                eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
+            }
         }
     }
 
     /**
      * Runs every hour to purge expired refresh tokens from the database.
      */
-    @Scheduled(fixedRate = 3600000)
     @Transactional(timeout = 10)
     public void purgeExpiredRefreshTokens() {
         int deleted = refreshTokenRepository.deleteExpiredBefore(Instant.now());
@@ -100,7 +102,6 @@ public class GameSchedulerService {
     /**
      * Runs every hour to purge expired or used password reset tokens from the database.
      */
-    @Scheduled(fixedRate = 3600000)
     @Transactional(timeout = 10)
     public void purgeExpiredPasswordResetTokens() {
         int deleted = passwordResetTokenRepository.deleteExpiredOrUsed(Instant.now());
@@ -112,7 +113,6 @@ public class GameSchedulerService {
     /**
      * Runs every hour to purge expired or used email change tokens from the database.
      */
-    @Scheduled(fixedRate = 3600000)
     @Transactional(timeout = 10)
     public void purgeExpiredEmailChangeTokens() {
         int emailTokensPurged = emailChangeTokenRepository.deleteExpiredOrUsed(Instant.now());
@@ -124,13 +124,19 @@ public class GameSchedulerService {
     /**
      * Runs every 15 minutes to expire stale chunk upload sessions and clean temporary chunk files.
      */
-    @Scheduled(fixedRate = 900000)
     @Transactional(timeout = 10)
     public void expireStaleChunkUploadSessions() {
+        expireStaleChunkUploadSessionsAndCount();
+    }
+
+    /** Same sweep, returning how many sessions this run expired. */
+    @Transactional(timeout = 10)
+    public int expireStaleChunkUploadSessionsAndCount() {
         int expired = chunkedUploadService.expireStaleSessions();
         if (expired > 0) {
             log.info("Expired {} stale chunk upload sessions", expired);
         }
+        return expired;
     }
 
     /**
@@ -148,7 +154,6 @@ public class GameSchedulerService {
      * player-facing work so a slow scheduler tick never blocks the gameplay
      * path. Bounded to 500 rows per tick by the repository query.
      */
-    @Scheduled(fixedRate = 900000)
     @Transactional(readOnly = true, timeout = 30)
     public void detectNeedsAttentionUploads() {
         Instant now = Instant.now();
@@ -192,17 +197,20 @@ public class GameSchedulerService {
      * Finds stages with transitionType='scheduled', isActive=false, scheduledAt <= now,
      * sets them active, and broadcasts stage_unlock so players receive newly visible bases.
      */
-    @Scheduled(fixedRate = 30000)
     @Transactional(timeout = 10)
     public void activateScheduledStages() {
+        OffsetDateTime now = OffsetDateTime.now();
         List<Stage> dueStages = stageRepository.findByTransitionTypeAndIsActiveAndScheduledAtBefore(
-                TransitionType.scheduled, false, OffsetDateTime.now());
+                TransitionType.scheduled, false, now);
 
         for (Stage stage : dueStages) {
-            stage.setIsActive(true);
-            stageRepository.save(stage);
-
             UUID gameId = stage.getGame().getId();
+            if (stageRepository.activateIfScheduledAndDue(stage.getId(), now) != 1) {
+                // Another run activated it first, or an operator rescheduled it
+                // after the query above: either way this run must not announce it.
+                continue;
+            }
+
             log.info("[SCHEDULER] operation=activateScheduledStage gameId={} stageId={} name={} scheduledAt={}",
                     gameId, stage.getId(), stage.getName(), stage.getScheduledAt());
 

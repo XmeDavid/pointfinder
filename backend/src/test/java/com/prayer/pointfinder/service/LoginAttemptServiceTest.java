@@ -67,12 +67,11 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    void cleanupRemovesExpiredEntries() {
-        // Record some failures -- they won't be expired yet, but cleanup should not crash
+    void failureIsCountedUntilTheWindowPasses() {
+        // Expiry is by window (checked on read) and by the shared cleanup job,
+        // not by a per-service sweep any more.
         service.recordFailure("user@example.com");
         assertEquals(1, service.getAttemptCount("user@example.com"));
-        service.cleanupExpiredEntries();
-        // Not expired yet, so should still be there
-        assertEquals(1, service.getAttemptCount("user@example.com"));
+        assertFalse(service.isBlocked("user@example.com"));
     }
 }

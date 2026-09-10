@@ -1,79 +1,91 @@
 package com.prayer.pointfinder.service;
 
-import org.springframework.scheduling.annotation.Scheduled;
+import com.prayer.pointfinder.service.ratelimit.InMemoryRateLimitStore;
+import com.prayer.pointfinder.service.ratelimit.RateLimitStore;
+import com.prayer.pointfinder.service.ratelimit.RateLimitStoreUnavailableException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * In-memory login rate limiter. Tracks failed login attempts per email
- * and blocks further attempts after {@link #MAX_ATTEMPTS} within
- * {@link #BLOCK_DURATION_MINUTES}.
+ * Login brute-force limiter. Blocks an email after {@link #MAX_ATTEMPTS}
+ * failures inside {@link #BLOCK_DURATION_MINUTES} of the first failure; a
+ * successful login clears the record.
  *
- * <p><strong>Limitation (audit 12.9):</strong> State is held in a
- * {@link ConcurrentHashMap} and is lost on application restart. An
- * attacker could theoretically time brute-force attempts around
- * deployments. For production hardening, consider migrating to a
- * Redis-backed store or database table so rate-limit state survives
- * restarts. The current design is acceptable for the expected
- * deployment cadence and nginx-level IP rate limiting that provides
- * a first line of defense.
+ * <p>State lives in the shared {@link RateLimitStore}, so two active backends
+ * see one allowance per email and the count survives a restart. The store
+ * writes in its own transaction: a failed login is recorded even though the
+ * login transaction that observed it rolls back. If the store cannot answer,
+ * the limiter refuses the login rather than allowing it.
  */
 @Service
 public class LoginAttemptService {
 
     static final int MAX_ATTEMPTS = 10;
     static final long BLOCK_DURATION_MINUTES = 15;
+    static final String SCOPE = "login";
 
-    private final ConcurrentHashMap<String, AttemptRecord> attempts = new ConcurrentHashMap<>();
+    private static final Duration WINDOW = Duration.ofMinutes(BLOCK_DURATION_MINUTES);
+
+    private final RateLimitStore store;
+
+    public LoginAttemptService(RateLimitStore store) {
+        this.store = store;
+    }
+
+    /** Per-process limiter; used by unit tests of the policy. */
+    public LoginAttemptService() {
+        this(new InMemoryRateLimitStore());
+    }
 
     public boolean isBlocked(String email) {
-        String key = email.toLowerCase();
-        AttemptRecord record = attempts.get(key);
-        if (record == null) {
-            return false;
+        String key = normalize(email);
+        Instant now = Instant.now();
+        try {
+            return store.get(SCOPE, key)
+                    .filter(bucket -> !bucket.windowExpired(now, WINDOW))
+                    .map(bucket -> bucket.count() >= MAX_ATTEMPTS)
+                    .orElse(false);
+        } catch (DataAccessException ex) {
+            throw new RateLimitStoreUnavailableException("Login limiter unavailable", ex);
         }
-        if (isExpired(record)) {
-            attempts.remove(key);
-            return false;
-        }
-        return record.count >= MAX_ATTEMPTS;
     }
 
     public void recordFailure(String email) {
-        String key = email.toLowerCase();
-        attempts.compute(key, (k, existing) -> {
-            if (existing == null || isExpired(existing)) {
-                return new AttemptRecord(1, Instant.now());
-            }
-            return new AttemptRecord(existing.count + 1, existing.firstAttempt);
-        });
+        try {
+            store.hit(SCOPE, normalize(email), WINDOW, Instant.now());
+        } catch (DataAccessException ex) {
+            throw new RateLimitStoreUnavailableException("Login limiter unavailable", ex);
+        }
     }
 
     public void recordSuccess(String email) {
-        attempts.remove(email.toLowerCase());
-    }
-
-    @Scheduled(fixedRate = 30 * 60 * 1000) // every 30 minutes
-    public void cleanupExpiredEntries() {
-        attempts.entrySet().removeIf(entry -> isExpired(entry.getValue()));
+        try {
+            store.reset(SCOPE, normalize(email));
+        } catch (DataAccessException ex) {
+            throw new RateLimitStoreUnavailableException("Login limiter unavailable", ex);
+        }
     }
 
     // visible for testing
     int getAttemptCount(String email) {
-        AttemptRecord record = attempts.get(email.toLowerCase());
-        return record == null ? 0 : record.count;
+        Instant now = Instant.now();
+        return store.get(SCOPE, normalize(email))
+                .filter(bucket -> !bucket.windowExpired(now, WINDOW))
+                .map(RateLimitStore.Bucket::count)
+                .orElse(0);
     }
 
     // visible for testing
     void clear() {
-        attempts.clear();
+        if (store instanceof InMemoryRateLimitStore memory) {
+            memory.clear();
+        }
     }
 
-    private boolean isExpired(AttemptRecord record) {
-        return Instant.now().isAfter(record.firstAttempt.plusSeconds(BLOCK_DURATION_MINUTES * 60));
+    private static String normalize(String email) {
+        return email == null ? "" : email.trim().toLowerCase();
     }
-
-    record AttemptRecord(int count, Instant firstAttempt) {}
 }

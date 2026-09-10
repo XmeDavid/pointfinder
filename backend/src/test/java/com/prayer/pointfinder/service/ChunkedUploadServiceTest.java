@@ -103,6 +103,8 @@ class ChunkedUploadServiceTest {
         chunkedUploadService = new ChunkedUploadService(
                 uploadSessionRepository,
                 uploadSessionChunkRepository,
+                new com.prayer.pointfinder.service.upload.LocalChunkStore(tempDir),
+                mock(jakarta.persistence.EntityManager.class),
                 playerRepository,
                 gameAccessService,
                 fileStorageService,
@@ -132,6 +134,41 @@ class ChunkedUploadServiceTest {
         when(uploadSessionRepository.findById(any(UUID.class))).thenAnswer(invocation ->
                 Optional.ofNullable(sessions.get(invocation.getArgument(0)))
         );
+        when(uploadSessionRepository.findByIdForUpdate(any(UUID.class))).thenAnswer(invocation ->
+                Optional.ofNullable(sessions.get(invocation.getArgument(0)))
+        );
+        when(uploadSessionRepository.findAllById(any())).thenAnswer(invocation -> {
+            Iterable<UUID> ids = invocation.getArgument(0);
+            List<UploadSession> list = new ArrayList<>();
+            for (UUID id : ids) {
+                UploadSession s = sessions.get(id);
+                if (s != null) list.add(s);
+            }
+            return list;
+        });
+        when(uploadSessionRepository.findExpiredActiveIdsSkipLocked(any(Instant.class), anyInt()))
+                .thenAnswer(invocation -> {
+                    Instant now = invocation.getArgument(0);
+                    return sessions.values().stream()
+                            .filter(session -> session.getStatus() == UploadSessionStatus.active
+                                    && session.getExpiresAt().isBefore(now))
+                            .map(UploadSession::getId)
+                            .toList();
+                });
+        when(uploadSessionRepository.findExpiredActiveIdsForPlayerSkipLocked(
+                any(UUID.class), any(UUID.class), any(Instant.class)
+        )).thenAnswer(invocation -> {
+            UUID gameId = invocation.getArgument(0);
+            UUID playerId = invocation.getArgument(1);
+            Instant now = invocation.getArgument(2);
+            return sessions.values().stream()
+                    .filter(session -> session.getGame().getId().equals(gameId))
+                    .filter(session -> session.getPlayer().getId().equals(playerId))
+                    .filter(session -> session.getStatus() == UploadSessionStatus.active)
+                    .filter(session -> !session.getExpiresAt().isAfter(now))
+                    .map(UploadSession::getId)
+                    .toList();
+        });
         when(uploadSessionRepository.countActiveSessionsByPlayerId(any(UUID.class), eq(UploadSessionStatus.active), any(Instant.class)))
                 .thenAnswer(invocation -> {
                     UUID playerId = invocation.getArgument(0);
@@ -240,6 +277,12 @@ class ChunkedUploadServiceTest {
         });
         doAnswer(invocation -> {
             UUID sessionId = invocation.getArgument(0);
+            int chunkIndex = invocation.getArgument(1);
+            uploadedChunks.computeIfAbsent(sessionId, ignored -> new HashSet<>()).add(chunkIndex);
+            return null;
+        }).when(uploadSessionChunkRepository).upsertChunk(any(UUID.class), anyInt(), anyInt(), any(Instant.class));
+        doAnswer(invocation -> {
+            UUID sessionId = invocation.getArgument(0);
             uploadedChunks.remove(sessionId);
             return null;
         }).when(uploadSessionChunkRepository).deleteBySessionId(any(UUID.class));
@@ -273,7 +316,7 @@ class ChunkedUploadServiceTest {
         request.setMediaItemKey("local-video-1");
 
         AtomicInteger storeCalls = new AtomicInteger(0);
-        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L), any(UUID.class)))
                 .thenAnswer(invocation -> {
                     storeCalls.incrementAndGet();
                     Path assembled = invocation.getArgument(0);
@@ -376,7 +419,7 @@ class ChunkedUploadServiceTest {
 
         UploadSessionInitRequest completedRequest = uploadRequest("completed");
         UploadSessionResponse completed = chunkedUploadService.createSession(gameId, authPlayer, completedRequest);
-        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L), any(UUID.class)))
                 .thenReturn("/api/games/" + gameId + "/files/completed.mp4");
         chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 0, "AAAA".getBytes(), authPlayer);
         chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 1, "BBBB".getBytes(), authPlayer);
@@ -402,7 +445,7 @@ class ChunkedUploadServiceTest {
 
         UploadSessionResponse active = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("active"));
         UploadSessionResponse completed = chunkedUploadService.createSession(gameId, authPlayer, uploadRequest("completed"));
-        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L), any(UUID.class)))
                 .thenReturn("/api/games/" + gameId + "/files/completed.mp4");
         chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 0, "AAAA".getBytes(), authPlayer);
         chunkedUploadService.uploadChunk(gameId, completed.sessionId(), 1, "BBBB".getBytes(), authPlayer);
@@ -436,7 +479,7 @@ class ChunkedUploadServiceTest {
         );
         UUID sessionId = created.sessionId();
 
-        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L)))
+        when(fileStorageService.storeAssembledUpload(any(Path.class), eq(gameId), eq("video/mp4"), eq(8L), any(UUID.class)))
                 .thenReturn("/api/games/" + gameId + "/files/no-link.mp4");
 
         chunkedUploadService.uploadChunk(gameId, sessionId, 0, "AAAA".getBytes(), authPlayer);

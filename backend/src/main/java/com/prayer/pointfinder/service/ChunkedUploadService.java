@@ -8,7 +8,6 @@ import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.UploadSession;
-import com.prayer.pointfinder.entity.UploadSessionChunk;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.config.ChunkedUploadProperties;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -18,13 +17,18 @@ import com.prayer.pointfinder.exception.UploadSessionException;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.UploadSessionChunkRepository;
 import com.prayer.pointfinder.repository.UploadSessionRepository;
+import com.prayer.pointfinder.service.upload.ChunkStore;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,21 +37,41 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+/**
+ * Resumable chunked media uploads.
+ *
+ * <p><strong>Two active backends.</strong> Chunk bytes live in the configured
+ * {@link ChunkStore} (S3 objects in production, local files for one
+ * instance or development), so a session can accept chunks on either
+ * instance and complete on either. The database rows remain the record of
+ * accepted chunks. Every state change to a session (chunk accepted,
+ * completion, cancel, clear, expiry) first takes the session's row lock and
+ * re-reads the row under it, so two instances serialise and the second one
+ * decides on the committed state, never on a stale copy. The expiry sweep
+ * uses {@code SKIP LOCKED} so it never expires a session that is being
+ * completed. Chunk bytes are removed only after the transaction that made
+ * them obsolete has committed; a rollback keeps them. Assembly happens in a
+ * bounded local temporary file that is removed on every exit path, and the
+ * final object key is derived from the session id so a retry after a failed
+ * commit overwrites the same object instead of leaving another behind.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ChunkedUploadService {
 
     private static final int RECOVERABLE_SESSION_LIMIT = 100;
+    private static final int EXPIRE_BATCH = 500;
+    private static final int ORPHAN_SWEEP_BATCH = 1000;
     private static final List<UploadSessionStatus> RECOVERABLE_MEDIA_ITEM_STATUSES =
             List.of(UploadSessionStatus.active, UploadSessionStatus.completed);
     private static final List<UploadSessionStatus> CLEARABLE_SESSION_STATUSES =
@@ -55,6 +79,8 @@ public class ChunkedUploadService {
 
     private final UploadSessionRepository uploadSessionRepository;
     private final UploadSessionChunkRepository uploadSessionChunkRepository;
+    private final ChunkStore chunkStore;
+    private final EntityManager entityManager;
     private final PlayerRepository playerRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
@@ -128,7 +154,7 @@ public class ChunkedUploadService {
         if (metadata.mediaItemKey() != null) {
             uploadSessionRepository.flush();
         }
-        ensureSessionDirectory(session.getId());
+        chunkStore.prepare(session.getId());
         meterRegistry.counter("uploads.sessions.created").increment();
         return buildResponse(session);
     }
@@ -136,6 +162,7 @@ public class ChunkedUploadService {
     @Transactional(timeout = 10)
     public UploadSessionResponse getSession(UUID gameId, UUID sessionId, Player authPlayer) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
+        lockForUpdate(session);
         expireSessionIfStale(session, Instant.now());
         return buildResponse(session);
     }
@@ -168,16 +195,9 @@ public class ChunkedUploadService {
             Player authPlayer
     ) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
-        if (session.getStatus() != UploadSessionStatus.active) {
-            meterRegistry.counter("uploads.chunks.failed", "reason", "inactive_session").increment();
-            throw sessionNotActive(session);
-        }
-        Instant now = Instant.now();
-        if (expireSessionIfStale(session, now)) {
-            meterRegistry.counter("uploads.chunks.failed", "reason", "session_expired").increment();
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED",
-                    "Upload session has expired");
-        }
+        // Cheap rejections on the unlocked copy first; the decisive checks are
+        // repeated under the row lock below.
+        rejectIfNotAcceptingChunks(session);
         if (chunkIndex < 0 || chunkIndex >= session.getTotalChunks()) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "invalid_chunk_index").increment();
             throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_CHUNK_INDEX", "Invalid chunk index");
@@ -194,25 +214,37 @@ public class ChunkedUploadService {
                     "Chunk size mismatch for index " + chunkIndex);
         }
 
-        boolean chunkExists = uploadSessionChunkRepository.existsBySessionIdAndChunkIndex(
+        // Store the bytes before taking the lock so parallel chunk uploads of
+        // one session only serialise on the short bookkeeping below. A put
+        // that turns out to be for a session that just completed or expired
+        // is reclaimed by the orphan sweep.
+        boolean chunkRecorded = uploadSessionChunkRepository.existsBySessionIdAndChunkIndex(
                 session.getId(), chunkIndex
         );
-        Path chunkPath = chunkPathFor(session.getId(), chunkIndex);
-        if (chunkExists && Files.exists(chunkPath)) {
+        boolean bytesPresent = chunkRecorded && chunkStore.exists(session.getId(), chunkIndex);
+        if (!bytesPresent) {
+            chunkStore.put(session.getId(), chunkIndex, chunkBytes);
+        }
+
+        lockForUpdate(session);
+        rejectIfNotAcceptingChunks(session);
+        Instant now = Instant.now();
+        if (expireSessionIfStale(session, now)) {
+            meterRegistry.counter("uploads.chunks.failed", "reason", "session_expired").increment();
+            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED",
+                    "Upload session has expired");
+        }
+        if (bytesPresent) {
             log.debug("Chunk {} already uploaded for session {}, skipping", chunkIndex, sessionId);
         } else {
-            if (chunkExists) {
-                uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(session.getId(), chunkIndex);
+            if (chunkRecorded) {
+                // Record without bytes (store switched, or a prior write was
+                // lost): the bytes that just arrived repair it.
                 meterRegistry.counter("uploads.chunks.recovered_missing_file").increment();
             }
-            writeChunk(chunkPath, chunkBytes);
-            uploadSessionChunkRepository.save(
-                    UploadSessionChunk.builder()
-                            .sessionId(session.getId())
-                            .chunkIndex(chunkIndex)
-                            .chunkSizeBytes(chunkBytes.length)
-                            .build()
-            );
+            // Idempotent: a duplicate of this request on the other instance
+            // lands on the same row instead of failing on the primary key.
+            uploadSessionChunkRepository.upsertChunk(session.getId(), chunkIndex, chunkBytes.length, now);
             meterRegistry.counter("uploads.chunks.uploaded").increment();
         }
         session.setExpiresAt(now.plusSeconds(uploadProps.getChunk().getSessionTtlSeconds()));
@@ -222,7 +254,11 @@ public class ChunkedUploadService {
 
     @Transactional(timeout = 60)
     public UploadSessionResponse completeSession(UUID gameId, UUID sessionId, Player authPlayer) {
+        // Authorise first (cheap, no lock), then lock and re-read the row so a
+        // concurrent completion on the other instance waits here and then
+        // observes the committed outcome instead of storing a second file.
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
+        lockForUpdate(session);
         ensureGameIsLive(session.getPlayer());
 
         if (session.getStatus() == UploadSessionStatus.completed) {
@@ -252,12 +288,20 @@ public class ChunkedUploadService {
         }
 
         Path assembled = assembleChunks(session);
-        String fileUrl = fileStorageService.storeAssembledUpload(
-                assembled,
-                session.getGame().getId(),
-                session.getContentType(),
-                session.getTotalSizeBytes()
-        );
+        String fileUrl;
+        try {
+            // The object key is the session id: a retry after a failed commit
+            // overwrites the same object rather than orphaning another one.
+            fileUrl = fileStorageService.storeAssembledUpload(
+                    assembled,
+                    session.getGame().getId(),
+                    session.getContentType(),
+                    session.getTotalSizeBytes(),
+                    session.getId()
+            );
+        } finally {
+            deleteQuietly(assembled);
+        }
 
         session.setStatus(UploadSessionStatus.completed);
         session.setCompletedAt(Instant.now());
@@ -272,6 +316,7 @@ public class ChunkedUploadService {
     @Transactional(timeout = 10)
     public void cancelSession(UUID gameId, UUID sessionId, Player authPlayer) {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
+        lockForUpdate(session);
         if (session.getStatus() == UploadSessionStatus.completed) {
             throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_COMPLETED_CANNOT_CANCEL",
                     "Completed uploads cannot be cancelled");
@@ -294,35 +339,69 @@ public class ChunkedUploadService {
                 normalizeMediaItemKey(mediaItemKey),
                 CLEARABLE_SESSION_STATUSES
         );
+        int clearedSessions = 0;
         for (UploadSession session : sessions) {
+            lockForUpdate(session);
+            if (session.getStatus() == UploadSessionStatus.completed) {
+                // Completed on the other instance after the query above: not ours to clear.
+                continue;
+            }
             if (session.getStatus() == UploadSessionStatus.active) {
                 session.setStatus(UploadSessionStatus.cancelled);
                 cancelledSessions++;
             }
             uploadSessionChunkRepository.deleteBySessionId(session.getId());
             cleanupSessionStorage(session.getId());
+            uploadSessionRepository.save(session);
+            clearedSessions++;
         }
-        uploadSessionRepository.saveAll(sessions);
-        if (!sessions.isEmpty()) {
-            meterRegistry.counter("uploads.sessions.cleared").increment(sessions.size());
+        if (clearedSessions > 0) {
+            meterRegistry.counter("uploads.sessions.cleared").increment(clearedSessions);
         }
-        return new UploadSessionClearResponse(cancelledSessions, sessions.size());
+        return new UploadSessionClearResponse(cancelledSessions, clearedSessions);
     }
 
+    /**
+     * Expires active sessions past their deadline. Rows currently locked by a
+     * completion (on either instance) are skipped and picked up next tick if
+     * still active, so expiry-versus-completion always resolves to whichever
+     * committed first.
+     */
     @Transactional(timeout = 10)
     public int expireStaleSessions() {
-        List<UploadSession> stale = uploadSessionRepository.findByStatusAndExpiresAtBefore(
-                UploadSessionStatus.active,
-                Instant.now()
-        );
+        List<UUID> ids = uploadSessionRepository.findExpiredActiveIdsSkipLocked(Instant.now(), EXPIRE_BATCH);
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        List<UploadSession> stale = uploadSessionRepository.findAllById(ids);
         for (UploadSession session : stale) {
             expireSession(session);
         }
         uploadSessionRepository.saveAll(stale);
-        if (!stale.isEmpty()) {
-            meterRegistry.counter("uploads.sessions.expired").increment(stale.size());
-        }
+        meterRegistry.counter("uploads.sessions.expired").increment(stale.size());
         return stale.size();
+    }
+
+    /**
+     * Reclaims chunk storage for sessions that are no longer active (or no
+     * longer exist) but whose bytes were not removed, for example because a
+     * delete failed or a process died between the status change and the
+     * cleanup. Bounded per run. Never touches storage of an active session.
+     */
+    public int sweepOrphanChunkStorage() {
+        int removed = 0;
+        for (UUID sessionId : chunkStore.sessionsWithStorage(ORPHAN_SWEEP_BATCH)) {
+            Optional<UploadSessionStatus> status = uploadSessionRepository.findStatusById(sessionId);
+            if (status.isPresent() && status.get() == UploadSessionStatus.active) {
+                continue;
+            }
+            chunkStore.deleteSession(sessionId);
+            removed++;
+        }
+        if (removed > 0) {
+            meterRegistry.counter("uploads.chunks.orphans_removed").increment(removed);
+        }
+        return removed;
     }
 
     private UploadSession getAuthorizedSession(UUID gameId, UUID sessionId, Player authPlayer) {
@@ -425,20 +504,17 @@ public class ChunkedUploadService {
     }
 
     private int expireStaleSessionsForPlayerInGame(UUID gameId, UUID playerId, Instant now) {
-        List<UploadSession> stale = uploadSessionRepository.findExpiredActiveSessionsForPlayerInGame(
-                gameId,
-                playerId,
-                UploadSessionStatus.active,
-                now
-        );
+        List<UUID> ids = uploadSessionRepository.findExpiredActiveIdsForPlayerSkipLocked(gameId, playerId, now);
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        List<UploadSession> stale = uploadSessionRepository.findAllById(ids);
         for (UploadSession session : stale) {
             expireSession(session);
         }
         uploadSessionRepository.saveAll(stale);
-        if (!stale.isEmpty()) {
-            uploadSessionRepository.flush();
-            meterRegistry.counter("uploads.sessions.expired").increment(stale.size());
-        }
+        uploadSessionRepository.flush();
+        meterRegistry.counter("uploads.sessions.expired").increment(stale.size());
         return stale.size();
     }
 
@@ -556,8 +632,9 @@ public class ChunkedUploadService {
     }
 
     private List<Integer> findUploadedChunksWithMissingFiles(UploadSession session) {
+        Set<Integer> present = chunkStore.existingChunkIndexes(session.getId());
         return uploadSessionChunkRepository.findUploadedChunkIndexes(session.getId()).stream()
-                .filter(chunkIndex -> !Files.exists(chunkPathFor(session.getId(), chunkIndex)))
+                .filter(chunkIndex -> !present.contains(chunkIndex))
                 .toList();
     }
 
@@ -595,36 +672,6 @@ public class ChunkedUploadService {
         );
     }
 
-    private Path chunkPathFor(UUID sessionId, int chunkIndex) {
-        return sessionDirectory(sessionId).resolve("chunk-" + chunkIndex + ".part");
-    }
-
-    private Path sessionDirectory(UUID sessionId) {
-        return chunkSessionsRoot().resolve(sessionId.toString());
-    }
-
-    private Path chunkSessionsRoot() {
-        return Paths.get(uploadProps.getPath()).resolve("_chunk_sessions");
-    }
-
-    private void ensureSessionDirectory(UUID sessionId) {
-        Path dir = sessionDirectory(sessionId);
-        try {
-            Files.createDirectories(dir);
-        } catch (IOException e) {
-            throw new FileStorageException("Could not create upload session directory", e);
-        }
-    }
-
-    private void writeChunk(Path chunkPath, byte[] chunkBytes) {
-        try {
-            Files.createDirectories(chunkPath.getParent());
-            Files.write(chunkPath, chunkBytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            throw new FileStorageException("Failed to store upload chunk", e);
-        }
-    }
-
     private int expectedChunkSize(UploadSession session, int chunkIndex) {
         if (chunkIndex < session.getTotalChunks() - 1) {
             return session.getChunkSizeBytes();
@@ -633,42 +680,91 @@ public class ChunkedUploadService {
         return (int) (session.getTotalSizeBytes() - consumed);
     }
 
+    /**
+     * Streams every chunk, in order, into one temporary file under
+     * {@code app.uploads.temp-path}. The caller deletes the file on every
+     * path; a missing chunk mid-stream also deletes it here before the
+     * retryable error goes back to the client.
+     */
     private Path assembleChunks(UploadSession session) {
-        Path assembledPath = sessionDirectory(session.getId()).resolve("assembled.upload");
+        Path tempRoot = Paths.get(uploadProps.getTempPath());
+        Path assembledPath;
+        try {
+            Files.createDirectories(tempRoot);
+            assembledPath = Files.createTempFile(tempRoot, "assembly-" + session.getId() + "-", ".upload");
+        } catch (IOException e) {
+            throw new FileStorageException("Failed to allocate assembly temp file", e);
+        }
         try (OutputStream outputStream = Files.newOutputStream(
                 assembledPath,
-                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE,
                 StandardOpenOption.TRUNCATE_EXISTING
         )) {
             for (int i = 0; i < session.getTotalChunks(); i++) {
-                Path chunkPath = chunkPathFor(session.getId(), i);
-                if (!Files.exists(chunkPath)) {
+                if (!chunkStore.exists(session.getId(), i)) {
                     uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(session.getId(), i);
+                    deleteQuietly(assembledPath);
                     throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
                             "Uploaded chunk data is incomplete; retry missing chunks");
                 }
-                Files.copy(chunkPath, outputStream);
+                chunkStore.copyTo(session.getId(), i, outputStream);
             }
         } catch (IOException e) {
+            deleteQuietly(assembledPath);
             throw new FileStorageException("Failed to assemble uploaded chunks", e);
+        } catch (RuntimeException e) {
+            deleteQuietly(assembledPath);
+            throw e;
         }
         return assembledPath;
     }
 
+    /**
+     * Takes the session's row lock and reloads its state under it. The entity
+     * was loaded without a lock for authorisation; after waiting for a
+     * competing transaction the first-level cache would still hold the
+     * pre-wait state, so a plain lock is not enough: refresh reads the
+     * committed row.
+     */
+    private void lockForUpdate(UploadSession session) {
+        entityManager.refresh(session, LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    private void rejectIfNotAcceptingChunks(UploadSession session) {
+        if (session.getStatus() != UploadSessionStatus.active) {
+            meterRegistry.counter("uploads.chunks.failed", "reason", "inactive_session").increment();
+            throw sessionNotActive(session);
+        }
+    }
+
+    /**
+     * Chunk bytes are removed only once the transaction that made them
+     * obsolete has committed. A rollback (deadlock, commit failure, timeout)
+     * therefore keeps the bytes for the still-active session; a crash after
+     * commit and before the delete leaves objects the orphan sweep reclaims.
+     */
     private void cleanupSessionStorage(UUID sessionId) {
-        Path root = sessionDirectory(sessionId);
-        if (!Files.exists(root)) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    chunkStore.deleteSession(sessionId);
+                }
+            });
+        } else {
+            chunkStore.deleteSession(sessionId);
+        }
+    }
+
+    private static void deleteQuietly(Path path) {
+        if (path == null) {
             return;
         }
-        try (var files = Files.walk(root)) {
-            List<Path> paths = new ArrayList<>();
-            files.forEach(paths::add);
-            paths.sort((a, b) -> b.getNameCount() - a.getNameCount());
-            for (Path path : paths) {
-                Files.deleteIfExists(path);
-            }
+        try {
+            Files.deleteIfExists(path);
         } catch (IOException e) {
-            log.warn("Failed to clean session chunk directory for {}: {}", sessionId, e.getMessage());
+            log.warn("Failed to delete temp file {}: {}", path, e.getMessage());
         }
     }
 

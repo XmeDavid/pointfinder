@@ -71,7 +71,7 @@ public class OperatorPresenceEventListener {
         }
     }
 
-    private void broadcastPresence(UUID gameId) {
+    public void broadcastPresence(UUID gameId) {
         Set<OperatorPresenceTracker.OperatorInfo> operators = presenceTracker.getOperators(gameId);
         List<Map<String, Object>> operatorList = operators.stream()
                 .map(op -> {

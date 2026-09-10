@@ -5,6 +5,7 @@ import com.prayer.pointfinder.entity.GameStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -31,6 +32,30 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
     List<Game> findByStatus(GameStatus status);
 
     List<Game> findByStatusAndEndDateBefore(GameStatus status, Instant before);
+
+    /**
+     * Ends a live game only if it is still live and its end date is still in
+     * the past at update time. Returns the number of rows changed (0 or 1).
+     * The scheduled job uses this so that two overlapping runs cannot both
+     * announce the end, and so an operator who moved the end date forward
+     * between the job's query and its update wins: the stale pre-query does
+     * not end the game.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Game g SET g.status = com.prayer.pointfinder.entity.GameStatus.ended "
+            + "WHERE g.id = :gameId AND g.status = com.prayer.pointfinder.entity.GameStatus.live "
+            + "AND g.endDate IS NOT NULL AND g.endDate < :now")
+    int endGameIfLiveAndDue(@Param("gameId") UUID gameId, @Param("now") Instant now);
+
+    /**
+     * Ends a practice game only if it is still a practice game, not yet
+     * ended, and its expiry is still in the past at update time.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Game g SET g.status = com.prayer.pointfinder.entity.GameStatus.ended "
+            + "WHERE g.id = :gameId AND g.status <> com.prayer.pointfinder.entity.GameStatus.ended "
+            + "AND g.tutorialScenario IS NOT NULL AND g.tutorialExpiresAt IS NOT NULL AND g.tutorialExpiresAt < :now")
+    int endPracticeGameIfExpired(@Param("gameId") UUID gameId, @Param("now") Instant now);
 
     @Query("SELECT g FROM Game g WHERE g.createdBy.id = :userId OR :userId IN (SELECT o.id FROM g.operators o)")
     List<Game> findByOperatorOrCreator(@Param("userId") UUID userId);

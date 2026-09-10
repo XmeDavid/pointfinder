@@ -1,10 +1,13 @@
 package com.prayer.pointfinder.service;
 
-import org.springframework.scheduling.annotation.Scheduled;
+import com.prayer.pointfinder.service.ratelimit.InMemoryRateLimitStore;
+import com.prayer.pointfinder.service.ratelimit.RateLimitStore;
+import com.prayer.pointfinder.service.ratelimit.RateLimitStoreUnavailableException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Per-IP and per-device rate limiter for {@code POST /api/auth/player/join}.
@@ -20,10 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * handles the anonymous IP-based flood; this service handles the cases nginx
  * cannot see (device ID abuse, or cases where nginx is bypassed in dev/test).
  *
- * <p>Storage is an in-memory {@link ConcurrentHashMap} with a background
- * cleanup task. Good enough for a single-backend deployment; for multi-replica
- * we would swap in Redis or Caffeine with distributed counters. Current scale
- * (hundreds of submissions per game) does not justify that complexity.
+ * <p>Counters live in the shared {@link RateLimitStore} so alternating join
+ * attempts between two backends draw from one allowance. If the store cannot
+ * answer, the join is refused rather than allowed.
  */
 @Service
 public class PlayerJoinRateLimiter {
@@ -32,13 +34,28 @@ public class PlayerJoinRateLimiter {
     static final int MAX_DEVICE_ATTEMPTS = 20;
     static final long WINDOW_SECONDS = 60;
 
-    private final ConcurrentHashMap<String, Counter> ipCounters = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Counter> deviceCounters = new ConcurrentHashMap<>();
-    // Tracks which (ip, deviceId) pairs have already counted toward the IP
-    // bucket in the current window so a single device reusing the same IP
-    // doesn't double-dip. The device bucket handles same-device abuse; the
-    // IP bucket is meant to catch multi-device flood from one IP.
-    private final ConcurrentHashMap<String, Counter> countedPairs = new ConcurrentHashMap<>();
+    static final String SCOPE_IP = "join_ip";
+    static final String SCOPE_DEVICE = "join_device";
+    /**
+     * (ip, deviceId) pairs already counted toward the IP bucket in the
+     * current window, so a single device reusing the same IP does not
+     * double-dip. The device bucket handles same-device abuse; the IP bucket
+     * is meant to catch multi-device flood from one IP.
+     */
+    static final String SCOPE_PAIR = "join_pair";
+
+    private static final Duration WINDOW = Duration.ofSeconds(WINDOW_SECONDS);
+
+    private final RateLimitStore store;
+
+    public PlayerJoinRateLimiter(RateLimitStore store) {
+        this.store = store;
+    }
+
+    /** Per-process limiter; used by unit tests of the policy. */
+    public PlayerJoinRateLimiter() {
+        this(new InMemoryRateLimitStore());
+    }
 
     /**
      * Record one attempt and return {@code true} if neither bucket is
@@ -46,75 +63,57 @@ public class PlayerJoinRateLimiter {
      * the caller must reject the request.
      */
     public boolean tryAcquire(String ip, String deviceId) {
-        boolean deviceBlocked = deviceId != null && bump(deviceCounters, deviceId) > MAX_DEVICE_ATTEMPTS;
-
-        boolean ipBlocked = false;
-        if (ip != null) {
+        try {
             Instant now = Instant.now();
-            boolean countTowardIp;
-            if (deviceId == null) {
-                countTowardIp = true;
-            } else {
-                String pairKey = ip + "|" + deviceId;
-                Counter existing = countedPairs.get(pairKey);
-                if (existing == null || existing.isExpired(now)) {
-                    countedPairs.put(pairKey, new Counter(1, now));
+            boolean deviceBlocked = deviceId != null
+                    && store.hit(SCOPE_DEVICE, deviceId, WINDOW, now).count() > MAX_DEVICE_ATTEMPTS;
+
+            boolean ipBlocked = false;
+            if (ip != null) {
+                boolean countTowardIp;
+                if (deviceId == null) {
                     countTowardIp = true;
                 } else {
-                    countTowardIp = false;
+                    // count == 1 means this pair opened a fresh window: first sighting.
+                    countTowardIp = store.hit(SCOPE_PAIR, ip + "|" + deviceId, WINDOW, now).count() == 1;
+                }
+                if (countTowardIp) {
+                    ipBlocked = store.hit(SCOPE_IP, ip, WINDOW, now).count() > MAX_IP_ATTEMPTS;
+                } else {
+                    ipBlocked = store.get(SCOPE_IP, ip)
+                            .filter(bucket -> !bucket.windowExpired(now, WINDOW))
+                            .map(bucket -> bucket.count() > MAX_IP_ATTEMPTS)
+                            .orElse(false);
                 }
             }
-            if (countTowardIp) {
-                ipBlocked = bump(ipCounters, ip) > MAX_IP_ATTEMPTS;
-            } else {
-                Counter c = ipCounters.get(ip);
-                ipBlocked = c != null && !c.isExpired(now) && c.count > MAX_IP_ATTEMPTS;
-            }
+            return !(ipBlocked || deviceBlocked);
+        } catch (DataAccessException ex) {
+            throw new RateLimitStoreUnavailableException("Join limiter unavailable", ex);
         }
-        return !(ipBlocked || deviceBlocked);
-    }
-
-    private int bump(ConcurrentHashMap<String, Counter> map, String key) {
-        Counter updated = map.compute(key, (k, existing) -> {
-            Instant now = Instant.now();
-            if (existing == null || existing.isExpired(now)) {
-                return new Counter(1, now);
-            }
-            return new Counter(existing.count + 1, existing.windowStart);
-        });
-        return updated.count;
-    }
-
-    @Scheduled(fixedRate = 5 * 60 * 1000) // every 5 minutes
-    public void cleanupExpiredEntries() {
-        Instant now = Instant.now();
-        ipCounters.entrySet().removeIf(e -> e.getValue().isExpired(now));
-        deviceCounters.entrySet().removeIf(e -> e.getValue().isExpired(now));
-        countedPairs.entrySet().removeIf(e -> e.getValue().isExpired(now));
     }
 
     // visible for testing
     public void clear() {
-        ipCounters.clear();
-        deviceCounters.clear();
-        countedPairs.clear();
+        if (store instanceof InMemoryRateLimitStore memory) {
+            memory.clear();
+        }
     }
 
     // visible for testing
     int getIpCount(String ip) {
-        Counter c = ipCounters.get(ip);
-        return c == null ? 0 : c.count;
+        return currentCount(SCOPE_IP, ip);
     }
 
     // visible for testing
     int getDeviceCount(String deviceId) {
-        Counter c = deviceCounters.get(deviceId);
-        return c == null ? 0 : c.count;
+        return currentCount(SCOPE_DEVICE, deviceId);
     }
 
-    private record Counter(int count, Instant windowStart) {
-        boolean isExpired(Instant now) {
-            return now.isAfter(windowStart.plusSeconds(WINDOW_SECONDS));
-        }
+    private int currentCount(String scope, String key) {
+        Instant now = Instant.now();
+        return store.get(scope, key)
+                .filter(bucket -> !bucket.windowExpired(now, WINDOW))
+                .map(RateLimitStore.Bucket::count)
+                .orElse(0);
     }
 }

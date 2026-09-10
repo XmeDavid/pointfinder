@@ -10,9 +10,16 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -82,6 +89,70 @@ public class ObjectStorageService {
         return url.toString();
     }
 
+    /** Streams an object's bytes to {@code out}. */
+    public void downloadTo(String key, OutputStream out) throws IOException {
+        try (InputStream in = s3Client.getObject(GetObjectRequest.builder()
+                .bucket(config.getBucket())
+                .key(key)
+                .build())) {
+            in.transferTo(out);
+        }
+    }
+
+    /** Downloads an object to a local file, replacing it if present. */
+    public void download(String key, Path target) throws IOException {
+        try (InputStream in = s3Client.getObject(GetObjectRequest.builder()
+                .bucket(config.getBucket())
+                .key(key)
+                .build())) {
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    /**
+     * Deletes every object under {@code prefix}; returns how many were
+     * removed. Uses single-object deletes: the multi-object delete call needs
+     * a Content-MD5 header that some S3-compatible stores insist on and the
+     * SDK no longer sends by default, and a chunk prefix holds few objects.
+     */
+    public int deleteByPrefix(String prefix) {
+        int removed = 0;
+        String token = null;
+        do {
+            ListObjectsV2Response page = s3Client.listObjectsV2(ListObjectsV2Request.builder()
+                    .bucket(config.getBucket())
+                    .prefix(prefix)
+                    .continuationToken(token)
+                    .build());
+            for (S3Object object : page.contents()) {
+                s3Client.deleteObject(DeleteObjectRequest.builder()
+                        .bucket(config.getBucket())
+                        .key(object.key())
+                        .build());
+                removed++;
+            }
+            token = Boolean.TRUE.equals(page.isTruncated()) ? page.nextContinuationToken() : null;
+        } while (token != null);
+        log.debug("[S3] deleted {} object(s) under prefix={}", removed, prefix);
+        return removed;
+    }
+
+    /** One page of keys under {@code prefix}, strictly after {@code startAfter} (may be null). */
+    public record KeyPage(List<String> keys, boolean truncated) {}
+
+    public KeyPage listKeysPage(String prefix, String startAfter, int maxKeys) {
+        ListObjectsV2Request.Builder request = ListObjectsV2Request.builder()
+                .bucket(config.getBucket())
+                .prefix(prefix)
+                .maxKeys(Math.max(1, Math.min(1000, maxKeys)));
+        if (startAfter != null && !startAfter.isBlank()) {
+            request.startAfter(startAfter);
+        }
+        ListObjectsV2Response page = s3Client.listObjectsV2(request.build());
+        return new KeyPage(page.contents().stream().map(S3Object::key).toList(),
+                Boolean.TRUE.equals(page.isTruncated()));
+    }
+
     public void delete(String key) {
         s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(config.getBucket())
@@ -107,13 +178,19 @@ public class ObjectStorageService {
      * Returns an empty list when S3 is not enabled.
      */
     public java.util.List<String> listKeys(String prefix) {
-        ListObjectsV2Response response = s3Client.listObjectsV2(
-                ListObjectsV2Request.builder()
-                        .bucket(config.getBucket())
-                        .prefix(prefix)
-                        .build());
-        return response.contents().stream()
-                .map(S3Object::key)
-                .toList();
+        List<String> keys = new ArrayList<>();
+        String token = null;
+        do {
+            ListObjectsV2Response response = s3Client.listObjectsV2(
+                    ListObjectsV2Request.builder()
+                            .bucket(config.getBucket())
+                            .prefix(prefix)
+                            .continuationToken(token)
+                            .build());
+            response.contents().forEach(object -> keys.add(object.key()));
+            token = Boolean.TRUE.equals(response.isTruncated())
+                    ? response.nextContinuationToken() : null;
+        } while (token != null);
+        return keys;
     }
 }

@@ -23,13 +23,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -38,22 +34,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 
     private static final String GAME_TOPIC_PREFIX = "/topic/games/";
 
-    /**
-     * Per-IP brute-force throttle for broadcast-code auth attempts.
-     *
-     * <p>Broadcast codes are 6-character tokens with a reduced alphabet
-     * (&lt;30 chars, digit-safe). Without a throttle an attacker could try
-     * every code in the address space in a few minutes. We lock out an IP
-     * for {@link #LOCKOUT_DURATION} once it fires
-     * {@link #MAX_FAILED_ATTEMPTS} inside {@link #ATTEMPT_WINDOW}, and we
-     * emit a WARN log on every failure so the rate shows up in observability.
-     */
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final Duration ATTEMPT_WINDOW = Duration.ofMinutes(1);
-    private static final Duration LOCKOUT_DURATION = Duration.ofMinutes(15);
-
-    private final Map<String, BroadcastAttemptState> broadcastAttempts = new ConcurrentHashMap<>();
-
+    private final BroadcastCodeThrottle broadcastCodeThrottle;
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
     private final PlayerRepository playerRepository;
@@ -99,51 +80,20 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 
     private void authenticateBroadcastViewer(String code, StompHeaderAccessor accessor) {
         String remoteIp = extractRemoteIp(accessor);
-        enforceBroadcastThrottle(remoteIp);
+        broadcastCodeThrottle.enforce(remoteIp);
 
         var gameOpt = gameRepository.findByBroadcastCodeAndBroadcastEnabledTrue(code);
         if (gameOpt.isEmpty()) {
-            recordBroadcastFailure(remoteIp, code);
+            broadcastCodeThrottle.recordFailure(remoteIp);
             throw new AccessDeniedException("Invalid broadcast code");
         }
         var game = gameOpt.get();
-        // Successful auth resets the per-IP counter so a legitimate viewer
-        // who miskeyed once is not punished indefinitely.
-        broadcastAttempts.remove(remoteIp);
+        broadcastCodeThrottle.recordSuccess(remoteIp);
         WebSocketPrincipals.BroadcastPrincipal principal = new WebSocketPrincipals.BroadcastPrincipal(game.getId());
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_BROADCAST_VIEWER"));
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
         accessor.setUser(authentication);
-    }
-
-    private void enforceBroadcastThrottle(String remoteIp) {
-        BroadcastAttemptState state = broadcastAttempts.get(remoteIp);
-        if (state == null) {
-            return;
-        }
-        Instant now = Instant.now();
-        if (state.lockedUntil != null && now.isBefore(state.lockedUntil)) {
-            log.warn("Broadcast-code auth blocked: ip={} locked_until={} (attempts={})",
-                    remoteIp, state.lockedUntil, state.failureCount);
-            throw new AccessDeniedException("Too many invalid broadcast-code attempts");
-        }
-    }
-
-    private void recordBroadcastFailure(String remoteIp, String code) {
-        Instant now = Instant.now();
-        BroadcastAttemptState updated = broadcastAttempts.compute(remoteIp, (ip, prev) -> {
-            if (prev == null || now.isAfter(prev.windowStart.plus(ATTEMPT_WINDOW))
-                    || (prev.lockedUntil != null && now.isAfter(prev.lockedUntil))) {
-                return new BroadcastAttemptState(now, 1, null);
-            }
-            int next = prev.failureCount + 1;
-            Instant lockedUntil = next >= MAX_FAILED_ATTEMPTS ? now.plus(LOCKOUT_DURATION) : null;
-            return new BroadcastAttemptState(prev.windowStart, next, lockedUntil);
-        });
-        // Never log the attempted code — it could be valid for another game.
-        log.warn("Broadcast-code auth failed: ip={} attempts={} locked_until={}",
-                remoteIp, updated.failureCount, updated.lockedUntil);
     }
 
     private String extractRemoteIp(StompHeaderAccessor accessor) {
@@ -166,8 +116,6 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         String sessionId = accessor.getSessionId();
         return StringUtils.hasText(sessionId) ? "session:" + sessionId : "unknown";
     }
-
-    private record BroadcastAttemptState(Instant windowStart, int failureCount, Instant lockedUntil) {}
 
     private void authenticateUser(String token, StompHeaderAccessor accessor) {
         UUID userId = tokenProvider.getUserIdFromToken(token);

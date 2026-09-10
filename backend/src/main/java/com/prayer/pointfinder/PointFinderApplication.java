@@ -1,6 +1,7 @@
 package com.prayer.pointfinder;
 
 import com.prayer.pointfinder.config.ChunkedUploadProperties;
+import com.prayer.pointfinder.config.HaProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -10,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
-@EnableConfigurationProperties(ChunkedUploadProperties.class)
+@EnableConfigurationProperties({ChunkedUploadProperties.class, HaProperties.class})
 public class PointFinderApplication {
 
     public static void main(String[] args) {

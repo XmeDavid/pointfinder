@@ -4,7 +4,9 @@ import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,10 +14,53 @@ import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UploadSessionRepository extends JpaRepository<UploadSession, UUID> {
     List<UploadSession> findByStatusAndExpiresAtBefore(UploadSessionStatus status, Instant expiresAt);
+
+    /**
+     * Loads a session with a row lock for the rest of the transaction. Used by
+     * completion so two instances completing the same session serialise: the
+     * second sees {@code completed} after the first commits and returns the
+     * same result instead of assembling and storing a second file. The expiry
+     * sweep skips locked rows, so it can never expire a session mid-completion.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM UploadSession s WHERE s.id = :id")
+    Optional<UploadSession> findByIdForUpdate(@Param("id") UUID id);
+
+    /**
+     * Ids of active sessions past their expiry, locked for this transaction,
+     * skipping rows another transaction holds (a completion in progress on
+     * either instance). Native because JPQL has no {@code SKIP LOCKED}.
+     */
+    @Query(value = """
+            SELECT id FROM upload_sessions
+             WHERE status = 'active' AND expires_at < :now
+             ORDER BY expires_at
+             LIMIT :limit
+             FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<UUID> findExpiredActiveIdsSkipLocked(@Param("now") Instant now, @Param("limit") int limit);
+
+    /** Same as {@link #findExpiredActiveIdsSkipLocked} scoped to one player in one game. */
+    @Query(value = """
+            SELECT id FROM upload_sessions
+             WHERE game_id = :gameId AND player_id = :playerId
+               AND status = 'active' AND expires_at <= :now
+             FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<UUID> findExpiredActiveIdsForPlayerSkipLocked(
+            @Param("gameId") UUID gameId,
+            @Param("playerId") UUID playerId,
+            @Param("now") Instant now
+    );
+
+    /** Status of a session without loading the entity; used by the orphan chunk sweep. */
+    @Query("SELECT s.status FROM UploadSession s WHERE s.id = :id")
+    Optional<UploadSessionStatus> findStatusById(@Param("id") UUID id);
 
     @Query("""
             SELECT COUNT(s)

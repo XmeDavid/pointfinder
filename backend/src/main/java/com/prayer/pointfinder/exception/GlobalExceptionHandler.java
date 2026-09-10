@@ -75,6 +75,15 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 
+    @ExceptionHandler(com.prayer.pointfinder.service.ratelimit.RateLimitStoreUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitStoreUnavailable(
+            com.prayer.pointfinder.service.ratelimit.RateLimitStoreUnavailableException ex) {
+        // Fail closed: the shared limiter could not decide, so the request is
+        // refused rather than allowed through unprotected.
+        log.error("Rate-limit store unavailable: {}", ex.getMessage(), ex);
+        return jsonError(HttpStatus.SERVICE_UNAVAILABLE, "Service temporarily unavailable. Please try again shortly.");
+    }
+
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex) {
         return jsonError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), null, null,

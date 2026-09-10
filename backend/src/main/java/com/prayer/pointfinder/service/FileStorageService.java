@@ -130,6 +130,15 @@ public class FileStorageService {
     }
 
     public String storeAssembledUpload(Path assembledFile, UUID gameId, String contentType, long expectedSizeBytes) {
+        return storeAssembledUpload(assembledFile, gameId, contentType, expectedSizeBytes, UUID.randomUUID());
+    }
+
+    /**
+     * Stores an assembled upload under {@code <gameId>/<fileId>.<ext>}. Passing
+     * a stable {@code fileId} (the upload session id) makes a retry after a
+     * failed commit overwrite the same object instead of leaving another one.
+     */
+    public String storeAssembledUpload(Path assembledFile, UUID gameId, String contentType, long expectedSizeBytes, UUID fileId) {
         MediaKind declaredKind = validateDeclaredContentType(contentType);
 
         long actualSize;
@@ -149,7 +158,7 @@ public class FileStorageService {
         }
 
         String extension = extensionFor(detectedKind);
-        String filename = UUID.randomUUID() + "." + extension;
+        String filename = fileId + "." + extension;
 
         if (objectStorageService.isEnabled()) {
             String key = gameId + "/" + filename;
@@ -166,7 +175,7 @@ public class FileStorageService {
             Path target = gameDir.resolve(filename);
             try {
                 Files.createDirectories(gameDir);
-                Files.move(assembledFile, target);
+                Files.move(assembledFile, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 log.info("Stored assembled upload locally: {}", target);
             } catch (IOException e) {
                 throw new FileStorageException("Failed to store assembled upload", e);

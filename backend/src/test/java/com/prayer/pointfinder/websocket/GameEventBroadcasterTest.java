@@ -36,13 +36,21 @@ class GameEventBroadcasterTest {
     @Mock
     private GameRepository gameRepository;
 
+    @Mock
+    private com.prayer.pointfinder.realtime.RealtimeOutboxWriter outboxWriter;
+
     private GameEventBroadcaster broadcaster;
 
     private UUID gameId;
 
     @BeforeEach
     void setUp() {
-        broadcaster = new GameEventBroadcaster(messagingTemplate, mobileRealtimeHub, gameRepository);
+        // A real dispatcher over the mocked transports keeps the existing
+        // destination/payload assertions meaningful; the outbox is mocked.
+        broadcaster = new GameEventBroadcaster(
+                new com.prayer.pointfinder.realtime.RealtimeDispatcher(messagingTemplate, mobileRealtimeHub),
+                outboxWriter,
+                gameRepository);
         gameId = UUID.randomUUID();
         // Default: increment returns a monotonic value; individual tests can
         // override with a specific value where the assertion needs it.

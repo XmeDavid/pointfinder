@@ -35,7 +35,8 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Database
-    runtimeOnly("org.postgresql:postgresql")
+    // Compile-scoped: the realtime outbox uses the driver's LISTEN/NOTIFY API.
+    implementation("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
 
@@ -66,6 +67,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:minio")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -3,10 +3,12 @@ package com.prayer.pointfinder.websocket;
 import com.prayer.pointfinder.dto.response.NotificationResponse;
 import com.prayer.pointfinder.entity.Submission;
 import com.prayer.pointfinder.entity.ActivityEvent;
+import com.prayer.pointfinder.realtime.RealtimeDispatcher;
+import com.prayer.pointfinder.realtime.RealtimeEvent;
+import com.prayer.pointfinder.realtime.RealtimeOutboxWriter;
 import com.prayer.pointfinder.repository.GameRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -47,6 +49,14 @@ import java.util.UUID;
  *       restore</li>
  * </ul>
  *
+ * <p><strong>Two active backends.</strong> With the outbox enabled every
+ * envelope is written to the {@code realtime_outbox} table through
+ * {@link RealtimeOutboxWriter} inside the caller's transaction, so it commits
+ * or rolls back with the mutation it announces, and every instance's
+ * consumer (this one included) delivers it to its own sockets through
+ * {@link RealtimeDispatcher}. A rolled-back transaction leaves no row and
+ * therefore no delivery anywhere.
+ *
  * <p>The bump is a durable DB write. When the caller is inside a transaction
  * (the common case for business mutations) it joins that transaction and
  * commits with the mutation; when the caller is outside a transaction (for
@@ -61,8 +71,8 @@ public class GameEventBroadcaster {
 
     private static final int EVENT_VERSION = 1;
 
-    private final SimpMessagingTemplate messagingTemplate;
-    private final MobileRealtimeHub mobileRealtimeHub;
+    private final RealtimeDispatcher dispatcher;
+    private final RealtimeOutboxWriter outbox;
     private final GameRepository gameRepository;
 
     public void broadcastActivityEvent(UUID gameId, ActivityEvent event) {
@@ -178,32 +188,18 @@ public class GameEventBroadcaster {
         teamData.put("submittedAt", submission.getSubmittedAt() != null
                 ? submission.getSubmittedAt().toString() : null);
 
-        String operatorDest = "/topic/games/" + gameId + "/operator/submission_status";
-        String teamDest = "/topic/games/" + gameId + "/team/" + teamId + "/submission_status";
+        RealtimeEvent operatorEvent = RealtimeEvent.operator(gameId, "submission_status",
+                buildEnvelope(gameId, "submission_status", operatorData, stateVersion));
+        RealtimeEvent teamEvent = RealtimeEvent.team(gameId, teamId, "submission_status",
+                buildEnvelope(gameId, "submission_status", teamData, stateVersion));
 
-        Map<String, Object> operatorEnvelope = buildEnvelope(gameId, "submission_status", operatorData, stateVersion);
-        Map<String, Object> teamEnvelope = buildEnvelope(gameId, "submission_status", teamData, stateVersion);
-
-        dispatchAfterCommit(() -> {
-            log.debug("Broadcasting submission_status operator envelope to {}", operatorDest);
-            messagingTemplate.convertAndSend(operatorDest, operatorEnvelope);
-            log.debug("Broadcasting submission_status team envelope to {}", teamDest);
-            messagingTemplate.convertAndSend(teamDest, teamEnvelope);
-            mobileRealtimeHub.broadcastToOperators(gameId, operatorEnvelope);
-            mobileRealtimeHub.broadcastToTeam(gameId, teamId, teamEnvelope);
-        });
+        publish(operatorEvent);
+        publish(teamEvent);
     }
 
     private void broadcast(UUID gameId, String type, Object data, boolean bumpStateVersion) {
         Long stateVersion = bumpStateVersion ? bumpStateVersion(gameId, type) : null;
-        Map<String, Object> payload = buildEnvelope(gameId, type, data, stateVersion);
-
-        dispatchAfterCommit(() -> {
-            String destination = "/topic/games/" + gameId;
-            log.debug("Broadcasting {} event to {}", type, destination);
-            messagingTemplate.convertAndSend(destination, payload);
-            mobileRealtimeHub.broadcast(gameId, payload);
-        });
+        publish(RealtimeEvent.all(gameId, type, buildEnvelope(gameId, type, data, stateVersion)));
     }
 
     /**
@@ -215,14 +211,23 @@ public class GameEventBroadcaster {
      */
     private void broadcastOperatorOnly(UUID gameId, String type, Object data, boolean bumpStateVersion) {
         Long stateVersion = bumpStateVersion ? bumpStateVersion(gameId, type) : null;
-        Map<String, Object> payload = buildEnvelope(gameId, type, data, stateVersion);
+        publish(RealtimeEvent.operator(gameId, type, buildEnvelope(gameId, type, data, stateVersion)));
+    }
 
-        dispatchAfterCommit(() -> {
-            String destination = "/topic/games/" + gameId + "/operator/" + type;
-            log.debug("Broadcasting operator-only {} event to {}", type, destination);
-            messagingTemplate.convertAndSend(destination, payload);
-            mobileRealtimeHub.broadcastToOperators(gameId, payload);
-        });
+    /**
+     * With the outbox enabled the event is only recorded (joining the
+     * caller's transaction); every instance, this one included, delivers it
+     * from the table after commit, so all sockets see one ordering and a
+     * crash between commit and dispatch loses nothing. With the outbox
+     * disabled the event goes straight to this instance's sockets after
+     * commit, the single-instance behaviour.
+     */
+    private void publish(RealtimeEvent event) {
+        if (outbox.enabled()) {
+            outbox.enqueue(event);
+        } else {
+            dispatchAfterCommit(() -> dispatcher.dispatch(event));
+        }
     }
 
     private Long bumpStateVersion(UUID gameId, String type) {

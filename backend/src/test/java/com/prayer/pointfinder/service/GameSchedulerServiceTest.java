@@ -92,12 +92,11 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.save(expiredGame)).thenReturn(expiredGame);
+        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(1);
 
         gameSchedulerService.autoEndGames();
 
-        assertEquals(GameStatus.ended, expiredGame.getStatus());
-        verify(gameRepository).save(expiredGame);
+        verify(gameRepository).endGameIfLiveAndDue(eq(gameId), any(Instant.class));
         verify(eventBroadcaster).broadcastGameStatus(gameId, GameStatus.ended.name());
     }
 
@@ -123,13 +122,11 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame1, expiredGame2));
-        when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(gameRepository.endGameIfLiveAndDue(any(UUID.class), any(Instant.class))).thenReturn(1);
 
         gameSchedulerService.autoEndGames();
 
-        assertEquals(GameStatus.ended, expiredGame1.getStatus());
-        assertEquals(GameStatus.ended, expiredGame2.getStatus());
-        verify(gameRepository, times(2)).save(any(Game.class));
+        verify(gameRepository, times(2)).endGameIfLiveAndDue(any(UUID.class), any(Instant.class));
         verify(eventBroadcaster).broadcastGameStatus(gameId1, GameStatus.ended.name());
         verify(eventBroadcaster).broadcastGameStatus(gameId2, GameStatus.ended.name());
     }
@@ -141,7 +138,7 @@ class GameSchedulerServiceTest {
 
         gameSchedulerService.autoEndGames();
 
-        verify(gameRepository, never()).save(any(Game.class));
+        verify(gameRepository, never()).endGameIfLiveAndDue(any(UUID.class), any(Instant.class));
         verifyNoInteractions(eventBroadcaster);
     }
 
@@ -170,7 +167,7 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.save(expiredGame)).thenReturn(expiredGame);
+        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(1);
 
         gameSchedulerService.autoEndGames();
 
@@ -192,14 +189,36 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.save(expiredGame)).thenReturn(expiredGame);
+        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(1);
 
         org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(gameRepository, eventBroadcaster);
 
         gameSchedulerService.autoEndGames();
 
-        inOrder.verify(gameRepository).save(expiredGame);
+        inOrder.verify(gameRepository).endGameIfLiveAndDue(eq(gameId), any(Instant.class));
         inOrder.verify(eventBroadcaster).broadcastGameStatus(gameId, "ended");
+    }
+
+    @Test
+    void autoEndGamesDoesNotBroadcastWhenAnotherRunAlreadyEndedTheGame() {
+        // Two instances can both load the same live game before either commits.
+        // The conditional update changes the row once; the run whose update
+        // matched nothing must stay silent so clients get one game_status event.
+        UUID gameId = UUID.randomUUID();
+        Game expiredGame = Game.builder()
+                .id(gameId)
+                .name("Raced Game")
+                .description("Desc")
+                .status(GameStatus.live)
+                .endDate(Instant.now().minusSeconds(10))
+                .build();
+        when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
+                .thenReturn(List.of(expiredGame));
+        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(0);
+
+        gameSchedulerService.autoEndGames();
+
+        verify(eventBroadcaster, never()).broadcastGameStatus(any(UUID.class), anyString());
     }
 
     // ── purgeExpiredRefreshTokens ──────────────────────────────────────
