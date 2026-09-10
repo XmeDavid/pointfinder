@@ -1,8 +1,33 @@
 name: Deploy
 
+# Reusable, digest-only production release. It is called by ci.yml after a
+# fully green master run has published immutable images, and it cannot be
+# started by hand: the only manual path is a CI workflow_dispatch, which runs
+# every test before it gets here. Releases stay paused until the repository
+# variable POINTFINDER_DEPLOY_ENABLED is set to "true".
 on:
   workflow_call:
-  workflow_dispatch:
+    inputs:
+      backend_image:
+        description: GHCR repository of the backend image (no tag or digest)
+        required: true
+        type: string
+      backend_digest:
+        description: sha256 manifest digest of the backend image
+        required: true
+        type: string
+      frontend_image:
+        description: GHCR repository of the frontend image (no tag or digest)
+        required: true
+        type: string
+      frontend_digest:
+        description: sha256 manifest digest of the frontend image
+        required: true
+        type: string
+      revision:
+        description: Commit the images were built from
+        required: true
+        type: string
 
 concurrency:
   group: pointfinder-production
@@ -12,30 +37,70 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Trigger Dokploy (${{ matrix.service }})
+  paused:
+    name: Deployment paused
     runs-on: ubuntu-latest
+    if: vars.POINTFINDER_DEPLOY_ENABLED != 'true'
+    steps:
+      - name: Explain the pause
+        env:
+          BACKEND: ${{ inputs.backend_image }}@${{ inputs.backend_digest }}
+          FRONTEND: ${{ inputs.frontend_image }}@${{ inputs.frontend_digest }}
+        run: |
+          echo "::notice title=Deployment paused::POINTFINDER_DEPLOY_ENABLED is not 'true'. Images were published but not released."
+          echo "backend:  $BACKEND"
+          echo "frontend: $FRONTEND"
+
+  release:
+    name: Release ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    if: vars.POINTFINDER_DEPLOY_ENABLED == 'true'
     strategy:
       fail-fast: false
       matrix:
         include:
           - service: pointfinder-backend
-            touched_path: backend/
+            image: ${{ inputs.backend_image }}
+            digest: ${{ inputs.backend_digest }}
           - service: pointfinder-frontend
-            touched_path: web/
+            image: ${{ inputs.frontend_image }}
+            digest: ${{ inputs.frontend_digest }}
 
     steps:
-      - name: Verify manual deploy branch
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/master'
+      - name: Verify release source
+        if: github.ref != 'refs/heads/master' || (github.event_name != 'push' && github.event_name != 'workflow_dispatch')
         run: |
-          echo "Manual production deploys must run from master, got '${GITHUB_REF}'."
+          echo "Production releases only run for master CI runs, got '${GITHUB_REF}' via '${GITHUB_EVENT_NAME}'."
           exit 1
 
-      - name: Trigger deployment
+      - name: Validate release inputs
+        env:
+          IMAGE: ${{ matrix.image }}
+          DIGEST: ${{ matrix.digest }}
+          REVISION: ${{ inputs.revision }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$DIGEST" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
+            echo "Refusing to release without an immutable sha256 digest (got '$DIGEST')."
+            exit 1
+          fi
+          if ! printf '%s' "$IMAGE" | grep -Eq '^ghcr\.io(/[a-z0-9][a-z0-9._-]*){2,}$'; then
+            echo "Refusing to release: image must be a plain GHCR repository (got '$IMAGE')."
+            exit 1
+          fi
+          if ! printf '%s' "$REVISION" | grep -Eq '^[0-9a-f]{7,64}$'; then
+            echo "Refusing to release: revision must be a commit id (got '$REVISION')."
+            exit 1
+          fi
+
+      - name: Request release through the relay
+        id: request
         env:
           DOKPLOY_RELAY_TOKEN: ${{ secrets.DOKPLOY_RELAY_TOKEN }}
-          DOKPLOY_RELAY_URL: https://actions.davidsbatista.com/deploy/${{ matrix.service }}
-          DOKPLOY_TOUCHED_PATH: ${{ matrix.touched_path }}
+          RELEASE_URL: https://actions.davidsbatista.com/release/${{ matrix.service }}
+          IMAGE: ${{ matrix.image }}
+          DIGEST: ${{ matrix.digest }}
+          REVISION: ${{ inputs.revision }}
         run: |
           set -euo pipefail
 
@@ -44,46 +109,98 @@ jobs:
             exit 1
           fi
 
+          payload="$(jq -cn \
+            --arg digest "$DIGEST" \
+            --arg repository "$IMAGE" \
+            --arg revision "$REVISION" \
+            --arg runId "$GITHUB_RUN_ID" \
+            '{digest: $digest, repository: $repository, revision: $revision, runId: $runId}')"
+
           response_file="$(mktemp)"
           http_code="$(
             curl --show-error --silent \
+              --max-time 60 \
               --output "$response_file" \
               --write-out "%{http_code}" \
-              --request POST "$DOKPLOY_RELAY_URL" \
+              --request POST "$RELEASE_URL" \
               --header "X-Deploy-Token: $DOKPLOY_RELAY_TOKEN" \
-              --header "X-GitHub-Event: push" \
-              --header "X-GitHub-Delivery: $GITHUB_RUN_ID" \
               --header "Content-Type: application/json" \
-              --data @- <<JSON
-          {
-            "ref": "${GITHUB_REF}",
-            "after": "${GITHUB_SHA}",
-            "head_commit": {
-              "id": "${GITHUB_SHA}",
-              "message": "GitHub Actions deploy ${GITHUB_SHA}"
-            },
-            "commits": [
-              {
-                "id": "${GITHUB_SHA}",
-                "message": "GitHub Actions deploy ${GITHUB_SHA}",
-                "modified": ["${DOKPLOY_TOUCHED_PATH}"]
-              }
-            ],
-            "repository": {
-              "name": "${GITHUB_REPOSITORY#*/}",
-              "full_name": "${GITHUB_REPOSITORY}"
-            }
-          }
-          JSON
+              --data "$payload"
           )"
 
           cat "$response_file"
           echo
 
-          case "$http_code" in
-            2*) ;;
-            *)
-              echo "Dokploy relay returned HTTP $http_code"
-              exit 1
-              ;;
-          esac
+          if [ "$http_code" != "202" ]; then
+            echo "Relay refused the release with HTTP $http_code"
+            exit 1
+          fi
+
+          release_id="$(jq -r '.releaseId // empty' "$response_file")"
+          if ! printf '%s' "$release_id" | grep -Eq '^[0-9a-f]{24}$'; then
+            echo "Relay did not return a release id"
+            exit 1
+          fi
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the deployment to finish
+        env:
+          DOKPLOY_RELAY_TOKEN: ${{ secrets.DOKPLOY_RELAY_TOKEN }}
+          STATUS_URL: https://actions.davidsbatista.com/release/${{ matrix.service }}/${{ steps.request.outputs.release_id }}
+          MAX_ATTEMPTS: "90"
+          INTERVAL_SECONDS: "10"
+          MAX_CONSECUTIVE_FAILURES: "6"
+        run: |
+          set -euo pipefail
+
+          failures=0
+          attempt=0
+          while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
+            attempt=$((attempt + 1))
+            response_file="$(mktemp)"
+            http_code="$(
+              curl --silent --show-error \
+                --max-time 30 \
+                --output "$response_file" \
+                --write-out "%{http_code}" \
+                --header "X-Deploy-Token: $DOKPLOY_RELAY_TOKEN" \
+                "$STATUS_URL" || echo "000"
+            )"
+
+            if [ "$http_code" != "200" ]; then
+              failures=$((failures + 1))
+              echo "attempt $attempt: relay status HTTP $http_code ($failures/$MAX_CONSECUTIVE_FAILURES consecutive failures)"
+              if [ "$failures" -ge "$MAX_CONSECUTIVE_FAILURES" ]; then
+                echo "Giving up: the relay status endpoint kept failing."
+                exit 1
+              fi
+              sleep "$INTERVAL_SECONDS"
+              continue
+            fi
+            failures=0
+
+            status="$(jq -r '.status // "unknown"' "$response_file")"
+            deployment_id="$(jq -r '.deploymentId // ""' "$response_file")"
+            echo "attempt $attempt: status=$status deployment=${deployment_id:-<not yet created>}"
+
+            case "$status" in
+              done)
+                echo "Deployment $deployment_id finished successfully."
+                exit 0
+                ;;
+              error|cancelled)
+                echo "Deployment $deployment_id ended with status '$status'."
+                exit 1
+                ;;
+              pending|running|unknown)
+                ;;
+              *)
+                echo "Unexpected status '$status' from relay."
+                exit 1
+                ;;
+            esac
+            sleep "$INTERVAL_SECONDS"
+          done
+
+          echo "Timed out after $attempt status checks without a terminal deployment state."
+          exit 1
