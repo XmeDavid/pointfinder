@@ -104,9 +104,11 @@ public enum ErrorCode {
     BASE_ORDER_DEPENDENCY_CONFLICT,
     /** The device already joined this game on a different team; switching teams mid-game is not allowed. */
     DEVICE_ALREADY_IN_DIFFERENT_TEAM,
-    /** The account already has a participation in this game (details: teamId, teamName, sameTeam). */
     /** Wrong email or password on a call that keeps the player session (link, recover). */
     INVALID_CREDENTIALS,
+    /** A participant (registered player) account tried to sign in to the operator surface. */
+    PARTICIPANT_ACCOUNT,
+    /** The account already has a participation in this game (details: teamId, teamName, sameTeam). */
     ACCOUNT_ALREADY_IN_GAME,
     /** This participation is already linked to a different account. */
     PLAYER_ALREADY_LINKED,

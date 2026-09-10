@@ -30,6 +30,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.Map;
@@ -99,10 +101,10 @@ public class PlayerAccountService {
         try {
             playerRepository.saveAndFlush(player);
         } catch (DataIntegrityViolationException ex) {
-            // Two devices claimed the same account for the same game at once; the index decided.
-            Player existing = playerRepository.findByUserIdAndGameId(user.getId(), gameId)
-                    .orElseThrow(() -> new ConflictException("Could not link this participation", ErrorCode.ACCOUNT_ALREADY_IN_GAME));
-            throw alreadyInGame(existing, player);
+            // Two devices claimed the same account for the same game at once and the index
+            // decided. The persistence context is unusable after the violation, so answer
+            // the conflict without touching it; the retry sees the winner through the pre-check.
+            throw new ConflictException("This account already plays in this game", ErrorCode.ACCOUNT_ALREADY_IN_GAME);
         }
         log.info("[ACCOUNT] operation=link playerId={} userId={} gameId={} created={}",
                 player.getId(), user.getId(), gameId, request.isCreateAccount());
@@ -124,7 +126,11 @@ public class PlayerAccountService {
         Player player = playerRepository.findByUserIdAndGameId(user.getId(), game.getId())
                 .orElseThrow(() -> new BadRequestException("This account has not joined this game", ErrorCode.NO_PARTICIPATION_FOUND));
 
+        releaseDevice(request.getDeviceId(), game.getId(), player);
         player.setDeviceId(request.getDeviceId());
+        // The new phone registers its own push token; the old one must not keep receiving.
+        player.setPushToken(null);
+        player.setPushPlatform(null);
         player = playerRepository.save(player);
         Team team = player.getTeam();
         log.info("[ACCOUNT] operation=recover playerId={} userId={} gameId={}", player.getId(), user.getId(), game.getId());
@@ -133,6 +139,23 @@ public class PlayerAccountService {
     }
 
     // --- helpers ---
+
+    /**
+     * A device holds one identity per game, which join enforces. Switching a phone to
+     * the account's participation retires the guest row that phone had here, so a later
+     * guest rejoin resolves to the recovered row and the roster shows no ghost. A row
+     * that belongs to another account is never taken over.
+     */
+    private void releaseDevice(String deviceId, UUID gameId, Player recovered) {
+        Player holder = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId).orElse(null);
+        if (holder == null || holder.getId().equals(recovered.getId())) return;
+        if (holder.getUser() != null) {
+            throw new BadRequestException("This device already belongs to another account's participation in this game",
+                    ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
+        }
+        log.info("[ACCOUNT] operation=recover retiredGuestPlayerId={} deviceId={} gameId={}", holder.getId(), deviceId, gameId);
+        playerRepository.delete(holder);
+    }
 
     private Player load(Player authPlayer) {
         return playerRepository.findById(authPlayer.getId())
@@ -191,7 +214,18 @@ public class PlayerAccountService {
                 .token(UUID.randomUUID().toString())
                 .expiresAt(Instant.now().plusMillis(VERIFICATION_TOKEN_EXPIRY_MS))
                 .build());
-        emailService.sendParticipantVerification(email, token.getToken(), requestHost);
+        // Only mail once the account is really there: the surrounding transaction can still roll back.
+        String verificationToken = token.getToken();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    emailService.sendParticipantVerification(email, verificationToken, requestHost);
+                }
+            });
+        } else {
+            emailService.sendParticipantVerification(email, verificationToken, requestHost);
+        }
         return user;
     }
 
@@ -203,7 +237,7 @@ public class PlayerAccountService {
         }
         if (request.getGameId() != null) {
             return gameRepository.findById(request.getGameId())
-                    .orElseThrow(() -> new BadRequestException("Invalid join code"));
+                    .orElseThrow(() -> new BadRequestException("Game not found"));
         }
         throw new BadRequestException("A join code or game is required");
     }

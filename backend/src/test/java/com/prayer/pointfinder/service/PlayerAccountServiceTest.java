@@ -258,6 +258,48 @@ class PlayerAccountServiceTest {
     }
 
     @Test
+    void recoverAcceptsTheGameIdTheAppSendsWhenSwitchingPhones() {
+        guest.setUser(ana);
+        when(gameRepository.findById(game.getId())).thenReturn(Optional.of(game));
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.of(guest));
+        PlayerRecoverRequest byGame = recover(null, "device-b");
+        byGame.setGameId(game.getId());
+
+        assertEquals(guest.getId(), service.recover(byGame).player().id());
+        verify(teamRepository, never()).findByJoinCode(any());
+    }
+
+    @Test
+    void recoverRetiresTheGuestRowThatPhoneHadInThisGame() {
+        // Ana joined the Owls as a guest on phone B, then recovers her Falcons participation there.
+        guest.setUser(ana);
+        guest.setPushToken("old-phone-token");
+        Player ghost = Player.builder().id(UUID.randomUUID()).team(owls).game(game).deviceId("device-b").displayName("Ana again").build();
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.of(guest));
+        when(playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc("device-b", game.getId())).thenReturn(Optional.of(ghost));
+
+        PlayerAuthResponse auth = service.recover(recover("FALC01", "device-b"));
+
+        assertEquals(guest.getId(), auth.player().id());
+        verify(playerRepository).delete(ghost);
+        assertNull(guest.getPushToken(), "the old phone's push registration is dropped");
+    }
+
+    @Test
+    void recoverNeverTakesOverAnotherAccountsRowOnThatPhone() {
+        guest.setUser(ana);
+        User bob = User.builder().id(UUID.randomUUID()).email("bob@example.com").build();
+        Player bobsRow = Player.builder().id(UUID.randomUUID()).team(owls).game(game).user(bob).deviceId("device-b").displayName("Bob").build();
+        when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.of(guest));
+        when(playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc("device-b", game.getId())).thenReturn(Optional.of(bobsRow));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.recover(recover("FALC01", "device-b")));
+        assertEquals(ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM, ex.getErrorCode());
+        verify(playerRepository, never()).delete(any(Player.class));
+        assertEquals("device-a", guest.getDeviceId());
+    }
+
+    @Test
     void recoverRefusesAnAccountThatNeverJoined() {
         when(playerRepository.findByUserIdAndGameId(ana.getId(), game.getId())).thenReturn(Optional.empty());
         BadRequestException ex = assertThrows(BadRequestException.class, () -> service.recover(recover("FALC01", "device-b")));

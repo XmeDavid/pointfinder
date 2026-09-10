@@ -64,6 +64,11 @@ const FaqPage = lazy(() =>
   import("@/features/public/FaqPage").then((m) => ({ default: m.FaqPage })),
 );
 
+const EmailConfirmedPage = lazy(() =>
+  import("@/features/public/EmailConfirmedPage").then((m) => ({
+    default: m.EmailConfirmedPage,
+  })),
+);
 const PrivacyPage = lazy(() =>
   import("@/features/public/PrivacyPage").then((m) => ({
     default: m.PrivacyPage,
@@ -261,6 +266,14 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
     element: (
       <Suspense fallback={<PageSpinner />}>
         <PrivacyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/email-confirmed",
+    element: (
+      <Suspense fallback={<PageSpinner />}>
+        <EmailConfirmedPage />
       </Suspense>
     ),
   },

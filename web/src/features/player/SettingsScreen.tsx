@@ -147,7 +147,9 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title={t('settings.account')}>
-        {account.data?.linked ? (
+        {!account.data ? (
+          <Row label={t('settings.account')} value={account.isError ? t('common.offline') : '…'} testId="settings-account-unknown" />
+        ) : account.data.linked ? (
           <div className="flex flex-col gap-1 px-4 py-3" data-testid="settings-account-linked">
             <p className="text-sm"><span className="text-muted-foreground">{t('settings.savedTo')}</span> <span className="font-medium">{account.data.email}</span></p>
             {!account.data.emailVerified && <p className="text-xs text-muted-foreground">{t('settings.emailUnverified')}</p>}

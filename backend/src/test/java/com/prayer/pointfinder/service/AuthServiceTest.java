@@ -116,6 +116,25 @@ class AuthServiceTest {
         }
 
         @Test
+        void loginRefusesParticipantAccountsWithATypedCode() {
+            // PF-01: a registered player never gets an operator session, even with the right password.
+            com.prayer.pointfinder.entity.User participant = com.prayer.pointfinder.entity.User.builder()
+                    .id(java.util.UUID.randomUUID()).email("ana@example.com").name("Ana").passwordHash("hash")
+                    .role(com.prayer.pointfinder.entity.UserRole.participant).build();
+            when(loginAttemptService.isBlocked("ana@example.com")).thenReturn(false);
+            when(userRepository.findByEmail("ana@example.com")).thenReturn(Optional.of(participant));
+            when(passwordEncoder.matches("Secret123", "hash")).thenReturn(true);
+
+            LoginRequest request = new LoginRequest();
+            request.setEmail("ana@example.com");
+            request.setPassword("Secret123");
+
+            BadRequestException ex = assertThrows(BadRequestException.class, () -> authService.login(request));
+            assertEquals(com.prayer.pointfinder.exception.ErrorCode.PARTICIPANT_ACCOUNT, ex.getErrorCode());
+            verify(refreshTokenRepository, never()).save(any());
+        }
+
+        @Test
         void loginRecordsFailureOnBadCredentials() {
             when(loginAttemptService.isBlocked("operator@example.com")).thenReturn(false);
             when(userRepository.findByEmail("operator@example.com")).thenReturn(Optional.of(testUser));

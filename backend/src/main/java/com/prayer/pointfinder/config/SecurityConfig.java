@@ -103,7 +103,11 @@ public class SecurityConfig {
                 .hasAnyRole("ADMIN", "OPERATOR", "PLAYER")
                 .requestMatchers("/api/games/**", "/api/invites/**", "/api/users/**")
                 .hasAnyRole("ADMIN", "OPERATOR")
-                .anyRequest().authenticated()
+                // Everything else (/api/orgs, /api/billing, workspaces, quota,
+                // org invites, future controllers) is operator territory. A
+                // participant account (PF-01) or a player token must never
+                // inherit reach here just because a route has no matcher.
+                .anyRequest().hasAnyRole("ADMIN", "OPERATOR")
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(frozenAccountFilter, UsernamePasswordAuthenticationFilter.class);

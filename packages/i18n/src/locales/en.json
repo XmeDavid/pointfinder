@@ -1778,7 +1778,9 @@
       "switchBlocked": "Sync your pending actions first, then try again.",
       "switchBlocked_one": "You have {{count}} unsynced action. Let it sync first, then try again.",
       "switchBlocked_other": "You have {{count}} unsynced actions. Let them sync first, then try again.",
-      "back": "Back to settings"
+      "back": "Back to settings",
+      "emailConfirmedTitle": "Email confirmed",
+      "emailConfirmedBody": "Your PointFinder account is ready. You can now get your games back on any phone from the PointFinder app."
     },
     "recover": {
       "title": "Get your game back",

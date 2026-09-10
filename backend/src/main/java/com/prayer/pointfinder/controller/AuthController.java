@@ -215,9 +215,13 @@ public class AuthController {
 
     @GetMapping("/confirm-email")
     public ResponseEntity<Void> confirmEmailChange(@RequestParam String token) {
-        authService.confirmEmailChange(token);
+        com.prayer.pointfinder.entity.User user = authService.confirmEmailChange(token);
+        // A participant has no operator profile to land on; the operator page would only refuse them.
+        String target = user.getRole() == com.prayer.pointfinder.entity.UserRole.participant
+                ? frontendUrl + "/email-confirmed"
+                : frontendUrl + "/profile?tab=general&emailConfirmed=true";
         return ResponseEntity.status(302)
-                .header("Location", frontendUrl + "/profile?tab=general&emailConfirmed=true")
+                .header("Location", target)
                 .build();
     }
 }

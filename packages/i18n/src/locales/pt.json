@@ -1778,7 +1778,9 @@
       "switchBlocked": "Sincroniza primeiro as ações pendentes e tenta de novo.",
       "switchBlocked_one": "Tens {{count}} ação por sincronizar. Deixa-a sincronizar e tenta de novo.",
       "switchBlocked_other": "Tens {{count}} ações por sincronizar. Deixa-as sincronizar e tenta de novo.",
-      "back": "Voltar às definições"
+      "back": "Voltar às definições",
+      "emailConfirmedTitle": "Email confirmado",
+      "emailConfirmedBody": "A tua conta PointFinder está pronta. Já podes recuperar os teus jogos em qualquer telemóvel a partir da app PointFinder."
     },
     "recover": {
       "title": "Recuperar o teu jogo",

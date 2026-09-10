@@ -172,6 +172,42 @@ class AccountParticipationIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    void switchingAPhoneToTheAccountRetiresThatPhonesGuestRow() {
+        String email = "ana-" + UUID.randomUUID() + "@example.com";
+        PlayerAuthResponse falcon = join(falcons, "Ana", "device-a");
+        assertEquals(HttpStatus.OK, link(falcon.token(), signup(email, "Ana"), PlayerAccountResponse.class).getStatusCode());
+
+        // Phone C joined the Owls as a guest, then Ana signs in there and chooses to switch.
+        PlayerAuthResponse ghost = join(owls, "Ana again", "device-c");
+        assertEquals(2, playerRepository.countByGameId(game.getId()));
+        PlayerRecoverRequest byGame = recover(email, null, "device-c");
+        byGame.setGameId(game.getId());
+        ResponseEntity<PlayerAuthResponse> recovered = restTemplate.postForEntity("/api/auth/player/recover", byGame, PlayerAuthResponse.class);
+
+        assertEquals(HttpStatus.OK, recovered.getStatusCode());
+        assertEquals(falcon.player().id(), recovered.getBody().player().id());
+        assertEquals(1, playerRepository.countByGameId(game.getId()), "the abandoned guest row is gone");
+        assertTrue(playerRepository.findById(ghost.player().id()).isEmpty());
+        // The ghost's token no longer authenticates; the recovered one does.
+        assertEquals(HttpStatus.UNAUTHORIZED, restTemplate.exchange("/api/player/account", HttpMethod.GET, new HttpEntity<>(bearer(ghost.token())), String.class).getStatusCode());
+        assertEquals(HttpStatus.OK, restTemplate.exchange("/api/player/account", HttpMethod.GET, new HttpEntity<>(bearer(recovered.getBody().token())), String.class).getStatusCode());
+        // A guest rejoin from phone C now resolves to the recovered participation.
+        PlayerAuthResponse rejoin = join(falcons, "Ana", "device-c");
+        assertEquals(falcon.player().id(), rejoin.player().id());
+    }
+
+    @Test
+    void participantAccountsCannotSignInToTheOperatorSurface() {
+        String email = "ana-" + UUID.randomUUID() + "@example.com";
+        PlayerAuthResponse guest = join(falcons, "Ana", "device-a");
+        assertEquals(HttpStatus.OK, link(guest.token(), signup(email, "Ana"), PlayerAccountResponse.class).getStatusCode());
+
+        ResponseEntity<Map> login = restTemplate.postForEntity("/api/auth/login", Map.of("email", email, "password", "Secret123"), Map.class);
+        assertEquals(HttpStatus.BAD_REQUEST, login.getStatusCode());
+        assertEquals("PARTICIPANT_ACCOUNT", login.getBody().get("code"));
+    }
+
+    @Test
     void wrongPasswordAndUnknownGameAnswerWithTypedFailures() {
         String email = "ana-" + UUID.randomUUID() + "@example.com";
         PlayerAuthResponse guest = join(falcons, "Ana", "device-a");

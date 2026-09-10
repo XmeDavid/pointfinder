@@ -1778,7 +1778,9 @@
       "switchBlocked": "Synchronisiere zuerst deine ausstehenden Aktionen und versuche es erneut.",
       "switchBlocked_one": "Du hast {{count}} nicht synchronisierte Aktion. Lass sie zuerst synchronisieren.",
       "switchBlocked_other": "Du hast {{count}} nicht synchronisierte Aktionen. Lass sie zuerst synchronisieren.",
-      "back": "Zurück zu den Einstellungen"
+      "back": "Zurück zu den Einstellungen",
+      "emailConfirmedTitle": "E-Mail bestätigt",
+      "emailConfirmedBody": "Dein PointFinder-Konto ist bereit. Du kannst deine Spiele jetzt auf jedem Handy in der PointFinder-App fortsetzen."
     },
     "recover": {
       "title": "Dein Spiel zurückholen",

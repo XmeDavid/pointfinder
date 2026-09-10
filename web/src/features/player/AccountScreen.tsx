@@ -8,6 +8,7 @@ import { useAuth, useServices } from '@/app/player/services'
 import { getDeviceId } from '@/app/player/device'
 import { describeError } from '@/app/player/errors'
 import { Alert, Button, ConfirmDeleteDialog, Input, Label } from '@/components'
+import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingState } from '@/components/feedback/LoadingState'
 import { Screen } from '@/features/player/components/Screen'
 import { usePlayerGame } from '@/features/player/usePlayerGame'
@@ -89,6 +90,7 @@ export default function AccountScreen() {
       <h1 className="text-2xl font-semibold leading-tight text-balance">{t('account.title')}</h1>
 
       {account.isLoading && <LoadingState label={t('common.loading')} />}
+      {account.isError && <ErrorState title={describeError(account.error, t)} retryLabel={t('common.retry')} onRetry={() => void account.refetch()} />}
 
       {account.data?.linked && (
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4" data-testid="account-linked">
@@ -102,9 +104,9 @@ export default function AccountScreen() {
       {account.data && !account.data.linked && (
         <>
           <p className="text-muted-foreground">{t('account.subtitle')}</p>
-          <div className="grid grid-cols-2 gap-2" role="tablist" aria-label={t('account.title')}>
-            <Button type="button" role="tab" aria-selected={mode === 'create'} variant={mode === 'create' ? 'default' : 'outline'} onClick={() => setMode('create')} data-testid="account-mode-create">{t('account.create')}</Button>
-            <Button type="button" role="tab" aria-selected={mode === 'signIn'} variant={mode === 'signIn' ? 'default' : 'outline'} onClick={() => setMode('signIn')} data-testid="account-mode-signin">{t('account.signIn')}</Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" aria-pressed={mode === 'create'} variant={mode === 'create' ? 'default' : 'outline'} onClick={() => setMode('create')} data-testid="account-mode-create">{t('account.create')}</Button>
+            <Button type="button" aria-pressed={mode === 'signIn'} variant={mode === 'signIn' ? 'default' : 'outline'} onClick={() => setMode('signIn')} data-testid="account-mode-signin">{t('account.signIn')}</Button>
           </div>
           <form className="flex flex-col gap-4" onSubmit={submit}>
             <div className="flex flex-col gap-2">

@@ -72,6 +72,11 @@ public class AuthService {
         }
 
         loginAttemptService.recordSuccess(request.getEmail());
+        // PF-01: a participant account lives inside the player app. It never gets an
+        // operator session, so the operator surface, org invites and billing stay out of reach.
+        if (user.getRole() == UserRole.participant) {
+            throw new BadRequestException("This is a player account", ErrorCode.PARTICIPANT_ACCOUNT);
+        }
         return generateAuthResponse(user);
     }
 
@@ -328,7 +333,7 @@ public class AuthService {
     }
 
     @Transactional(timeout = 10)
-    public void confirmEmailChange(String tokenStr) {
+    public User confirmEmailChange(String tokenStr) {
         EmailChangeToken token = emailChangeTokenRepository.findByToken(tokenStr)
                 .orElseThrow(() -> new BadRequestException("Invalid email change token", ErrorCode.EMAIL_CHANGE_TOKEN_INVALID));
 
@@ -358,6 +363,7 @@ public class AuthService {
 
         // Invalidate any other pending email change tokens for this user
         emailChangeTokenRepository.invalidateAllForUser(user.getId());
+        return user;
     }
 
     void validatePassword(String password) {

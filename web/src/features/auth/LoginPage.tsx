@@ -50,7 +50,10 @@ export function LoginPage() {
       if (destination) navigate(destination, { replace: true });
     } catch (err: unknown) {
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-      if (status === 429) {
+      const code = axios.isAxiosError(err) ? (err.response?.data as { code?: string } | undefined)?.code : undefined;
+      if (code === "PARTICIPANT_ACCOUNT") {
+        setError(t("playerApp.login.participantOnly"));
+      } else if (status === 429) {
         setError(t("auth.tooManyAttempts"));
       } else if (status === 500) {
         setError(t("auth.serverError"));

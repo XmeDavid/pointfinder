@@ -83,6 +83,14 @@ describe('AccountScreen', () => {
     expect(services.client.session.current).toMatchObject({ playerId: 'p1' })
   })
 
+  it('offers a retry when the account cannot be loaded, e.g. offline', async () => {
+    server.use(http.get('/api/player/account', () => HttpResponse.error()))
+    await renderPlayer(<AccountScreen />, { route: '/account' })
+    expect(await screen.findByRole('alert')).toHaveTextContent("Offline")
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+    expect(screen.queryByTestId('account-submit')).not.toBeInTheDocument()
+  })
+
   it('shows the linked account instead of the form when already saved', async () => {
     server.use(http.get('/api/player/account', () => HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: true })))
     await renderPlayer(<AccountScreen />, { route: '/account' })

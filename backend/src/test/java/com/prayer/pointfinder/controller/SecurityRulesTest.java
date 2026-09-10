@@ -125,6 +125,7 @@ class SecurityRulesTest {
     private static final String OPERATOR_TOKEN = "operator-jwt";
     private static final String PLAYER_TOKEN = "player-jwt";
     private static final String ADMIN_TOKEN = "admin-jwt";
+    private static final String PARTICIPANT_TOKEN = "participant-jwt";
 
     @BeforeEach
     void setUp() {
@@ -172,6 +173,20 @@ class SecurityRulesTest {
         when(tokenProvider.getUserIdFromToken(ADMIN_TOKEN)).thenReturn(adminId);
         when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
 
+        // Participant (registered player) account token setup
+        UUID participantId = UUID.randomUUID();
+        User participant = User.builder()
+                .id(participantId)
+                .email("ana@test.com")
+                .name("Ana")
+                .passwordHash("hash")
+                .role(UserRole.participant)
+                .build();
+        when(tokenProvider.validateToken(PARTICIPANT_TOKEN)).thenReturn(true);
+        when(tokenProvider.getTokenType(PARTICIPANT_TOKEN)).thenReturn("user");
+        when(tokenProvider.getUserIdFromToken(PARTICIPANT_TOKEN)).thenReturn(participantId);
+        when(userRepository.findById(participantId)).thenReturn(Optional.of(participant));
+
         // Player token setup
         when(tokenProvider.validateToken(PLAYER_TOKEN)).thenReturn(true);
         when(tokenProvider.getTokenType(PLAYER_TOKEN)).thenReturn("player");
@@ -193,6 +208,27 @@ class SecurityRulesTest {
         mockMvc.perform(get("/api/player/account")
                         .header("Authorization", "Bearer " + PLAYER_TOKEN))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void participantAccountsReachNothingButAuth() throws Exception {
+        // A registered player is not an operator: games, orgs, billing, workspaces and the
+        // player routes themselves are all closed to its user token.
+        for (String path : new String[] {"/api/games", "/api/orgs", "/api/billing/status", "/api/workspaces", "/api/org-invites/my", "/api/users/me", "/api/player/account", "/api/admin/orgs"}) {
+            mockMvc.perform(get(path).header("Authorization", "Bearer " + PARTICIPANT_TOKEN))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void unmatchedRoutesAreClosedToPlayersAndOpenToOperators() throws Exception {
+        // The default is operator-only, so a future controller cannot leak to a player token.
+        mockMvc.perform(get("/api/orgs").header("Authorization", "Bearer " + PLAYER_TOKEN))
+                .andExpect(status().isForbidden());
+        // The org controller is not part of this slice, so the operator gets past the filter
+        // chain and fails later; the point is that it is not the 403 a player token gets.
+        mockMvc.perform(get("/api/orgs").header("Authorization", "Bearer " + OPERATOR_TOKEN))
+                .andExpect(result -> org.junit.jupiter.api.Assertions.assertNotEquals(403, result.getResponse().getStatus()));
     }
 
     @Test
