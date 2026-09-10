@@ -74,6 +74,22 @@ chapters lead back to the game. Settings keeps the story under Help
 (`settings-how-it-works`). Test ids: `player-intro-prompt`,
 `player-intro-prompt-open`, `player-intro-prompt-dismiss`.
 
+Component: DocumentsScreen / DocumentScreen
+Status: canonical
+Location: `web/src/features/player/DocumentsScreen.tsx`, `web/src/features/player/DocumentScreen.tsx`
+Modes: Player Field
+States: loading, empty, error with retry, cached offline (files marked
+"Needs a connection", documents still open), file opening (busy), document
+missing, long names (truncated rows, wrapping title).
+Notes: Lists what the team may see now: resources shared with players plus
+embeds behind the team's check-ins and submissions, in backend order. Files
+open in a new tab in the browser and through the system opener on native; a
+link older than 45 minutes is refreshed first because presigned URLs expire.
+Documents render inline through `RichContent`. Reached from the map header
+(`player-documents-btn`). Test ids: `documents-list`, `documents-empty`,
+`documents-offline-hint`, `document-<id>`, `document-body`,
+`document-missing`.
+
 Component: BrandMark / BrandLockup / BrandTile
 Status: canonical
 Location: `web/src/components/brand/BrandMark.tsx`

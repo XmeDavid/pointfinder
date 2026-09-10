@@ -19,6 +19,7 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Player arrival notice: named base, hidden base found, queued offline | pending | n/a | n/a |
 | Player map check-in radius rings and method-aware scan control | pending | n/a | n/a |
 | Player map chrome and detail states | pending | yes | yes |
+| Player documents: list, empty, error, cached offline, file vs document rows, inline document | pending | n/a | n/a |
 | Operator stats, review cards, and rescue actions | partial | yes | yes |
 | Operator setup readiness, resources, and launch | partial | yes | yes |
 | Operator game library and workspace switching | partial | yes | yes |

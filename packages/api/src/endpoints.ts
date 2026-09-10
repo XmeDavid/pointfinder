@@ -29,6 +29,7 @@ import type {
   PlayerAuthResponse,
   PlayerJoinRequest,
   PlayerNotificationResponse,
+  PlayerResource,
   PlayerResponse,
   PlayerSnapshotResponse,
   PlayerSubmissionRequest,
@@ -88,6 +89,8 @@ export function createApi(http: HttpClient) {
     updateLocation: (gameId: EntityId, body: LocationUpdateRequest) => http.post<void>(`${p(gameId)}/location`, body),
     registerPushToken: (body: PushTokenRequest) => http.put<void>('/api/player/push-token', body),
     unregisterPushToken: (body: PushTokenRequest) => http.delete('/api/player/push-token', { body }),
+    /** Files and documents the team may see now: shared ones plus embeds behind check-ins and submissions. */
+    files: (gameId: EntityId) => http.get<PlayerResource[]>(`${p(gameId)}/files`),
     notifications: () => http.get<PlayerNotificationResponse[]>('/api/player/notifications'),
     unseenNotificationCount: () => http.get<UnseenCountResponse>('/api/player/notifications/unseen-count'),
     markNotificationsSeen: () => http.post<void>('/api/player/notifications/mark-seen'),

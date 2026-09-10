@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import Map, { Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Bell, List, LocateFixed, Nfc, QrCode, Settings } from 'lucide-react'
+import { Bell, FileText, List, LocateFixed, Nfc, QrCode, Settings } from 'lucide-react'
 import { Alert, Badge, Button, StatusMarker, TeamLocationMarker, baseStatusMarkerTone, buttonVariants, cn, getResolvedStyleUrl } from '@/components'
 import { useAuth } from '@/app/player/services'
 import { usePlayerGame } from '@/features/player/usePlayerGame'
@@ -162,6 +162,7 @@ export default function PlayerMap() {
               {unseen > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-destructive px-1 text-center text-[10px] font-semibold leading-4 text-destructive-foreground" aria-hidden>{unseen > 9 ? '9+' : unseen}</span>}
             </Link>
             <Link to="/list" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.list')}><List className="h-5 w-5" aria-hidden /></Link>
+            <Link to="/documents" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.documents')} data-testid="player-documents-btn"><FileText className="h-5 w-5" aria-hidden /></Link>
             <Link to="/settings" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.settings')} data-testid="player-settings-btn"><Settings className="h-5 w-5" aria-hidden /></Link>
           </div>
         </div>

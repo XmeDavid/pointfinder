@@ -25,6 +25,10 @@ export const playerFixtures = {
     { baseId: 'b2', challengeTitle: 'Granite boulder', lat: 40.091, lng: -8.871, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'checked_in', checkedInAt: '2026-09-05T09:30:00Z', challengeId: 'c2', submissionStatus: null },
     { baseId: 'b3', challengeTitle: 'Chapel', lat: 40.092, lng: -8.872, nfcLinked: false, checkInMethod: 'NFC', checkInRadiusM: 15, status: 'submitted', checkedInAt: '2026-09-05T09:40:00Z', challengeId: 'c3', submissionStatus: 'pending' },
   ],
+  files: [
+    { id: 'r1', gameId: 'g1', type: 'file', name: 'Site map.pdf', contentType: 'application/pdf', content: null, sizeBytes: 245760, sharedWithPlayers: true, downloadUrl: 'https://files.example.test/site-map.pdf?sig=1', createdAt: '2026-09-04T08:00:00Z' },
+    { id: 'r2', gameId: 'g1', type: 'document', name: 'Camp rules', contentType: 'text/html', content: '<p>Stay with your team at all times.</p>', sizeBytes: 0, sharedWithPlayers: true, downloadUrl: null, createdAt: '2026-09-04T08:05:00Z' },
+  ],
   notifications: [
     { id: 'n1', gameId: 'g1', message: 'Lunch is at the chapel at 12:30.', targetTeamId: null, sentAt: '2026-09-05T10:00:00Z', sentBy: 'op1' },
     { id: 'n2', gameId: 'g1', message: 'Falcons, your photo at the boulder was great!', targetTeamId: 'team1', sentAt: '2026-09-05T10:20:00Z', sentBy: 'op1' },
@@ -49,6 +53,7 @@ export const playerHandlers = [
       uploadSessions: [],
     })
   }),
+  http.get('/api/player/games/:gameId/files', () => HttpResponse.json(playerFixtures.files)),
   http.get('/api/player/notifications', () => HttpResponse.json(playerFixtures.notifications)),
   http.get('/api/player/notifications/unseen-count', () => HttpResponse.json({ count: 2 })),
   http.post('/api/player/notifications/mark-seen', () => new HttpResponse(null, { status: 204 })),

@@ -861,6 +861,13 @@ Upload-specific errors include optional classification fields in the standard er
 
 Supported content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/png`, `image/webp`, `image/heic`.
 
+**Organizer resources visible to a team** (files and rich documents from the resource library):
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/player/games/:gameId/files` | Player | Resources the team may see now: shared with players, plus embeds in bases the team checked in at and challenges it submitted to. Files carry a short-lived presigned `downloadUrl`; documents carry enriched `content`. Operator-only fields are omitted. |
+| GET | `/player/games/:gameId/resources/:resourceId/download` | Player | 302 to a presigned URL for a file the team may see under the same rule; 403 otherwise. |
+
 ---
 
 ## 10. Monitoring

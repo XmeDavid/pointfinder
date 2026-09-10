@@ -6,20 +6,13 @@ import { useGameResources } from '@/hooks/queries/useResources'
 import { useOrgResources } from '@/hooks/queries/useResources'
 import type { Resource } from '@/types/resource'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
+import { formatBytes } from '@/lib/utils/formatBytes'
 
 interface ResourcePickerProps {
   gameId: string
   orgId?: string
   onSelect: (resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void
   onClose: () => void
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
 function fileTypeIcon(contentType: string, type: 'file' | 'document') {

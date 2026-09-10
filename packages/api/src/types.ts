@@ -283,6 +283,22 @@ export interface UnseenCountResponse {
   count: number
 }
 
+/** A file or document a team may see. Operator-only fields are stripped by the backend. */
+export interface PlayerResource {
+  id: EntityId
+  gameId: EntityId | null
+  type: 'file' | 'document'
+  name: string
+  contentType: string
+  /** Rich HTML for documents, already enriched with embed URLs; null for files. */
+  content: string | null
+  sizeBytes: number
+  sharedWithPlayers: boolean
+  /** Presigned and short-lived (about an hour); null for documents or when storage is off. */
+  downloadUrl: string | null
+  createdAt: IsoDateTime
+}
+
 // ---------------------------------------------------------------- media uploads
 
 export interface UploadSessionInitRequest {

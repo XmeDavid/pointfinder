@@ -1701,7 +1701,8 @@
         "body": "Sieh in unter einer Minute, wie ein Spiel abläuft.",
         "open": "So funktioniert es",
         "dismiss": "Jetzt nicht"
-      }
+      },
+      "documents": "Dokumente"
     },
     "settings": {
       "title": "Einstellungen",
@@ -1756,6 +1757,20 @@
       "loadFailed": "Benachrichtigungen konnten nicht geladen werden.",
       "fromOperator": "Von deinem Operator",
       "justNow": "Gerade eben"
+    },
+    "documents": {
+      "title": "Dokumente",
+      "subtitle": "Karten, Zeitpläne und Anleitungen von deinem Veranstalter.",
+      "empty": "Noch keine Dokumente",
+      "emptyHint": "Dateien, die dein Veranstalter teilt, erscheinen hier.",
+      "loadFailed": "Dokumente konnten nicht geladen werden.",
+      "offlineHint": "Letzte Kopie wird angezeigt. Dateien brauchen eine Verbindung; Dokumente lassen sich weiterhin öffnen.",
+      "file": "Datei",
+      "document": "Dokument",
+      "open": "Öffnen",
+      "openFailed": "Diese Datei konnte nicht geöffnet werden.",
+      "needsConnection": "Verbindung erforderlich",
+      "notFound": "Dieses Dokument ist nicht mehr verfügbar."
     },
     "result": {
       "correct": "Richtig!",

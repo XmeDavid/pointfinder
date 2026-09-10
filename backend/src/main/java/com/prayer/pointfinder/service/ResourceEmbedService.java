@@ -7,8 +7,10 @@ import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.BaseRepository;
 import com.prayer.pointfinder.repository.ChallengeRepository;
+import com.prayer.pointfinder.repository.CheckInRepository;
 import com.prayer.pointfinder.repository.ResourceEmbedRepository;
 import com.prayer.pointfinder.repository.ResourceRepository;
+import com.prayer.pointfinder.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,8 @@ public class ResourceEmbedService {
     private final ResourceRepository resourceRepository;
     private final BaseRepository baseRepository;
     private final ChallengeRepository challengeRepository;
+    private final CheckInRepository checkInRepository;
+    private final SubmissionRepository submissionRepository;
     private final ObjectStorageService objectStorageService;
 
     /**
@@ -145,51 +149,30 @@ public class ResourceEmbedService {
     }
 
     /**
-     * Aggregates player-visible resources for a game: shared resources plus
-     * resources embedded in unlocked bases and challenges.
+     * Everything a team may currently see in a game: resources shared with players,
+     * plus resources embedded in bases the team checked in at and challenges the
+     * team submitted to. The list endpoint and the download endpoint both use this
+     * rule so a player can never download what the list would not show.
      */
     @Transactional(readOnly = true)
-    public List<ResourceResponse> getPlayerVisibleResources(UUID gameId,
-                                                             List<UUID> unlockedBaseIds,
-                                                             List<UUID> unlockedChallengeIds) {
-        Map<UUID, Resource> resources = new LinkedHashMap<>();
-
-        // Shared resources
-        for (Resource r : resourceRepository.findByGameIdAndSharedWithPlayersTrue(gameId)) {
-            resources.put(r.getId(), r);
-        }
-
-        // Embedded in unlocked bases
-        if (unlockedBaseIds != null && !unlockedBaseIds.isEmpty()) {
-            List<UUID> embedIds = resourceEmbedRepository.findResourceIdsByBaseIdIn(unlockedBaseIds);
-            for (UUID id : embedIds) {
-                resourceRepository.findById(id).ifPresent(r -> resources.put(r.getId(), r));
-            }
-        }
-
-        // Embedded in unlocked challenges
-        if (unlockedChallengeIds != null && !unlockedChallengeIds.isEmpty()) {
-            List<UUID> embedIds = resourceEmbedRepository.findResourceIdsByChallengeIdIn(unlockedChallengeIds);
-            for (UUID id : embedIds) {
-                resourceRepository.findById(id).ifPresent(r -> resources.put(r.getId(), r));
-            }
-        }
-
-        return resources.values().stream().map(this::toPlayerResponse).toList();
+    public List<ResourceResponse> getPlayerVisibleResources(UUID gameId, UUID teamId) {
+        return visibleResources(gameId, teamId).values().stream().map(this::toPlayerResponse).toList();
     }
 
     /**
-     * Generates a presigned download URL for a resource, verifying it belongs to the
-     * given game. Used by player-facing endpoints where operator auth is unavailable.
+     * Generates a presigned download URL for a file the calling team may see.
+     * Used by player-facing endpoints where operator auth is unavailable.
      */
     @Transactional(readOnly = true)
-    public String getDownloadUrlForPlayer(UUID gameId, UUID resourceId) {
+    public String getDownloadUrlForPlayer(UUID gameId, UUID teamId, UUID resourceId) {
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource", resourceId));
 
-        // Verify the resource belongs to this game
         if (resource.getGame() == null || !resource.getGame().getId().equals(gameId)) {
             throw new ForbiddenException("Resource does not belong to this game");
+        }
+        if (!visibleResources(gameId, teamId).containsKey(resourceId)) {
+            throw new ForbiddenException("Resource is not available to this team");
         }
         if (resource.getType() != ResourceType.file || resource.getS3Key() == null) {
             throw new BadRequestException("Resource is not a file or has no S3 key");
@@ -198,6 +181,37 @@ public class ResourceEmbedService {
             throw new BadRequestException("Object storage is not configured");
         }
         return objectStorageService.generatePresignedUrl(resource.getS3Key());
+    }
+
+    private Map<UUID, Resource> visibleResources(UUID gameId, UUID teamId) {
+        Map<UUID, Resource> resources = new LinkedHashMap<>();
+
+        for (Resource r : resourceRepository.findByGameIdAndSharedWithPlayersTrue(gameId)) {
+            resources.put(r.getId(), r);
+        }
+
+        List<UUID> unlockedBaseIds = checkInRepository.findByGameIdAndTeamId(gameId, teamId).stream()
+                .map(c -> c.getBase().getId())
+                .distinct()
+                .toList();
+        if (!unlockedBaseIds.isEmpty()) {
+            for (UUID id : resourceEmbedRepository.findResourceIdsByBaseIdIn(unlockedBaseIds)) {
+                resourceRepository.findById(id).ifPresent(r -> resources.put(r.getId(), r));
+            }
+        }
+
+        List<UUID> unlockedChallengeIds = submissionRepository.findByTeamId(teamId).stream()
+                .filter(s -> s.getTeam().getGame().getId().equals(gameId))
+                .map(s -> s.getChallenge().getId())
+                .distinct()
+                .toList();
+        if (!unlockedChallengeIds.isEmpty()) {
+            for (UUID id : resourceEmbedRepository.findResourceIdsByChallengeIdIn(unlockedChallengeIds)) {
+                resourceRepository.findById(id).ifPresent(r -> resources.put(r.getId(), r));
+            }
+        }
+
+        return resources;
     }
 
     // --- Helpers ---
@@ -225,7 +239,7 @@ public class ResourceEmbedService {
                 r.getType(),
                 r.getName(),
                 r.getContentType(),
-                r.getType() == ResourceType.document ? r.getContent() : null,
+                r.getType() == ResourceType.document ? enrichHtmlForPlayer(r.getContent()) : null,
                 r.getSizeBytes(),
                 r.getSharedWithPlayers(),
                 downloadUrl,

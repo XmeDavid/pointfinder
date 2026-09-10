@@ -11,6 +11,8 @@ const Logbook = lazy(() => import('@/features/player/LogbookScreen'))
 const Base = lazy(() => import('@/features/player/BaseScreen'))
 const Settings = lazy(() => import('@/features/player/SettingsScreen'))
 const Inbox = lazy(() => import('@/features/player/InboxScreen'))
+const Documents = lazy(() => import('@/features/player/DocumentsScreen'))
+const Document = lazy(() => import('@/features/player/DocumentScreen'))
 const Welcome = lazy(() => import('@/features/auth/Welcome'))
 const Landing = lazy(() => import('@/features/public/LandingPage').then((m) => ({ default: m.LandingPage })))
 
@@ -49,5 +51,7 @@ export const playerRoutes = [
   { path: '/base/:baseId', element: <PlayerRoute><Base /></PlayerRoute> },
   { path: '/settings', element: <PlayerRoute><Settings /></PlayerRoute> },
   { path: '/inbox', element: <PlayerRoute><Inbox /></PlayerRoute> },
+  { path: '/documents', element: <PlayerRoute><Documents /></PlayerRoute> },
+  { path: '/documents/:resourceId', element: <PlayerRoute><Document /></PlayerRoute> },
   { path: '/operator/games/:gameId', element: <OperatorAlias /> },
 ]

@@ -1701,7 +1701,8 @@
         "body": "Vê como funciona um jogo em menos de um minuto.",
         "open": "Ver como funciona",
         "dismiss": "Agora não"
-      }
+      },
+      "documents": "Documentos"
     },
     "settings": {
       "title": "Definições",
@@ -1756,6 +1757,20 @@
       "loadFailed": "Não foi possível carregar as notificações.",
       "fromOperator": "Do teu operador",
       "justNow": "Agora mesmo"
+    },
+    "documents": {
+      "title": "Documentos",
+      "subtitle": "Mapas, horários e instruções do teu organizador.",
+      "empty": "Sem documentos ainda",
+      "emptyHint": "Os ficheiros que o teu organizador partilhar aparecem aqui.",
+      "loadFailed": "Não foi possível carregar os documentos.",
+      "offlineHint": "A mostrar a última cópia. Os ficheiros precisam de ligação; os documentos continuam a abrir.",
+      "file": "Ficheiro",
+      "document": "Documento",
+      "open": "Abrir",
+      "openFailed": "Não foi possível abrir este ficheiro.",
+      "needsConnection": "Precisa de ligação",
+      "notFound": "Este documento já não está disponível."
     },
     "result": {
       "correct": "Correto!",

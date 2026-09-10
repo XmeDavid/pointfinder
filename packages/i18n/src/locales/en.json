@@ -1701,7 +1701,8 @@
         "body": "See how a game works in under a minute.",
         "open": "See how it works",
         "dismiss": "Not now"
-      }
+      },
+      "documents": "Documents"
     },
     "settings": {
       "title": "Settings",
@@ -1756,6 +1757,20 @@
       "loadFailed": "Couldn't load notifications.",
       "fromOperator": "From your operator",
       "justNow": "Just now"
+    },
+    "documents": {
+      "title": "Documents",
+      "subtitle": "Maps, schedules and instructions from your organizer.",
+      "empty": "No documents yet",
+      "emptyHint": "Files your organizer shares will show up here.",
+      "loadFailed": "Couldn't load documents.",
+      "offlineHint": "Showing the last copy. Files need a connection; documents still open.",
+      "file": "File",
+      "document": "Document",
+      "open": "Open",
+      "openFailed": "Couldn't open this file.",
+      "needsConnection": "Needs a connection",
+      "notFound": "This document is no longer available."
     },
     "result": {
       "correct": "Correct!",
