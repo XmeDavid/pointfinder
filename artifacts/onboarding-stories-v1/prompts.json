@@ -1,0 +1,48 @@
+{
+  "mode": "built-in image_gen",
+  "common": "Create one finished PointFinder onboarding story illustration, landscape 3:2 composition. Use the attached images ONLY as character and art-style references, not as edit targets. Match their premium tactile storybook/clay illustration quality: rounded friendly figures, subtle cotton weave, warm skin, brown curls, tiny black oval eyes, chunky tan hiking boots with dark rubber soles, detailed moss/ferns/rocks, soft warm forest lighting. Main mascot wears cream T-shirt, forest-green baseball cap, navy trousers; girl companion wears terracotta T-shirt, brown ponytail, navy trousers; optional third companion charcoal shirt, olive backpack. No blue uniform shirts, no scarves, no scout hats. Keep small PointFinder clothing marks consistent with reference, don't invent text or insignia. FULLY PAINTED woodland background edge to edge, no transparency, no checkerboard, no studio grid. No captions, labels, UI overlays, panels, borders or legible words. All faces and essential hands/props well inside frame with 10 percent breathing room. Clear single visual action, warm welcoming atmosphere, readable at mobile size. ",
+  "scenes": {
+    "participant-join": "Two companions welcome the main mascot into their team near a small woodland trail shelter. They gather around one smartphone the main mascot holds; its screen shows a simple green team icon with three dots/person silhouettes, no readable text. Friendly inclusive body language. Medium-wide scene, three complete characters.",
+    "participant-map": "The main mascot and ponytail girl walk along a woodland path together. Main mascot holds a smartphone with a simple map; girl points toward a small green waypoint marker beside a wooden trail post ahead. Communicate exploring together and finding a base. Complete figures, landscape forest scene.",
+    "participant-checkin": "The cream-shirt mascot holds his smartphone close to an NFC tap plate mounted on a sturdy wooden trail post. The small plate has only a simple contactless wave symbol, no QR code. Girl watches beside him. A subtle carved PointFinder pointer mark appears lower on the wooden post, consistent with reference cap symbol. Show the phone-to-plate interaction clearly.",
+    "participant-challenge": "The main mascot and ponytail girl cooperate on a nature photo challenge: girl points excitedly at a little white wildflower while mascot aims his phone camera toward the flower. Charcoal-shirt companion kneels nearby to look. Gentle triumphant teamwork, green forest clearing, no trophy or scores.",
+    "organizer-plan": "The main cream-shirt mascot kneels beside a large unfolded paper trail map on a mossy forest clearing, placing a green location marker on the map. Olive backpack beside him, a few small trees and warm sunlight. Main action fills the center, complete figure and boots.",
+    "organizer-bases": "The cream-shirt organizer at a wooden outdoor picnic table arranges three small green location markers across an unfolded map, with two simple cream challenge cards showing only a camera icon and a leaf icon beside it. Wooden NFC trail post in middle background. Communicate placing bases and connecting challenges, focused tactile arrangement, no UI or words.",
+    "organizer-teams": "The cream-shirt organizer welcomes a small team of two explorers, the terracotta-shirt ponytail girl and charcoal-shirt backpack companion, at a woodland shelter. Organizer presents a smartphone with simple team/person symbol to them; one companion waves. Friendly invitation into an outdoor game, clear complete characters, no QR code or text.",
+    "organizer-live": "The cream-shirt organizer stands at an outdoor wooden table checking a tablet with a simple stylized trail map, green dots and check marks. In the background the terracotta-shirt girl and charcoal-shirt explorer set off along a forest path toward a wooden NFC post. Communicate calmly running a live outdoor game, no leaderboard, no detailed UI, no readable words."
+  },
+  "outputs": [
+    {
+      "name": "participant-join",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-07a47557-9269-412d-84f4-230383b142cb.png"
+    },
+    {
+      "name": "participant-map",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-53e6b78e-eb05-4e0f-a8a9-e643b14979ac.png"
+    },
+    {
+      "name": "participant-checkin",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-cb194531-9a83-4297-9457-3a0b6d71a5ca.png"
+    },
+    {
+      "name": "participant-challenge",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-112d60ef-e418-4726-b811-e14673837790.png"
+    },
+    {
+      "name": "organizer-plan",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-ce0a3614-9dc9-4d50-8a3a-13a721ccf915.png"
+    },
+    {
+      "name": "organizer-bases",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-d07f72a5-c03c-4554-9d7d-4e5e56940a20.png"
+    },
+    {
+      "name": "organizer-teams",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-ec9a2e2a-410b-496e-841a-e8d25f7213c8.png"
+    },
+    {
+      "name": "organizer-live",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-4f3d6abc-b944-4fbc-98ad-eeaf18d71109.png"
+    }
+  ]
+}

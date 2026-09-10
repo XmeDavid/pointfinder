@@ -54,7 +54,7 @@ async function signIn(page: Page, email = user.email) {
 
 const experience = (page: Page) => page.getByTestId('onboarding-experience')
 const finishChapters = async (page: Page) => {
-  for (let step = 0; step < 6; step++) await page.getByTestId('onboarding-next').click()
+  for (let step = 0; step < 3; step++) await page.getByTestId('onboarding-next').click()
   await expect(experience(page)).toHaveAttribute('data-step', 'compass')
 }
 const forgetSession = (context: BrowserContext) => context.clearCookies().then(() => undefined)
@@ -207,7 +207,7 @@ test('the library replays the introduction without downgrading a watched one, an
   await page.getByRole('link', { name: 'Get started' }).first().click()
   await expect(page.locator('.topo-register-transition')).toHaveCount(0)
   await expect(page).toHaveURL(/\/welcome$/)
-  await expect(experience(page)).toHaveCSS('animation-name', 'onboarding-arrive')
+  await expect(page.locator('.onboarding-art')).toHaveCSS('animation-name', 'onboarding-arrive')
   await expect(experience(page)).toHaveCSS('transform', 'none')
   await expect(page.getByTestId('onboarding-role-participant')).toBeVisible()
 })

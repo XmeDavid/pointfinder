@@ -1,5 +1,5 @@
-import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Compass, Pause, Play, RotateCcw, Users } from 'lucide-react'
+import { useEffect, useRef, type ReactNode, type PointerEvent } from 'react'
+import { ArrowLeft, ArrowRight, Compass, RotateCcw, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { BrandLockup } from '@/components/brand'
@@ -7,21 +7,13 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils/cn'
 import { useMediaQuery } from '@/hooks/ui/useMediaQuery'
 import {
-  CHOICE_FRAME, COMPASS_STEP, ONBOARDING_CHAPTERS, STEP_FRAMES, stillFor, useOnboarding,
+  chapterCount, ONBOARDING_CHAPTERS, stillFor, useOnboarding,
   type OnboardingBranch, type OnboardingOptions, type OnboardingOutcome, type OnboardingRole,
 } from './useOnboarding'
-import type { OnboardingScene } from './OnboardingScene'
-import { useChapterAutoplay } from './useChapterAutoplay'
+import { StoryIllustration } from './StoryIllustration'
 import { isNativeEntry } from '@/platform/runtime'
 import { appStoreUrl, GOOGLE_PLAY_URL } from '@/lib/appDownloads'
 import './onboarding.css'
-
-class SceneBoundary extends Component<{ children: ReactNode; onError: () => void }, { failed: boolean }> {
-  state = { failed: false }
-  static getDerivedStateFromError() { return { failed: true } }
-  componentDidCatch() { this.props.onError() }
-  render() { return this.state.failed ? null : this.props.children }
-}
 
 /**
  * Who is watching. Anonymous visitors choose a role and are offered an account;
@@ -40,7 +32,7 @@ export interface OnboardingOperatorActions {
 }
 
 export interface OnboardingExperienceProps {
-  /** Fixture step (0–6) for the visual harness; never reads or writes completion. */
+  /** Fixture step (0–4) for the visual harness; never reads or writes completion. */
   previewStep?: number
   /** Fixture branch for the visual harness; `choice` shows the role screen. */
   previewRole?: OnboardingBranch
@@ -64,82 +56,47 @@ function hookOptions({ previewStep, previewRole, previewGate, mode, play, organi
   return { start, roleChoice: true, resume: start === undefined, remember: true, onFinish }
 }
 
-/** Text remains accessible, localized DOM above the decorative full-screen world.
+/** Localized text and manual story navigation remain separate from decorative artwork.
  * The role choice only picks which story is told; joining and signing in stay one tap away,
  * and nobody has to register before they can watch. */
 export function OnboardingExperience(props: OnboardingExperienceProps) {
   const { mode = 'anonymous', operator } = props
   const { t, i18n } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const native = isNativeEntry()
-  const { branch, step, stage, loaded, preview, chooseRole, changeRole, openChapters, go, skip } = useOnboarding(hookOptions(props))
+  const { branch, step, stage, chooseRole, changeRole, openChapters, go, skip } = useOnboarding(hookOptions(props))
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [attempt, setAttempt] = useState(0)
-  const [Scene, setScene] = useState<typeof OnboardingScene | null>(null)
-  const ready = useCallback(() => setStatus('ready'), [])
-  const failed = useCallback(() => setStatus('error'), [])
-  const retry = useCallback(() => { setStatus('loading'); setAttempt((value) => value + 1) }, [])
-
-  // A new branch means new geometry: keep it hidden until the renderer reports ready again,
-  // and give a failed renderer a fresh attempt instead of carrying the error across roles.
-  const [sceneBranch, setSceneBranch] = useState(branch)
-  if (sceneBranch !== branch) {
-    setSceneBranch(branch)
-    if (status === 'error') setAttempt((value) => value + 1)
-    setStatus('loading')
-  }
-
-  useEffect(() => {
-    if (!loaded || reducedMotion) return
-    let active = true
-    void import('./OnboardingScene').then((module) => {
-      if (active) {
-        // Restoring motion mounts a fresh renderer; reveal it only once ready.
-        setStatus('loading')
-        setScene(() => module.OnboardingScene)
-      }
-    }).catch(() => { if (active) failed() })
-    return () => { active = false }
-  }, [attempt, loaded, reducedMotion, failed])
-
+  const total = chapterCount(branch)
   const choice = stage === 'choice'
   const gate = stage === 'gate'
   const landing = stage === 'landing'
   const chapter = branch === 'choice' ? 'choice' : gate ? 'gate' : ONBOARDING_CHAPTERS[branch][step]
-  const targetFrame = choice ? CHOICE_FRAME : STEP_FRAMES[step]
   const copy = (key: string) => (branch === 'organizer' ? t(`onboarding.organizerSteps.${chapter}.${key}`) : t(`onboarding.steps.${chapter}.${key}`))
   const heading = useRef<HTMLHeadingElement>(null)
-  const layout = `${branch}:${stage}`
+  const layout = `${branch}:${stage}:${step}`
   const previousLayout = useRef(layout)
   useEffect(() => {
     // Controls disappear at these boundaries (role choice, gate, chapters, landing); move focus to the new title.
     if (previousLayout.current !== layout) heading.current?.focus({ preventScroll: true })
     previousLayout.current = layout
   }, [layout])
-  // Completed chapter stills are fallbacks, not loading posters: showing one before the
-  // live scene starts at frame 1 flashes the finished world and then makes it disappear.
-  const staticWorld = reducedMotion || status === 'error'
   const language = i18n.resolvedLanguage?.split('-')[0] ?? 'en'
-
-  // Chapters advance on their own once the live renderer has drawn the hold and the reader had
-  // a moment with it. Back pauses so the reader can reread; a new story starts playing again.
-  // Roles, the gate, the landing and every route stay the reader's own decision.
-  const [autoplay, setAutoplay] = useState(true)
-  const autoplayOffered = stage === 'chapter' && !reducedMotion && !preview && status === 'ready'
-  // Settled reports arrive from animation frames, after the commit that updated this.
-  const sceneIdentity = useRef({ branch, attempt })
-  useEffect(() => { sceneIdentity.current = { branch, attempt } }, [branch, attempt])
-  const { settle } = useChapterAutoplay({
-    scene: `${branch}:${attempt}:${targetFrame}`,
-    active: autoplayOffered && status === 'ready',
-    playing: autoplay,
-    restartKey: language,
-    onAdvance: () => go(step + 1),
-  })
-  const settled = useCallback((frame: number) => settle(`${sceneIdentity.current.branch}:${sceneIdentity.current.attempt}:${frame}`), [settle])
-  const back = () => { setAutoplay(false); go(step - 1) }
-  const restart = (open: () => void) => { setAutoplay(true); open() }
-  const nextLabel = step === COMPASS_STEP - 1 ? t('onboarding.finish') : branch === 'organizer' ? copy('next') : t('onboarding.next')
+  const back = () => go(step - 1)
+  const restart = (open: () => void) => open()
+  const nextLabel = step === total - 1 ? t('onboarding.finish') : t('onboarding.next')
+  const gesture = useRef<{ x: number; y: number; id: number } | null>(null)
+  const pointerDown = (event: PointerEvent<HTMLElement>) => {
+    if (stage !== 'chapter' || !event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return
+    if ((event.target as HTMLElement).closest('button, a, select, input')) return
+    gesture.current = { x: event.clientX, y: event.clientY, id: event.pointerId }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+  const pointerUp = (event: PointerEvent<HTMLElement>) => {
+    const start = gesture.current
+    gesture.current = null
+    if (!start || start.id !== event.pointerId || stage !== 'chapter') return
+    const dx = event.clientX - start.x, dy = event.clientY - start.y
+    if (Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.5) go(step + (dx < 0 ? 1 : -1))
+  }
   const anonymous = mode === 'anonymous'
 
   const action = (variant: 'default' | 'outline' | 'link') =>
@@ -180,7 +137,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
     <span>{t(branch === 'organizer' ? 'onboarding.organizerLanding' : 'onboarding.landing')}</span>
   ) : (
     <>
-      {gate ? <span>{t(anonymous ? 'onboarding.gate.eyebrow' : 'onboarding.account.eyebrow')}</span> : <span aria-live="polite">{t('onboarding.progress', { current: step + 1, total: COMPASS_STEP })}</span>}
+      {gate ? <span>{t(anonymous ? 'onboarding.gate.eyebrow' : 'onboarding.account.eyebrow')}</span> : <span aria-live="polite">{t('onboarding.progress', { current: step + 1, total: total })}</span>}
       {anonymous && (
         <>
           <span aria-hidden="true">·</span>
@@ -259,13 +216,7 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
           {canGoBack && <Button variant="outline" size="lg" className="onboarding-action" onClick={back} data-testid="onboarding-back"><ArrowLeft aria-hidden="true" size={18} />{t('onboarding.back')}</Button>}
           <Button size="lg" className="onboarding-action" onClick={() => go(step + 1)} data-testid="onboarding-next">{nextLabel}<ArrowRight aria-hidden="true" size={18} /></Button>
         </div>
-        <div className={cn('mt-1 grid gap-3', autoplayOffered && 'grid-cols-2')}>
-          {autoplayOffered && (
-            <Button variant="ghost" size="lg" className="onboarding-action px-2 text-foreground" onClick={() => setAutoplay((value) => !value)} aria-pressed={autoplay} data-testid="onboarding-autoplay">
-              {autoplay ? <Pause aria-hidden="true" size={16} className="shrink-0" /> : <Play aria-hidden="true" size={16} className="shrink-0" />}
-              {t(autoplay ? 'onboarding.autoplay.pause' : 'onboarding.autoplay.resume')}
-            </Button>
-          )}
+        <div className="mt-1 grid">
           <Button variant="ghost" size="lg" className="onboarding-action px-2 text-foreground" onClick={skip} data-testid="onboarding-skip">{t('onboarding.skip')}</Button>
         </div>
         {escapeRow}
@@ -275,14 +226,6 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
 
   return (
     <main className="onboarding-experience bg-background text-foreground" data-testid="onboarding-experience" data-step={chapter} data-role={branch} data-mode={mode} data-motion={reducedMotion ? 'reduced' : 'active'}>
-      <div className="onboarding-art" aria-hidden="true">
-        {staticWorld && <img className="onboarding-still" src={stillFor(branch, step)} alt="" />}
-        {loaded && Scene && !reducedMotion && status !== 'error' && (
-          <SceneBoundary key={attempt} onError={failed}>
-            <Scene branch={branch} targetFrame={targetFrame} reducedMotion={reducedMotion} className={cn('onboarding-scene', status !== 'ready' && 'invisible')} onReady={ready} onError={failed} onSettled={settled} />
-          </SceneBoundary>
-        )}
-      </div>
       <header className="onboarding-header">
         <BrandLockup size={24} tone="current" textClassName="text-base" />
         <label className="flex min-w-0 items-center gap-2 text-sm">
@@ -294,6 +237,8 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
           </select>
         </label>
       </header>
+      <div className="onboarding-story" onPointerDown={pointerDown} onPointerUp={pointerUp} onPointerCancel={() => { gesture.current = null }}>
+      <StoryIllustration key={stillFor(branch, step)} src={stillFor(branch, step)} />
       <section className="onboarding-overlay" aria-labelledby="onboarding-title">
         <div className="onboarding-copy">
           <div className="onboarding-eyebrow text-xs font-medium tracking-wide text-muted-foreground">{eyebrow}</div>
@@ -302,11 +247,14 @@ export function OnboardingExperience(props: OnboardingExperienceProps) {
             <p className="mt-3 text-base leading-relaxed text-muted-foreground">{body}</p>
           </div>
         </div>
+        {stage === 'chapter' && <nav className="onboarding-dots" aria-label={t('onboarding.storyNavigation')}>
+          {ONBOARDING_CHAPTERS[branch as OnboardingRole].slice(0, total).map((id, index) => (
+            <button key={id} type="button" className="onboarding-dot" aria-label={t('onboarding.goToStep', { current: index + 1, total: total })} aria-current={index === step ? 'step' : undefined} onClick={() => go(index)} data-testid={`onboarding-dot-${index + 1}`}><span /></button>
+          ))}
+        </nav>}
         {controls}
-        <div className="onboarding-status text-center text-xs text-muted-foreground" role="status">
-          {reducedMotion ? t('onboarding.reduced') : status === 'error' ? <>{t('onboarding.unavailable')} <Button variant="link" size="sm" className="onboarding-action" onClick={retry}>{t('onboarding.retry')}</Button></> : status === 'loading' ? t('onboarding.loading') : null}
-        </div>
       </section>
+      </div>
     </main>
   )
 }

@@ -1854,9 +1854,9 @@
       "language": "Language",
       "introduction": "STEP INTO THE GAME",
       "landing": "YOUR NEXT ADVENTURE",
-      "loading": "Loading the animation…",
-      "unavailable": "Animation unavailable. You can still explore every step.",
-      "retry": "Retry animation",
+      "loading": "Loading illustration…",
+      "unavailable": "Illustration unavailable. You can still follow the story.",
+      "retry": "Retry image",
       "reduced": "Reduced motion: each step stays still.",
       "autoplay": {
         "pause": "Pause auto-play",
@@ -1876,8 +1876,8 @@
           "body": "Tap the NFC tag, scan its QR code, or enter the marked area—depending on how that base is set up."
         },
         "challenge": {
-          "title": "Discover the challenge",
-          "body": "A challenge opens at your base. Read the task and work out your approach."
+          "title": "Solve it together",
+          "body": "Take a photo, answer a question, or complete a task—then send your team’s submission."
         },
         "submit": {
           "title": "Solve it together",
@@ -1913,13 +1913,13 @@
       "organizerLanding": "YOUR GAME AWAITS",
       "organizerSteps": {
         "plan": {
-          "title": "Plan your game",
-          "body": "Set up your game’s stages and decide where and when it takes place.",
+          "title": "Build your adventure",
+          "body": "Choose where and when to play, place bases on the map, and add check-in methods and challenges for your teams.",
           "next": "Place bases"
         },
         "bases": {
-          "title": "Place your bases",
-          "body": "Drop bases on the map and choose how teams check in at each one: NFC tag, QR code, or location.",
+          "title": "Build your adventure",
+          "body": "Place bases on the map, choose their check-in method, and add the challenges teams will solve.",
           "next": "Connect challenges"
         },
         "challenges": {
@@ -1957,7 +1957,7 @@
       "account": {
         "eyebrow": "WELCOME TO POINTFINDER",
         "title": "Take a quick tour?",
-        "body": "A one-minute look at how a game comes together: planning, bases, challenges, teams, going live and results.",
+        "body": "Three short steps to your first adventure: build your game, invite teams and run it live.",
         "tour": "Take a quick tour",
         "dashboard": "Go to my dashboard",
         "landingBody": "Every base, challenge and team is yours to shape. Your first game starts on the dashboard.",
@@ -1965,7 +1965,9 @@
       },
       "player": {
         "back": "Back to your game"
-      }
+      },
+      "storyNavigation": "Story steps",
+      "goToStep": "Go to step {{current}} of {{total}}"
     }
   },
   "baseOrder": {

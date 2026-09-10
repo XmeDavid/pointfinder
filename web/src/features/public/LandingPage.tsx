@@ -17,7 +17,7 @@ import { LandingHeader } from "./landing/LandingHeader";
 
 const CONTACT_HREF = contactHref();
 
-const WELCOME_STILL = "/onboarding/role-choice.webp";
+const WELCOME_STILL = "/onboarding/stories/participant-map.webp";
 const WELCOME_ROUTE = "/welcome";
 const ORGANIZER_GATE_ROUTE = "/welcome?role=organizer";
 

@@ -33,7 +33,7 @@ it('starts on the role choice and opens a completed role directly on its landing
   mocks.get.mockResolvedValue(completed('organizer'))
   const returning = renderHook(() => useOnboarding(anonymous()))
   await waitFor(() => expect(returning.result.current.loaded).toBe(true))
-  expect(returning.result.current).toMatchObject({ branch: 'organizer', step: 6, stage: 'landing' })
+  expect(returning.result.current).toMatchObject({ branch: 'organizer', step: 3, stage: 'landing' })
 })
 
 it('never reads the remembered role when told where to open, and is loaded at once', () => {
@@ -86,8 +86,8 @@ it('remembers completion or skip with the role and reports each once, never a me
   expect(onFinish).not.toHaveBeenCalled()
 
   act(() => result.current.chooseRole('participant'))
-  for (let step = 1; step <= 6; step++) act(() => result.current.go(step))
-  expect(result.current).toMatchObject({ branch: 'participant', step: 6, stage: 'landing' })
+  for (let step = 1; step <= 4; step++) act(() => result.current.go(step))
+  expect(result.current).toMatchObject({ branch: 'participant', step: 4, stage: 'landing' })
   expect(mocks.set).toHaveBeenCalledExactlyOnceWith(ONBOARDING_SEEN_KEY, completed('participant'))
   expect(onFinish).toHaveBeenCalledExactlyOnceWith('participant', 'completed')
 
@@ -95,7 +95,7 @@ it('remembers completion or skip with the role and reports each once, never a me
   expect(result.current.branch).toBe('choice')
   act(() => result.current.chooseRole('organizer'))
   act(() => result.current.skip())
-  expect(result.current).toMatchObject({ branch: 'organizer', step: 6, stage: 'landing' })
+  expect(result.current).toMatchObject({ branch: 'organizer', step: 3, stage: 'landing' })
   expect(mocks.set).toHaveBeenLastCalledWith(ONBOARDING_SEEN_KEY, completed('organizer'))
   expect(onFinish).toHaveBeenLastCalledWith('organizer', 'skipped')
   expect(onFinish).toHaveBeenCalledTimes(2)
@@ -105,7 +105,7 @@ it('treats a skip from the role choice as the participant story', async () => {
   const { result } = renderHook(() => useOnboarding(anonymous()))
   await waitFor(() => expect(result.current.loaded).toBe(true))
   act(() => result.current.skip())
-  expect(result.current).toMatchObject({ branch: 'participant', step: 6 })
+  expect(result.current).toMatchObject({ branch: 'participant', step: 4 })
   expect(mocks.set).toHaveBeenCalledWith(ONBOARDING_SEEN_KEY, completed('participant'))
 })
 
@@ -115,7 +115,7 @@ it('without a role choice, back and replay return to the first chapter and nothi
   act(() => result.current.openChapters())
   act(() => result.current.go(-1))
   expect(result.current).toMatchObject({ branch: 'organizer', step: 0, stage: 'chapter' })
-  for (let step = 1; step <= 6; step++) act(() => result.current.go(step))
+  for (let step = 1; step <= 3; step++) act(() => result.current.go(step))
   expect(result.current.stage).toBe('landing')
   expect(onFinish).toHaveBeenCalledExactlyOnceWith('organizer', 'completed')
   act(() => result.current.changeRole())
@@ -130,9 +130,9 @@ it('survives rejected reads and writes', async () => {
   const { result } = renderHook(() => useOnboarding(anonymous()))
   await waitFor(() => expect(result.current.loaded).toBe(true))
   act(() => result.current.chooseRole('participant'))
-  act(() => result.current.go(6))
+  act(() => result.current.go(4))
   await act(async () => {})
-  expect(result.current).toMatchObject({ branch: 'participant', step: 6 })
+  expect(result.current).toMatchObject({ branch: 'participant', step: 4 })
 })
 
 it('uses fixtures for previews and never reads or persists there', () => {
@@ -145,8 +145,8 @@ it('uses fixtures for previews and never reads or persists there', () => {
   gate.unmount()
   const organizer = renderHook(() => useOnboarding({ preview: { role: 'organizer', step: 3 }, onFinish }))
   expect(organizer.result.current).toMatchObject({ branch: 'organizer', step: 3 })
-  act(() => organizer.result.current.go(6))
-  expect(organizer.result.current.step).toBe(6)
+  act(() => organizer.result.current.go(4))
+  expect(organizer.result.current.step).toBe(3)
   organizer.unmount()
   const participant = renderHook(() => useOnboarding({ preview: { step: 4 }, onFinish }))
   expect(participant.result.current).toMatchObject({ branch: 'participant', step: 4 })

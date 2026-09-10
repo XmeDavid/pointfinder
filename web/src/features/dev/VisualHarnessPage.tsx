@@ -147,13 +147,13 @@ export function VisualHarnessPage() {
   const onboarding = params.get('onboarding')
   if (onboarding !== null) {
     // `?onboarding=choice` shows the role screen; `?onboarding=gate` the organizer's account choice
-    // (`&mode=operator` for the signed-in tour offer); `?onboarding=1`–`7` a chapter, participant
+    // (`&mode=operator` for the signed-in tour offer); `?onboarding=1`–`5` a chapter, participant
     // unless `&role=organizer`. `&mode=operator|player` previews those audiences' controls.
     const modeParam = params.get('mode')
     const mode = modeParam === 'operator' || modeParam === 'player' ? modeParam : 'anonymous'
     const gate = onboarding === 'gate'
     const previewRole = onboarding === 'choice' ? 'choice' : gate || params.get('role') === 'organizer' || mode === 'operator' ? 'organizer' : 'participant'
-    const previewStep = previewRole === 'choice' || gate ? undefined : Math.max(0, Math.min(6, Number(onboarding) - 1 || 0))
+    const previewStep = previewRole === 'choice' || gate ? undefined : Math.max(0, Math.min(previewRole === 'organizer' ? 3 : 4, Number(onboarding) - 1 || 0))
     const noop = () => undefined
     return (
       <Suspense fallback={<LoadingState />}>
@@ -184,8 +184,8 @@ export function VisualHarnessPage() {
               <a className="text-primary underline" href="/dev/visual-system?onboarding=1&role=organizer">Organizer introduction</a>
               <a className="text-primary underline" href="/dev/visual-system?onboarding=gate">Organizer account choice</a>
               <a className="text-primary underline" href="/dev/visual-system?onboarding=gate&mode=operator">Signed-in tour offer</a>
-              <a className="text-primary underline" href="/dev/visual-system?onboarding=7&mode=operator">Signed-in landing</a>
-              <a className="text-primary underline" href="/dev/visual-system?onboarding=7&mode=player">Player landing</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=4&mode=operator">Signed-in landing</a>
+              <a className="text-primary underline" href="/dev/visual-system?onboarding=5&mode=player">Player landing</a>
             </p>
           </div>
           <div className="flex gap-2" aria-label="Preview theme">

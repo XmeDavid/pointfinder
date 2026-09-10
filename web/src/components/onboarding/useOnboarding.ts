@@ -11,12 +11,14 @@ export const ONBOARDING_ROLES: readonly OnboardingRole[] = ['participant', 'orga
 /** v2 stores the completed role; v1 visitors ("true" under the old key) see the role choice once. */
 export const ONBOARDING_SEEN_KEY = 'player.onboarding.expanding-world.v2'
 export const CHOICE_FRAME = 125
-export const COMPASS_STEP = 6
+export const COMPASS_STEP = 4
 export const STEP_FRAMES = [125, 301, 371, 465, 580, 765, 864] as const
 export const ONBOARDING_CHAPTERS: Record<OnboardingRole, readonly string[]> = {
-  participant: ['join', 'map', 'checkin', 'challenge', 'submit', 'explore', 'compass'],
-  organizer: ['plan', 'bases', 'challenges', 'teams', 'live', 'review', 'compass'],
+  participant: ['join', 'map', 'checkin', 'challenge', 'compass'],
+  organizer: ['plan', 'teams', 'live', 'compass'],
 }
+
+export const chapterCount = (branch: OnboardingBranch) => ONBOARDING_CHAPTERS[branch === 'choice' ? 'participant' : branch].length - 1
 
 export interface OnboardingPreview { role?: OnboardingBranch; step?: number; gate?: boolean }
 export interface OnboardingStart { branch: OnboardingBranch; step?: number; gate?: boolean }
@@ -49,18 +51,18 @@ export function parseCompletedRole(raw: string | null): OnboardingRole | null {
   return null
 }
 
-/** Matching rendered stills stand in for the world while it loads or motion is reduced. */
+/** Bundled illustrations work offline in the native shell; no renderer is loaded. */
 export function stillFor(branch: OnboardingBranch, step: number): string {
-  if (branch === 'choice') return '/onboarding/role-choice.webp'
-  if (step === COMPASS_STEP) return '/onboarding/step-7.webp'
-  return branch === 'organizer' ? `/onboarding/organizer-step-${step + 1}.webp` : `/onboarding/step-${step + 1}.webp`
+  if (branch === 'choice') return '/onboarding/stories/participant-map.webp'
+  const chapter = ONBOARDING_CHAPTERS[branch][Math.min(step, chapterCount(branch) - 1)]
+  return `/onboarding/stories/${branch}-${branch === 'organizer' && chapter === 'plan' ? 'bases' : chapter}.webp`
 }
 
-const boundStep = (step: number) => Math.max(0, Math.min(COMPASS_STEP, Math.floor(step) || 0))
+const boundStep = (step: number, branch: OnboardingBranch) => Math.max(0, Math.min(chapterCount(branch), Math.floor(step) || 0))
 
 function startPosition(start: OnboardingStart | undefined): Position {
   if (!start || start.branch === 'choice') return { branch: 'choice', step: 0, gate: false }
-  return { branch: start.branch, step: boundStep(start.step ?? 0), gate: start.gate === true }
+  return { branch: start.branch, step: boundStep(start.step ?? 0, start.branch), gate: start.gate === true }
 }
 
 /** Preferences never gate joining, and late reads cannot undo a user's choice.
@@ -71,7 +73,7 @@ export function useOnboarding(options: OnboardingOptions = {}) {
   const [position, setPosition] = useState<Position>(() => {
     if (!previewing) return startPosition(start)
     const branch = preview.role ?? (preview.gate ? 'organizer' : 'participant')
-    return { branch, step: branch === 'choice' ? 0 : boundStep(preview.step ?? 0), gate: branch !== 'choice' && preview.gate === true }
+    return { branch, step: branch === 'choice' ? 0 : boundStep(preview.step ?? 0, branch), gate: branch !== 'choice' && preview.gate === true }
   })
   const [loaded, setLoaded] = useState(previewing || !resume)
   const touched = useRef(false)
@@ -87,7 +89,7 @@ export function useOnboarding(options: OnboardingOptions = {}) {
     const timeout = window.setTimeout(() => { expired = true; if (active) setLoaded(true) }, 1200)
     void kv.get(ONBOARDING_SEEN_KEY).then((raw) => {
       const role = parseCompletedRole(raw)
-      if (active && !expired && !touched.current && role) setPosition({ branch: role, step: COMPASS_STEP, gate: false })
+      if (active && !expired && !touched.current && role) setPosition({ branch: role, step: chapterCount(role), gate: false })
     }).catch(() => { /* The introduction is usable even when preferences fail. */ }).finally(() => {
       if (active) setLoaded(true)
       window.clearTimeout(timeout)
@@ -99,7 +101,7 @@ export function useOnboarding(options: OnboardingOptions = {}) {
     touched.current = true
     setPosition(next)
     setLoaded(true)
-    if (outcome && next.step === COMPASS_STEP && next.branch !== 'choice' && !previewing) {
+    if (outcome && next.step === chapterCount(next.branch) && next.branch !== 'choice' && !previewing) {
       // Completion or skip is remembered; merely choosing a role is not.
       if (remember) void kv.set(ONBOARDING_SEEN_KEY, JSON.stringify({ version: 2, role: next.branch })).catch(() => { /* Nonessential preference. */ })
       finish.current?.(next.branch, outcome)
@@ -126,13 +128,13 @@ export function useOnboarding(options: OnboardingOptions = {}) {
     if (next < 0) { move(firstChapter()); return }
     const { branch } = latest.current
     // Skipping straight from the choice explains the participant side, the app's default audience.
-    const target = boundStep(next)
-    move({ branch: branch === 'choice' ? 'participant' : branch, step: target, gate: false }, target === COMPASS_STEP ? how : undefined)
+    const target = boundStep(next, branch)
+    move({ branch: branch === 'choice' ? 'participant' : branch, step: target, gate: false }, target === chapterCount(branch) ? how : undefined)
   }, [move, firstChapter])
   /** Jumps to the landing, remembered as a skip. */
-  const skip = useCallback(() => go(COMPASS_STEP, 'skipped'), [go])
+  const skip = useCallback(() => go(chapterCount(latest.current.branch), 'skipped'), [go])
 
-  const stage: OnboardingStage = position.branch === 'choice' ? 'choice' : position.gate ? 'gate' : position.step === COMPASS_STEP ? 'landing' : 'chapter'
+  const stage: OnboardingStage = position.branch === 'choice' ? 'choice' : position.gate ? 'gate' : position.step === chapterCount(position.branch) ? 'landing' : 'chapter'
 
   return { branch: position.branch, step: position.step, stage, loaded, preview: previewing, chooseRole, changeRole, openChapters, go, skip }
 }

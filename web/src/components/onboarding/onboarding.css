@@ -1,102 +1,67 @@
-/* Auth illustration: a full-viewport canvas with semantic DOM scrims. The lower
-   scrim reserves reading space while the camera frames the world above it. */
+/* Auth / Onboarding: artwork and controls occupy separate layout regions. */
 .onboarding-experience {
-  position: relative;
-  isolation: isolate;
   min-height: 100dvh;
-  overflow: clip;
   display: flex;
   flex-direction: column;
-}
-.onboarding-art, .onboarding-scene {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.onboarding-art { z-index: -2; pointer-events: none; }
-.onboarding-still {
-  position: absolute;
-  inset: 4% 0 auto;
-  width: 100%;
-  height: 60%;
-  object-fit: contain;
-  mask-image: linear-gradient(to bottom, transparent, black 12%, black 80%, transparent);
+  overflow-x: clip;
 }
 .onboarding-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: calc(var(--safe-top, 0px) + 1rem) max(1.25rem, var(--safe-right, 0px)) 1rem max(1.25rem, var(--safe-left, 0px));
-  background: linear-gradient(var(--pf-color-surface-canvas), transparent);
+  padding: calc(var(--safe-top, 0px) + .75rem) max(1.25rem, var(--safe-right, 0px)) .75rem max(1.25rem, var(--safe-left, 0px));
 }
-.onboarding-overlay {
-  position: relative;
+.onboarding-story {
   width: 100%;
   max-width: 34rem;
-  margin: auto auto 0;
-  padding: 2rem max(1.25rem, var(--safe-right, 0px)) calc(var(--safe-bottom, 0px) + 1rem) max(1.25rem, var(--safe-left, 0px));
+  margin: auto;
+  padding: .25rem max(1.25rem, var(--safe-right, 0px)) calc(var(--safe-bottom, 0px) + 1rem) max(1.25rem, var(--safe-left, 0px));
+  touch-action: pan-y pinch-zoom;
 }
-.onboarding-overlay::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: -3rem calc((100% - 100vw) / 2) 0;
-  background: linear-gradient(transparent, var(--pf-color-surface-canvas) 5rem);
-  pointer-events: none;
+.onboarding-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  max-height: 34dvh;
+  overflow: hidden;
+  background: transparent;
+  color: var(--pf-color-content-secondary);
 }
+.onboarding-still { position: relative; display: block; width: 100%; height: 100%; object-fit: contain; }
+.onboarding-art-placeholder { position: absolute; inset: 0; display: grid; place-items: center; }
+.onboarding-art[data-state="ready"] .onboarding-art-placeholder { display: none; }
+.onboarding-art-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: end; gap: .5rem; padding: 1rem; text-align: center; font-size: .75rem; background: var(--pf-color-surface-canvas); }
+.onboarding-overlay { min-width: 0; padding-top: 1rem; }
 .onboarding-copy { text-align: center; overflow-wrap: anywhere; }
-.onboarding-eyebrow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: .125rem .5rem;
-}
-.onboarding-inline-action { min-height: 2.25rem; height: auto; padding: 0 .5rem; font-size: inherit; white-space: normal; }
+.onboarding-eyebrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .125rem .5rem; }
+.onboarding-inline-action { min-height: 2.75rem; height: auto; padding: 0 .5rem; font-size: inherit; white-space: normal; }
 .onboarding-action { min-height: 2.75rem; height: auto; white-space: normal; }
-/* Role choice: two equal cards, participant left and organizer right like the figures above them. */
-.onboarding-role {
-  flex-direction: column;
-  align-items: center;
-  gap: .25rem;
-  min-height: 2.75rem;
-  height: auto;
-  padding: .875rem .625rem;
-  text-align: center;
-  white-space: normal;
-}
+.onboarding-role { flex-direction: column; align-items: center; gap: .25rem; min-height: 2.75rem; height: auto; padding: .875rem .625rem; text-align: center; white-space: normal; }
 .onboarding-role-icon { display: inline-flex; margin-bottom: .125rem; }
 .onboarding-role-description { font-size: .75rem; font-weight: 400; line-height: 1.35; }
-.onboarding-status { min-height: 1rem; margin-top: .5rem; }
-@media (max-height: 700px) {
-  .onboarding-header { padding-top: calc(var(--safe-top, 0px) + .5rem); padding-bottom: .5rem; }
-  .onboarding-overlay { padding-top: 1rem; }
+.onboarding-dots { display: flex; justify-content: center; margin-top: .5rem; }
+.onboarding-dot { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; cursor: pointer; border-radius: var(--radius-md); }
+.onboarding-dot span { width: .5rem; height: .5rem; border-radius: 50%; background: var(--pf-color-content-secondary); opacity: .4; }
+.onboarding-dot[aria-current='step'] span { background: var(--pf-color-action-primary); opacity: 1; width: 1.5rem; border-radius: var(--radius-md); }
+.onboarding-dot:focus-visible { outline: 2px solid var(--pf-color-focus-ring); outline-offset: 2px; }
+.onboarding-dots + .mt-5 { margin-top: .25rem; }
+@media (min-width: 900px), (max-height: 520px) and (min-width: 640px) {
+  .onboarding-story { max-width: 76rem; display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(1.25rem, 4vw, 4rem); align-items: center; padding-top: 1rem; }
+  .onboarding-art { max-height: none; }
+  .onboarding-overlay { padding-top: 0; }
+}
+@media (max-height: 700px) and (max-width: 639px) {
+  .onboarding-art { max-height: 21dvh; }
+  .onboarding-overlay { padding-top: .5rem; }
+  .onboarding-overlay > .mt-5 { margin-top: .75rem; }
   .onboarding-copy h1 { font-size: 1.5rem; line-height: 1.2; }
-  .onboarding-copy p { margin-top: .5rem; }
-  .onboarding-copy p:last-child { font-size: .875rem; line-height: 1.45; }
+  .onboarding-copy p { margin-top: .5rem; font-size: .875rem; line-height: 1.4; }
   .onboarding-role { padding: .625rem .5rem; }
   .onboarding-role-icon { display: none; }
-  /* The role cards already explain both paths. Give the characters that space
-     on short phones instead of repeating the explanation above the cards. */
   [data-role='choice'] .onboarding-copy p { display: none; }
-  [data-role='choice'] .onboarding-still { top: 8%; height: 36%; }
 }
-@media (max-height: 520px) and (min-width: 640px) {
-  .onboarding-experience { display: grid; grid-template-columns: 1fr 1fr; }
-  .onboarding-header { grid-column: 1; grid-row: 1; align-self: start; }
-  .onboarding-overlay { grid-column: 2; grid-row: 1; align-self: end; margin-right: 0; width: 100%; padding-top: calc(var(--safe-top, 0px) + .5rem); padding-bottom: calc(var(--safe-bottom, 0px) + .5rem); }
-  .onboarding-overlay > .mt-5 { margin-top: .5rem; }
-  .onboarding-copy h1 { margin-top: .25rem; }
-  .onboarding-overlay::before { inset: -1rem 0 -1rem -2rem; background: linear-gradient(to right, transparent, var(--pf-color-surface-canvas) 2rem); }
-  .onboarding-still, [data-role='choice'] .onboarding-still { width: 50%; height: 90%; top: 10%; }
-}
-
-@keyframes onboarding-arrive {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+@keyframes onboarding-arrive { from { opacity: 0; transform: translateY(.25rem); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: no-preference) {
-  .onboarding-experience { animation: onboarding-arrive 240ms ease both; }
+  .onboarding-art { animation: onboarding-arrive 200ms ease both; }
 }

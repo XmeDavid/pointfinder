@@ -1,97 +1,52 @@
 # Component Inventory
 
-Component: OnboardingExperience
+Component: OnboardingExperience / StoryIllustration
 Status: canonical
-Location: `web/src/components/onboarding/OnboardingExperience.tsx`
-Modes: Auth / Onboarding. One welcome world at `/welcome` (browser and native;
-also the native anonymous home), in three audiences (`mode`): `anonymous`
-visitors, signed-in `operator`, joined `player`. The public website itself is
-unchanged; its Get started fades into the role choice (no map pan or zoom) and pricing opens the organizer gate (`?role=organizer`).
-States: role choice (participant left, organizer right); organizer gate
-(anonymous: Create an account / Sign in / See how it works first; operator:
-Take a quick tour / Go to my dashboard); six chapters per role that play on
-their own with a Pause / Resume auto-play toggle, or advance manually; landing per audience (participant: Join in the native app, iOS / Android downloads on the website; anonymous organizer: Create an
-account + Sign in; operator: Create my first game when the dashboard is empty
-and no `first-game` row exists, else Go to my dashboard; player: Back to your
-game); Back to the choice from the first chapter and Change role (anonymous
-only), Skip from any chapter, replay, language changes in place, loading and
-failed graphics per branch, retry, static reduced motion, unavailable
-preference storage, auto-play paused (after Back or the toggle), backgrounded
-mid-pause, long German copy, both themes and safe-area-aware phone /
-landscape layout.
-Notes: The decorative 3D world fills the viewport. Localized DOM copy and canonical
-buttons sit over the world on semantic canvas scrims; no text is baked into the
-scene. Choosing "participating" opens the participant animation before the platform-specific
-landing. Native builds offer `/join`; browser visitors get App Store and Google Play
-links, including phone browsers. Joined players retain Back to your game. Settings
-keeps the story under Help; choosing
-"organizing" opens the gate on the organizer world's first frame, so nobody has
-to register before watching. The choice only picks which story is told
-(`branch` prop on the scene: `choice`, `participant`, `organizer`); it never
-changes authentication, routes or permissions. Organizer chapters use short
-chapter-specific transition labels (Place bases, Connect challenges, Invite teams,
-Go live, Review results) that are educational only; nothing is created or set live.
-Anonymous completion or Skip stores `{ version: 2, role }` under the v2 platform
-key/value preference (never authentication storage) and, for the organizer story,
-a one-shot handoff that the next registration or sign-in on the device claims;
-choosing a role alone stores nothing, and earlier single-story visitors see the
-role choice once. Late preference reads never override an interaction, and a
-stalled read unblocks after 1.2 s. Operator completion, skip and "Go to my
-dashboard" on the gate write the account's `introduction` row through
-`web/src/features/introduction/progress.ts` (server-side, per account; a failed
-write is owed locally and retried at the next sign-in); the first-game CTA starts
-the guided tutorial on the dashboard and creates nothing itself. A branch change
-shows the new branch's still until the renderer reports ready again and gives a
-failed renderer a fresh attempt. Stills: `role-choice.webp`, `step-1..6.webp`,
-`organizer-step-1..6.webp`, `step-7.webp` (compass). Test ids:
-`onboarding-role-participant`, `onboarding-role-organizer`,
-`onboarding-change-role`, `onboarding-gate-create-account`,
-`onboarding-gate-watch`, `onboarding-tour-start`, `onboarding-tour-skip`,
-`onboarding-landing-create-account`, `onboarding-first-game`,
-`onboarding-dashboard`, `onboarding-dashboard-link`, `onboarding-player-back`,
-`onboarding-autoplay` (`aria-pressed` true while chapters play on their own,
-false while paused), plus the existing back / next / skip / replay ids;
-`data-mode` and `data-step` (`choice`, `gate`, chapter ids, `compass`) on the root.
-Auto-play (`useChapterAutoplay.ts`): with live animation, a chapter advances
-to the next one 2.5 s after the renderer reports that its hold pose has been
-drawn (`onSettled(frame)` from `sceneRuntime.ts` through `OnboardingScene`;
-reports for any other frame, branch or renderer attempt are ignored, and the
-hold drawn on the organizer gate counts for the first chapter that shares its
-frame). It only ever moves chapter → chapter → landing: it never chooses a
-role, leaves the gate, presses a landing action or changes a route. Back
-pauses so the reader can reread; the toggle, choosing a role, Change role and
-replay set it playing again; manual Next stays available and restarts the
-wait; a language change restarts the wait for the new copy; backgrounding
-(`platform/lifecycle`) cancels the wait and returning starts a full fresh one.
-Reduced motion, previews, loading and failed renderers stay manual and hide
-the toggle.
-The world uses skinned characters from the reusable Blender asset library;
-graphics failures and reduced motion use matching rendered stills. Loading keeps
-the art area empty until the live opening pose is rendered, avoiding a completed-step
-poster flashing before the entrance animation. Bone textures are
-disposed on scene exit.
-Motion policy (`sceneMath.ts`, `sceneMotion.ts`): chapter hops use three times the
-authored 24 fps with short reveals capped at 1.2 s of story time. Step 1 → 2 takes
-2.8 s in both stories (walking / placing bases); player step 5 → 6 takes 2.4 s.
-These intervals use the same pacing in reverse, proportional to remaining distance
-when interrupted. Transitions ease in and out so every hold
-pose is reached gently; the same plan runs forwards, backwards, for the compass
-handoff and for Skip, which still only fades the scene on screen. Story time follows rendered wall
-time but advances at most 0.25 s per drawn frame, so a slow renderer stretches a
-hop rather than skipping its gestures. Runtime policy (`scenePerformance.ts`,
-`sceneRuntime.ts`): drawing is paced at 30 fps; world materials stay opaque and
-single-pass except during the world fade (both shader variants are warmed at
-load); the pixel ratio starts at min(device, 1.5) and steps down to 1 (never lower,
-the characters lose their detail) only when the median of six consecutive world
-frames exceeds 50 ms, never back up (`data-pixel-ratio` on the scene host reports the current value).
-Preview: `/dev/visual-system?onboarding=choice` for the role screen,
-`?onboarding=gate` for the organizer account choice (`&mode=operator` for the
-signed-in tour offer), `?onboarding=1` through `?onboarding=7` for participant
-chapters, `?onboarding=1&role=organizer` (any 1–7) for organizer chapters, and
-`&mode=operator|player` on any chapter or `7` for those audiences' controls;
-fixtures never read or write onboarding completion or account progress. Use
-browser reduced-motion settings for static frames and block `/onboarding/*` to
-inspect graphics recovery.
+Location: `web/src/components/onboarding/OnboardingExperience.tsx`, `StoryIllustration.tsx`
+Modes: Auth / Onboarding. `/welcome` in browser and native; also the native
+anonymous home. Anonymous visitors choose participant or organizer; signed-in
+operators and joined players retain their own entry and exit actions.
+States: role choice; organizer account/tour gate; four participant and three organizer illustrated chapters; landing; Back, Next, Skip, replay and role changes; tappable progress
+dots; horizontal swipe (vertical scroll/pinch retained); keyboard focus moves to
+the new heading; image loading, failed image with retry, reduced motion,
+preferences unavailable, late preference reads, EN/PT/DE, light/dark, safe areas,
+small phones and landscape. Long copy can scroll vertically rather than overlap art.
+
+Transparent diorama art blends directly into the theme canvas, with no image card,
+frame or tinted backdrop. It occupies a separate region above copy on phones,
+beside it on larger screens; use contain to keep every subject intact.
+Controls never overlay character faces. Use canonical buttons and semantic tokens.
+Images are decorative; all instructional text and navigation are localized DOM.
+There is no WebGL import, autoplay, sensor use or image-dependent navigation gate.
+Only a brief CSS entrance transition animates, disabled for reduced motion.
+Eight generated WebP scenes live in `web/public/onboarding/stories/` and are bundled
+with Tauri for offline use. Source images/prompts and retired public 3D assets are
+preserved in `artifacts/onboarding-stories-v1/`; Blender work remains available.
+
+Participant: join → map → checkin → challenge. Organizer: plan (including bases and
+challenges) → teams → live. The final landing retains the `compass` state name for
+compatibility, with the last illustration. The welcome choice reuses the exploring
+scene; the organizer gate and merged planning chapter use the bases scene. Dots navigate chapters only;
+landing actions always require an explicit click. Choosing a role never changes
+authentication, routes, permissions or game state.
+
+Existing persistence remains: anonymous completion/Skip stores `{ version: 2, role }`
+in the platform v2 preference; choosing alone stores nothing. A late read cannot
+undo interaction; stalled reads unblock after 1.2 s. Existing completed visitors
+retain their landing. Anonymous organizer completion still hands off to the next
+registration/sign-in. Operator completion/skip uses the account `introduction`
+progress row and its existing retry behavior. First-game handoff creates nothing
+by itself. Joined players retain Back to your game. Native participants get `/join`;
+browser participants get store download links; organizers get account actions or
+their dashboard. Help and Tutorials retain replay entry points.
+
+Test IDs: existing role, gate, tour, landing, dashboard, player-back, back/next/skip/
+replay IDs remain. `onboarding-dot-1`–`4` are new. `onboarding-scene` now identifies
+the image region (`data-state` loading/ready/error); `onboarding-autoplay` is retired.
+Preview: `/dev/visual-system?onboarding=choice`, `?onboarding=gate`, or
+`?onboarding=1`–`5` for participants or `1`–`4` for organizers (chapters and landing); `&role=organizer`,
+`&mode=operator|player` retain their meanings. Previews never persist completion.
+Block `/onboarding/stories/*` to inspect image recovery.
 
 Component: IntroductionCard
 Status: canonical

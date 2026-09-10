@@ -21,7 +21,6 @@ vi.mock('@/platform', () => ({
   },
 }))
 vi.mock('@/app/player/services', () => ({ useAuth: () => auth }))
-vi.mock('@/components/onboarding/OnboardingScene', () => ({ OnboardingScene: () => <div data-testid="scene-mock" /> }))
 
 const OPERATOR = { id: 'user-1', email: 'test@example.com', name: 'Test Operator', role: 'operator' as const, createdAt: '2026-01-01T00:00:00.000Z' }
 const accessToken = `header.${btoa(JSON.stringify({ exp: 4102444800 })).replace(/=+$/, '')}.signature`
@@ -44,7 +43,7 @@ function mount(path = '/welcome') {
 }
 const experience = () => screen.getByTestId('onboarding-experience')
 const location = () => screen.getByTestId('location')
-const finishChapters = () => { for (let i = 0; i < 6; i++) fireEvent.click(screen.getByTestId('onboarding-next')) }
+const finishChapters = () => { for (let i = 0; i < (experience().getAttribute('data-role') === 'organizer' ? 3 : 4); i++) fireEvent.click(screen.getByTestId('onboarding-next')) }
 const introductionPuts = () => tutorialProgressStore.puts().filter((put) => put.scenarioId === 'introduction').map((put) => put.body.status)
 const row = (scenarioId: string, status: 'in_progress' | 'completed' | 'skipped') =>
   ({ scenarioId: scenarioId as never, status, currentStep: null, gameId: null, startedAt: '2026-09-08T09:00:00.000Z', completedAt: null })

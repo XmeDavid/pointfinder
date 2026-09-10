@@ -1854,9 +1854,9 @@
       "language": "Sprache",
       "introduction": "STEIG INS SPIEL EIN",
       "landing": "DEIN NÄCHSTES ABENTEUER",
-      "loading": "Animation wird geladen…",
-      "unavailable": "Animation nicht verfügbar. Du kannst trotzdem alle Schritte ansehen.",
-      "retry": "Animation erneut laden",
+      "loading": "Illustration wird geladen…",
+      "unavailable": "Illustration nicht verfügbar. Du kannst der Geschichte trotzdem folgen.",
+      "retry": "Bild erneut laden",
       "reduced": "Reduzierte Bewegung: Jeder Schritt bleibt unbewegt.",
       "autoplay": {
         "pause": "Autoplay pausieren",
@@ -1876,8 +1876,8 @@
           "body": "Halte dein Handy an den NFC-Tag, scanne den QR-Code oder betrete den markierten Bereich – je nach Einrichtung der Station."
         },
         "challenge": {
-          "title": "Entdecke die Aufgabe",
-          "body": "An deiner Station öffnet sich eine Aufgabe. Lest sie und überlegt euch gemeinsam eine Lösung."
+          "title": "Löst die Aufgabe gemeinsam",
+          "body": "Macht ein Foto, beantwortet eine Frage oder löst eine Aufgabe und sendet die Antwort eures Teams ab."
         },
         "submit": {
           "title": "Löst die Aufgabe gemeinsam",
@@ -1913,13 +1913,13 @@
       "organizerLanding": "DEIN SPIEL WARTET",
       "organizerSteps": {
         "plan": {
-          "title": "Plane dein Spiel",
-          "body": "Lege die Etappen deines Spiels fest und entscheide, wo und wann es stattfindet.",
+          "title": "Gestalte dein Abenteuer",
+          "body": "Entscheide, wo und wann gespielt wird, platziere Stationen auf der Karte und füge Check-in-Methoden und Aufgaben für deine Teams hinzu.",
           "next": "Stationen platzieren"
         },
         "bases": {
-          "title": "Platziere deine Stationen",
-          "body": "Setze Stationen auf die Karte und wähle für jede, wie Teams sich anmelden: NFC-Tag, QR-Code oder Standort.",
+          "title": "Gestalte dein Abenteuer",
+          "body": "Platziere Stationen auf der Karte, wähle die Check-in-Methode und füge Aufgaben für die Teams hinzu.",
           "next": "Aufgaben verknüpfen"
         },
         "challenges": {
@@ -1957,7 +1957,7 @@
       "account": {
         "eyebrow": "WILLKOMMEN BEI POINTFINDER",
         "title": "Kurze Tour gefällig?",
-        "body": "Eine Minute, um zu sehen, wie ein Spiel entsteht: Planung, Stationen, Aufgaben, Teams, Live-Spiel und Ergebnisse.",
+        "body": "Drei kurze Schritte zu deinem ersten Abenteuer: Spiel gestalten, Teams einladen und das Spiel live begleiten.",
         "tour": "Kurze Tour starten",
         "dashboard": "Zu meinem Dashboard",
         "landingBody": "Jede Station, jede Aufgabe und jedes Team gestaltest du selbst. Dein erstes Spiel beginnt im Dashboard.",
@@ -1965,7 +1965,9 @@
       },
       "player": {
         "back": "Zurück zu deinem Spiel"
-      }
+      },
+      "storyNavigation": "Schritte der Geschichte",
+      "goToStep": "Zu Schritt {{current}} von {{total}}"
     }
   },
   "baseOrder": {

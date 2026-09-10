@@ -1,0 +1,41 @@
+{
+  "mode": "built-in image_gen edit",
+  "diaramaPrompt": "Edit this illustration for a PointFinder onboarding screen. Preserve the exact mascot identities, clothing (cream T-shirt and forest-green baseball cap, terracotta ponytail companion, charcoal companion when present), tactile premium rendering, activity and essential props. Transform the full rectangular woodland scene into a clean isolated storybook diorama cutout like a freestanding figurine scene. Keep the characters FULLY OPAQUE and fully intact, with hands/boots/phones clear. Keep only a small organic island of moss, soil, a few rocks/ferns and at most two small trees directly around their feet, plus any essential NFC post or table. REMOVE all distant forest, sky, mountains, lake, shelter backdrop and rectangular ground edges. Compose the complete diorama comfortably within the image with generous transparent margins. Background must be ACTUAL TRANSPARENT ALPHA, not a painted checkerboard, not white/cream, no gradient, no full-image color. Preserve soft semitransparent edge shadows on the tiny ground island only. No border, card, text, caption, UI, no new insignia. Square 1024x1024 PNG with true transparency.",
+  "extractionPrompt": "Remove the background from this image. Keep all foreground subjects unchanged and fully intact, with clean, smooth edges. Make the background transparent. Remove the gray checkerboard; it is unwanted background, not part of the illustration. Deliver actual alpha transparency.",
+  "images": [
+    {
+      "name": "participant-join",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-7c84fa5a-ec77-437b-acb3-8f3b8f40b007.png"
+    },
+    {
+      "name": "participant-map",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-e403db00-f509-4789-9096-2786ad56d108.png"
+    },
+    {
+      "name": "participant-checkin",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-2db850d1-4e7c-41ee-9303-83d3b7bea060.png"
+    },
+    {
+      "name": "participant-challenge",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-6d84f3a1-fcc8-4694-9f80-8b1a06e4ff1b.png"
+    },
+    {
+      "name": "organizer-plan",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-877f9aae-68d7-4535-9242-3ec77473c5a5.png"
+    },
+    {
+      "name": "organizer-bases",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-c81db31a-4d94-4322-8641-7df879b3a353.png"
+    },
+    {
+      "name": "organizer-teams",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-18ea6b46-0ce0-49a9-96ae-ecb10ac79b1d.png"
+    },
+    {
+      "name": "organizer-live",
+      "path": "/Users/xmedavid/.codex/generated_images/01a0829e-c1d6-7671-8f58-64935372c95f/exec-0591feb8-f858-40be-9aba-afda15faeb28.png"
+    }
+  ],
+  "finalExtractionPrompt": "Remove the background from this image. Keep all foreground subjects unchanged and fully intact, with clean, smooth edges. Make the background transparent.",
+  "joinFinalExtractionPrompt": "Extract the foreground as a transparent PNG. Erase the checkerboard background entirely. Keep the three characters, wooden post, tree and ground island. Use actual alpha transparency, zero alpha outside the subjects. No painted background."
+}

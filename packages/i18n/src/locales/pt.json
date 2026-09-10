@@ -1854,9 +1854,9 @@
       "language": "Idioma",
       "introduction": "ENTRA NO JOGO",
       "landing": "A TUA PRÓXIMA AVENTURA",
-      "loading": "A carregar a animação…",
-      "unavailable": "Animação indisponível. Podes continuar a explorar todas as etapas.",
-      "retry": "Tentar carregar de novo",
+      "loading": "A carregar a ilustração…",
+      "unavailable": "Ilustração indisponível. Podes continuar a história.",
+      "retry": "Tentar novamente",
       "reduced": "Movimento reduzido: cada etapa permanece estática.",
       "autoplay": {
         "pause": "Pausar avanço automático",
@@ -1876,8 +1876,8 @@
           "body": "Aproxima o telemóvel da etiqueta NFC, lê o código QR ou entra na área assinalada, conforme a configuração da base."
         },
         "challenge": {
-          "title": "Descobre o desafio",
-          "body": "Um desafio abre-se na tua base. Lê a tarefa e decide como a vais resolver."
+          "title": "Resolvam em equipa",
+          "body": "Tirem uma fotografia, respondam a uma pergunta ou concluam uma tarefa e enviem a resposta da equipa."
         },
         "submit": {
           "title": "Resolvam em equipa",
@@ -1913,13 +1913,13 @@
       "organizerLanding": "O TEU JOGO ESPERA POR TI",
       "organizerSteps": {
         "plan": {
-          "title": "Planeia o teu jogo",
-          "body": "Define as etapas do jogo e decide onde e quando acontece.",
+          "title": "Cria a tua aventura",
+          "body": "Escolhe onde e quando jogar, coloca bases no mapa e adiciona métodos de check-in e desafios para as equipas.",
           "next": "Colocar bases"
         },
         "bases": {
-          "title": "Coloca as tuas bases",
-          "body": "Marca as bases no mapa e escolhe como as equipas registam a chegada em cada uma: etiqueta NFC, código QR ou localização.",
+          "title": "Cria a tua aventura",
+          "body": "Coloca bases no mapa, escolhe o método de check-in e adiciona os desafios que as equipas vão resolver.",
           "next": "Ligar desafios"
         },
         "challenges": {
@@ -1957,7 +1957,7 @@
       "account": {
         "eyebrow": "BEM-VINDO AO POINTFINDER",
         "title": "Queres uma visita rápida?",
-        "body": "Um minuto para ver como um jogo ganha forma: planeamento, bases, desafios, equipas, jogo ao vivo e resultados.",
+        "body": "Três passos até à tua primeira aventura: criar o jogo, convidar equipas e acompanhar o jogo ao vivo.",
         "tour": "Fazer a visita rápida",
         "dashboard": "Ir para o meu painel",
         "landingBody": "Cada base, desafio e equipa é tua para moldar. O teu primeiro jogo começa no painel.",
@@ -1965,7 +1965,9 @@
       },
       "player": {
         "back": "Voltar ao teu jogo"
-      }
+      },
+      "storyNavigation": "Passos da história",
+      "goToStep": "Ir para o passo {{current}} de {{total}}"
     }
   },
   "baseOrder": {

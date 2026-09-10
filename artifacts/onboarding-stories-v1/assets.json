@@ -1,0 +1,58 @@
+[
+  {
+    "name": "participant-join",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 319410
+  },
+  {
+    "name": "participant-map",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 340360
+  },
+  {
+    "name": "participant-checkin",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 364950
+  },
+  {
+    "name": "participant-challenge",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 333986
+  },
+  {
+    "name": "organizer-plan",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 338688
+  },
+  {
+    "name": "organizer-bases",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 276148
+  },
+  {
+    "name": "organizer-teams",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 326376
+  },
+  {
+    "name": "organizer-live",
+    "width": 1254,
+    "height": 1254,
+    "alpha": true,
+    "bytes": 348262
+  }
+]
