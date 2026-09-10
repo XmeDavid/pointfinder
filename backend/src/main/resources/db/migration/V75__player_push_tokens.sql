@@ -12,7 +12,10 @@ CREATE TABLE player_push_tokens (
 );
 CREATE INDEX idx_player_push_tokens_token ON player_push_tokens (token);
 
+-- Rows without a platform are not carried over: guessing one would push FCM
+-- tokens through APNs, which rejects them and then purges the row. Those
+-- phones re-register with a platform on the next launch.
 INSERT INTO player_push_tokens (player_id, device_id, token, platform)
-SELECT id, device_id, push_token, COALESCE(push_platform, 'ios')
+SELECT id, device_id, push_token, push_platform
 FROM players
-WHERE push_token IS NOT NULL AND push_token <> '';
+WHERE push_token IS NOT NULL AND push_token <> '' AND push_platform IS NOT NULL;

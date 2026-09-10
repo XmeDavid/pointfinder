@@ -45,6 +45,11 @@ export default function AccountScreen() {
       const token = await accountServices.accessToken()
       if (!token) throw new Error('No account session')
       const linked = await client.api.player.linkAccount({ accountAccessToken: token, createAccount: false })
+      if (accountServices.session.current.kind !== 'operator') {
+        // Signed out while the link was in flight: do not leave the game attached to an account this phone no longer holds.
+        await client.api.player.unlinkAccount().catch(() => {})
+        return
+      }
       queries.setQueryData(['account', 'link'], linked)
       void queries.invalidateQueries({ queryKey: ['account', 'me'] })
     } catch (err) {

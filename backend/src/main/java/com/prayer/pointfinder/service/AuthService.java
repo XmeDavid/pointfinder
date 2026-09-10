@@ -14,6 +14,7 @@ import com.prayer.pointfinder.repository.OperatorInviteRepository;
 import com.prayer.pointfinder.repository.OrgInviteRepository;
 import com.prayer.pointfinder.repository.PasswordResetTokenRepository;
 import com.prayer.pointfinder.repository.RefreshTokenRepository;
+import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.UserRepository;
 import com.prayer.pointfinder.repository.UserSubscriptionRepository;
 import com.prayer.pointfinder.security.JwtTokenProvider;
@@ -56,6 +57,7 @@ public class AuthService {
     private final UserSubscriptionRepository userSubRepository;
     private final LoginAttemptService loginAttemptService;
     private final QuotaService quotaService;
+    private final PlayerRepository playerRepository;
 
     @Transactional(timeout = 10)
     public AuthResponse login(LoginRequest request) {
@@ -412,13 +414,19 @@ public class AuthService {
         }
         validatePassword(password);
 
-        User user = userRepository.save(User.builder()
-                .email(email)
-                .name(name.trim())
-                .passwordHash(passwordEncoder.encode(password))
-                .role(UserRole.participant)
-                .emailVerified(false)
-                .build());
+        User user;
+        try {
+            user = userRepository.saveAndFlush(User.builder()
+                    .email(email)
+                    .name(name.trim())
+                    .passwordHash(passwordEncoder.encode(password))
+                    .role(UserRole.participant)
+                    .emailVerified(false)
+                    .build());
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Two signups for one address at once: the unique index decided, answer like the pre-check.
+            throw new BadRequestException("Email already registered", ErrorCode.EMAIL_ALREADY_TAKEN);
+        }
         // Every account owns a free personal plan row so billing lookups never miss.
         userSubRepository.save(UserSubscription.builder()
                 .user(user)
@@ -480,6 +488,8 @@ public class AuthService {
         bumpTokenVersion(parked);
         refreshTokenRepository.deleteByUserId(parked.getId());
         emailChangeTokenRepository.invalidateAllForUser(parked.getId());
+        // Whoever parked the address keeps playing as a guest; their games do not follow the mailbox owner.
+        playerRepository.unlinkAllForUser(parked.getId());
         return userRepository.save(parked);
     }
 

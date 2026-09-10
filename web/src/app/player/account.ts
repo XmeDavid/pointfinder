@@ -15,7 +15,9 @@ export class AccountTokenStore implements TokenStore {
     if (!raw) return null
     try {
       const parsed = JSON.parse(raw) as StoredAuth
-      return parsed && parsed.kind === 'operator' ? parsed : null
+      if (parsed && parsed.kind === 'operator') return parsed
+      await this.secrets.remove(KEY).catch(() => {})
+      return null
     } catch {
       await this.secrets.remove(KEY).catch(() => {})
       return null

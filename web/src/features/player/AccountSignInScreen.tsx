@@ -9,7 +9,8 @@ export default function AccountSignInScreen() {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const next = params.get('next') && params.get('next')!.startsWith('/') ? params.get('next')! : '/join'
+  // Same-origin paths only: a second slash or a backslash would resolve to another host.
+  const next = /^\/(?![/\\])/.test(params.get('next') ?? '') ? params.get('next')! : '/join'
   const initialMode = params.get('mode') === 'signIn' ? 'signIn' : 'create'
   return (
     <Screen>

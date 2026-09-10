@@ -57,6 +57,7 @@ class AuthServiceTest {
 
     // Registering through a game invite answers to the per-game operator limit.
     @Mock private QuotaService quotaService;
+    @Mock private com.prayer.pointfinder.repository.PlayerRepository playerRepository;
     @InjectMocks private AuthService authService;
 
     private User testUser;
@@ -392,7 +393,7 @@ class AuthServiceTest {
         void registerParticipantCreatesAnUnverifiedAccountAndMailsTheLink() {
             when(userRepository.existsByEmailIgnoreCase("ana@example.com")).thenReturn(false);
             when(passwordEncoder.encode("Secret123")).thenReturn("hash");
-            when(userRepository.save(any(com.prayer.pointfinder.entity.User.class))).thenAnswer(inv -> { var u = (com.prayer.pointfinder.entity.User) inv.getArgument(0); if (u.getId() == null) u.setId(java.util.UUID.randomUUID()); return u; });
+            when(userRepository.saveAndFlush(any(com.prayer.pointfinder.entity.User.class))).thenAnswer(inv -> { var u = (com.prayer.pointfinder.entity.User) inv.getArgument(0); if (u.getId() == null) u.setId(java.util.UUID.randomUUID()); return u; });
             when(emailChangeTokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tokenProvider.generateAccessToken(any(), any(), any(), org.mockito.ArgumentMatchers.anyInt())).thenReturn("access");
             when(tokenProvider.generateRefreshTokenString()).thenReturn("refresh");
@@ -401,7 +402,7 @@ class AuthServiceTest {
 
             assertEquals("participant", response.user().role());
             org.mockito.ArgumentCaptor<com.prayer.pointfinder.entity.User> saved = org.mockito.ArgumentCaptor.forClass(com.prayer.pointfinder.entity.User.class);
-            verify(userRepository, org.mockito.Mockito.atLeastOnce()).save(saved.capture());
+            verify(userRepository).saveAndFlush(saved.capture());
             assertEquals(com.prayer.pointfinder.entity.UserRole.participant, saved.getValue().getRole());
             assertEquals(Boolean.FALSE, saved.getValue().getEmailVerified());
             verify(userSubRepository).save(any());
@@ -434,6 +435,7 @@ class AuthServiceTest {
             assertEquals(Boolean.TRUE, parked.getEmailVerified());
             assertEquals(1, parked.getTokenVersion(), "every token the parker minted stops working");
             verify(refreshTokenRepository).deleteByUserId(parked.getId());
+            verify(playerRepository).unlinkAllForUser(parked.getId());
             verify(userSubRepository, never()).save(any());
         }
 

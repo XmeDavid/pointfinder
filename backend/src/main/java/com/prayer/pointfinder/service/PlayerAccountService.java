@@ -5,6 +5,8 @@ import com.prayer.pointfinder.dto.request.PlayerJoinRequest;
 import com.prayer.pointfinder.dto.request.PlayerRecoverRequest;
 import com.prayer.pointfinder.dto.response.PlayerAccountResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
+import com.prayer.pointfinder.entity.ActivityEvent;
+import com.prayer.pointfinder.entity.ActivityEventType;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
@@ -13,6 +15,7 @@ import com.prayer.pointfinder.entity.User;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ConflictException;
 import com.prayer.pointfinder.exception.ErrorCode;
+import com.prayer.pointfinder.repository.ActivityEventRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
@@ -25,6 +28,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,6 +54,10 @@ public class PlayerAccountService {
     private final JwtTokenProvider tokenProvider;
     private final AuthService authService;
     private final PlayerJoinService playerJoinService;
+    private final ActivityEventRepository activityEventRepository;
+
+    /** A retired guest row keeps its data but can never be resolved by a device again. */
+    static final String RETIRED_DEVICE_PREFIX = "retired:";
 
     @Transactional(readOnly = true)
     public PlayerAccountResponse account(Player authPlayer) {
@@ -181,8 +190,9 @@ public class PlayerAccountService {
     /**
      * A device holds one identity per game, which join enforces. Switching a phone to
      * the account's participation retires the guest row that phone had here, so a later
-     * guest rejoin resolves to the recovered row and the roster shows no ghost. A row
-     * that belongs to another account is never taken over.
+     * guest rejoin resolves to the recovered row. The row itself stays: its check-ins,
+     * submissions and locations belong to the team and cascade from the row. A row that
+     * belongs to another account is never taken over. The switch is audited.
      */
     private void releaseDevice(String deviceId, UUID gameId, Player recovered) {
         Player holder = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId).orElse(null);
@@ -191,8 +201,27 @@ public class PlayerAccountService {
             throw new BadRequestException("This device already belongs to another account's participation in this game",
                     ErrorCode.DEVICE_ALREADY_IN_DIFFERENT_TEAM);
         }
+        holder.setDeviceId(RETIRED_DEVICE_PREFIX + UUID.randomUUID());
+        playerRepository.save(holder);
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("retiredPlayerId", holder.getId().toString());
+        metadata.put("retiredTeamId", holder.getTeam().getId().toString());
+        metadata.put("recoveredPlayerId", recovered.getId().toString());
+        metadata.put("recoveredTeamId", recovered.getTeam().getId().toString());
+        metadata.put("deviceId", deviceId);
+        activityEventRepository.save(ActivityEvent.builder()
+                .game(recovered.getGame())
+                .type(ActivityEventType.team_switch)
+                .team(recovered.getTeam())
+                .message(holder.getDisplayName() + " switched this phone from " + holder.getTeam().getName() + " to their saved participation in " + recovered.getTeam().getName())
+                .timestamp(Instant.now())
+                .actorPlayer(recovered)
+                .actorDisplayNameSnapshot(recovered.getDisplayName())
+                .actorDeviceIdSnapshot(deviceId)
+                .sourceSurface("player_app")
+                .metadata(metadata)
+                .build());
         log.info("[ACCOUNT] operation=recover retiredGuestPlayerId={} deviceId={} gameId={}", holder.getId(), deviceId, gameId);
-        playerRepository.delete(holder);
     }
 
     private Player load(Player authPlayer) {

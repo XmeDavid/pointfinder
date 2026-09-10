@@ -33,7 +33,7 @@ class PushTokenServiceTest {
         service.registerPlayer(player, "device-b", "tok", PushPlatform.android);
         var order = inOrder(jdbc);
         order.verify(jdbc).queryForObject("SELECT 1 FROM pg_advisory_xact_lock(hashtext(?))", Integer.class, "android:tok");
-        order.verify(jdbc).update("DELETE FROM player_push_tokens WHERE token = ?", "tok");
+        order.verify(jdbc).update("DELETE FROM player_push_tokens WHERE token = ? AND device_id <> ?", "tok", "device-b");
         order.verify(jdbc).update("UPDATE users SET push_token = NULL, push_platform = NULL WHERE push_token = ?", "tok");
         order.verify(jdbc).update(contains("ON CONFLICT (player_id, device_id) DO UPDATE"), eq("device-b"), eq("tok"), eq("android"), eq(player));
     }

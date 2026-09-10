@@ -177,19 +177,23 @@ class AccountParticipationIntegrationTest extends IntegrationTestBase {
         PlayerAuthResponse falcon = join(falcons, "Ana", "device-a");
         assertEquals(HttpStatus.OK, link(falcon.token(), signup(email, "Ana"), PlayerAccountResponse.class).getStatusCode());
 
-        // Phone C joined the Owls as a guest, then Ana signs in there and chooses to switch.
+        // Phone C joined the Owls as a guest, checked in somewhere, then Ana signs in there and chooses to switch.
         PlayerAuthResponse ghost = join(owls, "Ana again", "device-c");
         assertEquals(2, playerRepository.countByGameId(game.getId()));
+        com.prayer.pointfinder.entity.Base mill = createBase(game, "Mill");
+        checkInRepository.save(com.prayer.pointfinder.entity.CheckIn.builder()
+                .game(game).team(owls).base(mill).player(playerRepository.findById(ghost.player().id()).orElseThrow())
+                .checkedInAt(java.time.Instant.now()).build());
         PlayerRecoverRequest byGame = recover(email, null, "device-c");
         byGame.setGameId(game.getId());
         ResponseEntity<PlayerAuthResponse> recovered = restTemplate.postForEntity("/api/auth/player/recover", byGame, PlayerAuthResponse.class);
 
         assertEquals(HttpStatus.OK, recovered.getStatusCode());
         assertEquals(falcon.player().id(), recovered.getBody().player().id());
-        assertEquals(1, playerRepository.countByGameId(game.getId()), "the abandoned guest row is gone");
-        assertTrue(playerRepository.findById(ghost.player().id()).isEmpty());
-        // The ghost's token no longer authenticates; the recovered one does.
-        assertEquals(HttpStatus.UNAUTHORIZED, restTemplate.exchange("/api/player/account", HttpMethod.GET, new HttpEntity<>(bearer(ghost.token())), String.class).getStatusCode());
+        // The guest row is retired, not deleted: the Owls keep the check-in it made.
+        Player retired = playerRepository.findById(ghost.player().id()).orElseThrow();
+        assertTrue(retired.getDeviceId().startsWith("retired:"));
+        assertEquals(1, checkInRepository.findByGameIdAndTeamId(game.getId(), owls.getId()).size(), "the team's check-in survives the switch");
         assertEquals(HttpStatus.OK, restTemplate.exchange("/api/player/account", HttpMethod.GET, new HttpEntity<>(bearer(recovered.getBody().token())), String.class).getStatusCode());
         // A guest rejoin from phone C now resolves to the recovered participation.
         PlayerAuthResponse rejoin = join(falcons, "Ana", "device-c");

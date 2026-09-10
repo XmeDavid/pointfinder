@@ -23,7 +23,9 @@ public class PushTokenService {
     @Transactional(timeout = 10)
     public void registerPlayer(UUID playerId, String deviceId, String token, PushPlatform platform) {
         lock(token, platform);
-        releaseEverywhere(token);
+        // The same phone plays several games under several player rows with one token; keep those.
+        jdbc.update("DELETE FROM player_push_tokens WHERE token = ? AND device_id <> ?", token, deviceId);
+        jdbc.update("UPDATE users SET push_token = NULL, push_platform = NULL WHERE push_token = ?", token);
         int upserted = jdbc.update("""
                 INSERT INTO player_push_tokens (player_id, device_id, token, platform, updated_at)
                 SELECT id, ?, ?, ?, now() FROM players WHERE id = ?

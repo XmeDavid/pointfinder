@@ -1220,7 +1220,7 @@ Players receive in-app notifications (not OS push by default, though push tokens
 
 The `last_notifications_seen_at` column on `players` tracks read state.
 
-**Delivery**: Notifications are delivered via WebSocket `notification` event to connected players. Push fallback uses `player_push_tokens`, one row per phone of a participation (PF-01, 2026-09-10); `players.push_token` is an unused relic until dropped.
+**Delivery**: Notifications are delivered via WebSocket `notification` event to connected players. Push fallback uses `player_push_tokens`, one row per phone of a participation (PF-01, 2026-09-10); a phone that plays several games keeps a row under each of its player ids; `players.push_token` is an unused relic until dropped. Recovering a game on a phone that already held a guest row there retires that row (`device_id` becomes `retired:<uuid>`, audited as `team_switch`) rather than deleting it, because the team's check-ins cascade from it.
 
 **Platform coverage**:
 - Backend: `NotificationService`, `PlayerController`

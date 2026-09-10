@@ -62,6 +62,7 @@ class PlayerAccountServiceTest {
     @Mock private JwtTokenProvider tokenProvider;
     @Mock private AuthService authService;
     @Mock private PlayerJoinService playerJoinService;
+    @Mock private com.prayer.pointfinder.repository.ActivityEventRepository activityEventRepository;
 
     @InjectMocks private PlayerAccountService service;
 
@@ -264,7 +265,13 @@ class PlayerAccountServiceTest {
         PlayerAuthResponse auth = service.recover(recover("FALC01", "device-b"));
 
         assertEquals(guest.getId(), auth.player().id());
-        verify(playerRepository).delete(ghost);
+        // The ghost keeps its data (check-ins cascade from it) but can never be resolved by a phone again.
+        verify(playerRepository, never()).delete(any(Player.class));
+        assertTrue(ghost.getDeviceId().startsWith(PlayerAccountService.RETIRED_DEVICE_PREFIX));
+        ArgumentCaptor<com.prayer.pointfinder.entity.ActivityEvent> audit = ArgumentCaptor.forClass(com.prayer.pointfinder.entity.ActivityEvent.class);
+        verify(activityEventRepository).save(audit.capture());
+        assertEquals(com.prayer.pointfinder.entity.ActivityEventType.team_switch, audit.getValue().getType());
+        assertEquals(ghost.getId().toString(), audit.getValue().getMetadata().get("retiredPlayerId"));
     }
 
     @Test
