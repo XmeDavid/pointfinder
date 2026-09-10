@@ -5,6 +5,7 @@ import com.prayer.pointfinder.dto.response.NotificationResponse;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameNotification;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.PlayerPushToken;
 import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.entity.User;
@@ -12,6 +13,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.GameNotificationRepository;
 import com.prayer.pointfinder.repository.GameRepository;
+import com.prayer.pointfinder.repository.PlayerPushTokenRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
 import com.prayer.pointfinder.repository.UserRepository;
@@ -41,6 +43,7 @@ public class NotificationService {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final PlayerRepository playerRepository;
+    private final PlayerPushTokenRepository playerPushTokenRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final ApnsPushService apnsPushService;
     private final FcmPushService fcmPushService;
@@ -86,33 +89,21 @@ public class NotificationService {
         NotificationResponse response = toResponse(notification);
         eventBroadcaster.broadcastNotification(gameId, response);
 
-        // Send push notifications to players on teams with registered push tokens
-        List<Player> pushTargets;
-        if (targetTeam != null) {
-            pushTargets = playerRepository.findByTeamIdAndPushTokenIsNotNull(targetTeam.getId());
-        } else {
-            pushTargets = playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId);
-        }
+        // Send push notifications to every phone registered for the targeted players
+        List<PlayerPushToken> pushTargets = targetTeam != null
+                ? playerPushTokenRepository.findByPlayerTeamId(targetTeam.getId())
+                : playerPushTokenRepository.findByGameId(gameId);
 
         if (!pushTargets.isEmpty()) {
-            // Audit 10.11: warn about players with null pushPlatform (silently dropped)
-            long nullPlatformCount = pushTargets.stream()
-                    .filter(p -> p.getPushPlatform() == null)
-                    .count();
-            if (nullPlatformCount > 0) {
-                log.warn("Skipping {} player(s) with null pushPlatform for game {} — push platform not set",
-                        nullPlatformCount, gameId);
-            }
-
             List<String> apnsTokens = pushTargets.stream()
-                    .filter(p -> p.getPushPlatform() == PushPlatform.ios)
-                    .map(Player::getPushToken)
-                    .filter(java.util.Objects::nonNull)
+                    .filter(t -> t.getPlatform() == PushPlatform.ios)
+                    .map(PlayerPushToken::getToken)
+                    .distinct()
                     .toList();
             List<String> fcmTokens = pushTargets.stream()
-                    .filter(p -> p.getPushPlatform() == PushPlatform.android)
-                    .map(Player::getPushToken)
-                    .filter(java.util.Objects::nonNull)
+                    .filter(t -> t.getPlatform() == PushPlatform.android)
+                    .map(PlayerPushToken::getToken)
+                    .distinct()
                     .toList();
 
             if (!apnsTokens.isEmpty()) {

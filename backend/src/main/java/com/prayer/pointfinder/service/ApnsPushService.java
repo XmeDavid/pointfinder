@@ -33,6 +33,7 @@ public class ApnsPushService {
     private final ApnsConfig apnsConfig;
     private final ResourceLoader resourceLoader;
     private final PlayerRepository playerRepository;
+    private final com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository;
 
     private ApnsClient apnsClient;
 
@@ -156,6 +157,7 @@ public class ApnsPushService {
     @Transactional
     void cleanupInvalidToken(String token) {
         try {
+            playerPushTokenRepository.deleteByToken(token);
             playerRepository.setInvalidPushTokenToNull(token);
             log.info("Cleaned up invalid push token from database");
         } catch (Exception e) {

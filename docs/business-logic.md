@@ -1220,7 +1220,7 @@ Players receive in-app notifications (not OS push by default, though push tokens
 
 The `last_notifications_seen_at` column on `players` tracks read state.
 
-**Delivery**: Notifications are delivered via WebSocket `notification` event to connected players. Push fallback uses `player.push_token` + `player.push_platform`.
+**Delivery**: Notifications are delivered via WebSocket `notification` event to connected players. Push fallback uses `player_push_tokens`, one row per phone of a participation (PF-01, 2026-09-10); `players.push_token` is an unused relic until dropped.
 
 **Platform coverage**:
 - Backend: `NotificationService`, `PlayerController`
@@ -1230,7 +1230,7 @@ The `last_notifications_seen_at` column on `players` tracks read state.
 ### Push Token Registration
 
 Both platforms register a device push token after login:
-- Players: `PUT /api/player/push-token` with `{pushToken, platform}`
+- Players: `PUT /api/player/push-token` with `{pushToken, platform, deviceId?}` (omitted `deviceId` means the player's own device)
 - Operators: `PUT /api/users/me/push-token` with `{pushToken, platform}`
 
 On new FCM token (Android `onNewToken`), the token is re-registered automatically. iOS registers via APNs on first launch.

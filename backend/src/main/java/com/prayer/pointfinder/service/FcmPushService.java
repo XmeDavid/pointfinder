@@ -33,6 +33,7 @@ public class FcmPushService {
     private final FcmConfig fcmConfig;
     private final ResourceLoader resourceLoader;
     private final PlayerRepository playerRepository;
+    private final com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository;
 
     private FirebaseApp firebaseApp;
 
@@ -119,6 +120,7 @@ public class FcmPushService {
     @Transactional
     void cleanupInvalidToken(String token) {
         try {
+            playerPushTokenRepository.deleteByToken(token);
             playerRepository.setInvalidPushTokenToNull(token);
             log.info("Cleaned up invalid push token from database");
         } catch (Exception e) {

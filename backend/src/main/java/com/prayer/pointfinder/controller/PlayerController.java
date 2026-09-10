@@ -196,7 +196,8 @@ public class PlayerController {
     @PutMapping("/push-token")
     public ResponseEntity<Void> updatePushToken(@Valid @RequestBody UpdatePushTokenRequest request) {
         Player player = SecurityUtils.getCurrentPlayer();
-        playerPushTokenService.updatePushToken(player.getId(), request.getPushToken(), request.resolvePlatform());
+        String deviceId = request.getDeviceId() != null && !request.getDeviceId().isBlank() ? request.getDeviceId() : player.getDeviceId();
+        playerPushTokenService.updatePushToken(player.getId(), deviceId, request.getPushToken(), request.resolvePlatform());
         return ResponseEntity.noContent().build();
     }
 

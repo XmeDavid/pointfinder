@@ -125,6 +125,8 @@ export interface OperatorAuthResponse {
 export interface PushTokenRequest {
   pushToken: string
   platform?: PushPlatform
+  /** PF-01: which phone registers; a participation may be on several. */
+  deviceId?: string
 }
 
 // ---------------------------------------------------------------- game setup

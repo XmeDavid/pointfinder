@@ -6,6 +6,7 @@ import com.prayer.pointfinder.dto.response.UploadSessionResponse;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.entity.PlayerPushToken;
 import com.prayer.pointfinder.entity.PushPlatform;
 import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
@@ -14,6 +15,7 @@ import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.exception.UploadSessionException;
+import com.prayer.pointfinder.repository.PlayerPushTokenRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.UploadSessionChunkRepository;
 import com.prayer.pointfinder.repository.UploadSessionRepository;
@@ -82,6 +84,7 @@ public class ChunkedUploadService {
     private final ChunkStore chunkStore;
     private final EntityManager entityManager;
     private final PlayerRepository playerRepository;
+    private final PlayerPushTokenRepository playerPushTokenRepository;
     private final GameAccessService gameAccessService;
     private final FileStorageService fileStorageService;
     private final MeterRegistry meterRegistry;
@@ -568,8 +571,8 @@ public class ChunkedUploadService {
         if (player == null) {
             return;
         }
-        String pushToken = player.getPushToken();
-        if (pushToken == null || pushToken.isBlank()) {
+        List<PlayerPushToken> registrations = playerPushTokenRepository.findByPlayerId(player.getId());
+        if (registrations.isEmpty()) {
             log.info(
                     "Skipping give-up push for expired upload session {}: player {} has no push token",
                     session.getId(),
@@ -598,20 +601,10 @@ public class ChunkedUploadService {
             customData.put("originalFileName", session.getOriginalFileName());
         }
 
-        PushPlatform platform = player.getPushPlatform();
-        List<String> tokens = List.of(pushToken);
-        if (platform == PushPlatform.android) {
-            fcmPushService.sendPush(tokens, title, body, customData);
-        } else if (platform == PushPlatform.ios) {
-            apnsPushService.sendPush(tokens, title, body, customData);
-        } else {
-            // Unknown platform (null): do not attempt to push. Sending an
-            // Android FCM token via APNs (or vice versa) would fail anyway
-            // and could be misattributed as an iOS delivery in metrics.
-            // The client will re-register with a platform on next sign-in.
-            meterRegistry.counter("uploads.sessions.expired_push_skipped_unknown_platform").increment();
-            return;
-        }
+        List<String> fcm = registrations.stream().filter(r -> r.getPlatform() == PushPlatform.android).map(PlayerPushToken::getToken).toList();
+        List<String> apns = registrations.stream().filter(r -> r.getPlatform() == PushPlatform.ios).map(PlayerPushToken::getToken).toList();
+        if (!fcm.isEmpty()) fcmPushService.sendPush(fcm, title, body, customData);
+        if (!apns.isEmpty()) apnsPushService.sendPush(apns, title, body, customData);
         meterRegistry.counter("uploads.sessions.expired_push_sent").increment();
     }
 

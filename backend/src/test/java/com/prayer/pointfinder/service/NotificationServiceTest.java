@@ -40,6 +40,8 @@ class NotificationServiceTest {
     @Mock
     private PlayerRepository playerRepository;
     @Mock
+    private com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository;
+    @Mock
     private GameEventBroadcaster eventBroadcaster;
     @Mock
     private ApnsPushService apnsPushService;
@@ -136,7 +138,7 @@ class NotificationServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
-        when(playerRepository.findByTeamIdAndPushTokenIsNotNull(teamId)).thenReturn(List.of());
+        when(playerPushTokenRepository.findByPlayerTeamId(teamId)).thenReturn(List.of());
 
         NotificationResponse response = notificationService.createNotification(gameId, request);
 
@@ -144,8 +146,8 @@ class NotificationServiceTest {
         assertEquals("Go to base 3!", response.message());
         assertEquals(teamId, response.targetTeamId());
         verify(eventBroadcaster).broadcastNotification(eq(gameId), any(NotificationResponse.class));
-        verify(playerRepository).findByTeamIdAndPushTokenIsNotNull(teamId);
-        verify(playerRepository, never()).findByTeamGameIdAndPushTokenIsNotNull(any());
+        verify(playerPushTokenRepository).findByPlayerTeamId(teamId);
+        verify(playerPushTokenRepository, never()).findByGameId(any());
     }
 
     // --- createNotification: send to all teams (broadcast) ---
@@ -163,38 +165,24 @@ class NotificationServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
-        when(playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId)).thenReturn(List.of());
+        when(playerPushTokenRepository.findByGameId(gameId)).thenReturn(List.of());
 
         NotificationResponse response = notificationService.createNotification(gameId, request);
 
         assertNotNull(response.id());
         assertNull(response.targetTeamId());
         verify(eventBroadcaster).broadcastNotification(eq(gameId), any(NotificationResponse.class));
-        verify(playerRepository).findByTeamGameIdAndPushTokenIsNotNull(gameId);
-        verify(playerRepository, never()).findByTeamIdAndPushTokenIsNotNull(any());
+        verify(playerPushTokenRepository).findByGameId(gameId);
+        verify(playerPushTokenRepository, never()).findByPlayerTeamId(any());
     }
 
     // --- createNotification: push dispatch splits by platform ---
 
     @Test
     void createNotificationDispatchesPushByPlatform() {
-        Player iosPlayer = Player.builder()
-                .id(UUID.randomUUID())
-                .team(team)
-                .deviceId("ios-device")
-                .displayName("iOS Scout")
-                .pushToken("apns-token-123")
-                .pushPlatform(PushPlatform.ios)
-                .build();
+        com.prayer.pointfinder.entity.PlayerPushToken iosPlayer = com.prayer.pointfinder.entity.PlayerPushToken.builder().id(UUID.randomUUID()).player(Player.builder().id(UUID.randomUUID()).team(team).deviceId("ios-device").build()).deviceId("ios-device").token("apns-token-123").platform(PushPlatform.ios).build();
 
-        Player androidPlayer = Player.builder()
-                .id(UUID.randomUUID())
-                .team(team)
-                .deviceId("android-device")
-                .displayName("Android Scout")
-                .pushToken("fcm-token-456")
-                .pushPlatform(PushPlatform.android)
-                .build();
+        com.prayer.pointfinder.entity.PlayerPushToken androidPlayer = com.prayer.pointfinder.entity.PlayerPushToken.builder().id(UUID.randomUUID()).player(Player.builder().id(UUID.randomUUID()).team(team).deviceId("android-device").build()).deviceId("android-device").token("fcm-token-456").platform(PushPlatform.android).build();
 
         CreateNotificationRequest request = new CreateNotificationRequest();
         request.setMessage("Alert!");
@@ -207,7 +195,7 @@ class NotificationServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
-        when(playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId))
+        when(playerPushTokenRepository.findByGameId(gameId))
                 .thenReturn(List.of(iosPlayer, androidPlayer));
 
         notificationService.createNotification(gameId, request);
@@ -225,14 +213,7 @@ class NotificationServiceTest {
 
     @Test
     void createNotificationSendsOnlyApnsWhenNoAndroidPlayers() {
-        Player iosPlayer = Player.builder()
-                .id(UUID.randomUUID())
-                .team(team)
-                .deviceId("ios-device")
-                .displayName("iOS Scout")
-                .pushToken("apns-token-123")
-                .pushPlatform(PushPlatform.ios)
-                .build();
+        com.prayer.pointfinder.entity.PlayerPushToken iosPlayer = com.prayer.pointfinder.entity.PlayerPushToken.builder().id(UUID.randomUUID()).player(Player.builder().id(UUID.randomUUID()).team(team).deviceId("ios-device").build()).deviceId("ios-device").token("apns-token-123").platform(PushPlatform.ios).build();
 
         CreateNotificationRequest request = new CreateNotificationRequest();
         request.setMessage("iOS only");
@@ -245,7 +226,7 @@ class NotificationServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
-        when(playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId))
+        when(playerPushTokenRepository.findByGameId(gameId))
                 .thenReturn(List.of(iosPlayer));
 
         notificationService.createNotification(gameId, request);
@@ -267,7 +248,7 @@ class NotificationServiceTest {
             saved.setId(UUID.randomUUID());
             return saved;
         });
-        when(playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId))
+        when(playerPushTokenRepository.findByGameId(gameId))
                 .thenReturn(List.of());
 
         notificationService.createNotification(gameId, request);
@@ -327,36 +308,4 @@ class NotificationServiceTest {
 
     // --- createNotification: null pushPlatform skips push ---
 
-    @Test
-    void createNotificationSkipsPushForNullPlatform() {
-        Player nullPlatformPlayer = Player.builder()
-                .id(UUID.randomUUID())
-                .team(team)
-                .deviceId("old-device")
-                .displayName("Legacy Scout")
-                .pushToken("apns-legacy-token")
-                .pushPlatform(null)
-                .build();
-
-        CreateNotificationRequest request = new CreateNotificationRequest();
-        request.setMessage("Legacy push");
-        request.setTargetTeamId(null);
-
-        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(operator));
-        when(notificationRepository.save(any(GameNotification.class))).thenAnswer(invocation -> {
-            GameNotification saved = invocation.getArgument(0);
-            saved.setId(UUID.randomUUID());
-            return saved;
-        });
-        when(playerRepository.findByTeamGameIdAndPushTokenIsNotNull(gameId))
-                .thenReturn(List.of(nullPlatformPlayer));
-
-        notificationService.createNotification(gameId, request);
-
-        // Null platform players are excluded from both APNs and FCM push
-        // dispatch — only players with an explicit platform receive push.
-        verify(apnsPushService, never()).sendPush(any(), any(), any(), any());
-        verify(fcmPushService, never()).sendPush(any(), any(), any(), any());
-    }
 }

@@ -94,6 +94,7 @@ class ChunkedUploadS3IntegrationTest extends IntegrationTestBase {
     @Autowired private S3Client s3Client;
     @Autowired private ThumbnailService thumbnailService;
     @Autowired private UploadSessionRepository uploadSessionRepository;
+    @Autowired private com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository;
     @Autowired private UploadSessionChunkRepository uploadSessionChunkRepository;
     @Autowired private GameAccessService gameAccessService;
     @Autowired private FileStorageService fileStorageService;
@@ -138,7 +139,7 @@ class ChunkedUploadS3IntegrationTest extends IntegrationTestBase {
     private ChunkedUploadService newInstance() {
         return new ChunkedUploadService(
                 uploadSessionRepository, uploadSessionChunkRepository, new S3ChunkStore(objectStorage),
-                entityManager, playerRepository, gameAccessService, fileStorageService, meterRegistry,
+                entityManager, playerRepository, playerPushTokenRepository, gameAccessService, fileStorageService, meterRegistry,
                 apnsPushService, fcmPushService, uploadProps, quotaService);
     }
 

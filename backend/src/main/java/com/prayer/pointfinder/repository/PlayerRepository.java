@@ -24,10 +24,6 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
 
     Optional<Player> findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(String deviceId, UUID gameId);
 
-    List<Player> findByTeamGameIdAndPushTokenIsNotNull(UUID gameId);
-
-    List<Player> findByTeamIdAndPushTokenIsNotNull(UUID teamId);
-
     @Query("""
             SELECT p
             FROM Player p

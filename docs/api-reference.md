@@ -607,6 +607,8 @@ All three endpoints emit an `operator_override` activity event via the standard 
 |--------|------|------|-------------|
 | GET | `/player/account` | Player | `{ linked, email, name, emailVerified }` for the calling participation |
 | DELETE | `/player/account/link` | Player | Unlink: the row becomes a guest again; the phone keeps playing |
+
+**Push registration is per phone (PF-01).** `PUT /player/push-token` accepts `{ pushToken, platform, deviceId? }`; the row lives in `player_push_tokens` keyed by `(player_id, device_id)`, so a participation recovered on a second phone receives on both. Older clients that omit `deviceId` register under the player's own device id. `DELETE /player/push-token` removes that phone's row only. A token rejected by APNs/FCM is dropped from every phone that registered it.
 | POST | `/player/account/link` | Player | `{ email?, password?, name?, createAccount, accountAccessToken? }` (credentials, or the phone's account session token). Links the calling player row to the account **in place**: the player id and token do not change. `createAccount=true` creates a `participant` user (unverified until the mailed link is opened) and sends the verification mail. Errors: `EMAIL_ALREADY_TAKEN` (400), `INVALID_CREDENTIALS` (400), `PLAYER_ALREADY_LINKED` (409), `ACCOUNT_ALREADY_IN_GAME` (409, `errors: { teamId, teamName, sameTeam }`) |
 
 

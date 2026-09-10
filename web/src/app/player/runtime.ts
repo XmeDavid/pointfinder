@@ -9,6 +9,7 @@ import { HttpClient } from '@pointfinder/api'
 import { platformFetch } from '@/platform/http'
 import { apiOrigin } from '@/platform/config'
 import { refreshLocationWatch, startLocationStore } from './locationStore'
+import { getDeviceId } from './device'
 import { playerGameIsLive, startArrivalDetector } from './arrival'
 
 /** App-level recovery continues even when no player gameplay screen is mounted. */
@@ -46,7 +47,7 @@ export function startPlayerRuntime(services: AppServices, queries: QueryClient):
       const auth = services.client.session.current
       if (auth.kind === 'player') return { key: `player:${auth.playerId}`, register: async (registration) => {
         if (services.client.session.current.kind !== 'player' || services.client.session.current.playerId !== auth.playerId) return
-        await services.client.api.player.registerPushToken({ pushToken: registration.token, platform: registration.platform })
+        await services.client.api.player.registerPushToken({ pushToken: registration.token, platform: registration.platform, deviceId: await getDeviceId() })
       }, unregister: async (registration) => {
         // Capture only in memory: logout can clear the session before teardown.
         const http = new HttpClient({ baseUrl: apiOrigin(), fetch: platformFetch, getToken: async () => auth.token })

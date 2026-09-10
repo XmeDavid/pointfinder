@@ -76,6 +76,8 @@ class ChunkedUploadServiceTest {
     @Mock
     private MeterRegistry meterRegistry;
     @Mock
+    private com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository = mock(com.prayer.pointfinder.repository.PlayerPushTokenRepository.class);
+    @Mock
     private ApnsPushService apnsPushService;
     @Mock
     private FcmPushService fcmPushService;
@@ -106,6 +108,7 @@ class ChunkedUploadServiceTest {
                 new com.prayer.pointfinder.service.upload.LocalChunkStore(tempDir),
                 mock(jakarta.persistence.EntityManager.class),
                 playerRepository,
+                playerPushTokenRepository,
                 gameAccessService,
                 fileStorageService,
                 meterRegistry,
@@ -527,8 +530,7 @@ class ChunkedUploadServiceTest {
         UUID playerId = UUID.randomUUID();
         Player authPlayer = Player.builder().id(playerId).build();
         Player managedPlayer = buildPlayer(playerId, gameId);
-        managedPlayer.setPushToken("apns-token-abcdef");
-        managedPlayer.setPushPlatform(PushPlatform.ios);
+        when(playerPushTokenRepository.findByPlayerId(playerId)).thenReturn(List.of(com.prayer.pointfinder.entity.PlayerPushToken.builder().player(managedPlayer).deviceId("dev").token("apns-token-abcdef").platform(PushPlatform.ios).build()));
         when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 
@@ -558,8 +560,7 @@ class ChunkedUploadServiceTest {
         UUID playerId = UUID.randomUUID();
         Player authPlayer = Player.builder().id(playerId).build();
         Player managedPlayer = buildPlayer(playerId, gameId);
-        managedPlayer.setPushToken("fcm-token-12345");
-        managedPlayer.setPushPlatform(PushPlatform.android);
+        when(playerPushTokenRepository.findByPlayerId(playerId)).thenReturn(List.of(com.prayer.pointfinder.entity.PlayerPushToken.builder().player(managedPlayer).deviceId("dev").token("fcm-token-12345").platform(PushPlatform.android).build()));
         when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 
@@ -584,8 +585,7 @@ class ChunkedUploadServiceTest {
         UUID playerId = UUID.randomUUID();
         Player authPlayer = Player.builder().id(playerId).build();
         Player managedPlayer = buildPlayer(playerId, gameId);
-        managedPlayer.setPushToken("apns-token-broken");
-        managedPlayer.setPushPlatform(PushPlatform.ios);
+        when(playerPushTokenRepository.findByPlayerId(playerId)).thenReturn(List.of(com.prayer.pointfinder.entity.PlayerPushToken.builder().player(managedPlayer).deviceId("dev").token("apns-token-broken").platform(PushPlatform.ios).build()));
         when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(managedPlayer));
         doNothing().when(gameAccessService).ensurePlayerBelongsToGame(any(Player.class), eq(gameId));
 

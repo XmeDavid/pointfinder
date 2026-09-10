@@ -12,6 +12,10 @@ public class UpdatePushTokenRequest {
     @NotBlank
     private String pushToken;
 
+    /** PF-01: which phone this registration belongs to. Older clients omit it and mean the player's own device. */
+    @jakarta.validation.constraints.Size(max = 128)
+    private String deviceId;
+
     @Pattern(regexp = "ios|android", message = "platform must be ios or android")
     private String platform;
 
