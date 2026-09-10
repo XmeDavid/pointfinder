@@ -92,6 +92,24 @@ Documents render inline through `RichContent`. Reached from the map header
 `documents-offline-hint`, `document-<id>`, `document-body`,
 `document-missing`.
 
+Component: AccountScreen / RecoverScreen / Settings Account section
+Status: canonical
+Location: `web/src/features/player/AccountScreen.tsx`, `web/src/features/player/RecoverScreen.tsx`, `web/src/features/player/SettingsScreen.tsx`
+Modes: Player Field (Settings → Account, `/account`), Auth (`/join/recover`)
+States: unlinked (create / sign in tabs, password hint), linked (email, unverified
+hint), taken email, wrong password, already linked, account already plays
+elsewhere (switch dialog), switch blocked by queued actions, recover not
+found, busy, offline error.
+Notes: PF-01/PF-02 first slice. Credentials are used once; the player
+session never changes principal and the operator-wins native routing is
+untouched. Recover replaces the session and is refused while the offline
+queue is non-empty. The operator web login refuses `participant` accounts
+with a pointer to the player app. Test ids: `settings-save-progress`,
+`settings-account-linked`, `account-mode-create`, `account-mode-signin`,
+`account-email`, `account-name`, `account-password`, `account-submit`,
+`account-linked`, `account-unverified`, `recover-email`, `recover-password`,
+`recover-code`, `recover-submit`, `player-join-recover-link`.
+
 Component: BrandMark / BrandLockup / BrandTile
 Status: canonical
 Location: `web/src/components/brand/BrandMark.tsx`

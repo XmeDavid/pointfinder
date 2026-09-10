@@ -1570,7 +1570,8 @@
       "email": "Email",
       "password": "Palavra-passe",
       "signIn": "Entrar",
-      "invalid": "Email ou palavra-passe errados."
+      "invalid": "Email ou palavra-passe errados.",
+      "participantOnly": "Esta é uma conta de jogador. Abre a app PointFinder para jogar; os operadores precisam de uma conta de operador."
     },
     "nfc": {
       "holdToRead": "Aproxima o telemóvel da etiqueta",
@@ -1748,7 +1749,44 @@
       "enableNotifications": "Ativar notificações",
       "notificationsHint": "Recebe mensagens do teu operador mesmo com a app fechada.",
       "help": "Ajuda",
-      "howItWorks": "Como funciona o PointFinder"
+      "howItWorks": "Como funciona o PointFinder",
+      "account": "Conta",
+      "saveProgress": "Guardar o meu progresso",
+      "saveProgressHint": "Cria uma conta ou inicia sessão para recuperar este jogo noutro telemóvel.",
+      "savedTo": "Guardado em",
+      "emailUnverified": "Email ainda não confirmado. Vê a tua caixa de entrada."
+    },
+    "account": {
+      "title": "Guardar o meu progresso",
+      "subtitle": "A tua equipa, check-ins e respostas ficam exatamente como estão. Uma conta permite recuperá-los noutro telemóvel.",
+      "create": "Criar conta",
+      "signIn": "Iniciar sessão",
+      "email": "Email",
+      "name": "O teu nome",
+      "password": "Palavra-passe",
+      "passwordHint": "Pelo menos 8 caracteres, uma maiúscula e um algarismo.",
+      "submitCreate": "Criar e guardar",
+      "submitSignIn": "Iniciar sessão e guardar",
+      "linked": "Progresso guardado",
+      "linkedHint": "Já podes recuperar este jogo em qualquer telemóvel com",
+      "emailTaken": "Esse email já tem uma conta. Inicia sessão em vez disso.",
+      "alreadyLinked": "Este jogo já está guardado numa conta.",
+      "alreadyInGameTitle": "Já estás a jogar este jogo",
+      "alreadyInGame": "A tua conta já está a jogar como {{team}} noutro telemóvel. Mudar este telemóvel para esse jogo?",
+      "alreadyInGameSameTeam": "A tua conta já está a jogar na {{team}} noutro telemóvel. Mudar este telemóvel para essa participação?",
+      "switchDevice": "Mudar para lá",
+      "switchBlocked": "Sincroniza primeiro as ações pendentes e tenta de novo.",
+      "switchBlocked_one": "Tens {{count}} ação por sincronizar. Deixa-a sincronizar e tenta de novo.",
+      "switchBlocked_other": "Tens {{count}} ações por sincronizar. Deixa-as sincronizar e tenta de novo.",
+      "back": "Voltar às definições"
+    },
+    "recover": {
+      "title": "Recuperar o teu jogo",
+      "subtitle": "Inicia sessão com a conta onde guardaste o progresso e introduz qualquer código de equipa desse jogo.",
+      "codeLabel": "Código da equipa",
+      "submit": "Recuperar o meu jogo",
+      "notFound": "Esta conta não entrou nesse jogo.",
+      "link": "Já guardaste o teu progresso? Recupera o teu jogo"
     },
     "inbox": {
       "title": "Notificações",

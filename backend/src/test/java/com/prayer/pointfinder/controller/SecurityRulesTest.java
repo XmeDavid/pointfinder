@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     AuthController.class,
     GameController.class,
     PlayerController.class,
+    PlayerAccountController.class,
     AdminOrgController.class
 })
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class})
@@ -61,6 +62,8 @@ class SecurityRulesTest {
 
     @MockitoBean
     private JwtTokenProvider tokenProvider;
+    @MockitoBean
+    private com.prayer.pointfinder.service.PlayerAccountService playerAccountService;
 
     @MockitoBean
     private com.prayer.pointfinder.repository.UserSubscriptionRepository userSubscriptionRepository;
@@ -174,6 +177,32 @@ class SecurityRulesTest {
         when(tokenProvider.getTokenType(PLAYER_TOKEN)).thenReturn("player");
         when(tokenProvider.getUserIdFromToken(PLAYER_TOKEN)).thenReturn(playerId);
         when(playerRepository.findAuthPlayerById(playerId)).thenReturn(Optional.of(player));
+    }
+
+    // ── PF-01 account routes ──────────────────────────────────────────
+
+    @Test
+    void playerAccountRequiresAPlayerToken() throws Exception {
+        mockMvc.perform(get("/api/player/account"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/player/account")
+                        .header("Authorization", "Bearer " + OPERATOR_TOKEN))
+                .andExpect(status().isForbidden());
+        org.mockito.Mockito.when(playerAccountService.account(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(com.prayer.pointfinder.dto.response.PlayerAccountResponse.guest());
+        mockMvc.perform(get("/api/player/account")
+                        .header("Authorization", "Bearer " + PLAYER_TOKEN))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void playerRecoverIsReachableWithoutASession() throws Exception {
+        // Like join: the body carries the credentials, so no bearer token is needed to reach it.
+        // An empty body is rejected by validation, which proves the route was reached, not the filter chain.
+        mockMvc.perform(post("/api/auth/player/recover")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

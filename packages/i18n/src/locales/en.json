@@ -1570,7 +1570,8 @@
       "email": "Email",
       "password": "Password",
       "signIn": "Sign in",
-      "invalid": "Wrong email or password."
+      "invalid": "Wrong email or password.",
+      "participantOnly": "This is a player account. Open the PointFinder app to play; operators need an operator account."
     },
     "nfc": {
       "holdToRead": "Hold your phone near the tag",
@@ -1748,7 +1749,44 @@
       "enableNotifications": "Enable notifications",
       "notificationsHint": "Get messages from your operator even when the app is closed.",
       "help": "Help",
-      "howItWorks": "How PointFinder works"
+      "howItWorks": "How PointFinder works",
+      "account": "Account",
+      "saveProgress": "Save my progress",
+      "saveProgressHint": "Create an account or sign in to get this game back on another phone.",
+      "savedTo": "Saved to",
+      "emailUnverified": "Email not confirmed yet. Check your inbox."
+    },
+    "account": {
+      "title": "Save my progress",
+      "subtitle": "Your team, check-ins and answers stay exactly as they are. An account lets you get them back on another phone.",
+      "create": "Create account",
+      "signIn": "Sign in",
+      "email": "Email",
+      "name": "Your name",
+      "password": "Password",
+      "passwordHint": "At least 8 characters, one uppercase letter and one digit.",
+      "submitCreate": "Create and save",
+      "submitSignIn": "Sign in and save",
+      "linked": "Progress saved",
+      "linkedHint": "You can now recover this game from any phone with",
+      "emailTaken": "That email already has an account. Sign in instead.",
+      "alreadyLinked": "This game is already saved to an account.",
+      "alreadyInGameTitle": "You already play this game",
+      "alreadyInGame": "Your account is already playing as {{team}} on another phone. Switch this phone to that game?",
+      "alreadyInGameSameTeam": "Your account is already playing in {{team}} on another phone. Switch this phone to that participation?",
+      "switchDevice": "Switch to it",
+      "switchBlocked": "Sync your pending actions first, then try again.",
+      "switchBlocked_one": "You have {{count}} unsynced action. Let it sync first, then try again.",
+      "switchBlocked_other": "You have {{count}} unsynced actions. Let them sync first, then try again.",
+      "back": "Back to settings"
+    },
+    "recover": {
+      "title": "Get your game back",
+      "subtitle": "Sign in with the account you saved your progress to and enter any team code of that game.",
+      "codeLabel": "Team code",
+      "submit": "Recover my game",
+      "notFound": "This account hasn't joined that game.",
+      "link": "Already saved your progress? Get your game back"
     },
     "inbox": {
       "title": "Notifications",

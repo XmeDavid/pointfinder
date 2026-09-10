@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { BrandLockup } from '@/components/brand'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -61,6 +62,8 @@ export default function SettingsScreen() {
     const off = onPushPermissionChange(() => void refresh())
     return () => { alive = false; off() }
   }, [])
+
+  const account = useQuery({ queryKey: ['account'], queryFn: () => client.api.player.account(), enabled: auth.kind === 'player' })
 
   if (auth.kind !== 'player') return null
 
@@ -141,6 +144,20 @@ export default function SettingsScreen() {
       <Section title={t('settings.device')}>
         <Row label={t('settings.deviceId')} value={<span className="font-mono text-xs">{deviceId ? `${deviceId.slice(0, 8)}…` : '…'}</span>} />
         <Row label={t('settings.pendingActions')} value={game.pending.length} testId="settings-pending-actions" />
+      </Section>
+
+      <Section title={t('settings.account')}>
+        {account.data?.linked ? (
+          <div className="flex flex-col gap-1 px-4 py-3" data-testid="settings-account-linked">
+            <p className="text-sm"><span className="text-muted-foreground">{t('settings.savedTo')}</span> <span className="font-medium">{account.data.email}</span></p>
+            {!account.data.emailVerified && <p className="text-xs text-muted-foreground">{t('settings.emailUnverified')}</p>}
+          </div>
+        ) : (
+          <Link to="/account" className="flex min-h-12 flex-col justify-center px-4 py-2.5" data-testid="settings-save-progress">
+            <span className="text-sm font-medium">{t('settings.saveProgress')}</span>
+            <span className="text-xs text-muted-foreground">{t('settings.saveProgressHint')}</span>
+          </Link>
+        )}
       </Section>
 
       <Section title={t('settings.help')}>

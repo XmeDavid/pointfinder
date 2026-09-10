@@ -125,6 +125,7 @@ export default function Join() {
         {error && <Alert variant="destructive" role="alert">{error}</Alert>}
         <Button size="lg" type="submit" className="text-base" disabled={busy || !joinCode.trim() || !displayName.trim()} data-testid="player-join-submit-btn">{t('join.join')}</Button>
       </form>
+      <Link to="/join/recover" className="text-center text-sm text-primary underline" data-testid="player-join-recover-link">{t('recover.link')}</Link>
     </Screen>
   )
 }

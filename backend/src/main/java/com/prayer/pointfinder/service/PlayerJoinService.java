@@ -54,6 +54,7 @@ public class PlayerJoinService {
             quotaService.enforcePlayersPerGameLimit(game);
             player = Player.builder()
                     .team(team)
+                    .game(game)
                     .deviceId(request.getDeviceId())
                     .displayName(request.getDisplayName())
                     .build();
@@ -89,25 +90,6 @@ public class PlayerJoinService {
         // Generate JWT token using the persisted player ID
         String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
 
-        return new PlayerAuthResponse(
-                jwt,
-                new PlayerAuthResponse.PlayerInfo(
-                        player.getId(),
-                        player.getDisplayName(),
-                        player.getDeviceId()
-                ),
-                new PlayerAuthResponse.TeamInfo(
-                        team.getId(),
-                        team.getName(),
-                        team.getColor()
-                ),
-                new PlayerAuthResponse.GameInfo(
-                        game.getId(),
-                        game.getName(),
-                        game.getDescription(),
-                        game.getStatus().name(),
-                        game.getTileSource()
-                )
-        );
+        return PlayerAuthResponse.of(jwt, player, team, game);
     }
 }

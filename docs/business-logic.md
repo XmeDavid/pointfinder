@@ -1130,6 +1130,8 @@ When locked out, `POST /api/auth/login` returns 400 with "Too many login attempt
 | Token | Single JWT (HS256), TTL **7 days** |
 | No refresh token | Players get a long-lived token; no refresh flow |
 | Device ID | Used to identify the player across sessions; same device in same game = same player record |
+| Account link | Optional `players.user_id` (PF-01, 2026-09-10). A guest links an account in place through `POST /api/player/account/link`; the row, token, offline queue and caches are untouched. One participation per account per game (`uq_players_user_game`). `POST /api/auth/player/recover` returns the same row for a second device and moves `device_id` there. Claims that collide answer `ACCOUNT_ALREADY_IN_GAME`; rows are never merged |
+| `participant` role | A registered player created from inside the game. Spring authority `ROLE_PARTICIPANT`, deliberately distinct from the player token's `ROLE_PLAYER`; no operator routes. `users.email_verified` is false until the mailed link is opened; verification never gates play or recovery |
 | Storage (iOS) | JWT in Keychain |
 | Storage (Android) | EncryptedSharedPreferences (AES256-GCM) |
 
@@ -1146,6 +1148,7 @@ The `type` claim is used by `JwtAuthenticationFilter` to route to the correct us
 | `ADMIN` | Global | All games, all users, global operator management |
 | `OPERATOR` | Game-scoped | Only games they created or were added to as an operator |
 | `PLAYER` | Game-scoped | Only `/api/player/**` endpoints; scoped to their team and game |
+| `PARTICIPANT` | Account | A registered player's user account. Only `/api/auth/**`; claims and recovers participations, never operates |
 
 **Game-scoped access**: Operators can only access a game if they are its creator or appear in the `game_operators` join table. `GameService.getAllGames()` filters by this for non-admin users.
 

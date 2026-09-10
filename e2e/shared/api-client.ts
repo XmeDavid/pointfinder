@@ -59,6 +59,26 @@ export async function playerJoin(joinCode: string, displayName: string, deviceId
   return { status: res.status, data: await json(res) };
 }
 
+// --- Player account (PF-01/PF-02) ---
+
+export async function playerAccount(playerToken: string) {
+  const res = await request('GET', '/api/player/account', { token: playerToken });
+  return { status: res.status, data: await json(res) };
+}
+
+export async function playerLinkAccount(
+  playerToken: string,
+  body: { email: string; password: string; name?: string; createAccount: boolean },
+) {
+  const res = await request('POST', '/api/player/account/link', { body, token: playerToken });
+  return { status: res.status, data: await json(res) };
+}
+
+export async function playerRecover(body: { email: string; password: string; deviceId: string; joinCode?: string; gameId?: string }) {
+  const res = await request('POST', '/api/auth/player/recover', { body });
+  return { status: res.status, data: await json(res) };
+}
+
 // --- Games ---
 
 export async function createGame(token: string, body: { name: string; description?: string }) {

@@ -31,6 +31,12 @@ export function LoginPage() {
     holdPostAuthRedirect();
     try {
       await login(email, password);
+      // A player account has nothing to do here; the game lives in the player app.
+      if (useAuthStore.getState().user?.role === "participant") {
+        useAuthStore.getState().logout();
+        setError(t("playerApp.login.participantOnly"));
+        return;
+      }
       const userId = useAuthStore.getState().user?.id;
       let destination: string | null = DASHBOARD_ROUTE;
       if (userId) {

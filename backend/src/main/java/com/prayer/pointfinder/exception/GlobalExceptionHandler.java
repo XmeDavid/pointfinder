@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
-        return jsonError(HttpStatus.CONFLICT, ex.getMessage(), null, null,
+        return jsonError(HttpStatus.CONFLICT, ex.getMessage(), ex.getErrors(), null,
                 ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 

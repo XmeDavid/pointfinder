@@ -166,6 +166,7 @@ public abstract class IntegrationTestBase {
     protected Player createPlayer(Team team, String displayName, String deviceId) {
         Player player = Player.builder()
                 .team(team)
+                .game(team.getGame())
                 .displayName(displayName)
                 .deviceId(deviceId)
                 .build();

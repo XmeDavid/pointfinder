@@ -31,8 +31,14 @@ export function describeError(err: unknown, t: TFunction): string {
         return t('join.invalidCode')
       case 'GAME_NOT_ACTIVE':
         return t('join.gameNotActive')
-      case 'DEVICE_IN_OTHER_TEAM':
+      case 'DEVICE_ALREADY_IN_DIFFERENT_TEAM':
         return t('join.deviceInOtherTeam')
+      case 'NO_PARTICIPATION_FOUND':
+        return t('recover.notFound')
+      case 'EMAIL_ALREADY_TAKEN':
+        return t('account.emailTaken')
+      case 'PLAYER_ALREADY_LINKED':
+        return t('account.alreadyLinked')
       case 'TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT':
         return t('join.practiceFull')
       case 'INVALID_CREDENTIALS':

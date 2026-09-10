@@ -46,6 +46,7 @@
 | POST | `/auth/reset-password` | None | Complete password reset with token + new password |
 | POST | `/auth/request-registration` | None | Request operator registration (sends link if eligible) |
 | POST | `/auth/player/join` | None | Join a team via join code; returns player JWT |
+| POST | `/auth/player/recover` | None | PF-01: an account recovers its existing participation on this device; same shape and rate limit as join |
 
 ### Key Payloads
 
@@ -78,6 +79,12 @@ Response: `{ "message": "If eligible, a registration link has been sent." }`
 { "joinCode": "string", "displayName": "string", "deviceId": "string" }
 ```
 Response: `{ "token", "player": { id, displayName }, "team": { id, name, color }, "game": { id, name, status } }`
+
+**POST /auth/player/recover**
+```json
+{ "email": "string", "password": "string", "deviceId": "string", "joinCode": "string?", "gameId": "uuid?" }
+```
+One of `joinCode` (any team code of that game) or `gameId`. Response: the join shape, for the account's existing player row; `device_id` moves to this device. Errors: `INVALID_CREDENTIALS` (400, counts toward the login lockout), `NO_PARTICIPATION_FOUND` (400), ended game (400), `RATE_LIMITED` (429).
 
 **POST /auth/forgot-password**
 ```json
@@ -592,6 +599,14 @@ All three endpoints emit an `operator_override` activity event via the standard 
 
 **Base path**: `/api/player`
 **Auth**: `ROLE_PLAYER` (except `/auth/player/join` which is public)
+
+**Account behind a participation (PF-01/PF-02)**
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/player/account` | Player | `{ linked, email, name, emailVerified }` for the calling participation |
+| POST | `/player/account/link` | Player | `{ email, password, name?, createAccount }`. Links the calling player row to the account **in place**: the player id and token do not change. `createAccount=true` creates a `participant` user (unverified until the mailed link is opened) and sends the verification mail. Errors: `EMAIL_ALREADY_TAKEN` (400), `INVALID_CREDENTIALS` (400), `PLAYER_ALREADY_LINKED` (409), `ACCOUNT_ALREADY_IN_GAME` (409, `errors: { teamId, teamName, sameTeam }`) |
+
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|

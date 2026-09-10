@@ -17,6 +17,16 @@ describe('SettingsScreen', () => {
     expect(screen.getByTestId('settings-pending-actions')).toHaveTextContent('0')
   })
 
+  it('offers to save progress, and shows the linked account once saved', async () => {
+    await renderPlayer(<SettingsScreen />)
+    expect(await screen.findByTestId('settings-save-progress')).toHaveAttribute('href', '/account')
+    server.use(http.get('/api/player/account', () => HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: false })))
+    await renderPlayer(<SettingsScreen />)
+    const linked = await screen.findByTestId('settings-account-linked')
+    expect(linked).toHaveTextContent('ana@example.com')
+    expect(linked).toHaveTextContent('Email not confirmed yet')
+  })
+
   it('leaves the game after a plain confirmation when nothing is queued', async () => {
     const { services } = await renderPlayer(<SettingsScreen />)
     await screen.findByText('Serra da Estrela')

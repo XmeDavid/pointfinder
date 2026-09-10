@@ -60,6 +60,11 @@ public class User {
     @Column(name = "token_version", nullable = false)
     private Integer tokenVersion = 0;
 
+    /** False only for participant self-signups until they open the verification email. */
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = true;
+
     @ManyToMany(mappedBy = "operators")
     @Builder.Default
     private Set<Game> operatedGames = new HashSet<>();

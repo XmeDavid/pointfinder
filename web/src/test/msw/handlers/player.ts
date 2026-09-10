@@ -54,6 +54,25 @@ export const playerHandlers = [
     })
   }),
   http.get('/api/player/games/:gameId/files', () => HttpResponse.json(playerFixtures.files)),
+  http.get('/api/player/account', () => HttpResponse.json({ linked: false, email: null, name: null, emailVerified: false })),
+  http.post('/api/player/account/link', async ({ request }) => {
+    const body = (await request.json()) as { email: string; password: string; name?: string; createAccount: boolean }
+    if (body.email === 'taken@example.com') return HttpResponse.json({ status: 400, message: 'Email already registered', code: 'EMAIL_ALREADY_TAKEN' }, { status: 400 })
+    if (body.email === 'elsewhere@example.com') return HttpResponse.json({ status: 409, message: 'This account already plays in this game', code: 'ACCOUNT_ALREADY_IN_GAME', errors: { teamId: 'team9', teamName: 'Owls', sameTeam: 'false' } }, { status: 409 })
+    if (!body.createAccount && body.password !== 'Secret123') return HttpResponse.json({ status: 400, message: 'Invalid credentials', code: 'INVALID_CREDENTIALS' }, { status: 400 })
+    return HttpResponse.json({ linked: true, email: body.email, name: body.name ?? 'Ana', emailVerified: !body.createAccount })
+  }),
+  http.post('/api/auth/player/recover', async ({ request }) => {
+    const body = (await request.json()) as { email: string; password: string; deviceId: string; joinCode?: string; gameId?: string }
+    if (body.password !== 'Secret123') return HttpResponse.json({ status: 400, message: 'Invalid credentials', code: 'INVALID_CREDENTIALS' }, { status: 400 })
+    if (body.joinCode === 'NOPE01') return HttpResponse.json({ status: 400, message: 'This account has not joined this game', code: 'NO_PARTICIPATION_FOUND' }, { status: 400 })
+    return HttpResponse.json({
+      token: 'recovered-token',
+      player: { id: 'p9', displayName: 'Ana', deviceId: body.deviceId },
+      team: { id: 'team9', name: 'Owls', color: '#8b5cf6' },
+      game: { id: 'g1', name: 'Serra da Estrela', description: '', status: 'live', tileSource: 'osm' },
+    })
+  }),
   http.get('/api/player/notifications', () => HttpResponse.json(playerFixtures.notifications)),
   http.get('/api/player/notifications/unseen-count', () => HttpResponse.json({ count: 2 })),
   http.post('/api/player/notifications/mark-seen', () => new HttpResponse(null, { status: 204 })),

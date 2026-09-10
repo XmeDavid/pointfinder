@@ -340,13 +340,17 @@ public class AuthService {
             throw new BadRequestException("This link has expired", ErrorCode.EMAIL_CHANGE_TOKEN_EXPIRED);
         }
 
-        // Check the new email hasn't been taken since the request was made
-        if (userRepository.existsByEmail(token.getNewEmail())) {
+        User user = token.getUser();
+        boolean sameAddress = token.getNewEmail().equalsIgnoreCase(user.getEmail());
+
+        // A participant signup verifies the address it already has; a change must not
+        // land on an address taken since the request was made.
+        if (!sameAddress && userRepository.existsByEmail(token.getNewEmail())) {
             throw new BadRequestException("Email is already taken", ErrorCode.EMAIL_ALREADY_TAKEN);
         }
 
-        User user = token.getUser();
-        user.setEmail(token.getNewEmail());
+        if (!sameAddress) user.setEmail(token.getNewEmail());
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         token.setUsed(true);

@@ -177,6 +177,23 @@ public class EmailService {
     }
 
     @Async
+    public void sendParticipantVerification(String toEmail, String token, String requestHost) {
+        String actionUrl = "https://" + normalizeHost(requestHost) + "/api/auth/confirm-email?token=" + token;
+
+        String contentHtml = "<p style=\"margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;\">"
+                + "Your <strong>" + BRAND_NAME + "</strong> account is ready and your game progress is saved to it.</p>"
+                + "<p style=\"margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;\">"
+                + "Confirm this address so you can recover your games from any device. The link expires in <strong>24 hours</strong>.</p>"
+                + "<p style=\"margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;\">"
+                + "If you didn't create this account, you can safely ignore this email.</p>";
+
+        String html = buildEmailTemplate("Welcome", "Confirm your email", contentHtml,
+                "Confirm Email", actionUrl);
+
+        sendHtmlEmail(toEmail, BRAND_NAME + " \u2014 Confirm your email", html);
+    }
+
+    @Async
     public void sendGameInvite(String toEmail, String gameName, String inviterName, String requestHost) {
         String frontendBaseUrl = resolveFrontendBaseUrl(requestHost);
         String subject = "You've been invited to operate a game on " + BRAND_NAME;

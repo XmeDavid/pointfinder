@@ -10,6 +10,7 @@ import com.prayer.pointfinder.exception.RateLimitExceededException;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
 import com.prayer.pointfinder.service.PlayerJoinRateLimiter;
+import com.prayer.pointfinder.service.PlayerAccountService;
 import com.prayer.pointfinder.service.PlayerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class AuthController {
     private final InviteService inviteService;
     private final PlayerService playerService;
     private final PlayerJoinRateLimiter playerJoinRateLimiter;
+    private final PlayerAccountService playerAccountService;
 
     @Value("${app.frontend-url:https://pointfinder.pt}")
     private String frontendUrl;
@@ -91,6 +93,23 @@ public class AuthController {
             throw new RateLimitExceededException("Too many join attempts. Please try again shortly.");
         }
         return ResponseEntity.ok(playerService.joinTeam(request));
+    }
+
+    /**
+     * PF-01: an account recovers its existing participation on this device. Same
+     * shape and same abuse limits as join, so a stolen password cannot be used to
+     * spray recovery attempts faster than a guest could spray join codes.
+     */
+    @PostMapping("/player/recover")
+    public ResponseEntity<PlayerAuthResponse> recoverParticipation(
+            @Valid @RequestBody PlayerRecoverRequest request,
+            HttpServletRequest httpRequest) {
+        String ip = resolveClientIp(httpRequest);
+        if (!playerJoinRateLimiter.tryAcquire(ip, request.getDeviceId())) {
+            log.warn("[AUTH] operation=playerRecover result=rateLimited ip={} deviceId={}", ip, request.getDeviceId());
+            throw new RateLimitExceededException("Too many attempts. Please try again shortly.");
+        }
+        return ResponseEntity.ok(playerAccountService.recover(request));
     }
 
     private String resolveClientIp(HttpServletRequest request) {

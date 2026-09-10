@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "operator";
+export type UserRole = "admin" | "operator" | "participant";
 export type {
   ActivityCheckInMetadata,
   CheckInMethod,

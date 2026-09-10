@@ -61,6 +61,9 @@ class AuthControllerTest {
     private com.prayer.pointfinder.service.PlayerJoinRateLimiter playerJoinRateLimiter;
 
     @MockitoBean
+    private com.prayer.pointfinder.service.PlayerAccountService playerAccountService;
+
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
@@ -69,6 +72,58 @@ class AuthControllerTest {
     @BeforeEach
     void stubRateLimiterAllow() {
         when(playerJoinRateLimiter.tryAcquire(any(), any())).thenReturn(true);
+    }
+
+    // ── Player recover (PF-01) ────────────────────────────────────────
+
+    @Test
+    void recoverReturnsTheJoinShapeForTheExistingParticipation() throws Exception {
+        com.prayer.pointfinder.dto.request.PlayerRecoverRequest request = new com.prayer.pointfinder.dto.request.PlayerRecoverRequest();
+        request.setEmail("ana@example.com");
+        request.setPassword("Secret123");
+        request.setDeviceId("device-b");
+        request.setJoinCode("TEST01");
+
+        UUID playerId = UUID.randomUUID();
+        when(playerAccountService.recover(any(com.prayer.pointfinder.dto.request.PlayerRecoverRequest.class))).thenReturn(
+                new PlayerAuthResponse("recovered-jwt",
+                        new PlayerAuthResponse.PlayerInfo(playerId, "Ana", "device-b"),
+                        new PlayerAuthResponse.TeamInfo(UUID.randomUUID(), "Falcons", "#111111"),
+                        new PlayerAuthResponse.GameInfo(UUID.randomUUID(), "Camp", "", "live", "osm-classic")));
+
+        mockMvc.perform(post("/api/auth/player/recover")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("recovered-jwt"))
+                .andExpect(jsonPath("$.player.id").value(playerId.toString()))
+                .andExpect(jsonPath("$.player.deviceId").value("device-b"))
+                .andExpect(jsonPath("$.team.name").value("Falcons"));
+        verify(playerJoinRateLimiter).tryAcquire(any(), eq("device-b"));
+    }
+
+    @Test
+    void recoverIsRateLimitedLikeJoin() throws Exception {
+        when(playerJoinRateLimiter.tryAcquire(any(), any())).thenReturn(false);
+        com.prayer.pointfinder.dto.request.PlayerRecoverRequest request = new com.prayer.pointfinder.dto.request.PlayerRecoverRequest();
+        request.setEmail("ana@example.com");
+        request.setPassword("Secret123");
+        request.setDeviceId("device-b");
+        request.setJoinCode("TEST01");
+
+        mockMvc.perform(post("/api/auth/player/recover")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isTooManyRequests());
+        verify(playerAccountService, org.mockito.Mockito.never()).recover(any());
+    }
+
+    @Test
+    void recoverValidatesTheBody() throws Exception {
+        mockMvc.perform(post("/api/auth/player/recover")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"not-an-email\",\"password\":\"\",\"deviceId\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     // ── Player Join tests ─────────────────────────────────────────────

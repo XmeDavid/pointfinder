@@ -28,7 +28,10 @@ import type {
   OperatorSnapshotResponse,
   PlayerAuthResponse,
   PlayerJoinRequest,
+  PlayerAccountLinkRequest,
+  PlayerAccountResponse,
   PlayerNotificationResponse,
+  PlayerRecoverRequest,
   PlayerResource,
   PlayerResponse,
   PlayerSnapshotResponse,
@@ -69,6 +72,8 @@ export function createApi(http: HttpClient) {
   const auth = {
     /** Join a team with its code. The device id keeps a player attached to their team across reinstalls. */
     playerJoin: (body: PlayerJoinRequest) => http.post<PlayerAuthResponse>('/api/auth/player/join', body, { anonymous: true }),
+    /** Same shape as join, for the account's existing participation in that game. */
+    playerRecover: (body: PlayerRecoverRequest) => http.post<PlayerAuthResponse>('/api/auth/player/recover', body, { anonymous: true }),
     operatorLogin: (body: OperatorLoginRequest) => http.post<OperatorAuthResponse>('/api/auth/login', body, { anonymous: true }),
     refresh: (refreshToken: string) => http.post<OperatorAuthResponse>('/api/auth/refresh', { refreshToken }, { anonymous: true }),
     logout: (refreshToken: string) => http.post<void>('/api/auth/logout', { refreshToken }, { anonymous: true }),
@@ -94,6 +99,10 @@ export function createApi(http: HttpClient) {
     notifications: () => http.get<PlayerNotificationResponse[]>('/api/player/notifications'),
     unseenNotificationCount: () => http.get<UnseenCountResponse>('/api/player/notifications/unseen-count'),
     markNotificationsSeen: () => http.post<void>('/api/player/notifications/mark-seen'),
+    /** The account behind this participation, if any. */
+    account: () => http.get<PlayerAccountResponse>('/api/player/account'),
+    /** Link this participation to an account in place; the player token stays valid. */
+    linkAccount: (body: PlayerAccountLinkRequest) => http.post<PlayerAccountResponse>('/api/player/account/link', body),
     /** GDPR self-service: removes the player record. Team data stays. */
     deleteMe: () => http.delete('/api/player/me'),
     uploads: {

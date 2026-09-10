@@ -13,6 +13,8 @@ const Settings = lazy(() => import('@/features/player/SettingsScreen'))
 const Inbox = lazy(() => import('@/features/player/InboxScreen'))
 const Documents = lazy(() => import('@/features/player/DocumentsScreen'))
 const Document = lazy(() => import('@/features/player/DocumentScreen'))
+const Account = lazy(() => import('@/features/player/AccountScreen'))
+const Recover = lazy(() => import('@/features/player/RecoverScreen'))
 const Welcome = lazy(() => import('@/features/auth/Welcome'))
 const Landing = lazy(() => import('@/features/public/LandingPage').then((m) => ({ default: m.LandingPage })))
 
@@ -33,12 +35,12 @@ function PlayerRoute({ children }: { children: React.ReactNode }) {
   if (auth.kind !== 'player') return <Navigate to="/join" replace />
   return <Suspense fallback={<LoadingState />}>{children}</Suspense>
 }
-function JoinRoute() {
+function JoinRoute({ children }: { children?: React.ReactNode }) {
   const auth = useAuth()
   const operator = useAuthStore((s) => s.isAuthenticated)
   if (operator) return <Navigate to="/dashboard" replace />
   if (auth.kind === 'player') return <Navigate to="/" replace />
-  return <Suspense fallback={<LoadingState />}><Join /></Suspense>
+  return <Suspense fallback={<LoadingState />}>{children ?? <Join />}</Suspense>
 }
 function OperatorAlias() {
   const { gameId } = useParams()
@@ -47,11 +49,13 @@ function OperatorAlias() {
 // eslint-disable-next-line react-refresh/only-export-components
 export const playerRoutes = [
   { path: '/join', element: <JoinRoute /> },
+  { path: '/join/recover', element: <JoinRoute><Recover /></JoinRoute> },
   { path: '/list', element: <PlayerRoute><Logbook /></PlayerRoute> },
   { path: '/base/:baseId', element: <PlayerRoute><Base /></PlayerRoute> },
   { path: '/settings', element: <PlayerRoute><Settings /></PlayerRoute> },
   { path: '/inbox', element: <PlayerRoute><Inbox /></PlayerRoute> },
   { path: '/documents', element: <PlayerRoute><Documents /></PlayerRoute> },
   { path: '/documents/:resourceId', element: <PlayerRoute><Document /></PlayerRoute> },
+  { path: '/account', element: <PlayerRoute><Account /></PlayerRoute> },
   { path: '/operator/games/:gameId', element: <OperatorAlias /> },
 ]

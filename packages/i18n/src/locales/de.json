@@ -1570,7 +1570,8 @@
       "email": "E-Mail",
       "password": "Passwort",
       "signIn": "Anmelden",
-      "invalid": "Falsche E-Mail oder falsches Passwort."
+      "invalid": "Falsche E-Mail oder falsches Passwort.",
+      "participantOnly": "Dies ist ein Spielerkonto. Öffne die PointFinder-App zum Spielen; Veranstalter brauchen ein Veranstalterkonto."
     },
     "nfc": {
       "holdToRead": "Halte dein Telefon an den Tag",
@@ -1748,7 +1749,44 @@
       "enableNotifications": "Benachrichtigungen aktivieren",
       "notificationsHint": "Erhalte Nachrichten von deinem Operator, auch wenn die App geschlossen ist.",
       "help": "Hilfe",
-      "howItWorks": "So funktioniert PointFinder"
+      "howItWorks": "So funktioniert PointFinder",
+      "account": "Konto",
+      "saveProgress": "Fortschritt speichern",
+      "saveProgressHint": "Erstelle ein Konto oder melde dich an, um dieses Spiel auf einem anderen Handy fortzusetzen.",
+      "savedTo": "Gespeichert unter",
+      "emailUnverified": "E-Mail noch nicht bestätigt. Sieh in deinem Posteingang nach."
+    },
+    "account": {
+      "title": "Fortschritt speichern",
+      "subtitle": "Dein Team, deine Check-ins und Antworten bleiben genau so, wie sie sind. Mit einem Konto bekommst du sie auf einem anderen Handy zurück.",
+      "create": "Konto erstellen",
+      "signIn": "Anmelden",
+      "email": "E-Mail",
+      "name": "Dein Name",
+      "password": "Passwort",
+      "passwordHint": "Mindestens 8 Zeichen, ein Großbuchstabe und eine Ziffer.",
+      "submitCreate": "Erstellen und speichern",
+      "submitSignIn": "Anmelden und speichern",
+      "linked": "Fortschritt gespeichert",
+      "linkedHint": "Du kannst dieses Spiel jetzt auf jedem Handy fortsetzen mit",
+      "emailTaken": "Zu dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.",
+      "alreadyLinked": "Dieses Spiel ist bereits mit einem Konto gespeichert.",
+      "alreadyInGameTitle": "Du spielst dieses Spiel bereits",
+      "alreadyInGame": "Dein Konto spielt bereits als {{team}} auf einem anderen Handy. Dieses Handy zu diesem Spiel wechseln?",
+      "alreadyInGameSameTeam": "Dein Konto spielt bereits in {{team}} auf einem anderen Handy. Dieses Handy zu dieser Teilnahme wechseln?",
+      "switchDevice": "Dorthin wechseln",
+      "switchBlocked": "Synchronisiere zuerst deine ausstehenden Aktionen und versuche es erneut.",
+      "switchBlocked_one": "Du hast {{count}} nicht synchronisierte Aktion. Lass sie zuerst synchronisieren.",
+      "switchBlocked_other": "Du hast {{count}} nicht synchronisierte Aktionen. Lass sie zuerst synchronisieren.",
+      "back": "Zurück zu den Einstellungen"
+    },
+    "recover": {
+      "title": "Dein Spiel zurückholen",
+      "subtitle": "Melde dich mit dem Konto an, unter dem du deinen Fortschritt gespeichert hast, und gib einen beliebigen Teamcode dieses Spiels ein.",
+      "codeLabel": "Teamcode",
+      "submit": "Mein Spiel zurückholen",
+      "notFound": "Dieses Konto ist diesem Spiel nicht beigetreten.",
+      "link": "Fortschritt schon gespeichert? Hol dein Spiel zurück"
     },
     "inbox": {
       "title": "Benachrichtigungen",

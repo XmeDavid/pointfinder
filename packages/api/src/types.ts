@@ -15,7 +15,7 @@ export type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'correct'
 export type BaseStatus = 'not_visited' | 'checked_in' | 'submitted' | 'completed' | 'rejected'
 export type AnswerType = 'text' | 'file' | 'none'
 export type UnlockTrigger = 'CHECK_IN' | 'SUBMISSION' | 'APPROVAL'
-export type UserRole = 'admin' | 'operator'
+export type UserRole = 'admin' | 'operator' | 'participant'
 export type PushPlatform = 'ios' | 'android'
 /** How a team proves it reached a base. Server enum names. */
 export type CheckInMethod = 'NFC' | 'QR' | 'LOCATION'
@@ -41,6 +41,31 @@ export interface PlayerAuthResponse {
     status: GameStatus
     tileSource?: string | null
   }
+}
+
+/** PF-02: attach the calling guest participation to an account, creating it first when asked. */
+export interface PlayerAccountLinkRequest {
+  email: string
+  password: string
+  /** Required with `createAccount`. */
+  name?: string
+  createAccount: boolean
+}
+
+/** PF-01: recover an account's existing participation on this device. One of joinCode/gameId. */
+export interface PlayerRecoverRequest {
+  email: string
+  password: string
+  deviceId: string
+  joinCode?: string
+  gameId?: EntityId
+}
+
+export interface PlayerAccountResponse {
+  linked: boolean
+  email: string | null
+  name: string | null
+  emailVerified: boolean
 }
 
 export interface OperatorLoginRequest {
