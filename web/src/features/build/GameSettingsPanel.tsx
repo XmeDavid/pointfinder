@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { PublicationSection } from './PublicationSection'
 import { useTranslation } from 'react-i18next'
 import { Switch } from '@/components/ui/switch'
@@ -119,6 +120,9 @@ export default function GameSettingsPanel({
 
   // State change dialog
   const [stateTarget, setStateTarget] = useState<GameStatus | null>(null)
+  // Ending freezes results, so the operator sees what is still unreviewed before confirming.
+  const [ending, setEnding] = useState(false)
+  const endSummary = useQuery({ queryKey: ['game', gameId, 'end-summary'], queryFn: () => gamesApi.getEndSummary(gameId), enabled: ending })
   const [progressChoice, setProgressChoice] = useState<'keep' | 'erase' | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
@@ -722,6 +726,49 @@ export default function GameSettingsPanel({
                 <GameStatusBadge status={game.status} />
               </div>
 
+              {game.status === 'live' && (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setEnding(true)}
+                    data-testid="end-game-btn"
+                    className="w-full cursor-pointer rounded-lg border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  >
+                    {t('lifecycle.endGame')}
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-1.5 px-1">{t('lifecycle.endFreezes')}</p>
+                  {ending && (
+                    <div className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3" data-testid="end-game-confirm">
+                      <p className="text-sm font-medium text-foreground">{t('lifecycle.endGameConfirmTitle')}</p>
+                      {endSummary.isLoading && <p className="text-xs text-muted-foreground">{t('common.loading')}</p>}
+                      {endSummary.data && (
+                        <p className="text-sm text-foreground" data-testid="end-game-pending">
+                          {endSummary.data.pendingReviews > 0
+                            ? t('lifecycle.endPendingReviews', { count: endSummary.data.pendingReviews })
+                            : t('lifecycle.endNoPending')}
+                        </p>
+                      )}
+                      {endSummary.isError && <p className="text-xs text-destructive">{t('lifecycle.endSummaryFailed')}</p>}
+                      <p className="text-xs text-muted-foreground">{t('lifecycle.endGameConfirmDescription', { teams: endSummary.data?.teams ?? 0 })}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEnding(false)}
+                          className="flex-1 px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground font-medium cursor-pointer hover:bg-muted transition-colors"
+                        >
+                          {t('common.cancel')}
+                        </button>
+                        <button
+                          onClick={() => updateStatus.mutate({ status: 'ended' }, { onSuccess: () => setEnding(false) })}
+                          disabled={updateStatus.isPending || endSummary.isLoading}
+                          data-testid="end-game-confirm-btn"
+                          className="flex-1 px-3 py-2 rounded-lg bg-destructive text-sm text-destructive-foreground font-medium cursor-pointer hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('lifecycle.endGame')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {game.status === 'ended' && (
                 <div>
                   <button

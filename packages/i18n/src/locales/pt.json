@@ -321,7 +321,12 @@
       "resumeHint": "O jogo vai retomar. Todo o progresso é mantido.",
       "confirm": "Confirmar",
       "reverting": "A reverter…"
-    }
+    },
+    "endFreezes": "Terminar congela os resultados. As submissões ainda por rever ficam sem revisão e não podem ser pontuadas depois.",
+    "endPendingReviews_one": "{{count}} submissão ainda está à espera de revisão.",
+    "endPendingReviews_other": "{{count}} submissões ainda estão à espera de revisão.",
+    "endNoPending": "Nada está à espera de revisão.",
+    "endSummaryFailed": "Não foi possível verificar as revisões pendentes. Ainda podes terminar o jogo."
   },
   "overview": {
     "nfcLinked": "NFC Ligado",

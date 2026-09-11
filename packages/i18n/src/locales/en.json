@@ -321,7 +321,12 @@
       "resumeHint": "The game will resume. All progress is kept.",
       "confirm": "Confirm",
       "reverting": "Reverting…"
-    }
+    },
+    "endFreezes": "Ending freezes the results. Submissions still pending review stay unreviewed and cannot be scored afterwards.",
+    "endPendingReviews_one": "{{count}} submission is still waiting for review.",
+    "endPendingReviews_other": "{{count}} submissions are still waiting for review.",
+    "endNoPending": "Nothing is waiting for review.",
+    "endSummaryFailed": "Couldn't check pending reviews. You can still end the game."
   },
   "overview": {
     "nfcLinked": "NFC Linked",

@@ -321,7 +321,12 @@
       "resumeHint": "Das Spiel läuft weiter. Der gesamte Fortschritt bleibt erhalten.",
       "confirm": "Bestätigen",
       "reverting": "Wird zurückgesetzt…"
-    }
+    },
+    "endFreezes": "Das Beenden friert die Ergebnisse ein. Noch nicht geprüfte Einreichungen bleiben ungeprüft und können danach nicht mehr bewertet werden.",
+    "endPendingReviews_one": "{{count}} Einreichung wartet noch auf Prüfung.",
+    "endPendingReviews_other": "{{count}} Einreichungen warten noch auf Prüfung.",
+    "endNoPending": "Nichts wartet auf Prüfung.",
+    "endSummaryFailed": "Ausstehende Prüfungen konnten nicht geladen werden. Du kannst das Spiel trotzdem beenden."
   },
   "overview": {
     "nfcLinked": "NFC verknüpft",

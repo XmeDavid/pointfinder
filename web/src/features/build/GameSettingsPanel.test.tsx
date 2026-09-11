@@ -525,4 +525,18 @@ describe('enforced base order settings', () => {
     ).toBeInTheDocument()
   })
 
+  it('ends a live game only after showing what is still unreviewed', async () => {
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    let patched: unknown = null
+    server.use(
+      http.get('/api/games/:id', () => HttpResponse.json(createMockGame({ id: 'game-1', status: 'live' }))),
+      http.get('/api/games/:id/end-summary', () => HttpResponse.json({ status: 'live', pendingReviews: 3, teams: 4, players: 12 })),
+      http.patch('/api/games/:id/status', async ({ request }) => { patched = await request.json(); return HttpResponse.json(createMockGame({ id: 'game-1', status: 'ended' })) }),
+    )
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    await userEvent.click(await screen.findByTestId('end-game-btn'))
+    expect(await screen.findByTestId('end-game-pending')).toHaveTextContent('3 submissions are still waiting for review.')
+    await userEvent.click(screen.getByTestId('end-game-confirm-btn'))
+    await waitFor(() => expect(patched).toEqual({ status: 'ended', resetProgress: false }))
+  })
 })
