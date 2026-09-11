@@ -73,7 +73,7 @@ export function DiscoverySection() {
     enabled: signedIn,
     staleTime: 30_000,
   });
-  const games = listings.data?.pages.flatMap((page) => page.items) ?? [];
+  const games = listings.data?.pages.flatMap((page) => page.items ?? []) ?? [];
   const mappedGame = games.find(
     (game) => game.lng !== null && game.lat !== null,
   );
