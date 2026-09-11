@@ -46,7 +46,7 @@ export function PlayingGames({ past }: { past: boolean }) {
               )
             ).data;
       await services.client.session.setPlayer(auth);
-      navigate("/");
+      navigate("/map");
     } catch {
       setFailed(true);
     }
@@ -64,7 +64,7 @@ export function PlayingGames({ past }: { past: boolean }) {
               status: player.gameStatus,
               context: "player",
             }}
-            onOpen={() => navigate("/")}
+            onOpen={() => navigate("/map")}
           />
         )}
         <p className="mt-4 text-sm text-muted-foreground">

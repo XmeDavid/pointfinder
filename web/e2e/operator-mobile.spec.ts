@@ -278,7 +278,7 @@ test('player settings, inbox and base fit a phone in both themes and in Portugue
   await page.screenshot({ path: 'test-results/mobile-player-settings.png', fullPage: true })
   await noSidewaysScroll(page)
 
-  await page.goto('/')
+  await page.goto('/map')
   await expect(page.getByTestId('player-settings-btn')).toBeVisible()
   for (const profile of safeProfiles) {
     await simulateSafeArea(page, profile)

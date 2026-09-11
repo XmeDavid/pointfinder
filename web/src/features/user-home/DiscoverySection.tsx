@@ -107,7 +107,7 @@ export function DiscoverySection() {
             ).data;
       await services.client.session.setPlayer(response);
       await queryClient.invalidateQueries({ queryKey: ["account", identity] });
-      navigate("/");
+      navigate("/map");
     } catch (error) {
       const failure = error as {
         code?: string;

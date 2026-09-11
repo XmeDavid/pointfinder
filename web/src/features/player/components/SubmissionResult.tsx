@@ -48,7 +48,7 @@ export function SubmissionResult({ outcome, feedback, completionContent, unlocke
           <RichContent html={completionContent ?? ''} className="prose prose-sm max-w-none text-foreground dark:prose-invert" />
         </div>
       )}
-      <Link to="/" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}>{t('result.backToMap')}</Link>
+      <Link to="/map" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}>{t('result.backToMap')}</Link>
     </section>
   )
 }

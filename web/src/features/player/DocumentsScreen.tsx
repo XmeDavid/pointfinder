@@ -55,7 +55,7 @@ export default function DocumentsScreen() {
 
   return (
     <Screen>
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
+      <Link to="/map" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
       <div>
         <h1 className="text-2xl font-semibold leading-tight">{t('documents.title')}</h1>
         <p className="text-sm text-muted-foreground">{t('documents.subtitle')}</p>

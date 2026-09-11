@@ -49,7 +49,7 @@ export default function LogbookScreen() {
         ) : undefined
       }
     >
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
+      <Link to="/map" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold leading-tight text-balance">{game.snapshot?.game.name ?? auth.gameName}</h1>
         <p className="text-sm text-muted-foreground">{auth.teamName} · {auth.displayName}</p>

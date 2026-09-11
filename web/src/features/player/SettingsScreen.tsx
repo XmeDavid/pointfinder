@@ -106,7 +106,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
+      <Link to="/map" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
       <h1 className="text-2xl font-semibold leading-tight">{t('settings.title')}</h1>
 
       <Section title={t('settings.language')}>
@@ -192,7 +192,7 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title={t('settings.help')}>
-        <Button variant="ghost" className="w-full min-h-12 justify-start px-4" onClick={()=>{usePlayerTour.getState().start();navigate("/")}} data-testid="settings-how-it-works">{t("settings.howItWorks")}</Button>
+        <Button variant="ghost" className="w-full min-h-12 justify-start px-4" onClick={()=>{usePlayerTour.getState().start();navigate("/map")}} data-testid="settings-how-it-works">{t("settings.howItWorks")}</Button>
       </Section>
 
       <Section title={t('settings.privacy')}>

@@ -86,7 +86,7 @@ export default function Join() {
       // if the account already plays this game, and never becomes a second competitor.
       const res = session.kind === 'operator' ? await account.api.account.join(body) : useAuthStore.getState().isAuthenticated ? (await apiClient.post<PlayerAuthResponse>('/account/join',body)).data : await client.api.auth.playerJoin(body)
       await client.session.setPlayer(res)
-      navigate('/', { replace: true })
+      navigate('/map', { replace: true })
     } catch (err) {
       setError(describeError(err, t))
     } finally {
