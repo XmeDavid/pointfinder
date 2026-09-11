@@ -41,7 +41,7 @@ test('operator enables order in settings, saves a shared route, and retains it w
   await expect(settings.getByRole('switch', { name: 'Enforce base order' })).toBeChecked()
   await expect.poll(() => game.enforceBaseOrder).toBe(true)
   await settings.getByRole('button', { name: 'Arrange route' }).click()
-  await page.getByRole('button', { name: 'Arrange route', exact: true }).click()
+  await page.getByRole('button', { name: 'Route', exact: true }).click()
   const editor = page.getByTestId('base-route-editor')
   await editor.getByRole('button', { name: 'Move Old bridge up' }).click()
   expect(saved).toEqual([])
