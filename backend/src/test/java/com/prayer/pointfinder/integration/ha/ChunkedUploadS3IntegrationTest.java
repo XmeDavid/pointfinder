@@ -33,6 +33,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.junit.jupiter.Container;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
@@ -73,7 +74,9 @@ class ChunkedUploadS3IntegrationTest extends IntegrationTestBase {
     private static final String BUCKET = "pointfinder-ha-test";
 
     @Container
-    static MinIOContainer minio = new MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z");
+    // MinIO no longer publishes to Docker Hub; the same release lives on quay.io.
+    static MinIOContainer minio = new MinIOContainer(
+            DockerImageName.parse("quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z").asCompatibleSubstituteFor("minio/minio"));
 
     static final Path TEMP_ROOT = Paths.get(System.getProperty("java.io.tmpdir"), "pointfinder-ha-assembly-" + UUID.randomUUID());
 
