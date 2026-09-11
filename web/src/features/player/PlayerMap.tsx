@@ -1,3 +1,4 @@
+import { GameResultCard } from './components/GameResultCard'
 import { BaseSequenceBadge } from '@/components/status/BaseSequenceBadge'
 import { BaseRouteNotice } from './components/BaseRouteNotice'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -5,8 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import Map, { Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Bell, FileText, List, LocateFixed, Nfc, QrCode, Settings } from 'lucide-react'
-import { Alert, Badge, Button, StatusMarker, TeamLocationMarker, baseStatusMarkerTone, buttonVariants, cn, getResolvedStyleUrl } from '@/components'
+import { ArrowLeft, CircleHelp, Bell, FileText, List, LocateFixed, Nfc, QrCode, Settings } from 'lucide-react'
+import { Alert, Button, StatusMarker, TeamLocationMarker, baseStatusMarkerTone, buttonVariants, cn, getResolvedStyleUrl } from '@/components'
 import { useAuth } from '@/app/player/services'
 import { usePlayerGame } from '@/features/player/usePlayerGame'
 import { useTeamLocation } from '@/features/player/useTeamLocation'
@@ -19,12 +20,14 @@ import { SyncBanner } from '@/features/player/components/SyncBanner'
 import { parseTagUrl } from '@pointfinder/game-core'
 import { scanQr } from '@/platform/qr'
 import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
+import { MapLegend } from './components/MapLegend'
+import { usePlayerTour } from './components/PlayerTour'
 import { IntroductionPrompt } from '@/features/player/components/IntroductionPrompt'
 import { UnverifiedAccountNotice } from '@/features/player/components/UnverifiedAccountNotice'
 import { lightColorValues } from '@/generated/colorValues'
 import { CHECK_IN_RADIUS_FILL_LAYER_ID, CHECK_IN_RADIUS_LINE_LAYER_ID, CHECK_IN_RADIUS_SOURCE_ID, radiusCollection } from '@/features/player/mapShapes'
 
-const LEGEND = ['not_visited', 'checked_in', 'submitted', 'completed', 'rejected'] as const
+
 const RADIUS_FILL = { id: CHECK_IN_RADIUS_FILL_LAYER_ID, type: 'fill' as const, paint: { 'fill-color': lightColorValues['status.checkedIn'], 'fill-opacity': 0.08 } }
 const RADIUS_LINE = { id: CHECK_IN_RADIUS_LINE_LAYER_ID, type: 'line' as const, paint: { 'line-color': lightColorValues['status.checkedIn'], 'line-width': 1.5, 'line-opacity': 0.5 } }
 
@@ -33,6 +36,8 @@ export default function PlayerMap() {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const auth = useAuth()
   const navigate = useNavigate()
+  const startTour = usePlayerTour(s=>s.start)
+  const tourActive = usePlayerTour(s=>s.index !== null)
   const game = usePlayerGame()
   const mapRef = useRef<MapRef | null>(null)
   const fitted = useRef(false)
@@ -136,7 +141,7 @@ export default function PlayerMap() {
         )}
         {open.map((e) => (
           <Marker key={e.baseId} longitude={e.view.lng} latitude={e.view.lat} anchor="center" onClick={(ev) => { ev.originalEvent.stopPropagation(); setSelected(e.baseId) }}>
-            <button type="button" className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${e.view.sequenceNumber ? `${t('baseOrder.baseNumber', { number: e.view.sequenceNumber, keyPrefix: '' })} · ` : ''}${e.title || t('challenge.noChallenge')}: ${t(`status.${e.view.effectiveStatus}`)}`}>
+            <button type="button" data-tour="player-base" className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${e.view.sequenceNumber ? `${t('baseOrder.baseNumber', { number: e.view.sequenceNumber, keyPrefix: '' })} · ` : ''}${e.title || t('challenge.noChallenge')}: ${t(`status.${e.view.effectiveStatus}`)}`}>
               <BaseSequenceBadge sequenceNumber={e.view.sequenceNumber} />
               <StatusMarker tone={baseStatusMarkerTone[e.view.effectiveStatus]} size={e.baseId === selected ? 18 : 14} selected={e.baseId === selected} label={e.title || undefined} />
             </button>
@@ -150,26 +155,27 @@ export default function PlayerMap() {
       </Map>
 
       {/* Header */}
-      <div className="safe-gutter pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2 pt-[calc(var(--safe-top)+8px)]">
-        <div className="pointer-events-auto flex items-center justify-between gap-3 rounded-lg border border-border bg-card/95 px-4 py-2.5 shadow-overlay backdrop-blur">
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold leading-tight">{game.snapshot?.game.name ?? auth.gameName}</h1>
-            <p className="truncate text-xs text-muted-foreground">{auth.teamName}{game.logbook ? ` · ${t('logbook.progress', { done: game.logbook.summary.completed, total: game.logbook.summary.total })}` : ''}</p>
+      <div className="safe-gutter pointer-events-none absolute z-10 inset-x-0 top-0 flex flex-col gap-2 pt-[calc(var(--safe-top)+8px)]">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-overlay" data-tour="player-header">
+          <div className="min-w-0 flex-1 basis-full sm:basis-auto flex items-center gap-2">
+            <Link to="/dashboard?view=play" aria-label={t("map.backToGames")} className={cn(buttonVariants({variant:"ghost",size:"icon"}),"shrink-0")} data-testid="player-back-btn"><ArrowLeft size={20}/></Link>
+            <div className="min-w-0"><h1 className="truncate text-base font-semibold leading-tight">{game.snapshot?.game.name ?? auth.gameName}</h1>
+            <p className="truncate text-xs text-muted-foreground">{auth.teamName}{game.logbook ? ` · ${t('logbook.progress', { done: game.logbook.summary.completed, total: game.logbook.summary.total })}` : ''}</p></div>
           </div>
-          <div className="flex items-center gap-1.5">
-            {status === 'live' && <Badge variant="success">live</Badge>}
+          <div className="flex w-full justify-end items-center gap-1 sm:w-auto" data-tour="player-tools">
+
             <Link to="/inbox" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }), 'relative')} aria-label={unseen > 0 ? `${t('map.inbox')} (${unseen})` : t('map.inbox')} data-testid="player-inbox-btn">
               <Bell className="h-5 w-5" aria-hidden />
               {unseen > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-destructive px-1 text-center text-[10px] font-semibold leading-4 text-destructive-foreground" aria-hidden>{unseen > 9 ? '9+' : unseen}</span>}
             </Link>
-            <Link to="/list" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.list')}><List className="h-5 w-5" aria-hidden /></Link>
+            <Link to="/list" data-testid="player-logbook-btn" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.list')}><List className="h-5 w-5" aria-hidden /></Link>
             <Link to="/documents" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.documents')} data-testid="player-documents-btn"><FileText className="h-5 w-5" aria-hidden /></Link>
             <Link to="/settings" className={cn(buttonVariants({ variant: 'outline', size: 'icon' }))} aria-label={t('map.settings')} data-testid="player-settings-btn"><Settings className="h-5 w-5" aria-hidden /></Link>
           </div>
         </div>
-        <IntroductionPrompt />
+        {!tourActive && (game.snapshot?.game.status ?? auth.gameStatus) !== "ended" && <IntroductionPrompt onStart={startTour}/>}
         <UnverifiedAccountNotice />
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto" data-tour="player-sync">
           <SyncBanner fromCache={game.fromCache} pending={game.pending} needsAuth={game.needsAuth} onRetry={(id) => void game.retry(id)} onDiscard={(id) => void game.discard(id)} />
         </div>
         <div className="pointer-events-auto"><BaseRouteNotice route={game.route} logbook={game.logbook} /></div>
@@ -184,10 +190,8 @@ export default function PlayerMap() {
 
       {/* Not live: scrim + message, like the old app */}
       {status !== 'live' && (
-        <div className="absolute inset-0 grid place-items-center bg-[var(--pf-color-surface-scrim)] px-6">
-          <div className="rounded-lg border border-border bg-card p-5 text-center shadow-modal">
-            <p className="font-semibold">{status === 'ended' ? t('logbook.ended') : t('logbook.notLive')}</p>
-          </div>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[var(--pf-color-surface-scrim)] px-6 pt-32 pb-24">
+          <div className="w-full max-w-md">{status === "ended" ? <GameResultCard gameId={auth.gameId} stateVersion={game.snapshot?.stateVersion ?? 0}/> : <div className="rounded-lg border border-border bg-card p-5 text-center shadow-modal"><p className="font-semibold">{t("logbook.notLive")}</p></div>}</div>
         </div>
       )}
 
@@ -203,12 +207,10 @@ export default function PlayerMap() {
           </div>
         )}
         <div className="flex items-end justify-between gap-2">
-          <ul className="flex flex-wrap gap-x-3 gap-y-1 rounded-lg border border-border bg-card/95 px-3 py-2 text-xs backdrop-blur" aria-label={t('map.legend')}>
-            {LEGEND.map((s) => (
-              <li key={s} className="flex items-center gap-1"><StatusMarker tone={baseStatusMarkerTone[s]} size={8} /><span>{t(`status.${s}`)}</span></li>
-            ))}
-          </ul>
-          <Button variant="outline" size="icon" aria-label={t('map.locate')} onClick={() => { const f = location.fix; if (f && mapRef.current) mapRef.current.flyTo({ center: [f.lng, f.lat], zoom: 16, duration: 500 }); else fitToBases() }}>
+          <MapLegend />
+          <Button variant="outline" size="icon" aria-label={t("map.tour")} onClick={startTour} data-testid="player-tour-btn"><CircleHelp size={20}/></Button>
+
+          <Button variant="outline" size="icon" data-tour="player-locate" aria-label={t('map.locate')} onClick={() => { const f = location.fix; if (f && mapRef.current) mapRef.current.flyTo({ center: [f.lng, f.lat], zoom: 16, duration: 500 }); else fitToBases() }}>
             <LocateFixed className="h-5 w-5" aria-hidden />
           </Button>
         </div>

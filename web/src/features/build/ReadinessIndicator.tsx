@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { CheckCircle, Info, XCircle } from 'lucide-react'
+import { CheckCircle, Info, Circle, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlassPanel } from '@/components/layout/GlassPanel'
 import { useUpdateGameStatus } from '@/hooks/mutations/useGameMutations'
@@ -19,6 +19,7 @@ export default function ReadinessIndicator({
   const setReadinessExpanded = useWorkspaceStore((s) => s.setReadinessExpanded)
   const updateStatus = useUpdateGameStatus(gameId)
   const setMode = useWorkspaceStore((s) => s.setMode)
+  const openDrawer = useWorkspaceStore(s=>s.openDrawer)
 
   // Only show in setup mode -- hide when game is live or ended
   if (gameStatus && gameStatus !== 'setup') return null
@@ -116,26 +117,26 @@ export default function ReadinessIndicator({
                   data-testid="readiness-checklist"
                 >
                   {checks.map((check) => (
-                    <div
+                    <button type="button" onClick={()=>{setMode("build");openDrawer(check.target ?? "bases")}}
                       key={check.label}
-                      className="flex items-center gap-2"
+                      className="flex w-full min-h-11 items-center gap-2 text-left rounded-md px-1 hover:bg-muted"
                       data-testid={`check-${check.passed ? 'pass' : 'fail'}`}
                     >
                       {check.passed ? (
                         <CheckCircle className="h-4 w-4 shrink-0 text-success" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                        <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
                       )}
                       <span
                         className={`text-xs ${
                           check.passed
                             ? 'text-muted-foreground'
-                            : 'text-destructive font-medium'
+                            : 'text-foreground font-medium'
                         }`}
                       >
                         {check.label}
-                      </span>
-                    </div>
+                      </span><ChevronRight size={14} className="ml-auto shrink-0 text-muted-foreground"/>
+                    </button>
                   ))}
 
                   {legacyNote && (
@@ -150,17 +151,18 @@ export default function ReadinessIndicator({
                     </div>
                   )}
 
+                  {updateStatus.isError && <p role="alert" className="text-sm text-destructive">{t("build.compose.launchFailed")}</p>}
                   {allPassed && (
                     <button
                       className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold w-full mt-2 cursor-pointer hover:bg-primary/90 transition-colors"
                       data-testid="go-live-btn"
+                      disabled={updateStatus.isPending}
                       onClick={(e) => {
                         e.stopPropagation()
-                        updateStatus.mutate({ status: 'live' })
-                        setMode('command')
+                        updateStatus.mutate({ status: 'live' }, {onSuccess:()=>setMode('command')})
                       }}
                     >
-                      Go Live
+                      {t(updateStatus.isPending ? "build.compose.launching" : "build.compose.goLive")}
                     </button>
                   )}
                 </div>

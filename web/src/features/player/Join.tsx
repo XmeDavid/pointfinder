@@ -12,6 +12,9 @@ import { BrandLockup } from '@/components/brand'
 import { Screen } from '@/features/player/components/Screen'
 import { PermissionDisclosure } from '@/features/player/components/PermissionDisclosure'
 import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
+import { useAuthStore } from '@/lib/auth/store'
+import apiClient from '@/lib/api/client'
+import type { PlayerAuthResponse } from '@pointfinder/api'
 import { parseJoinCode } from '@/features/player/joinCode'
 
 const DISCLOSURE_KEY = 'disclosureSeen'
@@ -81,7 +84,7 @@ export default function Join() {
       const body = { joinCode: joinCode.trim().toUpperCase(), displayName: displayName.trim(), deviceId }
       // A signed-in phone joins as its account: it gets its own participation back
       // if the account already plays this game, and never becomes a second competitor.
-      const res = session.kind === 'operator' ? await account.api.account.join(body) : await client.api.auth.playerJoin(body)
+      const res = session.kind === 'operator' ? await account.api.account.join(body) : useAuthStore.getState().isAuthenticated ? (await apiClient.post<PlayerAuthResponse>('/account/join',body)).data : await client.api.auth.playerJoin(body)
       await client.session.setPlayer(res)
       navigate('/', { replace: true })
     } catch (err) {
@@ -97,7 +100,7 @@ export default function Join() {
 
   return (
     <Screen>
-      <Link className="text-sm text-muted-foreground" to="/">{t('common.back')}</Link>
+      <Link className="inline-flex min-h-11 items-center text-sm text-muted-foreground" to={session.kind === "operator" || useAuthStore.getState().isAuthenticated ? "/dashboard" : "/"}>{t('common.back')}</Link>
       <BrandLockup size={22} className="text-sm" />
       <h1 className="text-2xl font-semibold leading-tight text-balance">{t('join.title')}</h1>
       <p className="text-muted-foreground">{t('join.subtitle')}</p>

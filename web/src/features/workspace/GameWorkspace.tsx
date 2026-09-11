@@ -23,6 +23,8 @@ import GameSettingsPanel from '@/features/build/GameSettingsPanel'
 import { CommandOverlay } from '@/features/command/CommandOverlay'
 import ReviewOverlay from '@/features/review/ReviewOverlay'
 import ResultsOverlay from '@/features/results/ResultsOverlay'
+import { Button } from '@/components/ui/button'
+import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useCreateBase } from '@/hooks/mutations/useBaseMutations'
 
 interface PendingMapAction {
@@ -35,12 +37,19 @@ export function GameWorkspace() {
   const { id: gameId } = useParams<{ id: string }>()
 
   // --- Data queries ---
-  const { data: game, isLoading: gameLoading, error: gameError } = useGame(gameId)
+  const {
+    data: game,
+    isLoading: gameLoading,
+    error: gameError,
+  } = useGame(gameId)
   const { data: stages = [] } = useStages(gameId)
   const { data: bases = [], isLoading: basesLoading } = useBases(gameId)
   const { data: teams = [] } = useTeams(gameId)
-  const createBase = useCreateBase(gameId!)
-  const [pendingMapAction, setPendingMapAction] = useState<PendingMapAction | null>(null)
+  const [placing, setPlacing] = useState(false)
+  const createBase = useCreateBase(gameId ?? '')
+  const creatingBase = useRef(false)
+  const [pendingMapAction, setPendingMapAction] =
+    useState<PendingMapAction | null>(null)
 
   // --- Map ref for programmatic control ---
   const mapRefInstance = useRef<MapRef | null>(null)
@@ -133,7 +142,7 @@ export function GameWorkspace() {
         saveMapView([center.lng, center.lat], map.getZoom())
       }
       inspectBase(baseId)
-      const base = bases.find(b => b.id === baseId)
+      const base = bases.find((b) => b.id === baseId)
       if (base && map) {
         map.flyTo({
           center: [base.lng - 0.002, base.lat],
@@ -144,8 +153,34 @@ export function GameWorkspace() {
     }
   }
 
+  async function placeBase(location: { lat: number; lng: number }) {
+    if (creatingBase.current) return
+    creatingBase.current = true
+    try {
+      const created = await createBase.mutateAsync({
+        name: t('build.editor.newBase'),
+        description: '',
+        ...location,
+      })
+      setPlacing(false)
+      selectBase(created.id)
+    } catch {
+      /* The mutation error stays visible on the map. */
+    } finally {
+      creatingBase.current = false
+    }
+  }
+
   const handleMapClick = (event: MapMouseEvent) => {
-    if (mode === 'build' && game.status === 'setup') {
+    if (
+      mode === 'build' &&
+      (game.status === 'setup' ||
+        (game.status === 'live' && !game.enforceBaseOrder))
+    ) {
+      if (placing) {
+        void placeBase({ lat: event.lngLat.lat, lng: event.lngLat.lng })
+        return
+      }
       setPendingMapAction({
         position: { x: event.point.x, y: event.point.y },
         location: { lat: event.lngLat.lat, lng: event.lngLat.lng },
@@ -161,15 +196,7 @@ export function GameWorkspace() {
     if (!pendingMapAction) return
     const { lat, lng } = pendingMapAction.location
     setPendingMapAction(null)
-    createBase.mutate(
-      {
-        name: `Base ${bases.length + 1}`,
-        description: '',
-        lat,
-        lng,
-      },
-      { onSuccess: (base) => selectBase(base.id) },
-    )
+    void placeBase({ lat, lng })
   }
 
   const handleTeamClick = (teamId: string) => {
@@ -180,13 +207,35 @@ export function GameWorkspace() {
 
   return (
     <div className="h-full w-full relative overflow-hidden">
+      {(createBase.isPending || createBase.isError) && (
+        <OverlayPanel
+          className="absolute left-3 right-3 top-20 z-30 md:right-auto"
+          padding="sm"
+        >
+          <p role={createBase.isError ? 'alert' : 'status'} className="text-sm">
+            {t(
+              createBase.isError
+                ? 'build.editor.createBaseError'
+                : 'build.compose.saving',
+            )}
+          </p>
+        </OverlayPanel>
+      )}
       <GameMap
         className="workspace-map h-full w-full"
         mapStyle={getStyleUrl(game.tileSource)}
-        initialCenter={bases.length > 0 ? [bases[0].lng, bases[0].lat] : undefined}
+        initialCenter={
+          bases.length > 0 ? [bases[0].lng, bases[0].lat] : undefined
+        }
         initialZoom={bases.length > 0 ? 15 : 3}
-        fitPoints={bases.length > 0 ? bases.map(b => [b.lng, b.lat] as [number, number]) : undefined}
-        onMapRef={(ref) => { mapRefInstance.current = ref }}
+        fitPoints={
+          bases.length > 0
+            ? bases.map((b) => [b.lng, b.lat] as [number, number])
+            : undefined
+        }
+        onMapRef={(ref) => {
+          mapRefInstance.current = ref
+        }}
         onClick={handleMapClick}
       >
         <BaseMarkers
@@ -227,7 +276,34 @@ export function GameWorkspace() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <ContentDrawer gameId={gameId!} />
+              <ContentDrawer
+                gameId={gameId!}
+                onCreateBase={() => setPlacing(true)}
+              />
+              {(!bases.length || placing) &&
+                !drawerOpen &&
+                !createBase.isPending && (
+                  <OverlayPanel
+                    padding="md"
+                    className="absolute left-3 right-3 top-32 md:top-20 md:right-auto md:max-w-sm"
+                  >
+                    <p className="text-sm font-semibold">
+                      {t('build.compose.firstBase')}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t('build.compose.firstBaseHint')}
+                    </p>
+                    {placing && (
+                      <Button
+                        className="mt-2"
+                        variant="ghost"
+                        onClick={() => setPlacing(false)}
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                    )}
+                  </OverlayPanel>
+                )}
               <div className="absolute bottom-20 md:bottom-4 left-3 right-16 z-20 flex max-h-[calc(100%-5rem)] flex-col items-start gap-2 overflow-y-auto md:flex-row md:items-end md:justify-between">
                 <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
                 {!drawerOpen && (

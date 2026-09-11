@@ -5,8 +5,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
-import { createMockChallenge, resetChallengeCounter } from '@/test/factories/challenge'
-import { createMockAssignment, resetAssignmentCounter } from '@/test/factories/assignment'
+import {
+  createMockChallenge,
+  resetChallengeCounter,
+} from '@/test/factories/challenge'
+import {
+  createMockAssignment,
+  resetAssignmentCounter,
+} from '@/test/factories/assignment'
 import { createMockBase, resetBaseCounter } from '@/test/factories/base'
 import { resetTeamCounter } from '@/test/factories/team'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -33,10 +39,9 @@ describe('ChallengeDetail', () => {
   })
 
   it('renders challenge title in the form', async () => {
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       const input = screen.getByTestId('challenge-title-input')
@@ -51,10 +56,9 @@ describe('ChallengeDetail', () => {
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="nonexistent" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="nonexistent" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Challenge not found')).toBeInTheDocument()
@@ -62,31 +66,32 @@ describe('ChallengeDetail', () => {
   })
 
   it('renders all form sections', async () => {
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('challenge-detail')).toBeInTheDocument()
     })
 
     // Section headers
-    expect(screen.getByText('Identity')).toBeInTheDocument()
+    expect(screen.getByText('Challenge')).toBeInTheDocument()
     // "Content" appears as both section header and field label
-    expect(screen.getAllByText('Content').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Scoring')).toBeInTheDocument()
-    expect(screen.getByText('Assignments')).toBeInTheDocument()
-    expect(screen.getByText('Operator Notes')).toBeInTheDocument()
-    expect(screen.getByText('Location Bound')).toBeInTheDocument()
-    expect(screen.getByText('Post-completion')).toBeInTheDocument()
+    expect(
+      screen.getAllByText('Player instructions').length,
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByText('Scoring')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Points')).toBeVisible()
+    expect(screen.getByText('Where this challenge appears')).toBeInTheDocument()
+    expect(screen.getByText('Operator notes')).toBeInTheDocument()
+    expect(screen.getByText('Location requirements')).toBeInTheDocument()
+    expect(screen.getByText('After completion')).toBeInTheDocument()
   })
 
   it('shows answer type buttons', async () => {
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('answer-type-text')).toBeInTheDocument()
@@ -99,18 +104,22 @@ describe('ChallengeDetail', () => {
     server.use(
       http.get('/api/games/:gameId/challenges', () => {
         return HttpResponse.json([
-          createMockChallenge({ id: 'ch-text', title: 'Text Q', answerType: 'text' }),
+          createMockChallenge({
+            id: 'ch-text',
+            title: 'Text Q',
+            answerType: 'text',
+            autoValidate: true,
+          }),
         ])
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="ch-text" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="ch-text" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
-      expect(screen.getByText('Answer Configuration')).toBeInTheDocument()
+      expect(screen.getByText('Accepted answers')).toBeInTheDocument()
       expect(screen.getByTestId('correct-answer-input')).toBeInTheDocument()
     })
   })
@@ -119,21 +128,24 @@ describe('ChallengeDetail', () => {
     server.use(
       http.get('/api/games/:gameId/challenges', () => {
         return HttpResponse.json([
-          createMockChallenge({ id: 'ch-file', title: 'Photo Q', answerType: 'file' }),
+          createMockChallenge({
+            id: 'ch-file',
+            title: 'Photo Q',
+            answerType: 'file',
+          }),
         ])
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="ch-file" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="ch-file" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('challenge-detail')).toBeInTheDocument()
     })
 
-    expect(screen.queryByText('Answer Configuration')).not.toBeInTheDocument()
+    expect(screen.queryByText('Accepted answers')).not.toBeInTheDocument()
   })
 
   it('shows assigned base as clickable link', async () => {
@@ -145,7 +157,10 @@ describe('ChallengeDetail', () => {
       }),
       http.get('/api/games/:gameId/assignments', () => {
         return HttpResponse.json([
-          createMockAssignment({ baseId: 'base-1', challengeId: 'challenge-1' }),
+          createMockAssignment({
+            baseId: 'base-1',
+            challengeId: 'challenge-1',
+          }),
         ])
       }),
       http.get('/api/games/:gameId/bases', () => {
@@ -155,13 +170,14 @@ describe('ChallengeDetail', () => {
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
-      expect(screen.getByTestId('assigned-base-link')).toHaveTextContent('Start Base')
+      expect(screen.getByTestId('assigned-base-link')).toHaveTextContent(
+        'Start Base',
+      )
     })
   })
 
@@ -176,7 +192,10 @@ describe('ChallengeDetail', () => {
       }),
       http.get('/api/games/:gameId/assignments', () => {
         return HttpResponse.json([
-          createMockAssignment({ baseId: 'base-1', challengeId: 'challenge-1' }),
+          createMockAssignment({
+            baseId: 'base-1',
+            challengeId: 'challenge-1',
+          }),
         ])
       }),
       http.get('/api/games/:gameId/bases', () => {
@@ -186,10 +205,9 @@ describe('ChallengeDetail', () => {
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('assigned-base-link')).toBeInTheDocument()
@@ -207,25 +225,21 @@ describe('ChallengeDetail', () => {
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Assign to base'),
-      ).toBeInTheDocument()
+      expect(screen.getByText('Assign to base')).toBeInTheDocument()
     })
   })
 
   it('shows save button and can save', async () => {
     const user = userEvent.setup()
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('save-challenge')).toBeInTheDocument()
@@ -242,10 +256,9 @@ describe('ChallengeDetail', () => {
   it('toggles location bound', async () => {
     const user = userEvent.setup()
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('location-bound-toggle')).toBeInTheDocument()
@@ -254,21 +267,21 @@ describe('ChallengeDetail', () => {
     const toggle = screen.getByTestId('location-bound-toggle')
 
     // Default is false -- should not have primary styling
-    expect(toggle).toHaveTextContent('Require physical presence')
+    expect(toggle).toHaveAccessibleName('Require physical presence')
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
 
     await user.click(toggle)
 
     // After toggle, the button should have primary classes
-    expect(toggle.className).toContain('bg-primary/10')
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
   })
 
   it('toggles auto-validate', async () => {
     const user = userEvent.setup()
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('auto-validate-toggle')).toBeInTheDocument()
@@ -277,7 +290,7 @@ describe('ChallengeDetail', () => {
     const toggle = screen.getByTestId('auto-validate-toggle')
     await user.click(toggle)
 
-    expect(toggle.className).toContain('bg-primary/10')
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
   })
 
   it('renders correctAnswer as chip input instead of comma-separated Input', async () => {
@@ -288,16 +301,16 @@ describe('ChallengeDetail', () => {
             id: 'challenge-1',
             title: 'Challenge Alpha',
             answerType: 'text',
+            autoValidate: true,
             correctAnswer: ['FOX', '{{secret}}'],
           }),
         ])
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('correct-answer-input')).toBeInTheDocument()
@@ -320,16 +333,16 @@ describe('ChallengeDetail', () => {
             title: 'Challenge Alpha',
             answerType: 'text',
             content: '<p>Find {{teamColor}} at base</p>',
+            autoValidate: true,
             correctAnswer: ['{{teamColor}}'],
           }),
         ])
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() => {
       expect(screen.getByTestId('preview-preview-btn')).toBeInTheDocument()
@@ -344,7 +357,10 @@ describe('ChallengeDetail', () => {
     expect(screen.getByTestId('content-preview').innerHTML).toContain('red')
 
     // Switch to team-2 (Team Beta, teamColor="blue")
-    await user.selectOptions(screen.getByTestId('preview-team-select'), 'team-2')
+    await user.selectOptions(
+      screen.getByTestId('preview-team-select'),
+      'team-2',
+    )
     await waitFor(() =>
       expect(screen.getByTestId('content-preview').innerHTML).toContain('blue'),
     )
@@ -363,16 +379,16 @@ describe('ChallengeDetail', () => {
             id: 'challenge-1',
             title: 'Challenge Alpha',
             answerType: 'text',
+            autoValidate: true,
             correctAnswer: ['{{missing}}'],
           }),
         ])
       }),
     )
 
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     await waitFor(() =>
       expect(screen.getByTestId('undefined-key-warning')).toHaveTextContent(
@@ -410,6 +426,7 @@ describe('ChallengeDetail', () => {
     await waitFor(() => screen.getByTestId('challenge-title-input'))
 
     // Add a chip referencing an undefined key.
+    await user.click(screen.getByTestId('auto-validate-toggle'))
     const chipInput = screen.getByTestId('chip-add-input')
     await user.type(chipInput, '{{{{undefined_key}}{Enter}')
 
@@ -453,6 +470,7 @@ describe('ChallengeDetail', () => {
 
     await waitFor(() => screen.getByTestId('challenge-title-input'))
 
+    await user.click(screen.getByTestId('auto-validate-toggle'))
     const chipInput = screen.getByTestId('chip-add-input')
     await user.type(chipInput, '{{{{undefined_key}}{Enter}')
 
@@ -507,7 +525,11 @@ describe('ChallengeDetail keeps what it does not edit', () => {
     server.use(
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
-          createMockBase({ id: 'trail', name: 'Trailhead', fixedChallengeId: 'challenge-1' }),
+          createMockBase({
+            id: 'trail',
+            name: 'Trailhead',
+            fixedChallengeId: 'challenge-1',
+          }),
           createMockBase({ id: 'bridge', name: 'Old bridge', hidden: true }),
           createMockBase({ id: 'tower', name: 'Ruined tower', hidden: true }),
         ]),
@@ -523,7 +545,11 @@ describe('ChallengeDetail keeps what it does not edit', () => {
             tagIds: ['tag-a'],
             requirePresenceToSubmit: true,
           }),
-          createMockChallenge({ id: 'challenge-2', title: 'Bridge count', unlocksBaseIds: ['tower'] }),
+          createMockChallenge({
+            id: 'challenge-2',
+            title: 'Bridge count',
+            unlocksBaseIds: ['tower'],
+          }),
         ]),
       ),
     )
@@ -534,13 +560,23 @@ describe('ChallengeDetail keeps what it does not edit', () => {
     pinnedFixture()
     let body: Record<string, unknown> | null = null
     server.use(
-      http.put('/api/games/:gameId/challenges/:challengeId', async ({ request }) => {
-        body = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json(createMockChallenge({ id: 'challenge-1', title: 'Trailhead riddle' }))
-      }),
+      http.put(
+        '/api/games/:gameId/challenges/:challengeId',
+        async ({ request }) => {
+          body = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json(
+            createMockChallenge({
+              id: 'challenge-1',
+              title: 'Trailhead riddle',
+            }),
+          )
+        },
+      ),
     )
 
-    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, { wrapper: createWrapper() })
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
     await screen.findByTestId('unlocks-bases')
     await user.click(screen.getByTestId('save-challenge'))
 
@@ -554,13 +590,18 @@ describe('ChallengeDetail keeps what it does not edit', () => {
 
   it('a hidden base another challenge already reveals is shown but cannot be picked', async () => {
     pinnedFixture()
-    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, { wrapper: createWrapper() })
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     const tower = await screen.findByTestId('unlocks-base-tower')
     expect(tower).toBeDisabled()
     expect(tower).toHaveAttribute('title', 'Already revealed by “Bridge count”')
     expect(screen.getByTestId('unlocks-base-bridge')).not.toBeDisabled()
-    expect(screen.getByTestId('unlocks-base-bridge')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('unlocks-base-bridge')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 })
 
@@ -575,21 +616,53 @@ describe('ChallengeDetail tutorial anchors', () => {
 
   it('reports the selected answer type and the two toggles through aria-pressed', async () => {
     const user = userEvent.setup()
-    render(
-      <ChallengeDetail challengeId="challenge-1" gameId={gameId} />,
-      { wrapper: createWrapper() },
-    )
+    render(<ChallengeDetail challengeId="challenge-1" gameId={gameId} />, {
+      wrapper: createWrapper(),
+    })
 
     const textButton = await screen.findByTestId('answer-type-text')
     expect(screen.getByTestId('answer-type-group')).toContainElement(textButton)
     expect(textButton).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByTestId('answer-type-file')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('answer-type-file')).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
 
     const autoValidate = screen.getByTestId('auto-validate-toggle')
-    const before = autoValidate.getAttribute('aria-pressed')
+    const before = autoValidate.getAttribute('aria-checked')
     await user.click(autoValidate)
-    expect(autoValidate.getAttribute('aria-pressed')).not.toBe(before)
+    expect(autoValidate.getAttribute('aria-checked')).not.toBe(before)
 
-    expect(screen.getByTestId('location-bound-toggle').getAttribute('aria-pressed')).toMatch(/true|false/)
+    expect(
+      screen.getByTestId('location-bound-toggle').getAttribute('aria-checked'),
+    ).toMatch(/true|false/)
   })
+})
+
+it('keeps accepted answers only while automatic checking is on and retains their values', async () => {
+  server.use(
+    http.get('/api/games/:gameId/challenges', () =>
+      HttpResponse.json([
+        createMockChallenge({
+          id: 'ch-toggle',
+          answerType: 'text',
+          autoValidate: false,
+          correctAnswer: ['FOX'],
+        }),
+      ]),
+    ),
+  )
+  render(<ChallengeDetail gameId="game-1" challengeId="ch-toggle" />, {
+    wrapper: createWrapper(),
+  })
+  const toggle = await screen.findByRole('switch', {
+    name: 'Check answers automatically',
+  })
+  expect(screen.queryByTestId('correct-answer-input')).not.toBeInTheDocument()
+  await userEvent.click(toggle)
+  expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('FOX')
+  await userEvent.click(toggle)
+  expect(screen.queryByTestId('correct-answer-input')).not.toBeInTheDocument()
+  await userEvent.click(toggle)
+  expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('FOX')
 })

@@ -115,6 +115,7 @@ Header: `X-Forwarded-Host` (for email link generation)
 | PUT | `/games/:id` | Operator | Update game metadata |
 | DELETE | `/games/:id` | Operator | Delete game (cascades all data). An org game additionally needs `DELETE_GAMES` in that org |
 | PATCH | `/games/:id/status` | Operator | Transition game status |
+| GET | `/games/:id/end-summary` | Operator | `{ status, pendingReviews, teams, players }` for the end confirmation. Ending finalizes XP and freezes results; review, manual completion and rescue answer `GAME_ENDED` afterwards |
 | GET | `/games/:id/operators` | Operator | List operators for game |
 | POST | `/games/:id/operators/:userId` | Operator | Add operator to game |
 | DELETE | `/games/:id/operators/:userId` | Operator | Remove operator from game |
@@ -605,6 +606,7 @@ All three endpoints emit an `operator_override` activity event via the standard 
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
+| GET | `/player/games/:gameId/reward` | Player (own game) | PF-03: `state` `pending` (no amounts) while the game runs, `finalized` with awards by kind, the saved placement and the account's level when linked, `invalidated` after a reset |
 | GET | `/player/account` | Player | `{ linked, email, name, emailVerified }` for the calling participation |
 | DELETE | `/player/account/link` | Player | Unlink: the row becomes a guest again; the phone keeps playing |
 
@@ -889,6 +891,7 @@ Supported content types: `video/mp4`, `video/quicktime`, `image/jpeg`, `image/pn
 | POST | `/account/participations/:gameId/recover` | Account | `{ deviceId }`. Recover without a password |
 | POST | `/account/resend-verification` | Account | New verification link if the address is still unconfirmed. Rate limited |
 | DELETE | `/account` | Account (participant only) | Deletes the user; participations stay behind as guests |
+| GET | `/account/profile` | Account | PF-03: `{ level, xp, xpForCurrentLevel, xpForNextLevel, gamesPlayed, gamesCompleted, basesCompleted, placements[] }`. Computed from the XP ledger; never game points |
 
 **Organizer resources visible to a team** (files and rich documents from the resource library):
 

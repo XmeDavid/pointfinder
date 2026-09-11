@@ -5,7 +5,7 @@ import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { cn } from '../../lib/utils/cn'
 import { useTranslation } from 'react-i18next'
 
-export function WorkspaceSwitcher() {
+export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
@@ -15,7 +15,7 @@ export function WorkspaceSwitcher() {
   const isPersonalActive = active.type === 'personal'
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className={cn("flex items-center gap-2", compact ? "flex-row flex-wrap mt-3" : "flex-col")}>
       {/* Personal workspace */}
       <button
         onClick={() => {

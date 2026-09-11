@@ -102,10 +102,13 @@ test('reads fine when every image is blocked and no hero motion plays under redu
   await page.route(/\/(onboarding|landing)\/.*\.(webp|png|svg)$/, (route) => route.abort())
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  const fallbacks = page.getByTestId('landing-artwork-fallback')
-  await expect(fallbacks.first()).toBeVisible()
-  await expect(fallbacks.first()).toContainText(/Three explorers on a forest trail/)
-  await expect(page.locator('#organizers').getByTestId('landing-artwork-fallback').filter({ hasText: 'Screenshot unavailable' })).toBeVisible()
+  // Force lazy artwork to load too, so every failed image collapses.
+  for (const section of ['how-it-works', 'organizers', 'pricing']) {
+    await page.locator(`#${section}`).scrollIntoViewIfNeeded()
+  }
+  await expect(page.locator('#how-it-works img')).toHaveCount(0)
+  await expect(page.getByTestId('landing-artwork-fallback')).toHaveCount(0)
+  await expect(page.locator('.landing-workspace-screen')).toBeHidden()
   await expect(page.getByRole('heading', { name: 'Out in the field. Always in the loop.' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your next adventure starts here.' })).toBeVisible()
   expect(await page.locator('.landing-reveal').first().evaluate((el) => getComputedStyle(el).animationName)).toBe('none')

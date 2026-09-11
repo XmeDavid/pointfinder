@@ -3,6 +3,16 @@
 NFC-based gaming platform for scouting organisations (Pathfinders / Desbravadores).
 Teams scan NFC tags at physical locations to unlock challenges, while operators manage games and monitor progress in real time.
 
+## Product direction
+
+PointFinder's long-term direction is a broader platform for location-based activities,
+with persistent player identity, flexible game participation, public discovery, and
+shared activity information. Simple guest joining and team games remain central.
+See the [product vision](docs/product/vision.md),
+[planned capabilities and dependencies](docs/product/roadmap.md), and
+[current repository context](docs/product/repository-context.md).
+These describe incremental direction, not features promised in the current release.
+
 ## Frontend development
 
 The browser and Tauri apps share one React application in `web/`. Its components,

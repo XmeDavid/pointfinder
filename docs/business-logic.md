@@ -1122,6 +1122,26 @@ When locked out, `POST /api/auth/login` returns 400 with "Too many login attempt
 
 **Token refresh deduplication**: The web frontend uses a shared in-flight promise to avoid issuing multiple `/auth/refresh` calls concurrently. Android uses a `Mutex`-locked `OperatorTokenRefresher`.
 
+### Platform XP (PF-03, 2026-09-10)
+
+Backend foundation present on the redesign branch; shared-frontend integration is underway. This is not a release or platform-parity claim. Game points belong to the organizer and remain absent from player APIs. XP belongs to the platform.
+
+Each game cycle has an `xp_cycles` row. Awards are append-only `xp_awards` rows keyed `(cycle, kind, reference, player)`, written with `ON CONFLICT DO NOTHING`, so retries and races do not double-award. Base amounts are 1 per check-in, 5 per first base completion (approved or correct submission, including manual completion), 50 for completing every assigned base at game end, and a placement award `s × ((T / p) × 100 + min(P / m, 10) × 50)`, where `s` is the share of people in other teams the team finished ahead of. The multiplier scales these amounts, rounded to the nearest integer with a minimum of 1 for a nonzero base award. Each non-retired current team member receives the same action award; actor attribution remains separate.
+
+**Action XP and visible levels advance during play.** The account profile includes earned rows from live and finalized cycles, excluding invalidated cycles and including reversals in the total. A new account starts at level 0; reaching level `n` needs the rounded threshold `200 × n^1.35`. Placement and game-completion awards remain finalized at game end. A reward with `state: "pending"` includes the action XP already earned and the linked account's current level; it has no live placement. This supersedes the earlier spec wording that hid all XP until the end.
+
+**The creator factor remains based on finalized XP.** At go-live, the backend derives the creator's level from finalized, non-invalidated cycles and freezes `0.2 + 1.8 × ln(1 + L) / ln(500)`, capped at 2, on that game cycle. The featured multiplier is also frozen. Visible player levels can therefore advance before they affect a newly organized game's factor. This prevents unsettled action XP from increasing another game's multiplier. Practice games and games whose creator plays do not award new action XP; an ineligible field's existing rows are reversed at finalization. In particular, a single-team field can show earned action XP while live and lose it when the game ends ineligible. The saved result records the reason.
+
+All ending paths, including scheduled ending, finalize under the game's row lock. Afterwards review, manual completion and rescue answer `GAME_ENDED`. Resetting with progress erased reverses the cycle once. Reopening without reset continues the same cycle and preserves earned XP and stored results; repeated events are not paid again, and a placement is not republished as live. The ledger and game-name snapshot can outlive deleted games; history may then have a null game ID or missing team/result details and must not assume a working game link.
+
+| Endpoint | Current meaning |
+|---|---|
+| `GET /api/account/profile` | Private account totals, live level, activity counts and finalized placements. History covers award-bearing cycles; `/api/account/me` remains the participation list, including games without XP. |
+| `GET /api/player/games/{gameId}/reward` | Own participation only. `pending` includes earned XP but no placement; `finalized` adds the saved result; `invalidated` returns zero XP and no awards for the reset cycle. Guests can see participation XP without an account level. |
+| `GET /api/games/{gameId}/end-summary` | Authorized operator's pre-end summary: current status, pending reviews, teams and players. Pending reviews remain unreviewed when the game is ended. |
+
+Implementation: `xp/XpService.java`, `xp/XpLevels.java`, `repository/XpAwardRepository.java`, and `V76__xp_ledger.sql`. The [original specification](specs/2026-09-10-xp-and-profile.md) contains the ledger and formula design; the live-XP behavior above reflects the subsequent product decision and implementation.
+
 ### Player Authentication
 
 | Property | Value |

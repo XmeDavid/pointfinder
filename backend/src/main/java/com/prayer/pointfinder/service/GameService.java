@@ -49,6 +49,10 @@ public class GameService {
     private final QuotaService quotaService;
     private final UserTutorialProgressRepository progressRepository;
     private final OrganizationService organizationService;
+    private final com.prayer.pointfinder.xp.XpService xpService;
+    private final com.prayer.pointfinder.repository.SubmissionRepository submissionRepository;
+    private final com.prayer.pointfinder.repository.TeamRepository teamRepository;
+    private final com.prayer.pointfinder.repository.PlayerRepository playerRepository;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -294,6 +298,7 @@ public class GameService {
         // rejected before the go-live auto-assign could ever refill it.
         if (target == GameStatus.setup && resetProgress) {
             gameProgressResetService.resetProgress(id);
+            xpService.invalidateCycle(game);
         }
 
         if (target == GameStatus.live) {
@@ -308,12 +313,28 @@ public class GameService {
                 game.setStartDate(Instant.now());
             }
             challengeAssignmentService.autoAssignChallenges(game);
+            xpService.openCycle(game);
         }
 
+        if (target == GameStatus.ended && fromStatus != GameStatus.ended) {
+            // The one finalizer, under the row lock taken above. Every ending path uses it.
+            xpService.finalizeCycle(game);
+        }
         game.setStatus(target);
         game = gameRepository.save(game);
         eventBroadcaster.broadcastGameStatus(game.getId(), game.getStatus().name());
         return toResponse(game);
+    }
+
+    /** What the operator sees before ending: how many submissions are still unreviewed. */
+    @Transactional(readOnly = true)
+    public com.prayer.pointfinder.dto.response.EndSummaryResponse endSummary(UUID id) {
+        gameAccessService.ensureCurrentUserCanAccessGame(id);
+        Game game = gameRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Game", id));
+        long pending = submissionRepository.countByGameIdAndStatus(id, com.prayer.pointfinder.entity.SubmissionStatus.pending);
+        long teams = teamRepository.countByGameId(id);
+        long players = playerRepository.countByGameId(id);
+        return new com.prayer.pointfinder.dto.response.EndSummaryResponse(game.getStatus().name(), pending, teams, players);
     }
 
     // ── Operator management ──────────────────────────────────────────

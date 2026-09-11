@@ -33,7 +33,7 @@ describe('SettingsScreen', () => {
     await waitFor(() => expect(services.account.session.current.kind).toBe('none'))
   })
 
-  it('shows the linked account with resend, unlink and delete', async () => {
+  it('keeps account deletion out of game settings', async () => {
     const resent = vi.fn(); const unlinked = vi.fn(); const deleted = vi.fn()
     server.use(
       http.get('/api/player/account', () => unlinked.mock.calls.length ? HttpResponse.json({ linked: false, email: null, name: null, emailVerified: false }) : HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: false })),
@@ -48,27 +48,12 @@ describe('SettingsScreen', () => {
     await userEvent.click(screen.getByTestId('settings-resend-verification'))
     await waitFor(() => expect(resent).toHaveBeenCalledTimes(1))
     expect(screen.getByTestId('settings-account-unverified')).toHaveTextContent('Email sent.')
-    expect(screen.getByTestId('settings-delete-account')).toBeInTheDocument()
+    expect(screen.queryByTestId('settings-delete-account')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name:'Manage my account' })).toHaveAttribute('href','/profile')
     await userEvent.click(screen.getByTestId('settings-unlink'))
     await userEvent.click(screen.getByTestId('confirm-action-btn'))
     await waitFor(() => expect(unlinked).toHaveBeenCalledTimes(1))
     expect(await screen.findByTestId('settings-account-signed-in')).toBeInTheDocument()
-  })
-
-  it('deletes a participant account and leaves the participation as a guest', async () => {
-    const deleted = vi.fn()
-    server.use(
-      http.get('/api/player/account', () => deleted.mock.calls.length ? HttpResponse.json({ linked: false, email: null, name: null, emailVerified: false }) : HttpResponse.json({ linked: true, email: 'ana@example.com', name: 'Ana', emailVerified: true })),
-      http.delete('/api/account', () => { deleted(); return new HttpResponse(null, { status: 204 }) }),
-    )
-    const { services } = await renderPlayer(<SettingsScreen />, { account: accountAuth })
-    await screen.findByTestId('settings-account-linked')
-    await userEvent.click(screen.getByTestId('settings-delete-account'))
-    await userEvent.click(screen.getByTestId('confirm-action-btn'))
-    await waitFor(() => expect(deleted).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(services.account.session.current.kind).toBe('none'))
-    expect(services.client.session.current).toMatchObject({ kind: 'player', playerId: 'p1' })
-    expect(await screen.findByTestId('settings-save-progress')).toBeInTheDocument()
   })
 
   it('leaves the game after a plain confirmation when nothing is queued', async () => {

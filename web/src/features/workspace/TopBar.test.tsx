@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render as renderUI, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import type { ReactNode } from 'react'
+const render = (ui: ReactNode) => renderUI(<MemoryRouter>{ui}</MemoryRouter>)
 import { TopBar } from './TopBar'
 import type { Game, Stage } from '@/types/v2'
 

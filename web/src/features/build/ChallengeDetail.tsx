@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { RuleSection } from './RuleSection'
+import { Switch } from '@/components/ui/switch'
 import { Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import DOMPurify from 'dompurify'
@@ -9,8 +11,14 @@ import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
-import { useGameVariables, useChallengeVariables } from '@/hooks/queries/useVariables'
-import { useUpdateChallenge, useDeleteChallenge } from '@/hooks/mutations/useChallengeMutations'
+import {
+  useGameVariables,
+  useChallengeVariables,
+} from '@/hooks/queries/useVariables'
+import {
+  useUpdateChallenge,
+  useDeleteChallenge,
+} from '@/hooks/mutations/useChallengeMutations'
 import { ChallengeAssignmentSection } from './ChallengeAssignmentSection'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useWorkspaceContext } from '@/stores/workspaceContext'
@@ -21,7 +29,10 @@ import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { ResourcePicker } from '@/components/editor/ResourcePicker'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import { VariableAwareChipInput } from '@/components/inputs/VariableAwareChipInput'
-import { resolveTemplate, type VariableMap } from '@/lib/variables/resolveTemplate'
+import {
+  resolveTemplate,
+  type VariableMap,
+} from '@/lib/variables/resolveTemplate'
 import { findUndefinedReferences } from '@/lib/variables/scanReferences'
 import { cn } from '@/lib/utils'
 import type { AnswerType } from '@/types/v2'
@@ -114,14 +125,34 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
 
   // Resource picker state
   const [showResourcePicker, setShowResourcePicker] = useState(false)
-  const [activeEditorField, setActiveEditorField] = useState<'content' | 'completion' | null>(null)
-  const contentEditorRef = useRef<((resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void) | null>(null)
-  const completionEditorRef = useRef<((resource: { id: string; name: string; sizeBytes: number; contentType: string }) => void) | null>(null)
+  const [activeEditorField, setActiveEditorField] = useState<
+    'content' | 'completion' | null
+  >(null)
+  const contentEditorRef = useRef<
+    | ((resource: {
+        id: string
+        name: string
+        sizeBytes: number
+        contentType: string
+      }) => void)
+    | null
+  >(null)
+  const completionEditorRef = useRef<
+    | ((resource: {
+        id: string
+        name: string
+        sizeBytes: number
+        contentType: string
+      }) => void)
+    | null
+  >(null)
 
   // Refs for programmatic pill insertion after the create-variable dialog
   // resolves — one per editor so we can insert into the originating field.
   const contentInsertVariableRef = useRef<((key: string) => void) | null>(null)
-  const completionInsertVariableRef = useRef<((key: string) => void) | null>(null)
+  const completionInsertVariableRef = useRef<((key: string) => void) | null>(
+    null,
+  )
 
   // Create-variable dialog state — opened from the `{{foo` autocomplete.
   const [createVarDialogOpen, setCreateVarDialogOpen] = useState(false)
@@ -178,7 +209,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   // For delete cascade count
   // Hidden bases this challenge may reveal; never its own pinned base.
   const hiddenTargets = useMemo(
-    () => bases.filter((base) => base.hidden && base.id !== challenge?.fixedBaseId),
+    () =>
+      bases.filter((base) => base.hidden && base.id !== challenge?.fixedBaseId),
     [bases, challenge?.fixedBaseId],
   )
   // A base opens from exactly one challenge (the server rejects a second),
@@ -187,7 +219,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
     const map = new Map<string, string>()
     for (const other of challenges) {
       if (other.id === challengeId) continue
-      for (const baseId of other.unlocksBaseIds ?? []) map.set(baseId, other.title)
+      for (const baseId of other.unlocksBaseIds ?? [])
+        map.set(baseId, other.title)
     }
     return map
   }, [challenges, challengeId])
@@ -197,17 +230,27 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
     [assignments, challengeId],
   )
 
-  const showAnswerConfig = localAnswerType === 'text'
+  const showAnswerConfig = localAnswerType === 'text' && localAutoValidate
 
   // Undefined-key guard: collect every `{{key}}` referenced in authoring
   // fields and flag any that aren't defined as game/challenge variables.
   const undefinedKeys = useMemo(
     () =>
       findUndefinedReferences(
-        [localContent, localCompletionContent, ...localCorrectAnswer],
+        [
+          localContent,
+          localCompletionContent,
+          ...(showAnswerConfig ? localCorrectAnswer : []),
+        ],
         new Set(availableKeys),
       ),
-    [localContent, localCompletionContent, localCorrectAnswer, availableKeys],
+    [
+      localContent,
+      localCompletionContent,
+      localCorrectAnswer,
+      availableKeys,
+      showAnswerConfig,
+    ],
   )
 
   const handleSave = useCallback(() => {
@@ -215,7 +258,9 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       const ok = window.confirm(
         `Undefined variables: ${undefinedKeys
           .map((k) => `{{${k}}}`)
-          .join(', ')}\n\nThese references won't resolve for any team. Save anyway?`,
+          .join(
+            ', ',
+          )}\n\nThese references won't resolve for any team. Save anyway?`,
       )
       if (!ok) return
     }
@@ -237,7 +282,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         completionContent: localCompletionContent,
         // Unlock targets need a pinned, location-bound challenge; the server
         // ignores them otherwise, so send exactly what the editor shows.
-        unlocksBaseIds: localLocationBound && challenge?.fixedBaseId ? localUnlocks : [],
+        unlocksBaseIds:
+          localLocationBound && challenge?.fixedBaseId ? localUnlocks : [],
         // The update replaces the whole row: fields this form does not edit
         // are carried over, or the server would clear them.
         tagIds: challenge?.tagIds ?? [],
@@ -271,7 +317,9 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   )
   const previewTeam = useMemo(
     () =>
-      sortedTeams.find((tm) => tm.id === previewTeamId) ?? sortedTeams[0] ?? null,
+      sortedTeams.find((tm) => tm.id === previewTeamId) ??
+      sortedTeams[0] ??
+      null,
     [sortedTeams, previewTeamId],
   )
   const previewVars = useMemo<VariableMap>(() => {
@@ -351,7 +399,10 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const deleteDescription =
     t('common.confirm.deleteChallengeDescription') +
     (deleteCascadeCount > 0
-      ? ' ' + t('common.confirm.deleteChallengeCascade', { count: deleteCascadeCount })
+      ? ' ' +
+        t('common.confirm.deleteChallengeCascade', {
+          count: deleteCascadeCount,
+        })
       : '')
 
   return (
@@ -359,27 +410,30 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       {/* Identity section */}
       <section>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Identity
+          {t('build.editor.identity')}
         </h3>
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-muted-foreground mb-1">
-              Title
+              {t('build.editor.title')}
             </label>
             <Input
               value={localTitle}
               onChange={(e) => setLocalTitle(e.target.value)}
               data-testid="challenge-title-input"
-              className="h-8 text-sm"
+              className="min-h-11 text-base"
             />
           </div>
 
           {/* Answer type selector */}
           <div>
             <label className="block text-xs text-muted-foreground mb-1">
-              Answer Type
+              {t('build.editor.answerType')}
             </label>
-            <div className="flex gap-1.5" data-testid="answer-type-group">
+            <div
+              className="flex flex-wrap gap-1.5"
+              data-testid="answer-type-group"
+            >
               {ANSWER_TYPES.map((at) => (
                 <button
                   key={at.value}
@@ -388,35 +442,35 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                   aria-pressed={localAnswerType === at.value}
                   data-testid={`answer-type-${at.value}`}
                   className={cn(
-                    'px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
+                    'min-h-11 px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer border',
                     localAnswerType === at.value
                       ? 'bg-primary/10 text-primary border-primary/30'
                       : 'bg-background text-muted-foreground border-border hover:text-foreground',
                   )}
                 >
-                  {at.label}
+                  {t(`build.editor.${at.value}`)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Auto-validate toggle */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setLocalAutoValidate(!localAutoValidate)}
-              aria-pressed={localAutoValidate}
-              data-testid="auto-validate-toggle"
-              className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
-                localAutoValidate
-                  ? 'bg-primary/10 text-primary border-primary/30'
-                  : 'bg-background text-muted-foreground border-border hover:text-foreground',
-              )}
-            >
-              Auto-validate
-            </button>
-          </div>
+          {/* Matching answers is only applicable to text submissions. */}
+          {localAnswerType === 'text' && (
+            <div className="flex min-h-11 items-center justify-between gap-3">
+              <label
+                htmlFor="challenge-auto-validate"
+                className="flex-1 cursor-pointer py-2 text-sm"
+              >
+                {t('build.editor.autoValidate')}
+              </label>
+              <Switch
+                id="challenge-auto-validate"
+                checked={localAutoValidate}
+                onCheckedChange={setLocalAutoValidate}
+                data-testid="auto-validate-toggle"
+              />
+            </div>
+          )}
         </div>
       </section>
 
@@ -424,12 +478,12 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       <section className="border-t border-border pt-4 mt-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Content
+            {t('build.editor.content')}
           </h3>
           <div className="flex items-center gap-2">
             <div
               role="tablist"
-              aria-label="Editor mode"
+              aria-label={t('build.editor.editorMode')}
               className="inline-flex rounded-md border border-border p-0.5"
             >
               <button
@@ -439,13 +493,13 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 onClick={() => setPreviewMode(false)}
                 data-testid="preview-edit-btn"
                 className={cn(
-                  'px-2 py-0.5 text-xs rounded cursor-pointer transition-colors',
+                  'min-h-11 px-2 py-0.5 text-sm rounded cursor-pointer transition-colors',
                   !previewMode
                     ? 'bg-accent text-accent-foreground'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                Edit
+                {t('build.editor.edit')}
               </button>
               <button
                 type="button"
@@ -455,7 +509,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 disabled={sortedTeams.length === 0}
                 data-testid="preview-preview-btn"
                 className={cn(
-                  'px-2 py-0.5 text-xs rounded cursor-pointer transition-colors',
+                  'min-h-11 px-2 py-0.5 text-sm rounded cursor-pointer transition-colors',
                   previewMode
                     ? 'bg-accent text-accent-foreground'
                     : 'text-muted-foreground hover:text-foreground',
@@ -467,7 +521,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                     : undefined
                 }
               >
-                Preview
+                {t('build.editor.preview')}
               </button>
             </div>
             {previewMode && sortedTeams.length > 0 && (
@@ -489,7 +543,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-muted-foreground mb-1">
-              Description
+              {t('build.editor.description')}
             </label>
             <Textarea
               rows={3}
@@ -501,7 +555,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           </div>
           <div data-testid="challenge-content">
             <label className="block text-xs text-muted-foreground mb-1">
-              Content
+              {t('build.editor.content')}
             </label>
             {previewMode ? (
               <div
@@ -535,12 +589,12 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       {showAnswerConfig && (
         <section className="border-t border-border pt-4 mt-4">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Answer Configuration
+            {t('build.editor.answerConfiguration')}
           </h3>
           <div className="space-y-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">
-                Correct answer(s)
+                {t('build.editor.correctAnswers')}
               </label>
               {previewMode ? (
                 <div
@@ -549,7 +603,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 >
                   {localCorrectAnswer.length === 0 ? (
                     <span className="text-xs text-muted-foreground italic">
-                      No answers configured
+                      {t('build.editor.noAnswers')}
                     </span>
                   ) : (
                     localCorrectAnswer.map((chip, idx) => (
@@ -577,34 +631,30 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 className="text-[10px] text-destructive"
                 data-testid="undefined-key-warning"
               >
-                Unknown variable{undefinedKeys.length > 1 ? 's' : ''}:{' '}
+                {t('build.editor.unknownVariables')}{' '}
                 {undefinedKeys.map((k) => `{{${k}}}`).join(', ')}
               </p>
             )}
             <p className="text-[10px] text-muted-foreground">
-              When auto-validate is on, submissions matching any of these
-              answers are automatically approved. Use {'{{variable}}'} to
-              reference per-team values.
+              {t('build.editor.answerHint')}
             </p>
           </div>
         </section>
       )}
 
-      {/* Scoring section */}
-      <section className="border-t border-border pt-4 mt-4">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Scoring
-        </h3>
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">
-            Points
+      {/* Points stay visible as a single row. */}
+      <section className="flex items-center justify-between gap-3 border-t border-border pt-3 mt-3">
+        <div className="contents">
+          <label htmlFor="challenge-points" className="text-sm">
+            {t('build.editor.points')}
           </label>
           <Input
             type="number"
             value={localPoints}
             onChange={(e) => setLocalPoints(e.target.value)}
+            id="challenge-points"
             data-testid="points-input"
-            className="w-24 h-8 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-24 h-10 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </div>
       </section>
@@ -617,13 +667,13 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         bases={bases}
         teams={teams}
         onNavigateToBase={selectBase}
-              challenges={challenges}
+        challenges={challenges}
       />
 
       {/* Operator notes */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Operator Notes
+          {t('build.editor.notes')}
         </h3>
         <Textarea
           rows={3}
@@ -638,22 +688,22 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       {/* Location bound */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Location Bound
+          {t('build.editor.location')}
         </h3>
-        <button
-          type="button"
-          onClick={() => setLocalLocationBound(!localLocationBound)}
-          aria-pressed={localLocationBound}
-          data-testid="location-bound-toggle"
-          className={cn(
-            'px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border',
-            localLocationBound
-              ? 'bg-primary/10 text-primary border-primary/30'
-              : 'bg-background text-muted-foreground border-border hover:text-foreground',
-          )}
-        >
-          Require physical presence
-        </button>
+        <div className="flex min-h-11 items-center justify-between gap-3">
+          <label
+            htmlFor="challenge-location-bound"
+            className="flex-1 cursor-pointer py-2 text-sm"
+          >
+            {t('build.editor.physicalPresence')}
+          </label>
+          <Switch
+            id="challenge-location-bound"
+            checked={localLocationBound}
+            onCheckedChange={setLocalLocationBound}
+            data-testid="location-bound-toggle"
+          />
+        </div>
       </section>
 
       {/* Reveals bases: an unlock chain */}
@@ -662,17 +712,30 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           {t('build.unlocks.title')}
         </h3>
         {!challenge.fixedBaseId || !localLocationBound ? (
-          <p className="text-xs text-muted-foreground" data-testid="unlocks-hint">
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid="unlocks-hint"
+          >
             {t('build.unlocks.needsPinAndLocation')}
           </p>
         ) : hiddenTargets.length === 0 ? (
-          <p className="text-xs text-muted-foreground" data-testid="unlocks-hint">
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid="unlocks-hint"
+          >
             {t('build.unlocks.noHiddenBases')}
           </p>
         ) : (
           <>
-            <p className="text-xs text-muted-foreground">{t('build.unlocks.hint')}</p>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('build.unlocks.title')} data-testid="unlocks-bases">
+            <p className="text-xs text-muted-foreground">
+              {t('build.unlocks.hint')}
+            </p>
+            <div
+              className="flex flex-wrap gap-1.5"
+              role="group"
+              aria-label={t('build.unlocks.title')}
+              data-testid="unlocks-bases"
+            >
               {hiddenTargets.map((base) => {
                 const on = localUnlocks.includes(base.id)
                 const claimant = on ? undefined : claimedBy.get(base.id)
@@ -682,19 +745,37 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                     type="button"
                     aria-pressed={on}
                     disabled={Boolean(claimant)}
-                    title={claimant ? t('build.unlocks.claimedBy', { challenge: claimant }) : undefined}
-                    onClick={() => setLocalUnlocks(on ? localUnlocks.filter((id) => id !== base.id) : [...localUnlocks, base.id])}
+                    title={
+                      claimant
+                        ? t('build.unlocks.claimedBy', { challenge: claimant })
+                        : undefined
+                    }
+                    onClick={() =>
+                      setLocalUnlocks(
+                        on
+                          ? localUnlocks.filter((id) => id !== base.id)
+                          : [...localUnlocks, base.id],
+                      )
+                    }
                     data-testid={`unlocks-base-${base.id}`}
                     className={cn(
-                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors border',
-                      claimant ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+                      'min-h-11 px-3 py-1.5 text-sm font-medium rounded-md transition-colors border',
+                      claimant
+                        ? 'cursor-not-allowed opacity-50'
+                        : 'cursor-pointer',
                       on
                         ? 'bg-primary/10 text-primary border-primary/30'
                         : 'bg-background text-muted-foreground border-border hover:text-foreground',
                     )}
                   >
                     {base.name}
-                    {claimant && <span className="sr-only"> · {t('build.unlocks.claimedBy', { challenge: claimant })}</span>}
+                    {claimant && (
+                      <span className="sr-only">
+                        {' '}
+                        ·{' '}
+                        {t('build.unlocks.claimedBy', { challenge: claimant })}
+                      </span>
+                    )}
                   </button>
                 )
               })}
@@ -706,7 +787,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       {/* Tags section */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Tags
+          {t('build.editor.tags')}
         </h3>
         <TagPicker
           gameId={gameId}
@@ -734,52 +815,63 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         />
       </section>
 
-      {/* Challenge Variables */}
-      <section className="border-t border-border pt-4 mt-4">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Challenge Variables
-        </h3>
-        <TeamVariablesEditor gameId={gameId} challengeId={challengeId} teams={teams} />
-      </section>
-
-      {/* Post-completion content */}
-      <section className="border-t border-border pt-4 mt-4">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Post-completion
-        </h3>
-        <div data-testid="completion-content">
-          {previewMode ? (
-            <div
-              data-testid="completion-content-preview"
-              className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-input bg-muted/30 px-3 py-2 min-h-[150px]"
-              // See resolvedCompletionHtml memo — sanitized post-resolve.
-              dangerouslySetInnerHTML={{ __html: resolvedCompletionHtml }}
-            />
-          ) : (
-            <RichTextEditor
-              content={localCompletionContent}
-              onChange={setLocalCompletionContent}
-              placeholder={t('build.completionPlaceholder')}
-              onInsertFileEmbed={() => {
-                setActiveEditorField('completion')
-                setShowResourcePicker(true)
-              }}
-              insertFileEmbedRef={completionEditorRef}
-              variableKeys={availableKeys}
-              onCreateVariable={handleCreateCompletionVariable}
-              insertVariableRef={completionInsertVariableRef}
-            />
-          )}
-        </div>
-      </section>
-
+      <RuleSection
+        key={`variables-${challengeId}`}
+        title={t('build.rules.variables')}
+        configured={challengeVars.length > 0}
+      >
+        {/* Challenge Variables */}
+        <section>
+          <TeamVariablesEditor
+            gameId={gameId}
+            challengeId={challengeId}
+            teams={teams}
+          />
+        </section>
+      </RuleSection>
+      <RuleSection
+        key={`afterCompletion-${challengeId}`}
+        title={t('build.editor.afterCompletion')}
+        configured={Boolean(challenge.completionContent)}
+      >
+        {/* Post-completion content */}
+        <section>
+          <div data-testid="completion-content">
+            {previewMode ? (
+              <div
+                data-testid="completion-content-preview"
+                className="prose prose-sm dark:prose-invert max-w-none rounded-md border border-input bg-muted/30 px-3 py-2 min-h-[150px]"
+                // See resolvedCompletionHtml memo — sanitized post-resolve.
+                dangerouslySetInnerHTML={{ __html: resolvedCompletionHtml }}
+              />
+            ) : (
+              <RichTextEditor
+                content={localCompletionContent}
+                onChange={setLocalCompletionContent}
+                placeholder={t('build.completionPlaceholder')}
+                onInsertFileEmbed={() => {
+                  setActiveEditorField('completion')
+                  setShowResourcePicker(true)
+                }}
+                insertFileEmbedRef={completionEditorRef}
+                variableKeys={availableKeys}
+                onCreateVariable={handleCreateCompletionVariable}
+                insertVariableRef={completionInsertVariableRef}
+              />
+            )}
+          </div>
+        </section>
+      </RuleSection>
       {/* Resource picker modal */}
       {showResourcePicker && (
         <ResourcePicker
           gameId={gameId}
           orgId={orgId}
           onSelect={(resource) => {
-            const ref = activeEditorField === 'content' ? contentEditorRef : completionEditorRef
+            const ref =
+              activeEditorField === 'content'
+                ? contentEditorRef
+                : completionEditorRef
             ref.current?.(resource)
           }}
           onClose={() => setShowResourcePicker(false)}
@@ -799,7 +891,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       />
 
       {/* Save button */}
-      <div className="border-t border-border pt-4 mt-4">
+      <div className="sticky bottom-0 z-10 border-t border-border bg-card py-3 mt-4 flex items-center gap-3">
         <Button
           onClick={handleSave}
           loading={updateChallenge.isPending}
@@ -807,7 +899,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           size="sm"
         >
           <Save className="h-4 w-4" />
-          Save Changes
+          {t('common.save')}
         </Button>
       </div>
 
@@ -818,7 +910,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           data-testid="delete-challenge-btn"
           className="text-xs text-destructive hover:underline cursor-pointer"
         >
-          Delete challenge
+          {t('build.editor.delete')}
         </button>
       </div>
 
@@ -827,7 +919,9 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         onCancel={() => setConfirmDeleteOpen(false)}
         onConfirm={() => {
           setConfirmDeleteOpen(false)
-          deleteChallenge.mutate(challengeId, { onSuccess: () => selectChallenge(null) })
+          deleteChallenge.mutate(challengeId, {
+            onSuccess: () => selectChallenge(null),
+          })
         }}
         title={t('common.confirm.deleteChallengeTitle')}
         description={deleteDescription}

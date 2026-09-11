@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { FloatingBar } from '@/components/layout/FloatingBar'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +50,7 @@ export function TopBar({ game, stages }: TopBarProps) {
       <div className={cn('flex w-full min-w-0 items-center gap-2', useMobileStageRow && 'max-md:flex-wrap max-md:gap-y-1')}>
         {/* Left: Game name + status badge */}
         <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0" data-testid="top-bar-primary">
+          <Link to="/dashboard?view=organize" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-muted" aria-label={t("experience.backToOrganize")} data-testid="operator-back-btn"><ArrowLeft size={19}/></Link>
           <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-none">{game.name}</span>
           <GameStatusBadge
             status={game.status}

@@ -30,6 +30,15 @@ import type {
   PlayerJoinRequest,
   AccountJoinRequest,
   AccountMeResponse,
+  ExploreGameResponse,
+  ExploreJoinRequest,
+  ExplorePageResponse,
+  ExploreQuery,
+  GamePublicationRequest,
+  GamePublicationResponse,
+  EndSummaryResponse,
+  XpProfileResponse,
+  XpRewardResponse,
   ParticipantRegisterRequest,
   PlayerAccountLinkRequest,
   PlayerAccountResponse,
@@ -104,6 +113,8 @@ export function createApi(http: HttpClient) {
     notifications: () => http.get<PlayerNotificationResponse[]>('/api/player/notifications'),
     unseenNotificationCount: () => http.get<UnseenCountResponse>('/api/player/notifications/unseen-count'),
     markNotificationsSeen: () => http.post<void>('/api/player/notifications/mark-seen'),
+    /** PF-03: what this participation earned in the game's latest cycle; `pending` while it runs. */
+    reward: (gameId: EntityId) => http.get<XpRewardResponse>(`${p(gameId)}/reward`),
     /** The account behind this participation, if any. */
     account: () => http.get<PlayerAccountResponse>('/api/player/account'),
     /** Link this participation to an account in place; the player token stays valid. */
@@ -133,6 +144,39 @@ export function createApi(http: HttpClient) {
     },
   }
 
+  /** PF-07: the publisher's side of Explore. Game owner, org game admin or platform admin; co-operators may only read. */
+  const publication = {
+    /** 404 until a draft is saved. */
+    get: (gameId: EntityId) => http.get<GamePublicationResponse>(`/api/games/${encodeURIComponent(gameId)}/publication`),
+    /** Create or update the public summary. Does not list or delist. */
+    save: (gameId: EntityId, body: GamePublicationRequest) => http.put<GamePublicationResponse>(`/api/games/${encodeURIComponent(gameId)}/publication`, body),
+    publish: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/games/${encodeURIComponent(gameId)}/publication/publish`),
+    /** Delists and clears curation; the summary stays as a draft. */
+    unpublish: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/games/${encodeURIComponent(gameId)}/publication/unpublish`),
+    /** Platform admin only. */
+    admin: {
+      list: () => http.get<GamePublicationResponse[]>('/api/admin/publications'),
+      feature: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/feature`),
+      unfeature: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/unfeature`),
+    },
+  }
+
+  /** PF-08: Explore for signed-in accounts of any role. Bearer: the account session, never a player token. */
+  const explore = {
+    list: (query: ExploreQuery = {}) => {
+      const params = new URLSearchParams()
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== null && value !== '') params.set(key, String(value))
+      }
+      const qs = params.toString()
+      return http.get<ExplorePageResponse>(`/api/explore/games${qs ? `?${qs}` : ''}`)
+    },
+    /** 404 for anything not currently listed. */
+    get: (gameId: EntityId) => http.get<ExploreGameResponse>(`/api/explore/games/${encodeURIComponent(gameId)}`),
+    /** Recovers this account's participation, or creates one on the designated admission team when `joinable`. Same result as account join. */
+    join: (gameId: EntityId, body: ExploreJoinRequest) => http.post<PlayerAuthResponse>(`/api/explore/games/${encodeURIComponent(gameId)}/join`, body),
+  }
+
   /** PF-01: what a signed-in phone can do with its account. Bearer: the account session, not the player token. */
   const account = {
     me: () => http.get<AccountMeResponse>('/api/account/me'),
@@ -142,6 +186,8 @@ export function createApi(http: HttpClient) {
     resendVerification: () => http.post<{ message: string }>('/api/account/resend-verification'),
     /** Participants only; participations stay behind as guests. */
     delete: () => http.delete('/api/account'),
+    /** PF-03: level, XP and placements. Private to the account. */
+    profile: () => http.get<XpProfileResponse>('/api/account/profile'),
   }
 
   const games = {
@@ -151,6 +197,8 @@ export function createApi(http: HttpClient) {
     update: (gameId: EntityId, body: UpdateGameRequest) => http.put<Game>(g(gameId), body),
     remove: (gameId: EntityId) => http.delete(g(gameId)),
     setStatus: (gameId: EntityId, body: UpdateGameStatusRequest) => http.patch<Game>(`${g(gameId)}/status`, body),
+    /** Before ending: pending reviews that ending would leave unreviewed. Ending freezes results. */
+    endSummary: (gameId: EntityId) => http.get<EndSummaryResponse>(`${g(gameId)}/end-summary`),
     /** Canonical operator state including scores. */
     snapshot: (gameId: EntityId) => http.get<OperatorSnapshotResponse>(`${g(gameId)}/snapshot`),
     operators: (gameId: EntityId) => http.get<UserResponse[]>(`${g(gameId)}/operators`),
@@ -262,7 +310,7 @@ export function createApi(http: HttpClient) {
     revoke: (inviteId: EntityId) => http.delete(`/api/invites/${encodeURIComponent(inviteId)}`),
   }
 
-  return { auth, player, games, bases, challenges, assignments, teams, tags, monitoring, submissions, rescue, notifications, invites, account }
+  return { auth, player, games, bases, challenges, assignments, teams, tags, monitoring, submissions, rescue, notifications, invites, account, publication, explore }
 }
 
 export type PointFinderApi = ReturnType<typeof createApi>

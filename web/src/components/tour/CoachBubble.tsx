@@ -15,6 +15,8 @@ const FALLBACK_HEIGHT = 200
 export interface CoachBubbleProps {
   /** Already-translated title. */
   title: string
+  /** Character artwork accompanying contextual guidance. */
+  artwork?: string
   /** Already-translated body. */
   body: string
   /** Already-translated quieter secondary paragraph. */
@@ -40,6 +42,7 @@ export interface CoachBubbleProps {
 
 export function CoachBubble({
   title,
+  artwork = "/landing/illustrated/guide-pointing-mascot-v2.webp",
   body,
   aside,
   step,
@@ -128,7 +131,7 @@ export function CoachBubble({
       className={cn(
         'outline-none',
         inline && 'relative w-full max-w-sm',
-        !inline && 'fixed z-[70]',
+        !inline && 'fixed z-[71]',
         !inline && isDesktop && 'w-80',
         !inline && isDesktop && !anchorRect && 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
         sheet && 'left-0 right-0',
@@ -179,12 +182,13 @@ export function CoachBubble({
             onClick={onClose}
             data-testid="tour-close"
             aria-label={t('tutorials.common.close')}
-            className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+            className="flex min-h-11 min-w-11 items-center justify-center shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
+        <img src={artwork} alt="" className="float-right ml-3 h-24 w-24 object-contain" />
         <p data-testid="tour-bubble-body" className="mt-2 text-sm text-muted-foreground">
           {body}
         </p>
@@ -197,14 +201,14 @@ export function CoachBubble({
         {footer && <div className="mt-3">{footer}</div>}
 
         {(onLater || onAck) && (
-          <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+          <div className="mt-3 clear-both flex flex-wrap items-center justify-end gap-2">
             {onLater && (
-              <Button variant="outline" size="sm" onClick={onLater} data-testid="tour-later" className="h-auto min-h-9 whitespace-normal">
+              <Button variant="outline" size="sm" onClick={onLater} data-testid="tour-later" className="h-auto min-h-11 whitespace-normal">
                 {t('tutorials.common.later')}
               </Button>
             )}
             {onAck && (
-              <Button size="sm" onClick={onAck} data-testid="tour-next" className="h-auto min-h-9 whitespace-normal">
+              <Button size="sm" onClick={onAck} data-testid="tour-next" className="h-auto min-h-11 whitespace-normal">
                 {isLast ? t('tutorials.common.gotIt') : t('tutorials.common.next')}
               </Button>
             )}

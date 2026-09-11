@@ -201,6 +201,9 @@ body {
   background: var(--color-card);
   box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.6);
 }
+.landing-workspace-screen:empty {
+  display: none;
+}
 .landing-workspace-guide {
   position: absolute;
   left: 0;

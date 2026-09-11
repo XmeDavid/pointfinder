@@ -775,8 +775,9 @@ Component: Artwork
 Status: canonical (public site only)
 Location: `web/src/features/public/landing/Artwork.tsx`
 Modes: Public / Marketing
-States: loaded, failed (the description replaces the picture as text, test id
-`landing-artwork-fallback`, optional "Screenshot unavailable" label)
+States: loaded, missing/failed (optional artwork is omitted with no placeholder
+or description panel; section copy remains). The former
+`landing-artwork-fallback` test id is retired; tests assert its absence.
 Notes: Every homepage picture goes through it with explicit dimensions and a
 usable alt. Only the hero is eager / high priority; the rest is lazy.
 
@@ -942,3 +943,32 @@ Admin panel and club detail:
   `web/src/features/org/ClubMembership.test.tsx`,
   `web/src/features/dashboard/PendingOrgInvites.test.tsx`, and the club cases
   in `web/src/features/profile/BillingTab.test.tsx`.
+
+## Unified account and game experience (2026-09-10)
+
+The existing DashboardPage now contains Home, Play and Organize. OrganizePanel
+preserves the original workspace-aware dashboard controls. ProfilePage includes
+ExplorerProfile using real XP/history APIs. ExperienceMap and DiscoveryCard
+compose canonical GameMap/StatusMarker/overlay surfaces for Home discovery.
+PlayerMap remains the real player route; its contextual PlayerTour reuses
+Spotlight/CoachBubble with existing character poses. MapLegend collapses after
+initial reading and can be recalled. GameResultCard uses finalized team rewards.
+
+Map placement creates a base and opens BaseDetail. BaseAssignmentSection presents
+Challenge first, with blank challenge creation through existing mutations. RuleSection
+uses compact summaries for larger optional editors; single fields remain visible.
+ReadinessIndicator links to the affected editor and only changes operating mode
+after successful Go Live. Existing libraries, grid and per-team variants remain.
+
+Local seeded accounts/games/documents and discovery use real APIs. PublicationSection extends existing Game Settings with a deliberate summary, optional map location and explicit admission. DiscoverySection uses authenticated Explore queries. No prototype labels or duplicate production pages.
+See `docs/specs/2026-09-10-unified-user-experience.md` for scope and remaining gates.
+
+`QrCodeViewer` is the shared operator code preview: click to open a full-screen
+canonical dialog; save a PNG through the browser/native share adapter. BaseDetail
+and NfcTagsManager use it. PublicationSection uses the canonical Switch for
+Make it public, the game name as title, and an area label instead of coordinates.
+
+The game content drawer exposes Documents through the existing ResourceBrowser
+with gameId and showShareToggle. Game scope uses a narrow toolbar, optional folder
+selector, visible touch actions, and canonical sharing switches. Written content
+stays in the editor on failure; sharing reflects server acknowledgement.

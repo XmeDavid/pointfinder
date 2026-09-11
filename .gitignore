@@ -75,3 +75,13 @@ web/storybook-static/
 web/dist-native/
 web/test-results/
 web/playwright-report/
+
+# Local design iterations, render evidence and export scratch files
+/artifacts/
+/output/
+/PLANS
+*.blend1
+*.blend2
+*.raw.glb
+__pycache__/
+*.pyc

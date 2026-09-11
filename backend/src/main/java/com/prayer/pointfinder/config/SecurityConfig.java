@@ -91,6 +91,9 @@ public class SecurityConfig {
                 // PF-01: the account behind a player. Operators can play too, so every
                 // account role is admitted; the controller only ever acts on the caller.
                 .requestMatchers("/api/account/**").hasAnyRole("ADMIN", "OPERATOR", "PARTICIPANT")
+                // PF-08: Explore is for signed-in accounts of any role. Guests keep
+                // direct joining and never browse; a player token is not an account.
+                .requestMatchers("/api/explore/**").hasAnyRole("ADMIN", "OPERATOR", "PARTICIPANT")
                 // Platform administration — club creation, deal terms,
                 // invoicing, ownership transfer. Gated at the filter chain so
                 // no controller can accidentally ship an unguarded method.

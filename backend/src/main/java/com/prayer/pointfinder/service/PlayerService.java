@@ -34,6 +34,7 @@ public class PlayerService {
     private final CheckInRepository checkInRepository;
     private final SubmissionRepository submissionRepository;
     private final ActivityEventRepository activityEventRepository;
+    private final com.prayer.pointfinder.xp.XpService xpService;
     private final GameEventBroadcaster eventBroadcaster;
     private final SubmissionService submissionService;
     private final GameAccessService gameAccessService;
@@ -117,6 +118,8 @@ public class PlayerService {
                     .orElseThrow(() -> new BadRequestException("Check-in failed"));
             return buildCheckInResponse(existing2, base, team, gameId);
         }
+
+        xpService.awardCheckIn(team, base);
 
         // Create activity event with full player actor capture (V36).
         // Structured twin of the feed message. The operator UI reads these to

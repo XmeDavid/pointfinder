@@ -1030,6 +1030,7 @@
     "ACCOUNT_ALREADY_IN_GAME": "Dieses Konto spielt dieses Spiel bereits auf einem anderen Handy.",
     "PLAYER_ALREADY_LINKED": "Diese Teilnahme gehört bereits zu einem Konto.",
     "NO_PARTICIPATION_FOUND": "Dieses Konto ist diesem Spiel nicht beigetreten.",
+    "GAME_ENDED": "Das Spiel ist beendet. Die Ergebnisse sind eingefroren.",
     "RATE_LIMITED": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
     "QUOTA_BASES_PER_GAME_EXCEEDED": "Dieses Spiel hat das Stationslimit deines Plans erreicht.",
     "QUOTA_OPERATORS_PER_GAME_EXCEEDED": "Dieses Spiel hat das Operator-Limit deines Plans erreicht.",
@@ -1183,7 +1184,13 @@
     "pickResource": "Ressource auswählen",
     "gameResources": "Spiel-Ressourcen",
     "orgResources": "Organisations-Ressourcen",
-    "untitledDocument": "Unbenanntes Dokument"
+    "untitledDocument": "Unbenanntes Dokument",
+    "gameHelp": "Erstelle Dokumente oder lade Dateien für dieses Spiel hoch. Teile sie mit den Spielern, sobald sie bereit sind.",
+    "shareWithPlayers": "Mit Spielern teilen",
+    "offline": "Verbinde dich mit dem Internet, um Dokumente hinzuzufügen oder zu ändern.",
+    "loadError": "Dokumente konnten nicht geladen werden.",
+    "documentContent": "Dokumentinhalt…",
+    "documentTitle": "Dokumenttitel"
   },
   "billing": {
     "title": "Abrechnung & Plan",
@@ -1399,7 +1406,8 @@
       "newChallenge": "Neue Aufgabe",
       "newTeam": "Neues Team",
       "newStage": "Neue Etappe",
-      "autoAssign": "Automatisch zuweisen"
+      "autoAssign": "Aufgaben automatisch verknüpfen",
+      "documents": "Dokumente"
     },
     "mapActions": "Kartenaktionen",
     "placeBaseHere": "Station hier platzieren",
@@ -1448,8 +1456,8 @@
         "file": "Datei",
         "none": "Keine Antwort"
       },
-      "open": "Zuordnungen",
-      "title": "Zuordnungen",
+      "open": "Aufgaben verknüpfen",
+      "title": "Aufgaben verknüpfen",
       "hint": "Eine Challenge je Station. Alle Teams teilen sie, oder jedes Team bekommt seine eigene — das Raster hält je Team eine Challenge an genau einer Station.",
       "close": "Fertig",
       "base": "Station",
@@ -1500,7 +1508,77 @@
       "manual": "Manuell"
     },
     "unknownBase": "Unbekannte Station",
-    "gameNotFound": "Spiel nicht gefunden"
+    "gameNotFound": "Spiel nicht gefunden",
+    "compose": {
+      "title": "Eine spielbare Basis erstellen",
+      "intro": "Gib diesem Ort einen Namen und eine Aufgabe. Die Regeln kannst du danach verfeinern.",
+      "name": "Name der Basis",
+      "task": "Was sollen die Spieler hier tun?",
+      "audience": "Jedes Team bekommt hier diese Aufgabe.",
+      "rules": "Spieler reichen eine schriftliche Antwort zur Prüfung ein. Antworttyp, Teamregeln und Freischaltungen lassen sich im Editor ändern.",
+      "cancel": "Abbrechen",
+      "saving": "Wird gespeichert…",
+      "save": "Basis und Aufgabe speichern",
+      "retry": "Erneut versuchen",
+      "partialFailure": "Die Basis ist gespeichert. Versuche erneut, die Aufgabe fertigzustellen, oder schließe das Fenster und bearbeite sie weiter.",
+      "failure": "Speichern fehlgeschlagen. Dein Text ist noch da.",
+      "launching": "Spiel wird gestartet…",
+      "goLive": "Spiel starten",
+      "launchFailed": "Das Spiel konnte nicht starten. Prüfe die Verbindung und versuche es erneut.",
+      "firstBase": "Platziere deine erste Station",
+      "firstBaseHint": "Zoome zum Spielort und tippe auf die Karte. Ergänze dort die Aufgabe; sie gilt zunächst für alle Teams."
+    },
+    "rules": {
+      "scoring": "Punkte",
+      "notes": "Notizen für Veranstalter",
+      "discovery": "Entdecken und Standort",
+      "variables": "Unterschiedliche Antworten je Team",
+      "afterCompletion": "Nach Abschluss der Aufgabe"
+    },
+    "editor": {
+      "identity": "Aufgabe",
+      "title": "Titel",
+      "answerType": "Aufgabentyp",
+      "text": "Text",
+      "file": "Datei",
+      "none": "Keine",
+      "autoValidate": "Antworten automatisch prüfen",
+      "content": "Anleitung für Spielende",
+      "edit": "Bearbeiten",
+      "preview": "Vorschau",
+      "editorMode": "Bearbeitungsmodus",
+      "description": "Beschreibung",
+      "answerConfiguration": "Akzeptierte Antworten",
+      "correctAnswers": "Richtige Antwort(en)",
+      "noAnswers": "Noch keine Antworten festgelegt",
+      "unknownVariables": "Unbekannte Variablen:",
+      "answerHint": "Bei automatischer Prüfung werden passende Antworten direkt bestätigt. Du kannst Werte verwenden, die sich je nach Team unterscheiden.",
+      "points": "Punkte",
+      "notes": "Notizen der Spielleitung",
+      "location": "Standortbedingungen",
+      "physicalPresence": "Anwesenheit vor Ort verlangen",
+      "variables": "Teamwerte für diese Aufgabe",
+      "afterCompletion": "Nach dem Abschluss",
+      "delete": "Aufgabe löschen",
+      "tags": "Tags",
+      "name": "Name",
+      "locationAndCheckIn": "Standort & Check-in",
+      "moveBaseHint": "Tippe auf die Karte, um diese Station zu verschieben.",
+      "preciseCoordinates": "Genaue Koordinaten",
+      "visibility": "Sichtbarkeit",
+      "baseLocation": "Standort & Check-in · {{method}}",
+      "baseVisibility": "Sichtbarkeit · {{visibility}}",
+      "visible": "Sichtbar",
+      "hidden": "Verborgen",
+      "deleteBase": "Station löschen",
+      "newBase": "Neue Station",
+      "newChallenge": "Neue Aufgabe",
+      "createBaseError": "Die Station konnte nicht erstellt werden. Wähle ihre Position, um es erneut zu versuchen.",
+      "createEmptyChallenge": "Leere Aufgabe erstellen",
+      "challengeHere": "Aufgabe",
+      "chooseExistingChallenge": "Vorhandene Aufgabe wählen",
+      "appearsAt": "Wo diese Aufgabe erscheint"
+    }
   },
   "command2": {
     "empty": {
@@ -1651,7 +1729,7 @@
       "rejected": "Nochmal versuchen"
     },
     "logbook": {
-      "progress": "{{done}} von {{total}} geschafft",
+      "progress": "{{done}} von {{total}} sichtbaren Stationen abgeschlossen",
       "locked": "Gesperrt",
       "lockedHint": "Hier ist etwas. Mach weiter, um es freizuschalten.",
       "nextUp": "Als Nächstes",
@@ -1705,12 +1783,15 @@
       "inbox": "Benachrichtigungen",
       "settings": "Einstellungen",
       "introPrompt": {
-        "title": "Neu bei PointFinder?",
-        "body": "Sieh in unter einer Minute, wie ein Spiel abläuft.",
-        "open": "So funktioniert es",
+        "title": "Dein Begleiter unterwegs",
+        "body": "Lerne die Bedienung direkt in deinem Spiel kennen.",
+        "open": "Bedienung zeigen",
         "dismiss": "Jetzt nicht"
       },
-      "documents": "Dokumente"
+      "documents": "Dokumente",
+      "backToGames": "Zurück zu meinen Spielen",
+      "hideLegend": "Legende ausblenden",
+      "tour": "Bedienung zeigen"
     },
     "settings": {
       "title": "Einstellungen",
@@ -1761,7 +1842,8 @@
       "saveProgress": "Fortschritt speichern",
       "saveProgressHint": "Erstelle ein Konto oder melde dich an, um dieses Spiel auf einem anderen Handy fortzusetzen.",
       "savedTo": "Gespeichert unter",
-      "emailUnverified": "E-Mail noch nicht bestätigt. Sieh in deinem Posteingang nach."
+      "emailUnverified": "E-Mail noch nicht bestätigt. Sieh in deinem Posteingang nach.",
+      "manageAccount": "Mein Konto verwalten"
     },
     "account": {
       "title": "Fortschritt speichern",
@@ -2056,6 +2138,52 @@
       },
       "storyNavigation": "Schritte der Geschichte",
       "goToStep": "Zu Schritt {{current}} von {{total}}"
+    },
+    "tour": {
+      "map": {
+        "title": "Dein Spiel auf einen Blick",
+        "body": "Hier siehst du dein Spiel und dein Team. Der Fortschritt zählt nur aktuell sichtbare Basen; beim Erkunden können weitere erscheinen."
+      },
+      "base": {
+        "title": "Eine Basis erkunden",
+        "body": "Wähle einen Marker für den Status und öffne ihn für die Aufgabe. Nutze die angezeigte Check-in-Methode: Code, NFC-Tag oder Standort."
+      },
+      "tools": {
+        "title": "Alles für dieses Spiel",
+        "body": "Das Logbuch sammelt die Aufgaben. Dokumente enthalten Spielinformationen; Nachrichten bringen Neuigkeiten vom Veranstalter. Spieleinstellungen und Konto bleiben getrennt."
+      },
+      "location": {
+        "title": "Orientierung finden",
+        "body": "Diese Schaltfläche führt zu deinem Standort, falls verfügbar, oder zeigt alle sichtbaren Basen. Standortzugriff bleibt deine Entscheidung."
+      },
+      "legend": {
+        "title": "Die Karte lesen",
+        "body": "Die Farben zeigen neue, eingecheckte, eingereichte und abgeschlossene Basen. Die Legende blendet sich aus; bei Bedarf kannst du sie wieder öffnen."
+      },
+      "sync": {
+        "title": "Unterwegs weitermachen",
+        "body": "Gespeicherte Spieldaten bleiben offline verfügbar. Check-ins und Antworten warten in der Warteschlange und werden bei Verbindung gesendet. Prüfe den Synchronisierungshinweis, bevor du das Spiel wechselst."
+      },
+      "back": {
+        "title": "Zurück, ohne auszusteigen",
+        "body": "Gehe zu Spielen zurück, um andere Spiele zu sehen, oder wechsle zu Organisieren. Deine Teilnahme und gespeicherten Aktionen bleiben erhalten; du verlässt das Spiel dadurch nicht."
+      },
+      "logbook": {
+        "title": "Dein Weg auf einen Blick",
+        "body": "Sieh die aktuell sichtbaren Stationen, erledigte Aufgaben deines Teams und ausstehende Bewertungen."
+      },
+      "documents": {
+        "title": "Alles für dein Spiel",
+        "body": "Hier findest du Regeln, Zeitpläne und Dokumente der Spielleitung. Beim Erkunden können weitere Informationen verfügbar werden."
+      },
+      "messages": {
+        "title": "Bleib in Verbindung",
+        "body": "Hier kommen Nachrichten der Spielleitung an. Die Markierung zeigt dir unterwegs neue Mitteilungen."
+      },
+      "settings": {
+        "title": "Dein Platz im Spiel",
+        "body": "Hier findest du Team und Spieldetails, Einstellungen und die Möglichkeit, Gastfortschritt in deinem Konto zu speichern. Dein Kontoprofil liegt außerhalb des Spiels."
+      }
     }
   },
   "baseOrder": {
@@ -2070,7 +2198,8 @@
     "moveDown": "{{name}} nach unten verschieben",
     "drag": "{{name}} zum Anordnen ziehen",
     "routeChanged": "Die Route wurde während deiner Bearbeitung geändert. Brich ab und öffne sie erneut, um die aktuelle Route zu verwenden.",
-    "baseNumber": "Basis {{number}}"
+    "baseNumber": "Basis {{number}}",
+    "route": "Route"
   },
   "checkIn": {
     "group": "Check-in",
@@ -2087,7 +2216,7 @@
     "defaultRadius": "Standardradius (m)",
     "setupOnly": "Check-in-Einstellungen können nur während der Einrichtung geändert werden.",
     "tagsAndCodes": "Tags & Codes",
-    "printCode": "Code drucken",
+    "printCode": "Drucken",
     "printAll": "Alle Codes drucken",
     "noTagNeeded": "Kein Tag nötig – diese Basis wird per Standort freigeschaltet.",
     "noQrBases": "Noch keine Basis nutzt einen QR-Code.",
@@ -2104,7 +2233,10 @@
     "proofNoSnapshot": "Es wurden keine Positionen der Teammitglieder erfasst.",
     "verificationVerified": "Bestätigt",
     "verificationClaimed": "Selbst gemeldet",
-    "verificationOperator": "Betreiber"
+    "verificationOperator": "Betreiber",
+    "viewCode": "QR-Code für {{name}} öffnen",
+    "saveCode": "Bild speichern",
+    "saveCodeError": "Das Bild konnte nicht gespeichert werden. Versuche es erneut."
   },
   "readiness": {
     "atLeastOneBase": "Mindestens eine Basis",
@@ -2586,5 +2718,230 @@
       "action": "Verein verlassen",
       "confirm": "„{{name}}“ verlassen? Sie verlieren den Zugriff auf dessen Spiele und Ressourcen und bräuchten eine neue Einladung, um zurückzukehren."
     }
+  },
+  "userHome": {
+    "nav": {
+      "home": "Start",
+      "play": "Spielen",
+      "organize": "Organisieren",
+      "account": "Konto"
+    },
+    "status": {
+      "live": "Live",
+      "setup": "Vorbereitung",
+      "ended": "Beendet"
+    },
+    "subtitle": {
+      "home": "Mach dort weiter, wo du aufgehört hast.",
+      "play": "Deine Spiele, überall dabei.",
+      "organize": "Ein Platz für die Spiele, die du gestaltest.",
+      "account": "Ein Konto zum Spielen und Organisieren."
+    },
+    "scenario": {
+      "ready": "Bereit",
+      "empty": "Leer",
+      "loading": "Laden",
+      "error": "Fehler",
+      "offline": "Offline",
+      "queued": "Warteschlange"
+    },
+    "team": "Team {{name}}",
+    "yourGame": "Du spielst",
+    "teamProgress": "Fortschritt deines Teams",
+    "progress": "{{count}} von {{total}} Aufgaben",
+    "continue": "Dein Spiel fortsetzen",
+    "emptyTitle": "Dein nächstes Spiel beginnt hier",
+    "emptyBody": "Hast du einen Teamcode? Tritt einem Spiel bei und entdeckt gemeinsam Neues.",
+    "join": "Spiel beitreten",
+    "loading": "Deine Spiele werden geladen…",
+    "loadError": "Deine Spiele konnten nicht geladen werden",
+    "loadErrorBody": "Dein Fortschritt ist gespeichert. Versuche es erneut, sobald du eine Verbindung hast.",
+    "retry": "Erneut versuchen",
+    "preview": "Designvorschau · Beispieldaten",
+    "persona": "Vorschaukonto",
+    "both": "Spieler + Veranstalter",
+    "playerOnly": "Spieler",
+    "previewState": "Vorschauzustand",
+    "language": "Sprache",
+    "light": "Helles Erscheinungsbild",
+    "dark": "Dunkles Erscheinungsbild",
+    "navigation": "Hauptnavigation",
+    "queued": "Du bist offline. 2 Aktionen warten auf die Synchronisierung. Bleibe in diesem Spiel, bis sie gesendet wurden.",
+    "offline": "Du bist offline. Gespeicherte Informationen werden angezeigt; du kannst zum aktuellen Spiel zurückkehren.",
+    "personalSpace": "Dein PointFinder",
+    "greeting": "Hallo, David.",
+    "back": "Zurück",
+    "gameOverview": "Gemeinsam auf einem Weg",
+    "organizerOverview": "Dein Spielbereich",
+    "gameOverviewBody": "Jede Aufgabe, die dein Team abschließt, bringt alle weiter. Dein Spiel vereint Karte, Aufgaben, Dokumente und Nachrichten.",
+    "organizerOverviewBody": "Aufbau, Steuerung, Prüfung und Ergebnisse bleiben in diesem Spiel, mit seiner Karte und den Verwaltungswerkzeugen.",
+    "workspacePreview": "Vorschaugrenze: Hier öffnet sich nach der Sitzungsintegration der bestehende Spielbereich.",
+    "allGames": "Alle deine Spiele ansehen",
+    "organizing": "Du organisierst",
+    "organizingBody": "Deine Planung und laufenden Veranstaltungen im eigenen Arbeitsbereich.",
+    "organizeEmpty": "Schaffe Platz für ein Abenteuer",
+    "create": "Spiel erstellen",
+    "openOrganize": "Zum Organisieren",
+    "gameFilter": "Deine Spiele filtern",
+    "active": "Aktuell",
+    "ended": "Beendet",
+    "workspace": "Arbeitsbereich",
+    "personalWorkspace": "Persönlicher Arbeitsbereich",
+    "club": "Pfadfinderclub Lavos",
+    "organizeEmptyBody": "Erstelle dein erstes Spiel in diesem Arbeitsbereich.",
+    "verified": "E-Mail bestätigt",
+    "yourAccount": "Dein Fortschritt begleitet dich",
+    "accountBody": "Dein Konto hält deine Spiele zusammen. In einem Teamspiel ist der Fortschritt des Teams auch dein Fortschritt. Du kannst auf einem anderen Gerät weitermachen, ohne neu anzufangen.",
+    "preferences": "Erscheinungsbild",
+    "createBody": "Beginne mit einem Namen. Den Rest kannst du im Spielbereich vorbereiten.",
+    "joinBody": "Gib den Teamcode ein, den dein Veranstalter geteilt hat.",
+    "gameName": "Spielname",
+    "joinCode": "Teamcode",
+    "formPreview": "Nur Vorschau. Dieses Formular erstellt kein echtes Spiel und tritt keinem bei.",
+    "previewAction": "Aktion ansehen",
+    "previewSaved": "Vorschau abgeschlossen. Kein Spiel und kein Konto wurden verändert."
+  },
+  "experience": {
+    "nav": {
+      "home": "Start",
+      "explore": "Entdecken",
+      "play": "Spielen",
+      "organize": "Organisieren",
+      "profile": "Profil"
+    },
+    "navigation": "Hauptnavigation",
+    "homeTitle": "Zurück nach draußen.",
+    "welcome": "Schön, dich zu sehen, {{name}}",
+    "ongoingGame": "Dein aktuelles Spiel",
+    "live": "Live",
+    "team": "Team {{name}}",
+    "sharedProgressLabel": "Fortschritt deines Teams",
+    "continue": "Weiterspielen",
+    "joinCode": "Mit Code beitreten",
+    "featured": "Empfohlen",
+    "nextDiscovery": "Wohin geht es als Nächstes?",
+    "exploreAll": "Alle Spiele entdecken",
+    "organizerPrompt": "Ein Abenteuer in Planung?",
+    "organizerHint": "Deine Spiele, deine Menschen und deine Art, sie zusammenzubringen.",
+    "openOrganize": "Organisieren öffnen",
+    "outThere": "Draußen wartet ein Spiel",
+    "exploreSubtitle": "Wege, Aufgaben und Geschichten in deiner Umgebung.",
+    "search": "Spiele oder Orte suchen",
+    "clear": "Suche löschen",
+    "all": "Alle Spiele",
+    "nearby": "In meiner Nähe",
+    "location": {
+      "idle": "Wähle In meiner Nähe, um deinen Standort zu verwenden.",
+      "requesting": "Dein Standort wird ermittelt…",
+      "ready": "Spiele im Umkreis von 50 km um deinen Standort.",
+      "denied": "Der Standort ist deaktiviert. Du kannst nach einem Ort suchen.",
+      "unavailable": "Dein Standort ist nicht verfügbar. Suche stattdessen nach einem Ort."
+    },
+    "noGames": "Hier gibt es noch keine Spiele",
+    "noGamesHint": "Versuche einen anderen Ort oder entdecke alle Spiele.",
+    "showAll": "Alle Spiele anzeigen",
+    "discoveryMap": "Karte der verfügbaren Spiele",
+    "mapHint": "Wähle einen Ort. Entdecke ein Spiel.",
+    "yourJourneys": "Deine Erlebnisse",
+    "ended": "Beendet",
+    "current": "Aktuell",
+    "yourWorkspace": "Menschen zusammenbringen",
+    "openWorkspace": "Spielbibliothek öffnen",
+    "organizeDescription": "Planung, Live-Steuerung und Clubmaterialien an einem Ort. Dein Spielbereich bleibt um seine Karte aufgebaut.",
+    "backToMap": "Zurück zur Karte",
+    "language": "Sprache",
+    "yourProfile": "Dein Profil",
+    "level": "Level {{level}}",
+    "privateProfile": "Nur du kannst dieses Profil sehen",
+    "nextLevel": "{{count}} XP bis Level {{level}}",
+    "levelProgress": "Fortschritt zum nächsten Level",
+    "xpDuringPlay": "Sammle XP beim Entdecken, Einchecken und Abschließen von Aufgaben.",
+    "gamesCompleted": "Spiele abgeschlossen",
+    "basesCompleted": "Stationen abgeschlossen",
+    "recentJourneys": "Letzte Erlebnisse",
+    "placement": "Platz {{place}} von {{total}}",
+    "sharedProgress": "Der Fortschritt deines Teams ist auch dein Fortschritt. Jede gemeinsam gelöste Aufgabe gehört zu deinem Weg.",
+    "locations": "{{count}} Orte",
+    "distance": "{{distance}} km entfernt",
+    "category": {
+      "coast": "Küstenpfad",
+      "forest": "Waldaufgaben",
+      "city": "Stadtentdeckung",
+      "other": "Abenteuer draußen"
+    },
+    "light": "Helles Erscheinungsbild",
+    "dark": "Dunkles Erscheinungsbild",
+    "showMap": "Karte",
+    "hideMap": "Liste",
+    "accountSettings": "Kontoeinstellungen",
+    "connectionError": "Verbindung fehlgeschlagen. Bitte versuche es erneut.",
+    "retry": "Erneut versuchen",
+    "startExploring": "Erkundung starten",
+    "visibleProgress": "Sichtbare Basen abgeschlossen",
+    "backToOrganize": "Zurück zu Organisieren",
+    "saveProgress": "Fortschritt speichern",
+    "saveProgressHint": "Speichere dieses Spiel in deinem Konto, um auf jedem Handy weiterzuspielen.",
+    "gameDocuments": "Regeln & Dokumente",
+    "organizerAccess": "Hier beginnt dein nächstes Spiel",
+    "organizerAccessHint": "Melde dich mit einem Veranstalterkonto an, um Spiele zu erstellen und zu verwalten.",
+    "organizerSignIn": "Als Veranstalter anmelden",
+    "placementTied": "Geteilter Platz {{place}} von {{total}}",
+    "gameEnded": "Ein Weg voller Erinnerungen",
+    "resultUnavailable": "Dein Ergebnis konnte nicht geladen werden.",
+    "resultPending": "Das Ergebnis deines Teams wird abgeschlossen.",
+    "resultReset": "Dieses Spiel wurde zurückgesetzt. Dein Profil zeigt das aktualisierte Ergebnis.",
+    "teamCompleted": "Ihr habt das Spiel gemeinsam abgeschlossen. Dieses Ergebnis gehört jedem Mitglied eures Teams.",
+    "teamJourneyEnded": "Das Spiel ist beendet. Euer gemeinsamer Fortschritt gehört zu eurem Weg.",
+    "upcoming": "Demnächst",
+    "openToJoin": "Teilnahme offen",
+    "codeRequired": "Mit Code teilnehmen",
+    "discoverAccount": "Mehr Orte zum Spielen",
+    "discoverAccountHint": "Speichere deinen Fortschritt mit einem Konto, um Spiele zu entdecken und deine Abenteuer fortzusetzen.",
+    "discoveryStale": "Gespeicherte Spiele werden angezeigt. Verbinde dich, um die Verfügbarkeit zu prüfen.",
+    "moreGames": "Mehr Spiele",
+    "alreadyPlaying": "Dieses Spiel gehört bereits zu deinen Abenteuern.",
+    "upcomingHint": "Dieses Spiel wird vorbereitet. Schau wieder vorbei, wenn der Veranstalter es öffnet.",
+    "openToJoinHint": "Tritt dem öffentlichen Team des Veranstalters bei und erkundet gemeinsam die Umgebung.",
+    "codeRequiredHint": "Frage den Veranstalter nach einem Teilnahmecode.",
+    "discoveryJoinError": "Die Teilnahme ist fehlgeschlagen. Versuche es erneut.",
+    "backToDiscoveries": "Zurück zu den Entdeckungen",
+    "discoveryOtherTeam": "Dieses Handy gehört in diesem Spiel bereits zu einem anderen Team. Öffne deine gespeicherte Teilnahme unter Spielen.",
+    "admissionClosed": "Dieses Spiel nimmt hier keine neuen Spieler mehr auf. Frage den Veranstalter.",
+    "discoveryOffline": "Du bist offline. Verbinde dich, um Spiele zu finden oder teilzunehmen."
+  },
+  "publication": {
+    "heading": "Öffentlich machen",
+    "intro": "Hilf anderen, dein Spiel zu entdecken. Entscheide, was sie vor der Teilnahme sehen.",
+    "loadError": "Der Eintrag konnte nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "ended": "Beendet · in Entdecken ausgeblendet",
+    "listed": "In Entdecken veröffentlicht",
+    "unlisted": "Nicht veröffentlicht · Teilnahme nur mit Code",
+    "readOnly": "Der Ersteller oder ein Spieladministrator des Vereins kann diesen Eintrag verwalten.",
+    "title": "Öffentlicher Titel",
+    "summary": "Beschreibung",
+    "summaryHint": "Beschreibe das Spiel, das andere entdecken können.",
+    "place": "Ort oder Gebiet",
+    "category": "Art des Abenteuers",
+    "admission": "So nimmt man teil",
+    "codeOnly": "Mit einem Teilnahmecode",
+    "joinTeam": "Direkt {{name}} beitreten",
+    "teamsError": "Teams konnten nicht geladen werden.",
+    "admissionHint": "Neue Spieler treten gemeinsam diesem Team bei. Bestehende Teilnehmer behalten ihr Team. Der direkte Beitritt öffnet sich beim Spielstart.",
+    "codeHint": "Interessierte können das Spiel entdecken und dich nach dem Code ihres Teams fragen.",
+    "location": "Ort in Entdecken (optional)",
+    "locationHint": "Tippe auf die Karte, um einen ungefähren Treffpunkt zu wählen. Dieser Ort ist für alle sichtbar, die Entdecken nutzen.",
+    "latitude": "Breitengrad",
+    "longitude": "Längengrad",
+    "coordinatesError": "Gib beide gültigen Koordinaten ein oder entferne den Ort.",
+    "removeLocation": "Öffentlichen Ort entfernen",
+    "saveListedHint": "Gespeicherte Änderungen aktualisieren den sichtbaren Eintrag in Entdecken.",
+    "publishHint": "Diese Beschreibung wird für angemeldete Konten sichtbar. Private Inhalte bleiben im Spiel.",
+    "publish": "In Entdecken veröffentlichen",
+    "saveChanges": "Änderungen speichern",
+    "saveDraft": "Ohne Veröffentlichung speichern",
+    "unpublish": "Aus Entdecken entfernen",
+    "saveError": "Die Änderung konnte nicht abgeschlossen werden. Dein Text ist noch da. Versuche es erneut.",
+    "offline": "Du bist offline. Verbinde dich, um deinen Eintrag zu laden oder zu speichern."
   }
 }

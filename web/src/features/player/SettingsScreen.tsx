@@ -14,7 +14,7 @@ import { getThemePreference, setThemePreference, type ThemePreference } from '@/
 import { onPushPermissionChange, pushPermission, requestPushPermission, type PushPermission } from '@/platform/push'
 import { usePlayerGame } from '@/features/player/usePlayerGame'
 import { Screen } from '@/features/player/components/Screen'
-import { PARTICIPANT_STORY_ROUTE } from '@/features/player/components/IntroductionPrompt'
+import { usePlayerTour } from '@/features/player/components/PlayerTour'
 
 const LANGUAGE_LABELS: Record<Language, string> = { en: 'English', pt: 'Português', de: 'Deutsch' }
 
@@ -65,7 +65,7 @@ export default function SettingsScreen() {
 
   const link = useQuery({ queryKey: ['account', 'link'], queryFn: () => client.api.player.account(), enabled: auth.kind === 'player' })
   const session = useAccountSession()
-  const [accountAction, setAccountAction] = useState<'signOut' | 'unlink' | 'delete' | null>(null)
+  const [accountAction, setAccountAction] = useState<'signOut' | 'unlink' | null>(null)
   const [verificationSent, setVerificationSent] = useState(false)
 
   async function resendVerification() {
@@ -74,11 +74,6 @@ export default function SettingsScreen() {
   async function unlink() {
     setAccountAction(null)
     try { await client.api.player.unlinkAccount(); await link.refetch() } catch (err) { setError(describeError(err, t)) }
-  }
-  async function deleteUserAccount() {
-    setAccountAction(null)
-    setBusy(true)
-    try { await accountServices.api.account.delete(); await accountServices.session.logout(); await link.refetch() } catch (err) { setError(describeError(err, t)) } finally { setBusy(false) }
   }
 
   if (auth.kind !== 'player') return null
@@ -177,7 +172,7 @@ export default function SettingsScreen() {
             <div className="flex flex-wrap gap-2 pt-1">
               <Button type="button" variant="outline" size="sm" onClick={() => setAccountAction('unlink')} data-testid="settings-unlink">{t('account.unlink')}</Button>
               {session.kind === 'operator' && <Button type="button" variant="outline" size="sm" onClick={() => setAccountAction('signOut')} data-testid="settings-sign-out">{t('account.signOut')}</Button>}
-              {session.kind === 'operator' && session.role === 'participant' && <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => setAccountAction('delete')} data-testid="settings-delete-account">{t('account.deleteAccount')}</Button>}
+              <Link to="/profile" className="inline-flex min-h-11 items-center px-3 text-sm font-medium">{t("settings.manageAccount")}</Link>
             </div>
           </div>
         ) : session.kind === 'operator' ? (
@@ -197,7 +192,7 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title={t('settings.help')}>
-        <Link to={PARTICIPANT_STORY_ROUTE} className="flex min-h-12 items-center px-4 py-2.5 text-sm font-medium" data-testid="settings-how-it-works">{t('settings.howItWorks')}</Link>
+        <Button variant="ghost" className="w-full min-h-12 justify-start px-4" onClick={()=>{usePlayerTour.getState().start();navigate("/")}} data-testid="settings-how-it-works">{t("settings.howItWorks")}</Button>
       </Section>
 
       <Section title={t('settings.privacy')}>
@@ -208,9 +203,9 @@ export default function SettingsScreen() {
 
       <div className="mt-auto flex flex-col gap-2 pt-4">
         <Button variant="outline" size="lg" onClick={() => setLeaving(true)} disabled={busy}>{t('settings.leaveGame')}</Button>
-        <Button variant="ghost" size="lg" className="text-destructive" onClick={() => setDeleting(true)} disabled={busy}>
+        {link.data?.linked === false && session.kind !== "operator" && <Button variant="ghost" size="lg" className="text-destructive" onClick={() => setDeleting(true)} disabled={busy}>
           {busy ? t('settings.deletingAccount') : t('settings.deleteAccount')}
-        </Button>
+        </Button>}
         <BrandLockup size={20} className="mx-auto pt-2 text-sm text-muted-foreground" textClassName="font-medium" />
       </div>
 
@@ -231,14 +226,6 @@ export default function SettingsScreen() {
         description={t('account.unlinkConfirm')}
         confirmLabel={t('account.unlink')}
         variant="default"
-      />
-      <ConfirmDeleteDialog
-        open={accountAction === 'delete'}
-        onCancel={() => setAccountAction(null)}
-        onConfirm={() => void deleteUserAccount()}
-        title={t('account.deleteAccountTitle')}
-        description={t('account.deleteAccountConfirm')}
-        confirmLabel={t('account.deleteAccount')}
       />
       <ConfirmDeleteDialog
         open={leaving}

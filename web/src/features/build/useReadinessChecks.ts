@@ -17,6 +17,7 @@ import {
 export interface ReadinessCheck {
   label: string
   passed: boolean
+  target?: "bases" | "challenges" | "teams" | "nfc"
 }
 
 export interface ReadinessSummary {
@@ -88,21 +89,21 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
     ).length
 
     const checks: ReadinessCheck[] = [
-      { label: t('readiness.atLeastOneBase'), passed: baseList.length > 0 },
-      { label: t('readiness.atLeastOneChallenge'), passed: challengeList.length > 0 },
-      { label: t('readiness.atLeastOneTeam'), passed: teamList.length > 0 },
+      { target: 'bases', label: t('readiness.atLeastOneBase'), passed: baseList.length > 0 },
+      { target: 'challenges', label: t('readiness.atLeastOneChallenge'), passed: challengeList.length > 0 },
+      { target: 'teams', label: t('readiness.atLeastOneTeam'), passed: teamList.length > 0 },
       {
-        label: t('readiness.nfcLinked', { linked: nfcLinkedCount, total: nfcBases.length }),
+        target: 'nfc', label: t('readiness.nfcLinked', { linked: nfcLinkedCount, total: nfcBases.length }),
         passed: nfcLinkedCount === nfcBases.length,
       },
       {
-        label: t('readiness.assignmentsValid'),
+        target: 'challenges', label: t('readiness.assignmentsValid'),
         passed: assignmentList.every(
           (a) => baseIds.has(a.baseId) && challengeIds.has(a.challengeId),
         ),
       },
       {
-        label: t('readiness.locationBoundAssigned', {
+        target: 'challenges', label: t('readiness.locationBoundAssigned', {
           ok: locationBoundAssignedCount,
           total: locationBoundChallenges.length,
         }),
@@ -122,7 +123,7 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
       ...(locationBases.length > 0 && !locationAllowed
         ? [{ label: t('readiness.locationPlan'), passed: false }]
         : []),
-      { label: t('readiness.variablesComplete'), passed: completeness?.complete ?? true },
+      { target: 'teams', label: t('readiness.variablesComplete'), passed: completeness?.complete ?? true },
     ]
 
     return {

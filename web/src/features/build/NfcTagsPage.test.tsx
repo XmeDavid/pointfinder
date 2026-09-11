@@ -10,11 +10,15 @@ import { createMockGame } from '@/test/factories/game'
 import NfcTagsPage from './NfcTagsPage'
 
 function renderPage() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/game/g1/nfc']}>
-        <Routes><Route path="/game/:id/nfc" element={<NfcTagsPage />} /></Routes>
+        <Routes>
+          <Route path="/game/:id/nfc" element={<NfcTagsPage />} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -28,7 +32,11 @@ describe('NfcTagsPage', () => {
     resetBaseCounter()
     const linked = createMockBase({ name: 'Chapel', nfcLinked: true })
     const missing = createMockBase({ name: 'Old mill', nfcLinked: false })
-    server.use(http.get('/api/games/:gameId/bases', () => HttpResponse.json([linked, missing])))
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([linked, missing]),
+      ),
+    )
     renderPage()
     const items = await screen.findAllByRole('listitem')
     expect(items[0]).toHaveTextContent('Old mill')
@@ -39,16 +47,28 @@ describe('NfcTagsPage', () => {
   })
 
   it('explains that writing needs the phone app when running in a browser', async () => {
-    server.use(http.get('/api/games/:gameId/bases', () => HttpResponse.json([createMockBase({ name: 'Chapel', nfcLinked: false })])))
+    server.use(
+      http.get('/api/games/:gameId/bases', () =>
+        HttpResponse.json([
+          createMockBase({ name: 'Chapel', nfcLinked: false }),
+        ]),
+      ),
+    )
     renderPage()
-    expect(await screen.findByText('NFC writing needs the phone app.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('NFC writing needs the phone app.'),
+    ).toBeInTheDocument()
     expect(screen.queryByTestId(/nfc-write-/)).not.toBeInTheDocument()
   })
 
   it('shows an empty state for a game without bases', async () => {
-    server.use(http.get('/api/games/:gameId/bases', () => HttpResponse.json([])))
+    server.use(
+      http.get('/api/games/:gameId/bases', () => HttpResponse.json([])),
+    )
     renderPage()
-    expect(await screen.findByText('This game has no bases yet.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('This game has no bases yet.'),
+    ).toBeInTheDocument()
   })
 
   it('renders each base according to its check-in method', async () => {
@@ -56,8 +76,18 @@ describe('NfcTagsPage', () => {
     server.use(
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
-          createMockBase({ id: 'b1', name: 'Chapel', checkInMethod: 'NFC', nfcLinked: true }),
-          createMockBase({ id: QR_BASE_ID, name: 'Old mill', checkInMethod: 'QR', nfcToken: 'ab12cd34' }),
+          createMockBase({
+            id: 'b1',
+            name: 'Chapel',
+            checkInMethod: 'NFC',
+            nfcLinked: true,
+          }),
+          createMockBase({
+            id: QR_BASE_ID,
+            name: 'Old mill',
+            checkInMethod: 'QR',
+            nfcToken: 'ab12cd34',
+          }),
           createMockBase({
             id: 'b3',
             name: 'Fountain',
@@ -69,7 +99,9 @@ describe('NfcTagsPage', () => {
     )
     renderPage()
 
-    expect(await screen.findByTestId('nfc-base-b1')).toHaveTextContent('NFC linked')
+    expect(await screen.findByTestId('nfc-base-b1')).toHaveTextContent(
+      'NFC linked',
+    )
     expect(screen.getByTestId(`codes-qr-${QR_BASE_ID}`)).toBeInTheDocument()
     expect(screen.getByTestId('nfc-base-b3')).toHaveTextContent(
       'No tag needed — this base unlocks by location.',
@@ -107,8 +139,18 @@ describe('NfcTagsPage', () => {
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
           createMockBase({ id: 'b1', name: 'Chapel', checkInMethod: 'NFC' }),
-          createMockBase({ id: 'b2', name: 'Old mill', checkInMethod: 'QR', nfcToken: 'ab12cd34' }),
-          createMockBase({ id: 'b3', name: 'Fountain', checkInMethod: 'QR', nfcToken: 'ef56gh78' }),
+          createMockBase({
+            id: 'b2',
+            name: 'Old mill',
+            checkInMethod: 'QR',
+            nfcToken: 'ab12cd34',
+          }),
+          createMockBase({
+            id: 'b3',
+            name: 'Fountain',
+            checkInMethod: 'QR',
+            nfcToken: 'ef56gh78',
+          }),
         ]),
       ),
     )
@@ -127,7 +169,9 @@ describe('NfcTagsPage', () => {
     resetBaseCounter()
     server.use(
       http.get('/api/games/:gameId/bases', () =>
-        HttpResponse.json([createMockBase({ id: 'b1', name: 'Chapel', checkInMethod: 'NFC' })]),
+        HttpResponse.json([
+          createMockBase({ id: 'b1', name: 'Chapel', checkInMethod: 'NFC' }),
+        ]),
       ),
     )
     renderPage()
@@ -135,13 +179,22 @@ describe('NfcTagsPage', () => {
     expect(await screen.findByTestId('codes-print-all')).toBeDisabled()
   })
 
-
   it('renders rows from a backend that predates check-in methods as NFC bases', async () => {
     resetBaseCounter()
     server.use(
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
-          { id: 'b1', gameId: 'g1', name: 'Chapel', description: '', lat: 1, lng: 2, nfcLinked: true, nfcToken: 'ab12cd34', hidden: false },
+          {
+            id: 'b1',
+            gameId: 'g1',
+            name: 'Chapel',
+            description: '',
+            lat: 1,
+            lng: 2,
+            nfcLinked: true,
+            nfcToken: 'ab12cd34',
+            hidden: false,
+          },
         ]),
       ),
     )
@@ -150,5 +203,34 @@ describe('NfcTagsPage', () => {
     expect(await screen.findByTestId('nfc-base-b1')).toHaveTextContent('Chapel')
     expect(screen.getByTestId('nfc-base-b1')).toHaveTextContent('NFC linked')
   })
+})
 
+it('prints only the QR code whose Print button was pressed', async () => {
+  vi.stubGlobal('print', vi.fn())
+  server.use(
+    http.get('/api/games/:gameId/bases', () =>
+      HttpResponse.json([
+        createMockBase({
+          id: QR_BASE_ID,
+          name: 'Old mill',
+          checkInMethod: 'QR',
+        }),
+        createMockBase({
+          id: '0d2f1c9e-0000-4000-8000-000000000003',
+          name: 'Fountain',
+          checkInMethod: 'QR',
+        }),
+      ]),
+    ),
+  )
+  renderPage()
+  const button = await screen.findByTestId(`codes-print-${QR_BASE_ID}`)
+  expect(button).toHaveTextContent(/^Print$/)
+  await userEvent.click(button)
+  expect(screen.getAllByTestId('codes-print-page')).toHaveLength(1)
+  expect(screen.getByTestId('codes-print-page')).toHaveTextContent('Old mill')
+  await userEvent.click(screen.getByTestId('codes-print-close'))
+  await userEvent.click(screen.getByTestId('codes-print-all'))
+  expect(screen.getAllByTestId('codes-print-page')).toHaveLength(2)
+  vi.unstubAllGlobals()
 })

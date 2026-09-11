@@ -1030,6 +1030,7 @@
     "ACCOUNT_ALREADY_IN_GAME": "Esta conta já está a jogar este jogo noutro telemóvel.",
     "PLAYER_ALREADY_LINKED": "Esta participação já pertence a uma conta.",
     "NO_PARTICIPATION_FOUND": "Esta conta não entrou nesse jogo.",
+    "GAME_ENDED": "O jogo terminou. Os resultados estão congelados.",
     "RATE_LIMITED": "Demasiadas tentativas. Espera um momento e tenta outra vez.",
     "QUOTA_BASES_PER_GAME_EXCEEDED": "Este jogo atingiu o limite de bases do teu plano.",
     "QUOTA_OPERATORS_PER_GAME_EXCEEDED": "Este jogo atingiu o limite de operadores do teu plano.",
@@ -1183,7 +1184,13 @@
     "pickResource": "Selecionar um recurso",
     "gameResources": "Recursos do jogo",
     "orgResources": "Recursos da organização",
-    "untitledDocument": "Documento sem título"
+    "untitledDocument": "Documento sem título",
+    "gameHelp": "Crie documentos ou carregue ficheiros para este jogo. Partilhe-os com os jogadores quando estiverem prontos.",
+    "shareWithPlayers": "Partilhar com os jogadores",
+    "offline": "Ligue-se à internet para adicionar ou alterar documentos.",
+    "loadError": "Não foi possível carregar os documentos.",
+    "documentContent": "Conteúdo do documento…",
+    "documentTitle": "Título do documento"
   },
   "billing": {
     "title": "Faturação & Plano",
@@ -1399,7 +1406,8 @@
       "newChallenge": "Novo desafio",
       "newTeam": "Nova equipa",
       "newStage": "Nova etapa",
-      "autoAssign": "Atribuir automaticamente"
+      "autoAssign": "Ligar desafios automaticamente",
+      "documents": "Documentos"
     },
     "mapActions": "Ações do mapa",
     "placeBaseHere": "Colocar base aqui",
@@ -1448,8 +1456,8 @@
         "file": "Ficheiro",
         "none": "Sem resposta"
       },
-      "open": "Atribuições",
-      "title": "Atribuições",
+      "open": "Ligar desafios",
+      "title": "Ligar desafios",
       "hint": "Um desafio por base. Todas as equipas partilham-no, ou cada equipa tem o seu — a grelha mantém um desafio numa base por equipa.",
       "close": "Concluído",
       "base": "Base",
@@ -1500,7 +1508,77 @@
       "manual": "Manual"
     },
     "unknownBase": "Base desconhecida",
-    "gameNotFound": "Jogo não encontrado"
+    "gameNotFound": "Jogo não encontrado",
+    "compose": {
+      "title": "Criar uma base jogável",
+      "intro": "Dá um nome e um desafio a este lugar. Podes ajustar as regras depois.",
+      "name": "Nome da base",
+      "task": "O que devem fazer os jogadores aqui?",
+      "audience": "Todas as equipas recebem este desafio aqui.",
+      "rules": "Os jogadores enviam uma resposta escrita para revisão. Altera o tipo de resposta, as regras por equipa e os desbloqueios no editor.",
+      "cancel": "Cancelar",
+      "saving": "A guardar…",
+      "save": "Guardar base e desafio",
+      "retry": "Tentar novamente",
+      "partialFailure": "A base está guardada. Tenta novamente para concluir o desafio ou fecha para continuar a editá-la.",
+      "failure": "Não foi possível guardar. O teu texto continua aqui.",
+      "launching": "A iniciar…",
+      "goLive": "Iniciar jogo",
+      "launchFailed": "Não foi possível iniciar o jogo. Verifica a ligação e tenta novamente.",
+      "firstBase": "Coloca a primeira base",
+      "firstBaseHint": "Aproxima o mapa do local do jogo e toca no mapa. Adiciona o desafio aí; fica disponível para todas as equipas."
+    },
+    "rules": {
+      "scoring": "Pontuação",
+      "notes": "Notas para os operadores",
+      "discovery": "Descoberta e localização",
+      "variables": "Respostas diferentes por equipa",
+      "afterCompletion": "Depois de concluir o desafio"
+    },
+    "editor": {
+      "identity": "Desafio",
+      "title": "Título",
+      "answerType": "Tipo de desafio",
+      "text": "Texto",
+      "file": "Ficheiro",
+      "none": "Nenhuma",
+      "autoValidate": "Verificar respostas automaticamente",
+      "content": "Instruções para os jogadores",
+      "edit": "Editar",
+      "preview": "Pré-visualizar",
+      "editorMode": "Modo de edição",
+      "description": "Descrição",
+      "answerConfiguration": "Respostas aceites",
+      "correctAnswers": "Resposta(s) correta(s)",
+      "noAnswers": "Ainda não há respostas definidas",
+      "unknownVariables": "Variáveis desconhecidas:",
+      "answerHint": "Quando a verificação automática está ativa, as respostas correspondentes são aprovadas. Podes usar valores diferentes para cada equipa.",
+      "points": "Pontos",
+      "notes": "Notas do organizador",
+      "location": "Requisitos de localização",
+      "physicalPresence": "Exigir presença no local",
+      "variables": "Valores da equipa para este desafio",
+      "afterCompletion": "Após a conclusão",
+      "delete": "Eliminar desafio",
+      "tags": "Etiquetas",
+      "name": "Nome",
+      "locationAndCheckIn": "Localização e entrada",
+      "moveBaseHint": "Toca no mapa para mover esta base.",
+      "preciseCoordinates": "Coordenadas exatas",
+      "visibility": "Visibilidade",
+      "baseLocation": "Localização e entrada · {{method}}",
+      "baseVisibility": "Visibilidade · {{visibility}}",
+      "visible": "Visível",
+      "hidden": "Oculta",
+      "deleteBase": "Eliminar base",
+      "newBase": "Nova base",
+      "newChallenge": "Novo desafio",
+      "createBaseError": "Não foi possível criar a base. Escolhe a posição para tentar novamente.",
+      "createEmptyChallenge": "Criar desafio vazio",
+      "challengeHere": "Desafio",
+      "chooseExistingChallenge": "Escolher um desafio existente",
+      "appearsAt": "Onde aparece este desafio"
+    }
   },
   "command2": {
     "empty": {
@@ -1651,7 +1729,7 @@
       "rejected": "Tenta de novo"
     },
     "logbook": {
-      "progress": "{{done}} de {{total}} feitas",
+      "progress": "{{done}} de {{total}} bases visíveis concluídas",
       "locked": "Bloqueada",
       "lockedHint": "Há algo aqui. Continua para desbloquear.",
       "nextUp": "A seguir",
@@ -1705,12 +1783,15 @@
       "inbox": "Notificações",
       "settings": "Definições",
       "introPrompt": {
-        "title": "Novo no PointFinder?",
-        "body": "Vê como funciona um jogo em menos de um minuto.",
-        "open": "Ver como funciona",
+        "title": "O teu guia de campo",
+        "body": "Conhece os controlos aqui mesmo no teu jogo.",
+        "open": "Mostrar os controlos",
         "dismiss": "Agora não"
       },
-      "documents": "Documentos"
+      "documents": "Documentos",
+      "backToGames": "Voltar aos meus jogos",
+      "hideLegend": "Ocultar legenda",
+      "tour": "Mostrar os controlos"
     },
     "settings": {
       "title": "Definições",
@@ -1761,7 +1842,8 @@
       "saveProgress": "Guardar o meu progresso",
       "saveProgressHint": "Cria uma conta ou inicia sessão para recuperar este jogo noutro telemóvel.",
       "savedTo": "Guardado em",
-      "emailUnverified": "Email ainda não confirmado. Vê a tua caixa de entrada."
+      "emailUnverified": "Email ainda não confirmado. Vê a tua caixa de entrada.",
+      "manageAccount": "Gerir a minha conta"
     },
     "account": {
       "title": "Guardar o meu progresso",
@@ -2056,6 +2138,52 @@
       },
       "storyNavigation": "Passos da história",
       "goToStep": "Ir para o passo {{current}} de {{total}}"
+    },
+    "tour": {
+      "map": {
+        "title": "O teu jogo num olhar",
+        "body": "Este é o teu jogo e a tua equipa. O progresso conta apenas as bases que podes ver; podem aparecer mais enquanto exploras."
+      },
+      "base": {
+        "title": "Explora uma base",
+        "body": "Escolhe um marcador para ver o estado e abre-o para descobrir o desafio. Segue o método de check-in indicado: código, etiqueta NFC ou localização."
+      },
+      "tools": {
+        "title": "Tudo para este jogo",
+        "body": "O diário reúne os desafios. Os documentos contêm informações do jogo; as mensagens trazem novidades do organizador. As definições do jogo estão separadas da tua conta."
+      },
+      "location": {
+        "title": "Orienta-te",
+        "body": "Este controlo volta à tua localização, quando disponível, ou enquadra as bases visíveis no mapa. O acesso à localização é sempre uma escolha tua."
+      },
+      "legend": {
+        "title": "Lê o mapa",
+        "body": "As cores mostram se uma base é nova, tem check-in, aguarda revisão ou está concluída. A legenda desaparece; toca nela quando precisares."
+      },
+      "sync": {
+        "title": "Continua no terreno",
+        "body": "Os dados guardados continuam disponíveis sem ligação. Os check-ins e as respostas aguardam na fila e são enviados quando te voltares a ligar. Verifica o aviso de sincronização antes de mudares de jogo."
+      },
+      "back": {
+        "title": "Volta sem sair do jogo",
+        "body": "Volta a Jogar para ver outros jogos ou muda para Organizar. A tua participação e as ações guardadas mantêm-se; isto não abandona o jogo."
+      },
+      "logbook": {
+        "title": "O percurso num relance",
+        "body": "Consulta as bases visíveis, os desafios concluídos pela equipa e o que ainda aguarda avaliação."
+      },
+      "documents": {
+        "title": "Tudo o que precisas para o jogo",
+        "body": "Encontra as regras, horários e documentos partilhados pelo organizador. A tua equipa pode descobrir mais informação durante o jogo."
+      },
+      "messages": {
+        "title": "Mantém o contacto",
+        "body": "As mensagens dos organizadores chegam aqui. O indicador avisa-te de novidades durante o percurso."
+      },
+      "settings": {
+        "title": "O teu lugar neste jogo",
+        "body": "Vê os detalhes da equipa e do jogo, ajusta as preferências ou guarda o progresso de convidado na tua conta. O perfil da conta fica fora do jogo."
+      }
     }
   },
   "baseOrder": {
@@ -2070,7 +2198,8 @@
     "moveDown": "Mover {{name}} para baixo",
     "drag": "Arrastar {{name}} para reordenar",
     "routeChanged": "O percurso foi alterado enquanto o editavas. Cancela e volta a abrir para usar o percurso mais recente.",
-    "baseNumber": "Base {{number}}"
+    "baseNumber": "Base {{number}}",
+    "route": "Percurso"
   },
   "checkIn": {
     "group": "Check-in",
@@ -2087,7 +2216,7 @@
     "defaultRadius": "Raio por omissão (m)",
     "setupOnly": "As definições de check-in só podem ser alteradas durante a configuração.",
     "tagsAndCodes": "Etiquetas e códigos",
-    "printCode": "Imprimir código",
+    "printCode": "Imprimir",
     "printAll": "Imprimir todos os códigos",
     "noTagNeeded": "Não precisa de etiqueta — esta base desbloqueia por localização.",
     "noQrBases": "Ainda nenhuma base usa código QR.",
@@ -2104,7 +2233,10 @@
     "proofNoSnapshot": "Não foram registadas posições dos colegas.",
     "verificationVerified": "Verificado",
     "verificationClaimed": "Autodeclarado",
-    "verificationOperator": "Operador"
+    "verificationOperator": "Operador",
+    "viewCode": "Abrir código QR de {{name}}",
+    "saveCode": "Guardar imagem",
+    "saveCodeError": "Não foi possível guardar a imagem. Tente novamente."
   },
   "readiness": {
     "atLeastOneBase": "Pelo menos uma base",
@@ -2586,5 +2718,230 @@
       "action": "Sair do clube",
       "confirm": "Sair de \"{{name}}\"? Perde o acesso aos seus jogos e recursos e precisaria de novo convite para voltar."
     }
+  },
+  "userHome": {
+    "nav": {
+      "home": "Início",
+      "play": "Jogar",
+      "organize": "Organizar",
+      "account": "Conta"
+    },
+    "status": {
+      "live": "Em curso",
+      "setup": "Preparação",
+      "ended": "Terminado"
+    },
+    "subtitle": {
+      "home": "Continua de onde ficaste.",
+      "play": "Os teus jogos, onde quer que estejas.",
+      "organize": "Um espaço para os jogos que crias.",
+      "account": "Uma conta para jogar e organizar."
+    },
+    "scenario": {
+      "ready": "Pronto",
+      "empty": "Vazio",
+      "loading": "A carregar",
+      "error": "Erro",
+      "offline": "Sem ligação",
+      "queued": "Em fila"
+    },
+    "team": "Equipa {{name}}",
+    "yourGame": "Estás a jogar",
+    "teamProgress": "Progresso da tua equipa",
+    "progress": "{{count}} de {{total}} desafios",
+    "continue": "Continuar o teu jogo",
+    "emptyTitle": "O teu próximo jogo começa aqui",
+    "emptyBody": "Tens um código de equipa? Entra num jogo e explora em conjunto.",
+    "join": "Entrar num jogo",
+    "loading": "A carregar os teus jogos…",
+    "loadError": "Não foi possível carregar os teus jogos",
+    "loadErrorBody": "O teu progresso está guardado. Tenta novamente quando tiveres ligação.",
+    "retry": "Tentar novamente",
+    "preview": "Pré-visualização · dados de exemplo",
+    "persona": "Conta de exemplo",
+    "both": "Jogador + organizador",
+    "playerOnly": "Jogador",
+    "previewState": "Estado de exemplo",
+    "language": "Idioma",
+    "light": "Aspeto claro",
+    "dark": "Aspeto escuro",
+    "navigation": "Navegação principal",
+    "queued": "Estás sem ligação. Há 2 ações por sincronizar. Mantém este jogo até serem enviadas.",
+    "offline": "Estás sem ligação. A mostrar informação guardada; podes voltar ao jogo atual.",
+    "personalSpace": "O teu PointFinder",
+    "greeting": "Olá, David.",
+    "back": "Voltar",
+    "gameOverview": "Juntos, um percurso",
+    "organizerOverview": "O espaço do teu jogo",
+    "gameOverviewBody": "Cada desafio concluído pela equipa é progresso para todos. O jogo reúne o mapa, os desafios, os documentos e as mensagens.",
+    "organizerOverviewBody": "Preparação, Comando, Revisão e Resultados ficam dentro deste jogo, com o seu mapa e as suas ferramentas.",
+    "workspacePreview": "Limite da pré-visualização: o espaço de jogo existente abre aqui após a integração das sessões.",
+    "allGames": "Ver todos os teus jogos",
+    "organizing": "Estás a organizar",
+    "organizingBody": "Os teus planos e eventos em curso, no seu próprio espaço.",
+    "organizeEmpty": "Cria espaço para uma aventura",
+    "create": "Criar um jogo",
+    "openOrganize": "Ir para Organizar",
+    "gameFilter": "Filtrar os teus jogos",
+    "active": "Atuais",
+    "ended": "Terminados",
+    "workspace": "Espaço de trabalho",
+    "personalWorkspace": "Espaço pessoal",
+    "club": "Clube de Desbravadores de Lavos",
+    "organizeEmptyBody": "Cria o primeiro jogo neste espaço.",
+    "verified": "Email verificado",
+    "yourAccount": "O teu progresso acompanha-te",
+    "accountBody": "A tua conta reúne os jogos em que participas. Num jogo de equipa, o progresso da equipa também é teu. Podes voltar noutro dispositivo sem começar de novo.",
+    "preferences": "Aspeto",
+    "createBody": "Começa com um nome. Podes preparar o resto no espaço do jogo.",
+    "joinBody": "Introduz o código de equipa partilhado pelo organizador.",
+    "gameName": "Nome do jogo",
+    "joinCode": "Código de equipa",
+    "formPreview": "Apenas pré-visualização. Este formulário não cria nem entra num jogo real.",
+    "previewAction": "Pré-visualizar esta ação",
+    "previewSaved": "Pré-visualização concluída. Nenhum jogo ou conta foi alterado."
+  },
+  "experience": {
+    "nav": {
+      "home": "Início",
+      "explore": "Explorar",
+      "play": "Jogar",
+      "organize": "Organizar",
+      "profile": "Perfil"
+    },
+    "navigation": "Navegação principal",
+    "homeTitle": "De volta à aventura.",
+    "welcome": "Bom ver-te, {{name}}",
+    "ongoingGame": "O teu jogo atual",
+    "live": "Em curso",
+    "team": "Equipa {{name}}",
+    "sharedProgressLabel": "Progresso da tua equipa",
+    "continue": "Continuar a jogar",
+    "joinCode": "Entrar com código",
+    "featured": "Em destaque",
+    "nextDiscovery": "Qual será a próxima descoberta?",
+    "exploreAll": "Explorar todos os jogos",
+    "organizerPrompt": "Uma aventura em preparação?",
+    "organizerHint": "Os teus jogos, as tuas pessoas, a tua forma de as reunir.",
+    "openOrganize": "Abrir Organizar",
+    "outThere": "Há um jogo à tua espera",
+    "exploreSubtitle": "Percursos, desafios e histórias nos lugares à tua volta.",
+    "search": "Pesquisar jogos ou lugares",
+    "clear": "Limpar pesquisa",
+    "all": "Todos",
+    "nearby": "Perto de mim",
+    "location": {
+      "idle": "Escolhe Perto de mim para usar a tua localização.",
+      "requesting": "A obter a tua localização…",
+      "ready": "Jogos num raio de 50 km da tua localização.",
+      "denied": "A localização está desativada. Podes pesquisar um lugar.",
+      "unavailable": "Localização indisponível. Experimenta pesquisar um lugar."
+    },
+    "noGames": "Ainda não há jogos aqui",
+    "noGamesHint": "Experimenta outro lugar ou explora todos os jogos.",
+    "showAll": "Ver todos os jogos",
+    "discoveryMap": "Mapa de jogos disponíveis",
+    "mapHint": "Escolhe um lugar. Descobre um jogo.",
+    "yourJourneys": "Os teus percursos",
+    "ended": "Terminados",
+    "current": "Atuais",
+    "yourWorkspace": "Reúne as pessoas",
+    "openWorkspace": "Abrir biblioteca de jogos",
+    "organizeDescription": "Reúne a preparação, a operação em direto e os recursos do clube. O espaço do jogo continua centrado no mapa.",
+    "backToMap": "Voltar ao mapa",
+    "language": "Idioma",
+    "yourProfile": "O teu perfil",
+    "level": "Nível {{level}}",
+    "privateProfile": "Só tu podes ver este perfil",
+    "nextLevel": "{{count}} XP até ao nível {{level}}",
+    "levelProgress": "Progresso até ao próximo nível",
+    "xpDuringPlay": "Ganha XP ao explorar, fazer check-in e concluir desafios.",
+    "gamesCompleted": "Jogos concluídos",
+    "basesCompleted": "Bases concluídas",
+    "recentJourneys": "Percursos recentes",
+    "placement": "{{place}}.º de {{total}}",
+    "sharedProgress": "O progresso da tua equipa é o teu progresso. Cada desafio concluído em conjunto faz parte do teu percurso.",
+    "locations": "{{count}} locais",
+    "distance": "A {{distance}} km",
+    "category": {
+      "coast": "Percurso costeiro",
+      "forest": "Desafio na floresta",
+      "city": "Descoberta urbana",
+      "other": "Aventura ao ar livre"
+    },
+    "light": "Aspeto claro",
+    "dark": "Aspeto escuro",
+    "showMap": "Mapa",
+    "hideMap": "Lista",
+    "accountSettings": "Definições da conta",
+    "connectionError": "Não foi possível ligar. Tenta novamente.",
+    "retry": "Tentar novamente",
+    "startExploring": "Começar a explorar",
+    "visibleProgress": "Bases visíveis concluídas",
+    "backToOrganize": "Voltar a Organizar",
+    "saveProgress": "Guardar o progresso",
+    "saveProgressHint": "Guarda este jogo na tua conta para poderes voltar em qualquer telemóvel.",
+    "gameDocuments": "Regras e documentos",
+    "organizerAccess": "O teu próximo jogo começa aqui",
+    "organizerAccessHint": "Inicia sessão com uma conta de organizador para criar e gerir jogos.",
+    "organizerSignIn": "Entrar como organizador",
+    "placementTied": "Empate em {{place}}.º de {{total}}",
+    "gameEnded": "Um percurso para recordar",
+    "resultUnavailable": "Não foi possível carregar o resultado.",
+    "resultPending": "O resultado da equipa está a ser finalizado.",
+    "resultReset": "Este jogo foi reiniciado. O teu perfil reflete o resultado atualizado.",
+    "teamCompleted": "Concluíram o jogo em equipa. Este resultado pertence a todos os membros.",
+    "teamJourneyEnded": "O jogo terminou. O progresso que fizeram em equipa faz parte do vosso percurso.",
+    "upcoming": "Em breve",
+    "openToJoin": "Participação aberta",
+    "codeRequired": "Entrar com código",
+    "discoverAccount": "Mais lugares para jogar",
+    "discoverAccountHint": "Guarda o teu progresso numa conta para descobrir jogos e voltar às tuas aventuras.",
+    "discoveryStale": "A mostrar jogos guardados. Liga-te à internet para verificar a disponibilidade.",
+    "moreGames": "Mais jogos",
+    "alreadyPlaying": "Este jogo já faz parte das tuas aventuras.",
+    "upcomingHint": "Este jogo está a ser preparado. Volta quando o organizador o abrir.",
+    "openToJoinHint": "Entra na equipa pública do organizador e começa a explorar em conjunto.",
+    "codeRequiredHint": "Pede um código de entrada ao organizador.",
+    "discoveryJoinError": "Não foi possível entrar neste jogo. Tenta novamente.",
+    "backToDiscoveries": "Voltar às descobertas",
+    "discoveryOtherTeam": "Este telemóvel já pertence a outra equipa neste jogo. Abre a tua participação guardada em Jogar.",
+    "admissionClosed": "Este jogo já não aceita novos jogadores por aqui. Contacta o organizador.",
+    "discoveryOffline": "Estás offline. Liga-te para encontrar jogos ou participar."
+  },
+  "publication": {
+    "heading": "Tornar público",
+    "intro": "Ajuda as pessoas a descobrir o teu jogo. Escolhe o que podem ver antes de entrar.",
+    "loadError": "Não foi possível carregar a publicação.",
+    "retry": "Tentar novamente",
+    "ended": "Terminado · oculto em Explorar",
+    "listed": "Publicado em Explorar",
+    "unlisted": "Não publicado · entrada apenas com código",
+    "readOnly": "O criador do jogo ou um administrador de jogos do clube pode gerir esta publicação.",
+    "title": "Título público",
+    "summary": "Descrição",
+    "summaryHint": "Descreva o jogo que as pessoas vão descobrir.",
+    "place": "Local ou zona",
+    "category": "Tipo de aventura",
+    "admission": "Como participar",
+    "codeOnly": "Com um código de entrada",
+    "joinTeam": "Entrar diretamente em {{name}}",
+    "teamsError": "Não foi possível carregar as equipas.",
+    "admissionHint": "Os novos jogadores entram juntos nesta equipa. Os participantes atuais mantêm a sua equipa. A entrada direta abre quando o jogo começa.",
+    "codeHint": "As pessoas podem descobrir o jogo e pedir-te o código da sua equipa.",
+    "location": "Localização em Explorar (opcional)",
+    "locationHint": "Toca no mapa para escolher uma zona de encontro aproximada. Esta localização será visível a quem consulta Explorar.",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "coordinatesError": "Introduz ambas as coordenadas válidas ou remove a localização.",
+    "removeLocation": "Remover localização pública",
+    "saveListedHint": "Guardar as alterações atualiza a publicação visível em Explorar.",
+    "publishHint": "Ao publicar, esta descrição fica visível a contas com sessão iniciada. O conteúdo privado mantém-se dentro do jogo.",
+    "publish": "Publicar em Explorar",
+    "saveChanges": "Guardar alterações",
+    "saveDraft": "Guardar sem publicar",
+    "unpublish": "Remover de Explorar",
+    "saveError": "Não foi possível concluir a alteração. O teu texto continua aqui. Tenta novamente.",
+    "offline": "Estás offline. Liga-te para carregar ou guardar a publicação."
   }
 }

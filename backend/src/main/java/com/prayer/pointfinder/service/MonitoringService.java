@@ -63,6 +63,11 @@ public class MonitoringService {
         return computeLeaderboard(gameId);
     }
 
+    /** The organizer's points per team; XP reads it once at finalization and never again. */
+    public List<LeaderboardEntry> computeLeaderboardForXp(UUID gameId) {
+        return computeLeaderboard(gameId);
+    }
+
     List<LeaderboardEntry> computeLeaderboard(UUID gameId) {
         List<Team> teams = teamRepository.findByGameId(gameId);
         List<Object[]> scoredRows = submissionRepository.findScoredSubmissionsByGameId(gameId);

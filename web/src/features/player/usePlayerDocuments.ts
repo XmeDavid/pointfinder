@@ -45,6 +45,8 @@ export function usePlayerDocuments() {
     },
     enabled: gameId !== null,
     staleTime: 5 * 60_000,
+    // Reopening Documents picks up newly shared game resources immediately.
+    refetchOnMount: 'always',
   })
 
   const { refetch, data } = query

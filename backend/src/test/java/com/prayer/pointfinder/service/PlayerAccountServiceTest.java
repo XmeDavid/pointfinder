@@ -62,6 +62,8 @@ class PlayerAccountServiceTest {
     @Mock private JwtTokenProvider tokenProvider;
     @Mock private AuthService authService;
     @Mock private PlayerJoinService playerJoinService;
+    @Mock private com.prayer.pointfinder.xp.XpService xpService;
+    @Mock private com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository;
     @Mock private com.prayer.pointfinder.repository.ActivityEventRepository activityEventRepository;
 
     @InjectMocks private PlayerAccountService service;

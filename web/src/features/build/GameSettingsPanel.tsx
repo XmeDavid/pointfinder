@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { PublicationSection } from './PublicationSection'
 import { useTranslation } from 'react-i18next'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
@@ -164,6 +165,7 @@ export default function GameSettingsPanel({
         className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
         data-testid="game-settings-panel"
       >
+        <PublicationSection game={game} />
         {/* Game Details */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">

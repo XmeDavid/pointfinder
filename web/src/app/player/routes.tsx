@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { useAuth } from './services'
+import { useAuth, useAccountSession } from './services'
 import { useAuthStore } from '@/lib/auth/store'
 import { isNativeEntry } from '@/platform/runtime'
 import { LoadingState } from '@/components/feedback/LoadingState'
@@ -21,26 +21,26 @@ const Landing = lazy(() => import('@/features/public/LandingPage').then((m) => (
 
 export function Home() {
   const auth = useAuth()
+  const account = useAccountSession()
   const operator = useAuthStore((s) => s.isAuthenticated)
   const nativeEntry = isNativeEntry()
   let page = <Landing />
-  if (operator && nativeEntry) page = <Navigate to="/dashboard" replace />
-  else if (!operator && auth.kind === 'player') page = <PlayerMap />
+  if (auth.kind === 'player') page = <PlayerMap />
+  else if (operator) page = <Navigate to="/dashboard" replace />
+  else if (account.kind === 'operator') page = <Navigate to="/dashboard" replace />
   else if (!operator && nativeEntry) page = <Welcome />
   return <Suspense fallback={<LoadingState />}>{page}</Suspense>
 }
 function PlayerRoute({ children }: { children: React.ReactNode }) {
   const auth = useAuth()
-  const operator = useAuthStore((s) => s.isAuthenticated)
-  if (operator) return <Navigate to="/dashboard" replace />
   if (auth.kind !== 'player') return <Navigate to="/join" replace />
   return <Suspense fallback={<LoadingState />}>{children}</Suspense>
 }
 function JoinRoute({ children }: { children?: React.ReactNode }) {
   const auth = useAuth()
-  const operator = useAuthStore((s) => s.isAuthenticated)
-  if (operator) return <Navigate to="/dashboard" replace />
-  if (auth.kind === 'player') return <Navigate to="/" replace />
+  const account = useAccountSession()
+  const operator = useAuthStore(s=>s.isAuthenticated)
+  if (!children && auth.kind === 'player' && account.kind !== 'operator' && !operator) return <Navigate to="/" replace />
   return <Suspense fallback={<LoadingState />}>{children ?? <Join />}</Suspense>
 }
 function OperatorAlias() {

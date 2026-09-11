@@ -71,6 +71,8 @@ import static org.mockito.Mockito.when;
 class PlayerServiceTest {
 
     @Mock
+    private com.prayer.pointfinder.xp.XpService xpService;
+    @Mock
     private PlayerRepository playerRepository;
     @Mock
     private TeamRepository teamRepository;

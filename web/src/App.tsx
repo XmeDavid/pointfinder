@@ -1,7 +1,8 @@
+import { PlayerTour } from '@/features/player/components/PlayerTour';
 import { Home, playerRoutes } from '@/app/player/routes';
 import { TagIntake } from '@/app/player/TagIntake';
 import { PushIntake } from '@/features/player/PushIntake';
-import { ServicesProvider } from '@/app/player/services';
+import { useAccountSession, useAuth, ServicesProvider } from '@/app/player/services';
 import type { AppServices } from '@/app/player/client';
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ const DashboardPage = lazy(() =>
     default: m.DashboardPage,
   })),
 );
+
+
 
 const GameWorkspace = lazy(() =>
   import("@/features/workspace/GameWorkspace").then((m) => ({
@@ -122,6 +125,10 @@ const AdminPanelLazy = lazy(() =>
 const devRoutes = import.meta.env.DEV
   ? [
       {
+        path: "/dev/user-home",
+        element: <Navigate to="/home" replace />,
+      },
+      {
         path: "/dev/visual-system",
         lazy: () =>
           import("@/features/dev/VisualHarnessPage").then((m) => ({
@@ -192,10 +199,20 @@ useAuthStore.subscribe((state, prevState) => {
 // save succeeded after this step started". Lives for the life of the module.
 subscribeMutationLog(queryClient, (key, at) => useTourStore.getState().recordSuccess(key, at));
 
+function DashboardGate({children, allowGuest = false}: {children: React.ReactNode; allowGuest?: boolean}) {
+  const player = useAuth();
+  const account = useAccountSession();
+  return ((allowGuest && player.kind === "player") || account.kind === "operator" || (import.meta.env.DEV && import.meta.env.VITE_LOCAL_DESIGN)) ? <>{children}</> : <AuthGuard>{children}</AuthGuard>;
+}
+
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
-const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><PushIntake /><TagIntake /><TourHost /></>, children: [
+const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><PushIntake /><TagIntake /><TourHost /><PlayerTour /></>, children: [
+  // Preserve earlier entry links while using the canonical dashboard and player routes.
+  { path: '/play/session', element: <Navigate to='/' replace/> },
+  { path: '/explore', element: <Navigate to='/home' replace/> },
+  ...Object.entries({'/home':'/dashboard','/play':'/dashboard?view=play','/organize':'/dashboard?view=organize','/me':'/profile'}).map(([path,to]) => ({path,element:<Navigate to={to} replace/>})),
   ...playerRoutes,
   { path: "/tag/*", element: null },
   // ── Public routes ──────────────────────────────────────────────────────
@@ -306,13 +323,9 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
   {
     path: "/dashboard",
     element: (
-      <AuthGuard>
-        <AppLayout>
-          <Suspense fallback={<PageSpinner />}>
-            <DashboardPage />
-          </Suspense>
-        </AppLayout>
-      </AuthGuard>
+      <DashboardGate allowGuest>
+        <Suspense fallback={<PageSpinner />}><DashboardPage /></Suspense>
+      </DashboardGate>
     ),
   },
   {
@@ -373,13 +386,11 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
   {
     path: "/profile",
     element: (
-      <AuthGuard>
-        <AppLayout>
+      <DashboardGate>
           <Suspense fallback={<PageSpinner />}>
             <ProfilePage />
           </Suspense>
-        </AppLayout>
-      </AuthGuard>
+      </DashboardGate>
     ),
   },
   {

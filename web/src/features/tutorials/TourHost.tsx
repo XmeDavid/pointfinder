@@ -174,6 +174,8 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     if (!step || !element || visible) return
     if (scrolledFor.current === step.id) return
     scrolledFor.current = step.id
+    let disclosure = element.closest('details');
+    while (disclosure) { disclosure.open = true; disclosure = disclosure.parentElement?.closest('details') ?? null; }
     if (typeof element.scrollIntoView === 'function') {
       element.scrollIntoView({ block: 'center', inline: 'nearest' })
     }

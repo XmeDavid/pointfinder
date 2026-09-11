@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 
 export type GameMode = 'build' | 'command' | 'review' | 'results'
-export type DrawerTab = 'bases' | 'challenges' | 'teams' | 'stages' | 'nfc'
+export type DrawerTab = 'bases' | 'challenges' | 'teams' | 'stages' | 'nfc' | 'documents'
 
 interface WorkspaceState {
   mode: GameMode
   drawerOpen: boolean
   drawerTab: DrawerTab
   selectedBaseId: string | null
+  challengeOriginBaseId: string | null
   selectedChallengeId: string | null
   selectedTeamId: string | null
   selectedStageId: string | null
@@ -30,6 +31,7 @@ interface WorkspaceActions {
   setDrawerTab: (tab: DrawerTab) => void
   selectBase: (id: string | null) => void
   selectChallenge: (id: string | null) => void
+  openBaseChallenge: (baseId: string, challengeId: string) => void
   selectTeam: (id: string | null) => void
   selectStage: (id: string | null) => void
   selectSubmission: (id: string | null) => void
@@ -52,6 +54,7 @@ const initialState: WorkspaceState = {
   drawerTab: 'bases',
   selectedBaseId: null,
   selectedChallengeId: null,
+  challengeOriginBaseId: null,
   selectedTeamId: null,
   selectedStageId: null,
   selectedSubmissionId: null,
@@ -87,13 +90,16 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
   setDrawerTab: (tab) => set({ drawerTab: tab }),
 
   selectBase: (id) => set({
+    challengeOriginBaseId: null,
     selectedBaseId: id,
     selectedChallengeId: null,
     selectedTeamId: null,
     ...(id ? { drawerOpen: true, drawerTab: 'bases' as const } : {}),
   }),
 
+  openBaseChallenge: (baseId, challengeId) => set({challengeOriginBaseId:baseId,selectedBaseId:baseId,selectedChallengeId:challengeId,drawerOpen:true,drawerTab:"challenges"}),
   selectChallenge: (id) => set({
+    challengeOriginBaseId: null,
     selectedChallengeId: id,
     selectedBaseId: null,
     selectedTeamId: null,

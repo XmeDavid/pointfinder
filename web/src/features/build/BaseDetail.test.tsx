@@ -14,6 +14,7 @@ vi.mock('@/platform', () => ({ isNative: () => platform.native }))
 // Mock workspace store
 const mockStore = {
   selectChallenge: vi.fn(),
+  openBaseChallenge: vi.fn(),
   selectedBaseId: 'base-1',
   selectBase: vi.fn(),
   drawerOpen: true,
@@ -97,7 +98,7 @@ describe('BaseDetail', () => {
     })
 
     await user.click(screen.getByTestId('open-linked-challenge-btn'))
-    expect(mockStore.selectChallenge).toHaveBeenCalledWith('challenge-1')
+    expect(mockStore.openBaseChallenge).toHaveBeenCalledWith('base-1', 'challenge-1')
   })
 
   it('shows "Base not found" for invalid baseId', async () => {
@@ -129,6 +130,24 @@ describe('BaseDetail', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location-picker-mock')).toBeInTheDocument()
     })
+    expect(screen.getByTestId('base-checkin-method')).toBeInTheDocument()
+    expect(screen.queryByTestId('base-lat-input')).not.toBeInTheDocument()
+  })
+
+  it('reveals precise coordinates without hiding the map or check-in method', async () => {
+    const user = userEvent.setup()
+    renderBaseDetail()
+
+    const toggle = await screen.findByTestId('base-precise-coordinates-toggle')
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(toggle)
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('base-lat-input')).toBeInTheDocument()
+    expect(screen.getByTestId('base-lng-input')).toBeInTheDocument()
+    expect(screen.getByTestId('location-picker-mock')).toBeInTheDocument()
+    expect(screen.getByTestId('base-checkin-method')).toBeInTheDocument()
   })
 
   it('renders tags section', async () => {
@@ -136,13 +155,15 @@ describe('BaseDetail', () => {
     await waitFor(() => {
       expect(screen.getByText('Tags')).toBeInTheDocument()
     })
+    expect(screen.getByText('Tags').closest('details')).toBeNull()
+    expect(screen.getByTestId('visibility-visible').closest('details')).toBeNull()
   })
 
-  it('renders fixed challenge section', async () => {
+  it('keeps unset fixed-challenge rules out of the common flow', async () => {
     renderBaseDetail()
-    await waitFor(() => {
-      expect(screen.getByText('Fixed Challenge')).toBeInTheDocument()
-    })
+    await screen.findByTestId('base-name-input')
+    expect(screen.queryByText('Fixed Challenge')).not.toBeInTheDocument()
+    expect(screen.getByTestId('base-assignment-section')).toBeInTheDocument()
   })
 
   it('lets the operator switch the base to QR and shows the printable code', async () => {
@@ -231,6 +252,7 @@ describe('BaseDetail', () => {
     )
     renderBaseDetail()
 
+    await user.click(await screen.findByTestId('base-precise-coordinates-toggle'))
     const latInput = await screen.findByTestId('base-lat-input')
     await user.clear(latInput)
     await user.type(latInput, 'not-a-number')

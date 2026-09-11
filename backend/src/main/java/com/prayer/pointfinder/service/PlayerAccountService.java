@@ -55,9 +55,11 @@ public class PlayerAccountService {
     private final AuthService authService;
     private final PlayerJoinService playerJoinService;
     private final ActivityEventRepository activityEventRepository;
+    private final com.prayer.pointfinder.repository.PlayerPushTokenRepository playerPushTokenRepository;
+    private final com.prayer.pointfinder.xp.XpService xpService;
 
     /** A retired guest row keeps its data but can never be resolved by a device again. */
-    static final String RETIRED_DEVICE_PREFIX = "retired:";
+    public static final String RETIRED_DEVICE_PREFIX = "retired:";
 
     @Transactional(readOnly = true)
     public PlayerAccountResponse account(Player authPlayer) {
@@ -104,6 +106,7 @@ public class PlayerAccountService {
             // the conflict without touching it; the retry sees the winner through the pre-check.
             throw new ConflictException("This account already plays in this game", ErrorCode.ACCOUNT_ALREADY_IN_GAME);
         }
+        xpService.reassignPlayer(player.getId(), user.getId());
         log.info("[ACCOUNT] operation=link playerId={} userId={} gameId={} created={}",
                 player.getId(), user.getId(), gameId, request.isCreateAccount());
         return toResponse(user);
@@ -117,6 +120,7 @@ public class PlayerAccountService {
             log.info("[ACCOUNT] operation=unlink playerId={} userId={}", player.getId(), player.getUser().getId());
             player.setUser(null);
             playerRepository.save(player);
+            xpService.reassignPlayer(player.getId(), null);
         }
         return PlayerAccountResponse.guest();
     }
@@ -165,6 +169,7 @@ public class PlayerAccountService {
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException("This account already plays in this game", ErrorCode.ACCOUNT_ALREADY_IN_GAME);
         }
+        xpService.reassignPlayer(player.getId(), user.getId());
         log.info("[ACCOUNT] operation=joinForAccount playerId={} userId={} gameId={}", player.getId(), user.getId(), game.getId());
         return joined;
     }
@@ -203,6 +208,8 @@ public class PlayerAccountService {
         }
         holder.setDeviceId(RETIRED_DEVICE_PREFIX + UUID.randomUUID());
         playerRepository.save(holder);
+        // The phone re-registers under the recovered row; the retired row must not keep ringing it.
+        playerPushTokenRepository.deleteByPlayerId(holder.getId());
         Map<String, Object> metadata = new LinkedHashMap<>();
         metadata.put("retiredPlayerId", holder.getId().toString());
         metadata.put("retiredTeamId", holder.getTeam().getId().toString());
