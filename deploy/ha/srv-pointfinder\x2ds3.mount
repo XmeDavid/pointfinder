@@ -1,0 +1,12 @@
+[Unit]
+Description=PointFinder S3 recovery disk
+Before=docker.service
+
+[Mount]
+What=/dev/disk/by-uuid/a90df539-c996-4afe-b939-6b9f05cbff10
+Where=/srv/pointfinder-s3
+Type=ext4
+Options=defaults,noatime
+
+[Install]
+WantedBy=multi-user.target

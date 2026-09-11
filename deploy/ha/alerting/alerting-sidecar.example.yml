@@ -1,0 +1,53 @@
+# EXAMPLE ONLY — the email alert pusher next to the read-only monitoring
+# sidecar. Merge by hand into the host-specific Dokploy Compose stack
+# (patroni-production-hetzner.yml / patroni-production-rainer.yml) alongside
+# the `monitor` service from ../monitoring/monitoring-sidecar.example.yml.
+#
+# The service runs as uid 999 (postgres) from the start. It mounts exactly
+# three things: the monitor's state volume (read-only, for health.json), its
+# own state volume (read-write) and the email secret (read-only). It needs
+# outbound HTTPS to api.resend.com and nothing else: no socket, no PGDATA,
+# no Docker socket, no database.
+#
+# Secret file (owned by uid 999, mode 0400) at
+# /etc/dokploy/pointfinder/ha-secrets/email.json:
+#   {"api_key": "re_…", "from": "PointFinder DB <alerts@example.com>",
+#    "to": ["ops@example.com"]}
+#
+# After the first start, confirm the installation once with:
+#   docker compose exec alert-pusher /opt/patroni/bin/python \
+#       /usr/local/bin/pointfinder-alert-pusher --test-email
+services:
+  alert-pusher:
+    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r1
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher"]
+    user: "999:999"
+    environment:
+      PATRONI_NAME: production-hetzner      # fallback node name when health.json is missing
+      POINTFINDER_ALERT_STALE_SECONDS: "180"
+      POINTFINDER_ALERT_COALESCE_SECONDS: "600"
+      POINTFINDER_ALERT_MAX_EMAILS_PER_HOUR: "12"
+    volumes:
+      - monitor-state:/monitor-state:ro
+      - alert-state:/state
+      - /etc/dokploy/pointfinder/ha-secrets/email.json:/run/secrets/email.json:ro
+    healthcheck:
+      test: ["CMD", "/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # No `networks:` entry on purpose: the pusher needs egress to
+    # api.resend.com, not the quorum network. Add one only if the stack's
+    # default network has no internet access.
+    stop_grace_period: 30s
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.1
+
+volumes:
+  monitor-state:     # the same named volume the monitor service writes
+  alert-state:

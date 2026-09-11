@@ -1,0 +1,36 @@
+# PointFinder external uptime monitor — Cloudflare Workers free plan template.
+#
+# Everything here fits the free plan: one Worker on workers.dev, one D1
+# database, one cron trigger. No routes on the pointfinder zones, no paid
+# features, no Durable Objects, no queues.
+#
+# One-time setup (run from this directory; wrangler via npx, not a dependency):
+#   npx wrangler@4 login
+#   npx wrangler@4 d1 create pointfinder-monitor         # paste the id below
+#   npx wrangler@4 d1 execute pointfinder-monitor --remote --file=schema.sql
+#   npx wrangler@4 secret put HEARTBEAT_TOKENS            # {"hetzner":"…","arthur":"…","rainer":"…"}
+#   npx wrangler@4 secret put RESEND_API_KEY
+#   npx wrangler@4 secret put ALERT_FROM                  # e.g. PointFinder uptime <info@pointfinder.pt>
+#   npx wrangler@4 secret put ALERT_TO                    # mail@davidsbatista.com
+#   npx wrangler@4 deploy
+#
+# The deployed URL is https://pointfinder-monitor.xmedavid.workers.dev
+
+name = "pointfinder-monitor"
+main = "src/index.mjs"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# Evaluate every 5 minutes. Cron triggers are included in the free plan.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pointfinder-monitor"
+database_id = "REPLACE-WITH-THE-ID-PRINTED-BY-d1-create"
+
+# Workers Logs (free tier retention) carry only the secret-free JSON entries
+# emitted by the Worker; no request bodies or tokens are ever logged.
+[observability]
+enabled = true

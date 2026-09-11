@@ -1,0 +1,95 @@
+services:
+  patroni-rainer:
+    image: pointfinder-patroni:16.15-4.1.5-production-pgbackrest-r2
+    environment:
+      PATRONI_NAME: production-rainer
+    devices: ["/dev/watchdog0:/dev/watchdog"]
+    ports: ["100.75.57.44:15432:5432", "100.75.57.44:18008:8008"]
+    volumes:
+      - production-data:/var/lib/postgresql/data
+      - /etc/dokploy/pointfinder/ha-secrets/patroni-auth.json:/run/secrets/patroni_auth:ro
+      - /etc/dokploy/pointfinder/ha-secrets/etcd-auth.json:/run/secrets/etcd_auth:ro
+      - pg-socket:/var/run/postgresql
+      - /etc/dokploy/pointfinder/ha-secrets/pgbackrest-postgres.conf:/run/pgbackrest/pgbackrest.conf:ro
+    networks: [quorum]
+    stop_grace_period: 60s
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: 1.0
+  backup:
+    image: pointfinder-patroni:16.15-4.1.5-production-pgbackrest-r2
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-pgbackrest-runner"]
+    volumes:
+      - production-data:/var/lib/postgresql/data:ro
+      - pg-socket:/var/run/postgresql
+      - backup-state:/var/lib/pgbackrest-runner
+      - backup-log:/var/log/pgbackrest
+      - /etc/dokploy/pointfinder/ha-secrets/pgbackrest.conf:/run/secrets/pgbackrest.conf:ro
+    stop_grace_period: 120s
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.5
+  monitor:
+    image: pointfinder-patroni:16.15-4.1.5-production-monitor-r1
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-monitor"]
+    user: "999:999"
+    environment:
+      PATRONI_NAME: production-rainer
+      POINTFINDER_MONITOR_MAC_RECOVERY_FILES: "uploads=/mac/uploads/last-success.json,backups=/mac/backups/last-success.json"
+    volumes:
+      - production-data:/var/lib/postgresql/data:ro
+      - pg-socket:/var/run/postgresql
+      - monitor-state:/state
+      - /etc/dokploy/pointfinder/ha-secrets/pgbackrest-postgres.conf:/run/pgbackrest/pgbackrest.conf:ro
+      - /srv/pointfinder-s3/snapshot-state:/mac/uploads:ro
+      - /srv/pointfinder-s3/backup-snapshot-state:/mac/backups:ro
+    healthcheck:
+      test: ["CMD", "/opt/patroni/bin/python", "/usr/local/bin/pointfinder-monitor", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    tmpfs: ["/tmp:size=64m"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.25
+  alert-pusher:
+    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r1
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher"]
+    user: "999:999"
+    environment:
+      PATRONI_NAME: production-rainer
+    volumes:
+      - monitor-state:/monitor-state:ro
+      - alert-state:/state
+      - /etc/dokploy/pointfinder/ha-secrets/alert-email.json:/run/secrets/email.json:ro
+    healthcheck:
+      test: ["CMD", "/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.1
+networks:
+  quorum:
+    external: true
+    name: pointfinder-ha-clients
+volumes:
+  pg-socket:
+  backup-state:
+  backup-log:
+  monitor-state:
+  alert-state:
+  production-data:
+    external: true
+    name: pointfinder-production-pgdata

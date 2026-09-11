@@ -1,0 +1,15 @@
+{
+  "name": "pointfinder-external-monitor-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Independent uptime monitor for PointFinder: Cloudflare Worker + D1 + cron, no runtime dependencies.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "deploy": "npx wrangler@4 deploy",
+    "tail": "npx wrangler@4 tail --format=json"
+  }
+}

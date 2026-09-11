@@ -1,0 +1,2 @@
+# PostgreSQL UID/GID in the pinned image. Only the virtual hardware watchdog.
+SUBSYSTEM=="watchdog", ATTR{identity}=="i6300ESB timer", OWNER="999", GROUP="999", MODE="0600"

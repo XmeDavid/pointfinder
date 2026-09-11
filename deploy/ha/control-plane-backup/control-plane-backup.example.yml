@@ -1,0 +1,121 @@
+# EXAMPLE ONLY — Dokploy-managed Compose service for the daily control-plane
+# backup on the Hetzner main host (where Dokploy and its database run).
+# Merge by hand; nothing here is applied automatically.
+#
+# ROOT-EQUIVALENT: the service mounts the Docker socket. Anything that can
+# talk to that socket can start privileged containers on the host, i.e. it is
+# root on the host regardless of user/cap settings below. It also reads
+# root-only /etc/dokploy and every Swarm secret Dokploy's services mount.
+# Treat this image, its source and the passphrase/credential files with the
+# same care as root SSH access. The Dokploy UI itself already has this power;
+# the runner adds no new trust boundary, but it does add a second consumer.
+#
+# What the runner cannot do by construction: it never opens a network port,
+# never prints command output, never deletes anything outside its own
+# exact-name backup files (and only with CPB_PRUNE_APPLY=true), and its
+# restore rehearsal runs a throw-away PostgreSQL on --network none with a
+# fresh volume, no socket and no production mounts.
+services:
+  control-plane-backup:
+    image: pointfinder-control-plane-backup:r1
+    # Default command is the scheduler loop ("run"). One-off jobs:
+    #   docker exec <ctr> python3 /opt/control-plane-backup/backup_runner.py backup
+    #   docker exec <ctr> python3 /opt/control-plane-backup/backup_runner.py prune            # dry-run
+    #   docker exec <ctr> python3 /opt/control-plane-backup/backup_runner.py prune --apply
+    #   docker exec <ctr> python3 /opt/control-plane-backup/backup_runner.py restore-test
+    #   docker exec <ctr> python3 /opt/control-plane-backup/backup_runner.py restore-cleanup   # dry-run
+    #   docker exec <ctr> python3 /opt/control-plane-backup/backup_runner.py status
+    environment:
+      CPB_BACKUP_TIME_UTC: "04:15"          # after pgBackRest's 03:30 window
+      CPB_SERVICES: dokploy,dokploy-postgres,dokploy-redis
+      CPB_POSTGRES_SERVICE: dokploy-postgres
+      CPB_KEEP_DAILY: "7"
+      CPB_KEEP_WEEKLY: "4"
+      CPB_KEEP_MONTHLY: "3"
+      CPB_PRUNE_APPLY: "false"              # dry-run until the plan has been reviewed in last-run.json
+      CPB_BACKUP_MAX_AGE_HOURS: "36"
+      CPB_RESTORE_INTERVAL_DAYS: "0"        # 0 = rehearsal only on demand; e.g. 30 for a monthly automatic one
+      CPB_RESTORE_MAX_AGE_DAYS: "35"
+      CPB_EXPECTED_CONFIG_PATHS: traefik/traefik.yml,traefik/dynamic
+      # Optional second local directory (a mounted path; how it reaches the
+      # Mac — rsync, NFS, the recovery disk — is outside this package):
+      # CPB_COPY_DIR: /copy
+      # Optional off-host copy to the private backups bucket. Once enabled a
+      # failed or unverified upload makes the run CRITICAL and last-success is
+      # not touched. The hourly Garage backup-recovery mirror then picks the
+      # control-plane/ prefix up automatically. Remove network_mode: none.
+      # CPB_S3_CREDENTIALS_FILE: /run/secrets/control-plane-s3.json
+      # CPB_S3_BUCKET: pointfinder-prod-backups-202609
+      # CPB_S3_PREFIX: control-plane/
+      # Optional: capture the host's Docker client config (GHCR login) too.
+      # Only when the read-only mount below is present.
+      # CPB_DOCKER_CONFIG_DIR: /host/root/.docker
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: /etc/dokploy
+        target: /host/etc/dokploy
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /var/backups/pointfinder-ha/control-plane
+        target: /backups
+        bind:
+          create_host_path: false
+      # Single-line passphrase, root:root 0600, created outside this repository
+      # (e.g. `umask 077; openssl rand -base64 48 > .../control-plane-backup.passphrase`).
+      # Keep a copy with the pgBackRest passphrase custody; losing it makes
+      # every encrypted export unusable.
+      - type: bind
+        source: /etc/dokploy/pointfinder/ha-secrets/control-plane-backup.passphrase
+        target: /run/secrets/control-plane-passphrase
+        read_only: true
+        bind:
+          create_host_path: false
+      # Optional (see CPB_S3_CREDENTIALS_FILE):
+      # - type: bind
+      #   source: /etc/dokploy/pointfinder/ha-secrets/control-plane-s3.json
+      #   target: /run/secrets/control-plane-s3.json
+      #   read_only: true
+      #   bind:
+      #     create_host_path: false
+      # Optional (see CPB_DOCKER_CONFIG_DIR):
+      # - type: bind
+      #   source: /root/.docker
+      #   target: /host/root/.docker
+      #   read_only: true
+      #   bind:
+      #     create_host_path: false
+      # Optional (see CPB_COPY_DIR):
+      # - type: bind
+      #   source: /srv/some-mounted-copy-target/control-plane-backups
+      #   target: /copy
+      #   bind:
+      #     create_host_path: false
+      - control-plane-backup-state:/state
+    # Plaintext staging (dump, secrets, plain tar) lives only here, in memory,
+    # and is removed at the end of every run. Size it above 3× the expected
+    # plain archive. The encrypted file is staged under /backups/.incoming.
+    tmpfs:
+      - /tmp:size=1g,mode=0700
+    read_only: true
+    network_mode: none            # remove when CPB_S3_CREDENTIALS_FILE is set
+    cap_drop: [ALL]
+    cap_add: [DAC_READ_SEARCH]    # read non-root-owned 0400 files under /etc/dokploy
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 120s
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    # The image's HEALTHCHECK runs `backup_runner.py healthcheck`: unhealthy when
+    # health.json is missing/stale, the newest backup is older than
+    # CPB_BACKUP_MAX_AGE_HOURS, the enabled remote copy failed, or the last
+    # restore rehearsal failed. Warnings (copy dir stale, rehearsal never run,
+    # dry-run prune pending) keep it healthy. Dokploy's own notification for
+    # container health/restart events covers the alerting path.
+
+volumes:
+  control-plane-backup-state:

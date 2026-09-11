@@ -1,0 +1,48 @@
+# EXAMPLE ONLY — the outbound heartbeat runner for the external uptime
+# monitor. Deploy one copy per Dokploy host (hetzner, arthur, rainer) as its
+# own small Compose stack, or merge by hand into an existing host stack.
+# Change POINTFINDER_HEARTBEAT_HOST per host; nothing else differs.
+#
+# The container runs as uid 999 from the start. It mounts exactly two
+# things: its own state volume (read-write, for the healthcheck status file)
+# and the per-host secret (read-only). It needs outbound HTTPS to
+# pointfinder-monitor.xmedavid.workers.dev and nothing else: no inbound
+# port, no Docker socket, no application network, no database.
+#
+# Secret file (owned by uid 999, mode 0400) at
+# /etc/dokploy/pointfinder/ha-secrets/heartbeat.json:
+#   {"token": "<the token for this host from the Worker's HEARTBEAT_TOKENS>"}
+# Install it over SSH stdin, never through environment or arguments, e.g.:
+#   python3 -c 'import os,sys; from pathlib import Path; os.umask(0o077); \
+#     p=Path("/etc/dokploy/pointfinder/ha-secrets/heartbeat.json"); \
+#     p.write_bytes(sys.stdin.buffer.read()); os.chown(p,999,999); os.chmod(p,0o400)'
+services:
+  heartbeat:
+    image: pointfinder-heartbeat:1
+    user: "999:999"
+    environment:
+      POINTFINDER_HEARTBEAT_HOST: hetzner            # hetzner | arthur | rainer
+      POINTFINDER_HEARTBEAT_INTERVAL_SECONDS: "300"
+      # POINTFINDER_HEARTBEAT_WORKER_HOST: pointfinder-monitor.xmedavid.workers.dev
+    volumes:
+      - heartbeat-state:/state
+      - /etc/dokploy/pointfinder/ha-secrets/heartbeat.json:/run/secrets/heartbeat.json:ro
+    healthcheck:
+      test: ["CMD", "python3", "/opt/pointfinder/heartbeat.py", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # No `networks:` entry on purpose: the runner only needs egress to the
+    # Worker. Add one only if the stack's default network has no internet.
+    stop_grace_period: 15s
+    restart: unless-stopped
+    mem_limit: 64m
+    pids_limit: 16
+    cpus: 0.05
+
+volumes:
+  heartbeat-state:

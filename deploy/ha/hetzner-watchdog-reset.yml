@@ -1,0 +1,31 @@
+# Deliberately reboots the Hetzner host. Explicit maintenance approval required.
+# Load softdog with soft_noboot=0, soft_margin=15, nowayout=0 first.
+services:
+  watchdog-reset:
+    image: pointfinder-patroni:16.15-4.1.5-r3
+    entrypoint: ["/opt/patroni/bin/python", "-c"]
+    command:
+      - >-
+        import os,time,pathlib;
+        assert os.environ.get('POINTFINDER_RESET_TEST')=='hetzner-approved';
+        assert pathlib.Path('/host-name').read_text().strip()=='davidsbatista';
+        assert pathlib.Path('/watchdog-identity').read_text().strip()=='Software Watchdog';
+        assert os.geteuid()==999;
+        f=open('/dev/watchdog','wb',buffering=0);
+        f.write(b'ping');
+        print('Watchdog armed: deliberately withholding keepalive',flush=True);
+        time.sleep(45);
+        f.write(b'V');
+        f.close();
+        raise SystemExit('FAIL: host did not reset within 45 seconds')
+    user: "999:999"
+    environment:
+      POINTFINDER_RESET_TEST: "disabled"
+    devices: ["/dev/watchdog:/dev/watchdog"]
+    volumes:
+      - /sys/class/watchdog/watchdog0/identity:/watchdog-identity:ro
+      - /etc/hostname:/host-name:ro
+    network_mode: none
+    mem_limit: 64m
+    cpus: 0.25
+    restart: "no"

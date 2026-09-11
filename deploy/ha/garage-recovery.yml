@@ -1,0 +1,101 @@
+services:
+  garage:
+    image: dxflrs/garage@sha256:866bd13ed2038ba7e7190e840482bc27234c4afaf77be8cfa439ae088c1e4690
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    env_file: /etc/dokploy/pointfinder/ha-secrets/garage.env
+    ports:
+      - "100.75.57.44:3900:3900"
+    volumes:
+      - type: bind
+        source: /etc/dokploy/pointfinder/ha-secrets/garage.toml
+        target: /etc/garage.toml
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /srv/pointfinder-s3/garage
+        target: /data
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+    stop_grace_period: 60s
+    mem_limit: 384m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  recovery:
+    image: pointfinder-s3-recovery:20260910-r3
+    depends_on: [garage]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import os,time; assert time.time()-os.stat('/state/last-success.json').st_mtime < 7200"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10m
+    volumes:
+      - type: bind
+        source: /etc/dokploy/pointfinder/ha-secrets/recovery-client.json
+        target: /run/secrets/recovery-client.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /srv/pointfinder-s3/snapshot-state
+        target: /state
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /srv/pointfinder-s3/garage
+        target: /recovery-disk
+        read_only: true
+        bind:
+          create_host_path: false
+    tmpfs: ["/tmp:size=256m"]
+    environment:
+      TMPDIR: /state
+    restart: unless-stopped
+    stop_grace_period: 90s
+    mem_limit: 256m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  backup-recovery:
+    image: pointfinder-s3-recovery:20260910-r3
+    depends_on: [garage]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import os,time; assert time.time()-os.stat('/state/last-success.json').st_mtime < 7200"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10m
+    volumes:
+      - type: bind
+        source: /etc/dokploy/pointfinder/ha-secrets/backup-recovery-client.json
+        target: /run/secrets/recovery-client.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /srv/pointfinder-s3/backup-snapshot-state
+        target: /state
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /srv/pointfinder-s3/garage
+        target: /recovery-disk
+        read_only: true
+        bind:
+          create_host_path: false
+    tmpfs: ["/tmp:size=128m"]
+    environment:
+      TMPDIR: /state
+      SOURCE_BUCKET: pointfinder-prod-backups-202609
+    restart: unless-stopped
+    stop_grace_period: 90s
+    mem_limit: 256m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

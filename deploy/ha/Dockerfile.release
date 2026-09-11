@@ -1,0 +1,7 @@
+# Overlay the tested HA-only JAR on the preserved production runtime.
+# Build on Hetzner, where this exact rollback image already exists.
+FROM pointfinder-backend-v4djml:ha-preserved-20260909t170552z
+COPY --chown=app:app pointfinder-0.0.1-SNAPSHOT.jar /app/app.jar
+LABEL org.pointfinder.release.baseline="e01aa214a6fae651c4801e431f9d5150ae895869" \
+      org.pointfinder.release.jar-sha256="3aa57d3ba874187b657162d53e370bbc0c9bbfa07774c76b08b9f652a35f58cd" \
+      org.pointfinder.release.scope="HA-only; excludes billing V66/V67"

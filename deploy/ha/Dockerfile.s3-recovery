@@ -1,0 +1,6 @@
+FROM alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce
+RUN apk add --no-cache python3 py3-boto3 ca-certificates
+COPY s3-recovery-snapshot.py /opt/recovery/snapshot.py
+COPY s3-recovery-runner.py /opt/recovery/runner.py
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+ENTRYPOINT ["python3", "/opt/recovery/runner.py"]
