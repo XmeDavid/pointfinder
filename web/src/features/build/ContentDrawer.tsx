@@ -147,7 +147,7 @@ export function ContentDrawer({ gameId, onCreateBase }: ContentDrawerProps) {
       <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-3 border-b border-border shrink-0">
         {/* Tab group */}
         <div
-          className={`flex min-w-0 items-center overflow-x-auto gap-1 bg-muted rounded-lg p-1 ${currentTabMeta?.newLabel ? 'order-2 w-full md:order-none md:w-auto' : 'flex-1'}`}
+          className={`flex min-w-0 flex-wrap items-center gap-1 bg-muted rounded-lg p-1 md:flex-nowrap md:overflow-x-auto ${currentTabMeta?.newLabel ? 'order-2 w-full md:order-none md:w-auto' : 'flex-1'}`}
           ref={tabStrip}
           data-testid="drawer-tabs"
         >

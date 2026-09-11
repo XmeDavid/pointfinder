@@ -183,6 +183,7 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
   await page.getByTestId('login-password').fill('test-password')
   await page.getByTestId('login-submit').click()
   await expect(page).toHaveURL(/\/dashboard$/)
+  await page.goto('/dashboard?view=organize')
   await expect(page.getByText(game.name)).toBeVisible()
   await page.screenshot({ path: 'test-results/mobile-operator-dashboard.png', fullPage: true })
   await noSidewaysScroll(page)
