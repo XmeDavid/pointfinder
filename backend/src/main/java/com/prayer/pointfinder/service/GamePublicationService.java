@@ -174,6 +174,9 @@ public class GamePublicationService {
 
     /** Locks the game row, then checks access plus the publisher role described on the class. */
     private Game requirePublisher(UUID gameId) {
+        // Authorize on an unlocked read first, so a stranger cannot hold this game's row lock
+        // while being rejected; the locked re-check below covers ownership changed in between.
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Game game = lockGame(gameId);
         gameAccessService.ensureCurrentUserCanAccessGame(game);
         User user = SecurityUtils.getCurrentUser();

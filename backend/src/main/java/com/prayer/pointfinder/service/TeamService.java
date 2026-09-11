@@ -101,9 +101,10 @@ public class TeamService {
      */
     @Transactional(timeout = 10)
     public void deleteTeam(UUID gameId, UUID teamId) {
+        // Authorize before taking the game row lock, so a stranger cannot hold it while being rejected.
+        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         gameRepository.findByIdForUpdate(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
-        gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
         gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
