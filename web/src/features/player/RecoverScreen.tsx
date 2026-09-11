@@ -29,7 +29,7 @@ export default function RecoverScreen() {
     try {
       const res = await account.api.account.recover(gameId, await getDeviceId())
       await client.session.setPlayer(res)
-      navigate('/', { replace: true })
+      navigate('/map', { replace: true })
     } catch (err) {
       setError(describeError(err, t))
     } finally {

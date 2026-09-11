@@ -1,0 +1,14 @@
+[Unit]
+Description=Load required PointFinder software watchdog before containers
+After=systemd-modules-load.service
+Before=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/modprobe softdog
+ExecStart=/usr/bin/udevadm settle --timeout=10
+ExecStart=/usr/bin/test -c /dev/watchdog0
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

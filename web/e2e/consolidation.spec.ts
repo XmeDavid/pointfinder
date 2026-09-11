@@ -46,8 +46,9 @@ test('player screens share the same feature and keep operator routes protected',
   await expect(page.getByRole('heading', { name: 'Find the clue' })).toBeVisible()
   await expect(page.getByRole('textbox')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Clue.pdf' })).toHaveAttribute('href', 'https://files.example.test/clue.pdf')
+  // A guest player may open the account home; it never asks for an operator login.
   await page.goto('/dashboard')
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/dashboard$/)
   await expect(page.getByTestId('login-email')).toHaveCount(0)
 })
 
@@ -107,6 +108,7 @@ test('operator login opens the shared dashboard and workspace, including the for
   await page.getByTestId('login-password').fill('test-password')
   await page.getByTestId('login-submit').click()
   await expect(page).toHaveURL(/\/dashboard$/)
+  await page.goto('/dashboard?view=organize')
   await expect(page.getByText(game.name)).toBeVisible()
   await expect(page.getByTestId('create-game-btn')).toBeVisible()
   await page.goto('/operator/games/g')

@@ -2,6 +2,10 @@
 
 PointFinder is one product with native platform behavior: player UI is touch-first and field-ready; operator UI is map-centered, dense, calm, recoverable, and auditable.
 
+## Product direction
+
+Before planning or changing product behavior, read `docs/product/vision.md`. Use `docs/product/roadmap.md` for planned capabilities and dependencies, and `docs/product/repository-context.md` to distinguish existing foundations from future work. PointFinder is growing toward a broader location-based activity platform while preserving simple guest joining and existing team games. Prefer incremental changes that support persistent identity, independent participation/completion settings, and reuse of resources and permissions. These documents describe direction, not authorization to implement future features or replace current domain contracts. Keep unrelated work scoped; do not add speculative abstractions just to anticipate the roadmap.
+
 Before UI work, read `docs/visual-system/README.md`, `agent-checklist.md`, `component-inventory.md`, and `preview-matrix.md`. Identify the product mode. Reuse canonical components and generated semantic tokens; preserve test identifiers, permissions, localization, offline/realtime behavior, and audit boundaries.
 
 For branding or app icons, also read `docs/visual-system/brand.md`. The canonical logo is `design-system/brand/pointfinder-mark.svg`; preserve its geometry and derive platform assets from this source.

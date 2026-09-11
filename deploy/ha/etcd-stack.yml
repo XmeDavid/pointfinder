@@ -1,0 +1,138 @@
+version: "3.8"
+services:
+  etcd-hetzner:
+    image: gcr.io/etcd-development/etcd:v3.7.1
+    command:
+      - /usr/local/bin/etcd
+      - --name=hetzner
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd-hetzner:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd-hetzner:2380
+      - --initial-cluster=hetzner=http://etcd-hetzner:2380,arthur=http://etcd-arthur:2380,rainer=http://etcd-rainer:2380
+      - --initial-cluster-token=pointfinder-ha-20260909
+      - --initial-cluster-state=new
+      - --heartbeat-interval=250
+      - --election-timeout=2500
+      - --quota-backend-bytes=134217728
+      - --auto-compaction-retention=1
+    volumes:
+      - etcd-hetzner:/etcd-data
+    networks:
+      - database-tailscale
+      - database-clients
+    healthcheck:
+      # DNS must publish peers before quorum forms. Check quorum separately.
+      test: ["CMD", "/usr/local/bin/etcd", "--version"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints: ["node.hostname == davidsbatista"]
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.50"
+      restart_policy:
+        delay: 10s
+      update_config:
+        order: stop-first
+  etcd-arthur:
+    image: gcr.io/etcd-development/etcd:v3.7.1
+    command:
+      - /usr/local/bin/etcd
+      - --name=arthur
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd-arthur:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd-arthur:2380
+      - --initial-cluster=hetzner=http://etcd-hetzner:2380,arthur=http://etcd-arthur:2380,rainer=http://etcd-rainer:2380
+      - --initial-cluster-token=pointfinder-ha-20260909
+      - --initial-cluster-state=new
+      - --heartbeat-interval=250
+      - --election-timeout=2500
+      - --quota-backend-bytes=134217728
+      - --auto-compaction-retention=1
+    volumes:
+      - etcd-arthur:/etcd-data
+    networks:
+      - database-tailscale
+      - database-clients
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/etcd", "--version"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints: ["node.hostname == arthur"]
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.50"
+      restart_policy:
+        delay: 10s
+      update_config:
+        order: stop-first
+  etcd-rainer:
+    image: gcr.io/etcd-development/etcd:v3.7.1
+    command:
+      - /usr/local/bin/etcd
+      - --name=rainer
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd-rainer:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd-rainer:2380
+      - --initial-cluster=hetzner=http://etcd-hetzner:2380,arthur=http://etcd-arthur:2380,rainer=http://etcd-rainer:2380
+      - --initial-cluster-token=pointfinder-ha-20260909
+      - --initial-cluster-state=new
+      - --heartbeat-interval=250
+      - --election-timeout=2500
+      - --quota-backend-bytes=134217728
+      - --auto-compaction-retention=1
+    volumes:
+      - etcd-rainer:/etcd-data
+    networks:
+      - database-tailscale
+      - database-clients
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/etcd", "--version"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      replicas: 1
+      endpoint_mode: dnsrr
+      placement:
+        constraints: ["node.hostname == pointfinder-ha"]
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.50"
+      restart_policy:
+        delay: 10s
+      update_config:
+        order: stop-first
+networks:
+  database-tailscale:
+    driver: overlay
+    driver_opts:
+      com.docker.network.driver.mtu: "1200"
+  database-clients:
+    external: true
+    name: pointfinder-ha-clients
+volumes:
+  etcd-hetzner:
+  etcd-arthur:
+  etcd-rainer:

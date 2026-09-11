@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ONBOARDING_SEEN_KEY } from '@/components/onboarding/useOnboarding'
-import { INTRODUCTION_PROMPT_KEY, IntroductionPrompt, PARTICIPANT_STORY_ROUTE } from './IntroductionPrompt'
+import { INTRODUCTION_PROMPT_KEY, IntroductionPrompt } from './IntroductionPrompt'
 
 const store = vi.hoisted(() => new Map<string, string>())
 const kv = vi.hoisted(() => ({
@@ -11,23 +11,25 @@ const kv = vi.hoisted(() => ({
 }))
 vi.mock('@/platform', () => ({ kv }))
 
-const mount = () => render(<MemoryRouter><IntroductionPrompt /></MemoryRouter>)
+const onStart = vi.fn()
+const mount = () => render(<MemoryRouter><IntroductionPrompt onStart={onStart} /></MemoryRouter>)
 const prompt = () => screen.queryByTestId('player-intro-prompt')
 
 beforeEach(() => {
   store.clear()
+  onStart.mockClear()
   kv.get.mockImplementation(async (key: string) => store.get(key) ?? null)
   kv.set.mockImplementation(async (key: string, value: string) => { store.set(key, value) })
 })
 
 describe('IntroductionPrompt', () => {
-  it('offers the participant story once after joining, and opens it', async () => {
+  it('offers contextual guidance once after joining', async () => {
     mount()
     await waitFor(() => expect(prompt()).toBeInTheDocument())
-    expect(screen.getByText('New to PointFinder?')).toBeInTheDocument()
+    expect(screen.getByText('Your field guide')).toBeInTheDocument()
     const open = screen.getByTestId('player-intro-prompt-open')
-    expect(open).toHaveAttribute('href', PARTICIPANT_STORY_ROUTE)
     fireEvent.click(open)
+    expect(onStart).toHaveBeenCalledOnce()
     expect(prompt()).not.toBeInTheDocument()
     expect(store.has(INTRODUCTION_PROMPT_KEY)).toBe(true)
   })
@@ -43,11 +45,10 @@ describe('IntroductionPrompt', () => {
     expect(again.queryByTestId('player-intro-prompt')).not.toBeInTheDocument()
   })
 
-  it('stays quiet for a player who already watched the participant story on this device', async () => {
+  it('also offers in-game guidance after introductory onboarding', async () => {
     store.set(ONBOARDING_SEEN_KEY, JSON.stringify({ version: 2, role: 'participant' }))
     mount()
-    await new Promise((resolve) => setTimeout(resolve, 10))
-    expect(prompt()).not.toBeInTheDocument()
+    await waitFor(() => expect(prompt()).toBeInTheDocument())
   })
 
   it('still asks a player who only watched the organizer story', async () => {

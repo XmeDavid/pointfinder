@@ -216,6 +216,12 @@ export const gamesApi = {
     return data;
   },
 
+  /** Before ending: how many submissions are still unreviewed. Ending freezes results. */
+  getEndSummary: async (id: string): Promise<{ status: GameStatus; pendingReviews: number; teams: number; players: number }> => {
+    const { data } = await apiClient.get(`/games/${id}/end-summary`);
+    return data;
+  },
+
   /** Turns a practice game into a normal game, under the normal active-game quota. */
   keep: async (id: string): Promise<Game> => {
     const { data } = await apiClient.post(`/games/${id}/keep`);

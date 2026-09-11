@@ -36,6 +36,7 @@ public class TeamService {
     private static final int MAX_JOIN_CODE_ATTEMPTS = 20;
 
     private final TeamRepository teamRepository;
+    private final com.prayer.pointfinder.repository.GameRepository gameRepository;
     private final PlayerRepository playerRepository;
     private final BaseRepository baseRepository;
     private final CheckInRepository checkInRepository;
@@ -43,6 +44,7 @@ public class TeamService {
     private final ActivityEventRepository activityEventRepository;
     private final UserRepository userRepository;
     private final GameEventBroadcaster eventBroadcaster;
+    private final com.prayer.pointfinder.xp.XpService xpService;
     private final GameAccessService gameAccessService;
 
     @Transactional(readOnly = true)
@@ -89,9 +91,20 @@ public class TeamService {
         return toResponse(team);
     }
 
+    /**
+     * Lock order: game row first, then the team. Deleting a team touches the
+     * team row (and, through {@code admission_team_id ON DELETE SET NULL},
+     * the game's publication row) before the synchronous state-version bump
+     * updates the game row; publication writes and Explore joins lock the
+     * game row first and then read the team, so without this the two would
+     * take the same locks in opposite order and could deadlock.
+     */
     @Transactional(timeout = 10)
     public void deleteTeam(UUID gameId, UUID teamId) {
+        // Authorize before taking the game row lock, so a stranger cannot hold it while being rejected.
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+        gameRepository.findByIdForUpdate(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
         gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
@@ -107,6 +120,7 @@ public class TeamService {
         gameAccessService.ensureBelongsToGame("Team", team.getGame().getId(), gameId);
 
         return playerRepository.findByTeamId(teamId).stream()
+                .filter(p -> !p.getDeviceId().startsWith(PlayerAccountService.RETIRED_DEVICE_PREFIX))
                 .map(p -> PlayerResponse.builder()
                         .id(p.getId())
                         .teamId(p.getTeam().getId())
@@ -220,6 +234,7 @@ public class TeamService {
                     .orElseThrow(() -> new BadRequestException("Check-in failed"));
             return buildCheckInResponse(existing2, base, team);
         }
+        xpService.awardCheckIn(team, base);
 
         ActivityEvent event = ActivityEvent.builder()
                 .game(game)

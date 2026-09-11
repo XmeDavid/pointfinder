@@ -55,6 +55,7 @@ public class SubmissionService {
     private final ThumbnailService thumbnailService;
     private final MonitoringService monitoringService;
     private final UploadSessionRepository uploadSessionRepository;
+    private final com.prayer.pointfinder.xp.XpService xpService;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -209,6 +210,9 @@ public class SubmissionService {
             }
             throw ex;
         }
+        if (status == SubmissionStatus.approved || status == SubmissionStatus.correct) {
+            xpService.awardBaseCompleted(team, base);
+        }
 
         // Create activity event with actor capture (V36).
         ActivityEvent event = ActivityEvent.builder()
@@ -256,6 +260,7 @@ public class SubmissionService {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission", submissionId));
         ensureBelongsToGame(submission.getTeam().getGame().getId(), gameId, "Submission");
+        ensureNotEnded(submission.getTeam().getGame());
 
         // Force initialization of lazy proxies within this transaction
         submission.getTeam().getName();
@@ -288,6 +293,9 @@ public class SubmissionService {
         } catch (ObjectOptimisticLockingFailureException ex) {
             throw new ConflictException(
                     "This submission was already reviewed by another operator. Please refresh.");
+        }
+        if (newStatus == SubmissionStatus.approved || newStatus == SubmissionStatus.correct) {
+            xpService.awardBaseCompleted(submission.getTeam(), submission.getBase());
         }
 
         // Create activity event for the review
@@ -376,6 +384,7 @@ public class SubmissionService {
 
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game", gameId));
+        ensureNotEnded(game);
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team", teamId));
@@ -492,6 +501,7 @@ public class SubmissionService {
             }
             throw ex;
         }
+        xpService.awardBaseCompleted(team, base);
 
         // ── Activity event: operator_override (V36 enum value) ──────────
         String reasonSuffix = request.getReason() != null && !request.getReason().isBlank()
@@ -575,6 +585,13 @@ public class SubmissionService {
         }
 
         throw new ForbiddenException("Unauthorized principal for submission creation");
+    }
+
+    /** Ended is frozen: results, placement and XP must never drift apart afterwards. */
+    private static void ensureNotEnded(Game game) {
+        if (game.getStatus() == GameStatus.ended) {
+            throw new BadRequestException("The game has ended; results are frozen", ErrorCode.GAME_ENDED);
+        }
     }
 
     private void ensureBelongsToGame(UUID entityGameId, UUID expectedGameId, String entityName) {

@@ -1,0 +1,25 @@
+# NON-REBOOTING TEST ONLY. Verify softdog was loaded with soft_noboot=1 first.
+services:
+  watchdog-probe:
+    image: pointfinder-patroni:16.15-4.1.5-r2
+    entrypoint: ["/opt/patroni/bin/python", "-c"]
+    command:
+      - >-
+        import os,time;
+        assert os.environ.get('WATCHDOG_TEST_NON_REBOOTING')=='confirmed';
+        assert os.geteuid()==999;
+        f=open('/dev/watchdog','wb',buffering=0);
+        f.write(b'ping');
+        time.sleep(12);
+        f.write(b'V');
+        f.close();
+        print('PostgreSQL UID accessed and disarmed mapped watchdog')
+    user: "999:999"
+    environment:
+      # Deliberately disabled after the successful one-shot test.
+      WATCHDOG_TEST_NON_REBOOTING: "disabled"
+    devices: ["/dev/watchdog:/dev/watchdog"]
+    network_mode: none
+    mem_limit: 64m
+    cpus: 0.25
+    restart: "no"

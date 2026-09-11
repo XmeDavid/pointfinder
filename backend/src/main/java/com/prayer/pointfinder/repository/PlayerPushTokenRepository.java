@@ -15,6 +15,8 @@ public interface PlayerPushTokenRepository extends JpaRepository<PlayerPushToken
 
     List<PlayerPushToken> findByPlayerId(UUID playerId);
 
+    void deleteByPlayerId(UUID playerId);
+
     List<PlayerPushToken> findByPlayerTeamId(UUID teamId);
 
     @Query("SELECT t FROM PlayerPushToken t WHERE t.player.team.game.id = :gameId")

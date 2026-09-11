@@ -271,7 +271,7 @@ function BaseContent() {
 
   return (
     <Screen>
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground" onClick={() => game.clearUnlocked()}>
+      <Link to="/map" className="inline-flex items-center gap-1 text-sm text-muted-foreground" onClick={() => game.clearUnlocked()}>
         <ChevronLeft className="h-4 w-4" aria-hidden /> {t('common.back')}
       </Link>
 

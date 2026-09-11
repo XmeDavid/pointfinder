@@ -172,6 +172,10 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   const scrolledFor = useRef<string | null>(null)
   useEffect(() => {
     if (!step || !element || visible) return
+    // Collapsed rule sections are reopened every time the anchor turns up hidden,
+    // since a refetch can remount the editor and close them again; scrolling stays once per step.
+    let disclosure = element.closest('details')
+    while (disclosure) { disclosure.open = true; disclosure = disclosure.parentElement?.closest('details') ?? null }
     if (scrolledFor.current === step.id) return
     scrolledFor.current = step.id
     if (typeof element.scrollIntoView === 'function') {
@@ -213,8 +217,13 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
     if (!step || paused) return
     if (preparedFor.current === step.id) return
     preparedFor.current = step.id
-    step.prepare?.(latest.current.actions, latest.current.state)
-  }, [paused, step])
+    const { state: s, actions: a } = latest.current
+    // A run started away from the step's screen (the welcome card on the account
+    // home) goes there first, the same way the pill does on resume.
+    if (step.route === 'workspace' && gameId && s.routeGameId !== gameId) a.navigate(`/game/${gameId}`)
+    else if (step.route === 'dashboard' && !s.isDashboard) a.navigate('/dashboard?view=organize')
+    step.prepare?.(a, s)
+  }, [gameId, paused, step])
 
   if (!step) return null
 
@@ -226,7 +235,7 @@ function TourRunner({ scenario }: { scenario: Scenario }) {
   const handleResume = () => {
     const { state: s, actions: a } = latest.current
     if (step.route === 'workspace' && gameId && s.routeGameId !== gameId) a.navigate(`/game/${gameId}`)
-    else if (step.route === 'dashboard' && !s.isDashboard) a.navigate('/dashboard')
+    else if (step.route === 'dashboard' && !s.isDashboard) a.navigate('/dashboard?view=organize')
     step.prepare?.(a, s)
     preparedFor.current = step.id
     resume()

@@ -321,7 +321,12 @@
       "resumeHint": "The game will resume. All progress is kept.",
       "confirm": "Confirm",
       "reverting": "Reverting…"
-    }
+    },
+    "endFreezes": "Ending freezes the results. Submissions still pending review stay unreviewed and cannot be scored afterwards.",
+    "endPendingReviews_one": "{{count}} submission is still waiting for review.",
+    "endPendingReviews_other": "{{count}} submissions are still waiting for review.",
+    "endNoPending": "Nothing is waiting for review.",
+    "endSummaryFailed": "Couldn't check pending reviews. You can still end the game."
   },
   "overview": {
     "nfcLinked": "NFC Linked",
@@ -1030,6 +1035,10 @@
     "ACCOUNT_ALREADY_IN_GAME": "This account already plays in this game on another phone.",
     "PLAYER_ALREADY_LINKED": "This participation already belongs to an account.",
     "NO_PARTICIPATION_FOUND": "This account hasn't joined that game.",
+    "GAME_ENDED": "The game has ended. Results are frozen.",
+    "PUBLICATION_NOT_ALLOWED": "This game can't be published right now.",
+    "PUBLICATION_TEAM_INVALID": "Choose a team of this game for direct joining.",
+    "PUBLICATION_ADMISSION_CLOSED": "This game is not accepting new players.",
     "RATE_LIMITED": "Too many attempts. Wait a moment and try again.",
     "QUOTA_BASES_PER_GAME_EXCEEDED": "This game is at your plan's base limit.",
     "QUOTA_OPERATORS_PER_GAME_EXCEEDED": "This game is at your plan's operator limit.",
@@ -1183,7 +1192,13 @@
     "pickResource": "Select a resource",
     "gameResources": "Game resources",
     "orgResources": "Organization resources",
-    "untitledDocument": "Untitled document"
+    "untitledDocument": "Untitled document",
+    "gameHelp": "Add documents or upload files for this game. Share them with players when they are ready.",
+    "shareWithPlayers": "Share with players",
+    "offline": "Connect to add or change documents.",
+    "loadError": "Could not load documents.",
+    "documentContent": "Document content…",
+    "documentTitle": "Document title"
   },
   "billing": {
     "title": "Billing & Plan",
@@ -1399,7 +1414,8 @@
       "newChallenge": "New Challenge",
       "newTeam": "New Team",
       "newStage": "New Stage",
-      "autoAssign": "Auto-assign"
+      "autoAssign": "Auto-link challenges",
+      "documents": "Documents"
     },
     "mapActions": "Map actions",
     "placeBaseHere": "Place base here",
@@ -1448,8 +1464,8 @@
         "file": "File",
         "none": "No answer"
       },
-      "open": "Assignments",
-      "title": "Assignments",
+      "open": "Link challenges",
+      "title": "Link challenges",
       "hint": "One challenge per base. All teams share it, or each team gets its own — the grid keeps a challenge at one base per team.",
       "close": "Done",
       "base": "Base",
@@ -1500,7 +1516,77 @@
       "manual": "Manual"
     },
     "unknownBase": "Unknown base",
-    "gameNotFound": "Game not found"
+    "gameNotFound": "Game not found",
+    "compose": {
+      "title": "Create a playable base",
+      "intro": "Give this place a name and a challenge. You can refine its rules afterwards.",
+      "name": "Base name",
+      "task": "What should players do here?",
+      "audience": "Every team gets this challenge here.",
+      "rules": "Players submit a written answer for review. Change the answer type, team rules and unlocks in the editor.",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save base and challenge",
+      "retry": "Try again",
+      "partialFailure": "The base is saved. Retry to finish its challenge, or close to continue editing it.",
+      "failure": "Could not save. Your text is still here.",
+      "launching": "Going live…",
+      "goLive": "Go Live",
+      "launchFailed": "The game could not go live. Check the connection and try again.",
+      "firstBase": "Place your first base",
+      "firstBaseHint": "Zoom to your game’s location and tap the map. Add the task there; every team gets it by default."
+    },
+    "rules": {
+      "scoring": "Scoring",
+      "notes": "Notes for operators",
+      "discovery": "Discovery and location",
+      "variables": "Different answers for each team",
+      "afterCompletion": "After completing the challenge"
+    },
+    "editor": {
+      "identity": "Challenge",
+      "title": "Title",
+      "answerType": "Challenge type",
+      "text": "Text",
+      "file": "File",
+      "none": "None",
+      "autoValidate": "Check answers automatically",
+      "content": "Player instructions",
+      "edit": "Edit",
+      "preview": "Preview",
+      "editorMode": "Editor mode",
+      "description": "Description",
+      "answerConfiguration": "Accepted answers",
+      "correctAnswers": "Correct answer(s)",
+      "noAnswers": "No answers configured",
+      "unknownVariables": "Unknown variables:",
+      "answerHint": "Matching answers are approved automatically when automatic checking is on. You can reference values that differ for each team.",
+      "points": "Points",
+      "notes": "Operator notes",
+      "location": "Location requirements",
+      "physicalPresence": "Require physical presence",
+      "variables": "Team values for this challenge",
+      "afterCompletion": "After completion",
+      "delete": "Delete challenge",
+      "tags": "Tags",
+      "name": "Name",
+      "locationAndCheckIn": "Location & check-in",
+      "moveBaseHint": "Tap the map to move this base.",
+      "preciseCoordinates": "Precise coordinates",
+      "visibility": "Visibility",
+      "baseLocation": "Location & check-in · {{method}}",
+      "baseVisibility": "Visibility · {{visibility}}",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "deleteBase": "Delete base",
+      "newBase": "New base",
+      "newChallenge": "New challenge",
+      "createBaseError": "Could not create the base. Choose its position to try again.",
+      "createEmptyChallenge": "Create empty challenge",
+      "challengeHere": "Challenge",
+      "chooseExistingChallenge": "Choose an existing challenge",
+      "appearsAt": "Where this challenge appears"
+    }
   },
   "command2": {
     "empty": {
@@ -1651,7 +1737,7 @@
       "rejected": "Try again"
     },
     "logbook": {
-      "progress": "{{done}} of {{total}} done",
+      "progress": "{{done}} of {{total}} visible bases completed",
       "locked": "Locked",
       "lockedHint": "Something is here. Keep going to unlock it.",
       "nextUp": "Next up",
@@ -1705,12 +1791,15 @@
       "inbox": "Notifications",
       "settings": "Settings",
       "introPrompt": {
-        "title": "New to PointFinder?",
-        "body": "See how a game works in under a minute.",
-        "open": "See how it works",
+        "title": "Your field guide",
+        "body": "Get to know the controls right here in your game.",
+        "open": "Show me around",
         "dismiss": "Not now"
       },
-      "documents": "Documents"
+      "documents": "Documents",
+      "backToGames": "Back to my games",
+      "hideLegend": "Hide legend",
+      "tour": "Show me around"
     },
     "settings": {
       "title": "Settings",
@@ -1761,7 +1850,8 @@
       "saveProgress": "Save my progress",
       "saveProgressHint": "Create an account or sign in to get this game back on another phone.",
       "savedTo": "Saved to",
-      "emailUnverified": "Email not confirmed yet. Check your inbox."
+      "emailUnverified": "Email not confirmed yet. Check your inbox.",
+      "manageAccount": "Manage my account"
     },
     "account": {
       "title": "Save my progress",
@@ -2056,6 +2146,52 @@
       },
       "storyNavigation": "Story steps",
       "goToStep": "Go to step {{current}} of {{total}}"
+    },
+    "tour": {
+      "map": {
+        "title": "Your game, at a glance",
+        "body": "This is your current game and team. Progress counts only bases you can currently see; more may appear as you explore."
+      },
+      "base": {
+        "title": "Explore a base",
+        "body": "Choose a marker to see its status, then open it for the challenge. Follow the check-in method shown there: a code, NFC tag or your location."
+      },
+      "tools": {
+        "title": "Everything for this game",
+        "body": "Your logbook keeps challenges together. Documents hold game information; messages bring updates from the organizer. Game settings stay separate from your account."
+      },
+      "location": {
+        "title": "Find your bearings",
+        "body": "This control returns to your location when available, or fits the visible bases on the map. Location access is always your choice."
+      },
+      "legend": {
+        "title": "Read the map",
+        "body": "Marker colors show whether a base is new, checked in, awaiting review or completed. The legend fades away; tap it whenever you need it."
+      },
+      "sync": {
+        "title": "Keep going in the field",
+        "body": "Saved game data stays available offline. Check-ins and answers wait in the sync queue and are sent when you reconnect. Check the sync notice before switching games."
+      },
+      "back": {
+        "title": "Return without leaving",
+        "body": "Go back to Play to see your other games or switch to Organize. This keeps your participation and saved actions; it does not leave the game."
+      },
+      "logbook": {
+        "title": "Your trail, at a glance",
+        "body": "Check the bases you can currently see, your team’s completed challenges and anything still waiting for review."
+      },
+      "documents": {
+        "title": "Everything you need for the game",
+        "body": "Find the rules, schedules and documents shared by your organizer. More information can become available as your team explores."
+      },
+      "messages": {
+        "title": "Stay in touch",
+        "body": "Messages from the game organizers arrive here. Check the badge for updates while you’re out on the trail."
+      },
+      "settings": {
+        "title": "Your place in this game",
+        "body": "See your team and game details, adjust your preferences or save guest progress to your account. Your account profile lives outside the game."
+      }
     }
   },
   "baseOrder": {
@@ -2070,7 +2206,8 @@
     "moveDown": "Move {{name}} down",
     "drag": "Drag {{name}} to reorder",
     "routeChanged": "The route changed while you were editing. Cancel and reopen to use the latest route.",
-    "baseNumber": "Base {{number}}"
+    "baseNumber": "Base {{number}}",
+    "route": "Route"
   },
   "checkIn": {
     "group": "Check-in",
@@ -2087,7 +2224,7 @@
     "defaultRadius": "Default radius (m)",
     "setupOnly": "Check-in settings can only be changed during setup.",
     "tagsAndCodes": "Tags & codes",
-    "printCode": "Print code",
+    "printCode": "Print",
     "printAll": "Print all codes",
     "noTagNeeded": "No tag needed — this base unlocks by location.",
     "noQrBases": "No base uses a QR code yet.",
@@ -2104,7 +2241,10 @@
     "proofNoSnapshot": "No teammate positions were recorded.",
     "verificationVerified": "Verified",
     "verificationClaimed": "Claimed",
-    "verificationOperator": "Operator"
+    "verificationOperator": "Operator",
+    "viewCode": "Open QR code for {{name}}",
+    "saveCode": "Save image",
+    "saveCodeError": "Could not save the image. Try again."
   },
   "readiness": {
     "atLeastOneBase": "At least one base",
@@ -2586,5 +2726,230 @@
       "action": "Leave club",
       "confirm": "Leave \"{{name}}\"? You lose access to its games and resources, and would need a new invitation to come back."
     }
+  },
+  "userHome": {
+    "nav": {
+      "home": "Home",
+      "play": "Play",
+      "organize": "Organize",
+      "account": "Account"
+    },
+    "status": {
+      "live": "Live",
+      "setup": "Setup",
+      "ended": "Ended"
+    },
+    "subtitle": {
+      "home": "Pick up where you left off.",
+      "play": "Your games, wherever you go.",
+      "organize": "A place for the games you bring to life.",
+      "account": "One account for playing and organizing."
+    },
+    "scenario": {
+      "ready": "Ready",
+      "empty": "Empty",
+      "loading": "Loading",
+      "error": "Error",
+      "offline": "Offline",
+      "queued": "Queued"
+    },
+    "team": "Team {{name}}",
+    "yourGame": "You’re playing",
+    "teamProgress": "Your team’s progress",
+    "progress": "{{count}} of {{total}} challenges",
+    "continue": "Continue your game",
+    "emptyTitle": "Your next game starts here",
+    "emptyBody": "Have a team code? Join a game and explore together.",
+    "join": "Join a game",
+    "loading": "Loading your games…",
+    "loadError": "Your games couldn’t be loaded",
+    "loadErrorBody": "Your progress is safe. Try again when you have a connection.",
+    "retry": "Try again",
+    "preview": "Design preview · sample data",
+    "persona": "Preview account",
+    "both": "Player + organizer",
+    "playerOnly": "Player",
+    "previewState": "Preview state",
+    "language": "Language",
+    "light": "Light appearance",
+    "dark": "Dark appearance",
+    "navigation": "Main navigation",
+    "queued": "You’re offline. 2 actions are waiting to sync. Stay with this game until they’re sent.",
+    "offline": "You’re offline. Showing saved information; you can return to your current game.",
+    "personalSpace": "Your PointFinder",
+    "greeting": "Hello, David.",
+    "back": "Back",
+    "gameOverview": "Together, one trail",
+    "organizerOverview": "Your game workspace",
+    "gameOverviewBody": "Every challenge your team completes is progress for everyone. Your game keeps its map, challenges, documents and messages together.",
+    "organizerOverviewBody": "Build, Command, Review and Results stay inside this game, with its own map and operating tools.",
+    "workspacePreview": "Design boundary: the existing game workspace opens here after session integration.",
+    "allGames": "See all your games",
+    "organizing": "You’re organizing",
+    "organizingBody": "Your plans and live events, in their own workspace.",
+    "organizeEmpty": "Make room for an adventure",
+    "create": "Create a game",
+    "openOrganize": "Go to Organize",
+    "gameFilter": "Filter your games",
+    "active": "Current",
+    "ended": "Ended",
+    "workspace": "Workspace",
+    "personalWorkspace": "Personal workspace",
+    "club": "Lavos Pathfinder Club",
+    "organizeEmptyBody": "Create your first game in this workspace.",
+    "verified": "Email verified",
+    "yourAccount": "Your progress comes with you",
+    "accountBody": "Your account keeps your joined games together. In a team game, the team’s progress is your progress too. You can return on another device without starting again.",
+    "preferences": "Appearance",
+    "createBody": "Start with a name. You can build the rest in your game workspace.",
+    "joinBody": "Enter the team code shared by your organizer.",
+    "gameName": "Game name",
+    "joinCode": "Team code",
+    "formPreview": "Preview only. This form does not create or join a real game.",
+    "previewAction": "Preview this action",
+    "previewSaved": "Preview complete. No game or account was changed."
+  },
+  "experience": {
+    "nav": {
+      "home": "Home",
+      "explore": "Explore",
+      "play": "Play",
+      "organize": "Organize",
+      "profile": "Profile"
+    },
+    "navigation": "Main navigation",
+    "homeTitle": "Back to the field.",
+    "welcome": "Good to see you, {{name}}",
+    "ongoingGame": "Your current game",
+    "live": "Live",
+    "team": "Team {{name}}",
+    "sharedProgressLabel": "Your team’s progress",
+    "continue": "Continue playing",
+    "joinCode": "Join with a code",
+    "featured": "Featured",
+    "nextDiscovery": "Where will you go next?",
+    "exploreAll": "Explore all games",
+    "organizerPrompt": "An adventure in the making?",
+    "organizerHint": "Your games, your people, your way of bringing them together.",
+    "openOrganize": "Open Organize",
+    "outThere": "There’s a game out there",
+    "exploreSubtitle": "Trails, challenges and stories in the places around you.",
+    "search": "Search games or places",
+    "clear": "Clear search",
+    "all": "All games",
+    "nearby": "Near me",
+    "location": {
+      "idle": "Choose Near me to use your location.",
+      "requesting": "Finding your location…",
+      "ready": "Games within 50 km of your location.",
+      "denied": "Location is off. You can still search for a place.",
+      "unavailable": "Your location is unavailable. Try searching for a place."
+    },
+    "noGames": "No games here yet",
+    "noGamesHint": "Try another place or explore all games.",
+    "showAll": "Show all games",
+    "discoveryMap": "Map of discoverable games",
+    "mapHint": "Choose a place. Find a game.",
+    "yourJourneys": "Your journeys",
+    "ended": "Ended",
+    "current": "Current",
+    "yourWorkspace": "Bring people together",
+    "openWorkspace": "Open game library",
+    "organizeDescription": "Keep planning, live operation and your club’s resources together. Your game workspace is still built around its map.",
+    "backToMap": "Back to the map",
+    "language": "Language",
+    "yourProfile": "Your profile",
+    "level": "Level {{level}}",
+    "privateProfile": "Only you can see this profile",
+    "nextLevel": "{{count}} XP to level {{level}}",
+    "levelProgress": "Progress to the next level",
+    "xpDuringPlay": "Earn XP as you explore, check in and complete challenges.",
+    "gamesCompleted": "Games completed",
+    "basesCompleted": "Bases completed",
+    "recentJourneys": "Recent journeys",
+    "placement": "Place {{place}} of {{total}}",
+    "sharedProgress": "Your team’s progress is your progress. Every challenge you complete together belongs in your journey.",
+    "locations": "{{count}} locations",
+    "distance": "{{distance}} km away",
+    "category": {
+      "coast": "Coastal trail",
+      "forest": "Forest challenge",
+      "city": "City discovery",
+      "other": "Outdoor adventure"
+    },
+    "light": "Light appearance",
+    "dark": "Dark appearance",
+    "showMap": "Map",
+    "hideMap": "List",
+    "accountSettings": "Account settings",
+    "connectionError": "Could not connect. Please try again.",
+    "retry": "Try again",
+    "startExploring": "Start exploring",
+    "visibleProgress": "Visible bases completed",
+    "backToOrganize": "Back to Organize",
+    "saveProgress": "Save your progress",
+    "saveProgressHint": "Keep this game with your account so you can return on any phone.",
+    "gameDocuments": "Rules & documents",
+    "organizerAccess": "Your next game starts here",
+    "organizerAccessHint": "Sign in with an organizer account to create and manage games.",
+    "organizerSignIn": "Organizer sign in",
+    "placementTied": "Tied at {{place}} of {{total}}",
+    "gameEnded": "A journey to remember",
+    "resultUnavailable": "Your result could not be loaded.",
+    "resultPending": "Your team’s result is being finalized.",
+    "resultReset": "This game was reset. Your profile reflects the updated result.",
+    "teamCompleted": "You completed the game together. This result belongs to every member of your team.",
+    "teamJourneyEnded": "The game has ended. The progress you made together is part of your journey.",
+    "upcoming": "Upcoming",
+    "openToJoin": "Open to join",
+    "codeRequired": "Join with a code",
+    "discoverAccount": "More places to play",
+    "discoverAccountHint": "Save your progress with an account to discover games and return to your journeys.",
+    "discoveryStale": "Showing saved listings. Reconnect to check availability.",
+    "moreGames": "More games",
+    "alreadyPlaying": "This game is already in your journeys.",
+    "upcomingHint": "This game is getting ready. Come back when the organizer opens it.",
+    "openToJoinHint": "Join the organizer’s public team and start exploring together.",
+    "codeRequiredHint": "Ask the organizer for a joining code.",
+    "discoveryJoinError": "Could not join this game. Please try again.",
+    "backToDiscoveries": "Back to discoveries",
+    "discoveryOtherTeam": "This phone already belongs to another team in this game. Open your saved participation in Play.",
+    "admissionClosed": "This game is no longer accepting new players here. Check with the organizer.",
+    "discoveryOffline": "You’re offline. Reconnect to find games or join."
+  },
+  "publication": {
+    "heading": "Make it public",
+    "intro": "Help people discover your game. Choose what they can see before they join.",
+    "loadError": "The listing could not be loaded.",
+    "retry": "Try again",
+    "ended": "Ended · hidden from Explore",
+    "listed": "Listed in Explore",
+    "unlisted": "Unlisted · only people with a code can join",
+    "readOnly": "The game owner or a club game administrator can manage this listing.",
+    "title": "Public title",
+    "summary": "Description",
+    "summaryHint": "Describe the game people will discover.",
+    "place": "Place or area",
+    "category": "Type of adventure",
+    "admission": "How people join",
+    "codeOnly": "With a joining code",
+    "joinTeam": "Join {{name}} directly",
+    "teamsError": "Teams could not be loaded.",
+    "admissionHint": "New players join this team together. Existing participants keep their team. Direct joining opens when the game goes live.",
+    "codeHint": "People can discover the game, then ask you for their team’s code.",
+    "location": "Location on Explore (optional)",
+    "locationHint": "Tap the map to choose an approximate meeting area. This location will be visible to people browsing Explore.",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "coordinatesError": "Enter both valid coordinates, or remove the location.",
+    "removeLocation": "Remove public location",
+    "saveListedHint": "Saving changes updates the listing people see in Explore.",
+    "publishHint": "Publishing makes this description visible to signed-in accounts. Your game’s private content stays inside the game.",
+    "publish": "Publish in Explore",
+    "saveChanges": "Save changes",
+    "saveDraft": "Save without publishing",
+    "unpublish": "Remove from Explore",
+    "saveError": "The change could not be completed. Your text is still here. Try again.",
+    "offline": "You’re offline. Reconnect to load or save your listing."
   }
 }

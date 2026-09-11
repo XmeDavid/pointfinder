@@ -115,7 +115,7 @@ test('taking the tour from the gate hands off to the guided first game exactly o
   await finishChapters(page)
   await expect.poll(() => api.puts).toContainEqual({ scenarioId: 'introduction', status: 'completed' })
   await page.getByTestId('onboarding-first-game').click()
-  await expect(page).toHaveURL(/\/dashboard$/)
+  await expect(page).toHaveURL(/\/dashboard/)
   // The run started on the dashboard: the welcome card steps aside and the first lesson is the create dialog.
   await expect(page.getByTestId('tour-bubble')).toBeVisible()
   await expect(page.getByTestId('tutorial-welcome-card')).toHaveCount(0)

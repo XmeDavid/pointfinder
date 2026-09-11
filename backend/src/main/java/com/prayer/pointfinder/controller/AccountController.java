@@ -41,6 +41,7 @@ public class AccountController {
     private final PlayerAccountService playerAccountService;
     private final AuthService authService;
     private final PlayerJoinRateLimiter playerJoinRateLimiter;
+    private final com.prayer.pointfinder.xp.XpService xpService;
 
     @GetMapping("/me")
     public ResponseEntity<AccountMeResponse> me() {
@@ -48,6 +49,12 @@ public class AccountController {
     }
 
     /** Join a game as this account: recovers an existing participation, otherwise joins and links. */
+    /** PF-03: level, XP and placements. Private to the account. */
+    @GetMapping("/profile")
+    public ResponseEntity<com.prayer.pointfinder.dto.response.XpProfileResponse> profile() {
+        return ResponseEntity.ok(xpService.profile(SecurityUtils.getCurrentUser().getId()));
+    }
+
     @PostMapping("/join")
     public ResponseEntity<PlayerAuthResponse> join(@Valid @RequestBody AccountJoinRequest request, HttpServletRequest httpRequest) {
         limit(httpRequest, request.getDeviceId(), "accountJoin");

@@ -23,6 +23,6 @@ describe('TourPill', () => {
   it('sits on the tour layer and portals to the body', () => {
     const { container } = render(<TourPill step={1} total={3} onResume={() => {}} />)
     expect(container).toBeEmptyDOMElement()
-    expect(document.body.querySelector('[data-testid="tour-pill"]')?.className).toContain('z-[70]')
+    expect(document.body.querySelector('[data-testid="tour-pill"]')?.className).toContain('z-[71]')
   })
 })

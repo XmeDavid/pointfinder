@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { exportFile } from '@/lib/exportFile'
 import { Copy, Check, Trash2, Save, QrCode, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -49,22 +49,17 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
 
   // Sync local state when team data loads or teamId changes
-  const syncedRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (team && syncedRef.current !== teamId) {
-      syncedRef.current = teamId
+  // Sync local state when team data loads or teamId changes: derived during render
+  // (React's "adjusting state when a prop changes" pattern), so no effect sets state.
+  const [syncedId, setSyncedId] = useState<string | null>(null)
+  if (team && syncedId !== teamId) {
+    setSyncedId(teamId)
 
-      setLocalName(team.name)
-      setLocalColor(team.color)
-      setCopied(false)
-      setQrUrl(null)
-    }
-  }, [team, teamId])
-
-  // Reset sync tracker when teamId changes so new data gets synced
-  useEffect(() => {
-    syncedRef.current = null
-  }, [teamId])
+    setLocalName(team.name)
+    setLocalColor(team.color)
+    setCopied(false)
+    setQrUrl(null)
+  }
 
   const handleCopyJoinCode = useCallback(() => {
     if (!team) return

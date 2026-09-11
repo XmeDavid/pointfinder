@@ -57,7 +57,7 @@ const probe: Scenario = {
 
 function LocationProbe() {
   const location = useLocation()
-  return <div data-testid="location">{location.pathname}</div>
+  return <div data-testid="location">{location.pathname + location.search}</div>
 }
 
 function Harness({ children, path }: { children: ReactNode; path: string }) {
@@ -165,6 +165,25 @@ describe('TourHost', () => {
 
     expect(useTourStore.getState().paused).toBe(false)
     expect(prepare).toHaveBeenCalledTimes(2)
+  })
+
+  it('opens the organize view of the account home before resuming a dashboard step', async () => {
+    const user = userEvent.setup()
+    // A dashboard step of its own scenario, so the probe scenario's step count stays untouched.
+    registerScenario({
+      ...probe,
+      id: 'fixed-route',
+      steps: [{ id: 'on-dashboard', route: 'dashboard', anchor: 'probe-missing', done: { kind: 'ack' }, copy: { title: 'tutorials.common.next', body: 'tutorials.common.gotIt' } }],
+    })
+    renderHost('/game/game-1')
+    act(() => {
+      useTourStore.getState().start('fixed-route', { stepId: 'on-dashboard' })
+      useTourStore.getState().pause()
+    })
+
+    await user.click(await screen.findByTestId('tour-pill-resume'))
+
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/dashboard?view=organize'))
   })
 
   it('navigates back to the bound game before resuming a workspace step', async () => {

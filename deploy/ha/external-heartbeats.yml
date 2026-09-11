@@ -1,0 +1,57 @@
+x-heartbeat: &heartbeat
+  image: pointfinder-heartbeat:20260910-r2
+  user: "999:999"
+  read_only: true
+  cap_drop: [ALL]
+  volumes:
+    - type: bind
+      source: /etc/dokploy/pointfinder/ha-secrets/heartbeat.json
+      target: /run/secrets/heartbeat.json
+      read_only: true
+    - heartbeat-state:/state
+  healthcheck:
+    test: ["CMD", "python3", "/opt/pointfinder/heartbeat.py", "--healthcheck"]
+    interval: 60s
+    timeout: 10s
+    retries: 3
+    start_period: 60s
+  stop_grace_period: 20s
+
+x-resources: &resources
+  limits:
+    memory: 64M
+    cpus: "0.1"
+
+services:
+  hetzner:
+    <<: *heartbeat
+    environment:
+      POINTFINDER_HEARTBEAT_HOST: hetzner
+      POINTFINDER_HEARTBEAT_WORKER_HOST: pointfinder-infra-monitor.xmedavid.workers.dev
+    deploy:
+      replicas: 1
+      resources: *resources
+      placement:
+        constraints: ["node.id == zdpvsx98cfjlztq43pbkhvbe3"]
+  arthur:
+    <<: *heartbeat
+    environment:
+      POINTFINDER_HEARTBEAT_HOST: arthur
+      POINTFINDER_HEARTBEAT_WORKER_HOST: pointfinder-infra-monitor.xmedavid.workers.dev
+    deploy:
+      replicas: 1
+      resources: *resources
+      placement:
+        constraints: ["node.id == 7qxoduthfxa34mup7u99xfjhl"]
+  rainer:
+    <<: *heartbeat
+    environment:
+      POINTFINDER_HEARTBEAT_HOST: rainer
+      POINTFINDER_HEARTBEAT_WORKER_HOST: pointfinder-infra-monitor.xmedavid.workers.dev
+    deploy:
+      replicas: 1
+      resources: *resources
+      placement:
+        constraints: ["node.id == jlr7o5jkbozspm5bu31vu761d"]
+volumes:
+  heartbeat-state:

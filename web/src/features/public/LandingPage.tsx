@@ -223,7 +223,6 @@ export function LandingPage() {
               width={ART.hero.width}
               height={ART.hero.height}
               className="landing-hero-image"
-              fallbackClassName="landing-hero-image rounded-none border-0 bg-transparent"
             />
             <div aria-hidden="true" className="landing-hero-scrim" />
           </figure>
@@ -253,7 +252,6 @@ export function LandingPage() {
                     width={ART.steps[index].width}
                     height={ART.steps[index].height}
                     className="mt-6 h-auto w-full max-w-sm self-center md:self-start"
-                    fallbackClassName="mt-6 aspect-square max-w-sm self-center md:self-start"
                   />
                 </li>
               ))}
@@ -278,11 +276,9 @@ export function LandingPage() {
                   <Artwork
                     src={ART.workspace.src}
                     alt={t("landing.organizers.screenshotAlt")}
-                    unavailableLabel={t("landing.organizers.imageUnavailable")}
                     width={ART.workspace.width}
                     height={ART.workspace.height}
                     className="block h-auto w-full"
-                    fallbackClassName="aspect-[16/10] rounded-none border-0"
                   />
                 </div>
                 <Artwork
@@ -291,7 +287,6 @@ export function LandingPage() {
                   width={ART.guide.width}
                   height={ART.guide.height}
                   className="landing-workspace-guide"
-                  fallbackClassName="landing-workspace-guide sr-only"
                 />
               </div>
               <figcaption className="landing-workspace-caption text-xs leading-5 text-muted-foreground">
@@ -370,7 +365,6 @@ export function LandingPage() {
             width={ART.forest.width}
             height={ART.forest.height}
             className="landing-forest-image"
-            fallbackClassName="hidden"
           />
           <div aria-hidden="true" className="landing-forest-scrim" />
           <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 pb-8 pt-20 text-center sm:px-6 lg:px-8 lg:pt-28">

@@ -44,6 +44,12 @@ import static org.mockito.Mockito.when;
 class GameSchedulerServiceTest {
 
     @Mock
+    private com.prayer.pointfinder.xp.XpService xpService;
+    @Mock
+    private jakarta.persistence.EntityManager entityManager;
+    @Mock
+    private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock
     private GameRepository gameRepository;
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
@@ -59,6 +65,11 @@ class GameSchedulerServiceTest {
     private GameEventBroadcaster eventBroadcaster;
     @Mock
     private MeterRegistry meterRegistry;
+
+    @org.junit.jupiter.api.BeforeEach
+    void transactionsRunInline() {
+        org.mockito.Mockito.lenient().when(transactionManager.getTransaction(any())).thenReturn(mock(org.springframework.transaction.TransactionStatus.class));
+    }
 
     @InjectMocks
     private GameSchedulerService gameSchedulerService;
@@ -92,11 +103,13 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(1);
+        when(gameRepository.findByIdForUpdate(gameId)).thenAnswer(inv -> java.util.Optional.of(expiredGame));
 
         gameSchedulerService.autoEndGames();
 
-        verify(gameRepository).endGameIfLiveAndDue(eq(gameId), any(Instant.class));
+        verify(gameRepository).save(expiredGame);
+        assertEquals(GameStatus.ended, expiredGame.getStatus());
+        verify(xpService).finalizeCycle(expiredGame);
         verify(eventBroadcaster).broadcastGameStatus(gameId, GameStatus.ended.name());
     }
 
@@ -122,11 +135,15 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame1, expiredGame2));
-        when(gameRepository.endGameIfLiveAndDue(any(UUID.class), any(Instant.class))).thenReturn(1);
+        when(gameRepository.findByIdForUpdate(gameId1)).thenReturn(java.util.Optional.of(expiredGame1));
+        when(gameRepository.findByIdForUpdate(gameId2)).thenReturn(java.util.Optional.of(expiredGame2));
 
         gameSchedulerService.autoEndGames();
 
-        verify(gameRepository, times(2)).endGameIfLiveAndDue(any(UUID.class), any(Instant.class));
+        verify(gameRepository).save(expiredGame1);
+        verify(gameRepository).save(expiredGame2);
+        verify(xpService).finalizeCycle(expiredGame1);
+        verify(xpService).finalizeCycle(expiredGame2);
         verify(eventBroadcaster).broadcastGameStatus(gameId1, GameStatus.ended.name());
         verify(eventBroadcaster).broadcastGameStatus(gameId2, GameStatus.ended.name());
     }
@@ -138,7 +155,7 @@ class GameSchedulerServiceTest {
 
         gameSchedulerService.autoEndGames();
 
-        verify(gameRepository, never()).endGameIfLiveAndDue(any(UUID.class), any(Instant.class));
+        verify(gameRepository, never()).findByIdForUpdate(any(UUID.class));
         verifyNoInteractions(eventBroadcaster);
     }
 
@@ -167,7 +184,7 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(1);
+        when(gameRepository.findByIdForUpdate(gameId)).thenAnswer(inv -> java.util.Optional.of(expiredGame));
 
         gameSchedulerService.autoEndGames();
 
@@ -189,13 +206,15 @@ class GameSchedulerServiceTest {
 
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(1);
+        when(gameRepository.findByIdForUpdate(gameId)).thenAnswer(inv -> java.util.Optional.of(expiredGame));
 
         org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(gameRepository, eventBroadcaster);
 
         gameSchedulerService.autoEndGames();
 
-        inOrder.verify(gameRepository).endGameIfLiveAndDue(eq(gameId), any(Instant.class));
+        inOrder.verify(gameRepository).save(expiredGame);
+        assertEquals(GameStatus.ended, expiredGame.getStatus());
+        verify(xpService).finalizeCycle(expiredGame);
         inOrder.verify(eventBroadcaster).broadcastGameStatus(gameId, "ended");
     }
 
@@ -214,7 +233,9 @@ class GameSchedulerServiceTest {
                 .build();
         when(gameRepository.findByStatusAndEndDateBefore(eq(GameStatus.live), any(Instant.class)))
                 .thenReturn(List.of(expiredGame));
-        when(gameRepository.endGameIfLiveAndDue(eq(gameId), any(Instant.class))).thenReturn(0);
+        // The other node already ended it: the locked re-read sees 'ended' and this run stays silent.
+        expiredGame.setStatus(GameStatus.ended);
+        when(gameRepository.findByIdForUpdate(gameId)).thenReturn(java.util.Optional.of(expiredGame));
 
         gameSchedulerService.autoEndGames();
 

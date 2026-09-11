@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { anchorElement, isAnchorVisible, pressedIn, readAnchorField } from './dom'
 
 function mount(html: string): HTMLElement {
@@ -97,5 +97,21 @@ describe('anchorElement and isAnchorVisible', () => {
     stubRect(el, { top: 10, bottom: 50, left: 10, right: 100, width: 90, height: 40 })
     expect(isAnchorVisible(el)).toBe(true)
     expect(isAnchorVisible(null)).toBe(false)
+  })
+})
+
+describe('isAnchorVisible', () => {
+  it('counts content of a collapsed details as hidden even when it keeps a layout box', () => {
+    document.body.innerHTML = '<details><summary data-testid="s">Rules</summary><div data-testid="a">editor</div></details>'
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: 10, left: 10, right: 210, bottom: 50, width: 200, height: 40, x: 10, y: 10, toJSON: () => ({}),
+    })
+    const anchor = document.querySelector('[data-testid="a"]')
+    const summary = document.querySelector('[data-testid="s"]')
+    expect(isAnchorVisible(anchor)).toBe(false)
+    expect(isAnchorVisible(summary)).toBe(true)
+    ;(anchor!.closest('details') as HTMLDetailsElement).open = true
+    expect(isAnchorVisible(anchor)).toBe(true)
+    vi.restoreAllMocks()
   })
 })

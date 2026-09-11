@@ -1,0 +1,56 @@
+# EXAMPLE ONLY — the read-only monitoring sidecar next to the Hetzner Patroni
+# service. Merge by hand into the host-specific Dokploy Compose stack
+# (patroni-production-hetzner.yml / patroni-production-rainer.yml). For Rainer
+# replace the PGDATA bind mount with the external `production-data` volume.
+#
+# The service runs as uid 999 (postgres) from the start: no root phase, no
+# privilege drop. It needs exactly three things from the Patroni service:
+# the shared socket volume, PGDATA (read-only) and the postgres-readable
+# pgBackRest configuration copy (read-only). Nothing else is mounted.
+services:
+  monitor:
+    image: pointfinder-patroni:16.15-4.1.5-production-monitor-r1
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-monitor"]
+    user: "999:999"
+    environment:
+      PATRONI_NAME: production-hetzner      # reported as "node" in health.json
+      POINTFINDER_MONITOR_STANZA: pointfinder-production
+      POINTFINDER_MONITOR_BACKUP_MAX_AGE_HOURS: "36"
+      # Optional. Only on a host where the Mac recovery state directories are
+      # mounted below (label=path pairs). Leave unset elsewhere.
+      # POINTFINDER_MONITOR_MAC_RECOVERY_FILES: "uploads=/mac/uploads/last-success.json,backups=/mac/backups/last-success.json"
+      # POINTFINDER_MONITOR_MAC_RECOVERY_MAX_AGE_SECONDS: "7200"
+    volumes:
+      - /mnt/HC_Volume_105155434/pgdata:/var/lib/postgresql/data:ro
+      - pg-socket:/var/run/postgresql
+      - monitor-state:/state
+      # uid-999-owned 0400 copy already mounted into the Patroni service; the
+      # monitor only ever runs `pgbackrest info` against it.
+      - /etc/dokploy/pointfinder/ha-secrets/pgbackrest-postgres.conf:/run/pgbackrest/pgbackrest.conf:ro
+      # Optional Mac recovery state (read-only) if present on this host:
+      # - /srv/pointfinder-s3/snapshot-state:/mac/uploads:ro
+      # - /srv/pointfinder-s3/backup-snapshot-state:/mac/backups:ro
+    healthcheck:
+      test: ["CMD", "/opt/patroni/bin/python", "/usr/local/bin/pointfinder-monitor", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    tmpfs: ["/tmp:size=64m"]        # pgBackRest lock-path
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [quorum]
+    stop_grace_period: 30s
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.25
+
+volumes:
+  pg-socket:
+  monitor-state:
+
+networks:
+  quorum:
+    external: true
+    name: pointfinder-ha-clients

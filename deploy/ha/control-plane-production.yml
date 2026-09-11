@@ -1,0 +1,58 @@
+services:
+  backup:
+    image: pointfinder-control-plane-backup:20260910-r1
+    environment:
+      CPB_BACKUP_TIME_UTC: "04:15"
+      CPB_KEEP_DAILY: "7"
+      CPB_KEEP_WEEKLY: "4"
+      CPB_KEEP_MONTHLY: "3"
+      CPB_PRUNE_APPLY: "true"
+      CPB_RESTORE_INTERVAL_DAYS: "30"
+      CPB_RESTORE_IMAGE: "postgres:16@sha256:081f1bc7bd5e143dbb6e487b710bbc27712cdcfaced4c071b8e47349aa1b4171"
+      CPB_DOCKER_CONFIG_DIR: /host/root/.docker
+      CPB_S3_CREDENTIALS_FILE: /run/secrets/control-plane-s3.json
+      CPB_HEALTH_MAX_AGE_SECONDS: "900"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/dokploy:/host/etc/dokploy:ro
+      - /root/.docker:/host/root/.docker:ro
+      - /var/backups/pointfinder-ha/control-plane-encrypted:/backups
+      - /var/backups/pointfinder-ha/control-plane-state:/state
+      - /etc/dokploy/pointfinder/ha-secrets/control-plane-backup.passphrase:/run/secrets/control-plane-passphrase:ro
+      - /etc/dokploy/pointfinder/ha-secrets/control-plane-s3.json:/run/secrets/control-plane-s3.json:ro
+    tmpfs: ["/tmp:size=1g,mode=0700"]
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [DAC_READ_SEARCH]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    stop_grace_period: 120s
+    mem_limit: 512m
+    cpus: 0.5
+  alerts:
+    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r1
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher"]
+    # Root only to read root-private backup status. No socket, host config,
+    # backup archive or database is mounted into this email-only container.
+    user: "0:0"
+    environment:
+      POINTFINDER_ALERT_NODE_NAME: dokploy-control-plane
+      POINTFINDER_ALERT_SUBJECT_PREFIX: "[PointFinder infrastructure]"
+      POINTFINDER_ALERT_STALE_SECONDS: "900"
+    volumes:
+      - /var/backups/pointfinder-ha/control-plane-state:/monitor-state:ro
+      - /var/backups/pointfinder-ha/control-plane-alert-state:/state
+      - /etc/dokploy/pointfinder/ha-secrets/control-plane-email.json:/run/secrets/email.json:ro
+    healthcheck:
+      test: ["CMD", "/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 5m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    mem_limit: 64m
+    cpus: 0.1

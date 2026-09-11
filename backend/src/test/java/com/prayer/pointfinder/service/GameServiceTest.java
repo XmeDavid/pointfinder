@@ -40,6 +40,10 @@ class GameServiceTest {
     @Mock
     private GameRepository gameRepository;
     @Mock
+    private PlayerRepository playerRepository;
+    @Mock
+    private com.prayer.pointfinder.xp.XpService xpService;
+    @Mock
     private com.prayer.pointfinder.service.OrganizationService organizationService;
     @Mock
     private UserRepository userRepository;
@@ -127,7 +131,8 @@ class GameServiceTest {
                 new GameReadinessValidator(baseRepository, challengeRepository,
                         teamRepository, assignmentRepository, teamVariableService, stageRepository,
                         quotaService),
-                quotaService, progressRepository, organizationService
+                quotaService, progressRepository, organizationService,
+                xpService, submissionRepository, teamRepository, playerRepository
         );
 
         // Default stub: exportGame calls this to build the tags section

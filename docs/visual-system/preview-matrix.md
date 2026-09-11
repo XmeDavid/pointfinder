@@ -56,3 +56,17 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Operator assignment grid on phones: base list with per-base sheet; ChallengePicker (searchable, rich rows) in every assignment cell on both layouts | yes | n/a | n/a |
 
 Required screenshot widths for migrated web journeys: 390, 768, 1280, and 1600 pixels. A row moves to `yes` only when its canonical states render without backend data and the relevant accessibility labels are present. Check-in method rows are marked `n/a` for the legacy Swift and Compose apps: those apps keep working for NFC bases only and receive no QR or location UI. Guided tutorials are marked `n/a` for the legacy apps too: the operator tutorial engine ships once in `web/` for the browser and the Tauri shell.
+
+Unified experience iteration (2026-09-10): `/dashboard` is the real account home,
+with Home/Play/Organize; `/profile` extends the existing profile. Old preview and
+alternate entry paths redirect. Local development uses an isolated seeded backend
+for account, participation, documents, game editing and XP/history. Discovery
+uses authenticated published listings with search, featured, nearby and joining. Existing Game Settings handles explicit publication; a real-API smoke covers draft/publish/join/unpublish.
+No prototype labels appear in-product.
+
+The Playwright matrix covers 360/390/768/1280 px, EN/PT/DE, both themes and reduced
+motion. Mobile smoke checks include player tour/back/settings, documents/history,
+operator entry, direct map placement and existing base editor. Focused tests cover
+legend fade/recall, empty-challenge linking retry, readiness, settings and editor
+rules. Physical device, expired-session and full offline/recovery journeys still
+need verification. See the unified UX spec for exact evidence and limitations.

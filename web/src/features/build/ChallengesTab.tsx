@@ -140,6 +140,8 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
   const { data: teams = [] } = useTeams(gameId)
   const { data: bases = [] } = useBases(gameId)
 
+  const originBase = useWorkspaceStore(s=>s.challengeOriginBaseId)
+  const selectBase = useWorkspaceStore(s=>s.selectBase)
   const selectedChallengeId = useWorkspaceStore((s) => s.selectedChallengeId)
   const selectChallenge = useWorkspaceStore((s) => s.selectChallenge)
 
@@ -159,7 +161,7 @@ export function ChallengesTab({ gameId }: ChallengesTabProps) {
   }, [challenges, search, activeTags])
 
   return (
-    <ListDetailLayout data-testid="challenges-tab" selected={!!selectedChallengeId} onBack={() => selectChallenge(null)} list={<>
+    <ListDetailLayout data-testid="challenges-tab" selected={!!selectedChallengeId} onBack={() => originBase ? selectBase(originBase) : selectChallenge(null)} list={<>
 
         {/* Search */}
         <div className="p-2 border-b border-border">

@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  router:
+    image: haproxy@sha256:6343ce34a132a5dceaa24767d739df2bd519f8f7c1079ae39e4821334e8eb42e
+    configs:
+      - source: haproxy
+        target: /usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      database:
+      application:
+        aliases: [pointfinder-db-router]
+    deploy:
+      replicas: 2
+      placement:
+        constraints: ["node.role == manager", "node.hostname != pointfinder-ha"]
+        max_replicas_per_node: 1
+      resources:
+        limits: {memory: 64M, cpus: "0.25"}
+      update_config: {order: stop-first, parallelism: 1, delay: 10s}
+networks:
+  database:
+    external: true
+    name: pointfinder-ha-clients
+  application:
+    external: true
+    name: dokploy-network
+configs:
+  haproxy:
+    external: true
+    name: pointfinder-db-haproxy-v2

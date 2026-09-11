@@ -14,11 +14,15 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
 
     List<Player> findByTeamId(UUID teamId);
 
+    List<Player> findByTeamGameId(UUID gameId);
+
     Optional<Player> findByUserIdAndGameId(UUID userId, UUID gameId);
 
     List<Player> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    long countByTeamId(UUID teamId);
+    /** Members of a team that a phone can still resolve; retired guest rows (account recovery) do not count. */
+    @Query("SELECT COUNT(p) FROM Player p WHERE p.team.id = :teamId AND p.deviceId NOT LIKE 'retired:%'")
+    long countByTeamId(@Param("teamId") UUID teamId);
 
     Optional<Player> findByDeviceIdAndTeamId(String deviceId, UUID teamId);
 
@@ -33,7 +37,7 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
             """)
     Optional<Player> findAuthPlayerById(@Param("playerId") UUID playerId);
 
-    @Query("SELECT COUNT(DISTINCT p.id) FROM Player p WHERE p.team.game.id = :gameId")
+    @Query("SELECT COUNT(DISTINCT p.id) FROM Player p WHERE p.team.game.id = :gameId AND p.deviceId NOT LIKE 'retired:%'")
     long countByGameId(@Param("gameId") UUID gameId);
 
     @Modifying

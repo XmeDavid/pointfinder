@@ -76,7 +76,7 @@ export default function AccountScreen() {
     try {
       const recovered = await accountServices.api.account.recover(auth.gameId, await getDeviceId())
       await client.session.setPlayer(recovered)
-      navigate('/', { replace: true })
+      navigate('/map', { replace: true })
     } catch (err) {
       setError(describeError(err, t))
     } finally {

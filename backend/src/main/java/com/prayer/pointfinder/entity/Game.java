@@ -78,6 +78,11 @@ public class Game {
     @Column(name = "broadcast_code", length = 10)
     private String broadcastCode;
 
+    /** PF-03: an operator-side multiplier on XP for featured games; 1 for everyone else. */
+    @Builder.Default
+    @Column(name = "xp_featured_multiplier", nullable = false, precision = 4, scale = 2)
+    private java.math.BigDecimal xpFeaturedMultiplier = java.math.BigDecimal.ONE;
+
     @Column(name = "tile_source", nullable = false, length = 50)
     @Builder.Default
     private String tileSource = "osm-classic";

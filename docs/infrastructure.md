@@ -3,6 +3,10 @@
 **Platform:** PointFinder NFC Gaming Platform
 **Last updated:** 2026-03-21
 
+> For the September 2026 Dokploy/Swarm deployment baseline and planned Hetzner + Mac mini resilience rollout, see [High-availability plan](high-availability-plan.md). The stack descriptions below include historical configurations and should not be treated as a current production inventory.
+
+> **September 9 cutover:** Production PostgreSQL is now managed by host-specific Dokploy Patroni Compose services on Hetzner and Rainer. The backend must use `pointfinder-db-router:5432`, not `pointfinder-database-bt29ko`. The old Dokploy database is explicitly marked retired/idle; **do not start or deploy it**, because it mounts the same authoritative data as Patroni. Do not restart rehearsal databases while production owns the watchdogs. See [HA execution record](../deploy/ha/README.md) for IDs and recovery gates. Billing remains pending and was not deployed by the infrastructure rollout.
+
 ---
 
 ## 1. Docker Services

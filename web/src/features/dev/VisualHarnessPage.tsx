@@ -55,6 +55,7 @@ import { CoachBubble } from '@/components/tour/CoachBubble'
 import { TourPill } from '@/components/tour/TourPill'
 import { WelcomeCompass } from '@/components/compass/WelcomeCompass'
 
+const DashboardPreview = lazy(() => import("@/features/dashboard/DashboardPage").then(m => ({ default: m.DashboardPage })))
 const OnboardingPreview = lazy(() => import('@/components/onboarding/OnboardingExperience').then((m) => ({ default: m.OnboardingExperience })))
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
@@ -144,6 +145,9 @@ function HarnessSection({
 export function VisualHarnessPage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const params = new URLSearchParams(window.location.search)
+  if (params.has('userHome')) {
+    return <Suspense fallback={<LoadingState />}><DashboardPreview /></Suspense>
+  }
   const onboarding = params.get('onboarding')
   if (onboarding !== null) {
     // `?onboarding=choice` shows the role screen; `?onboarding=gate` the organizer's account choice

@@ -112,8 +112,18 @@ public enum ErrorCode {
     PLAYER_ALREADY_LINKED,
     /** The account never joined the requested game. */
     NO_PARTICIPATION_FOUND,
+    /** The game has ended: results are frozen, nothing may be reviewed, completed or rescued. */
+    GAME_ENDED,
     /** Too many join attempts for this IP or device in the current window. */
     RATE_LIMITED,
+
+    // ── Publication and Explore (PF-07/PF-08) ────────────────────────────
+    /** Practice games and ended games cannot be published. */
+    PUBLICATION_NOT_ALLOWED,
+    /** The designated public admission team does not belong to this game. */
+    PUBLICATION_TEAM_INVALID,
+    /** No new participation can be created from Explore: listing gone, game not live, or no admission team. */
+    PUBLICATION_ADMISSION_CLOSED,
 
     // ── Quota enforcement ────────────────────────────────────────────────
     /** User has reached the maximum number of active games for their tier. */

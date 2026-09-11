@@ -183,6 +183,7 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
   await page.getByTestId('login-password').fill('test-password')
   await page.getByTestId('login-submit').click()
   await expect(page).toHaveURL(/\/dashboard$/)
+  await page.goto('/dashboard?view=organize')
   await expect(page.getByText(game.name)).toBeVisible()
   await page.screenshot({ path: 'test-results/mobile-operator-dashboard.png', fullPage: true })
   await noSidewaysScroll(page)
@@ -278,7 +279,7 @@ test('player settings, inbox and base fit a phone in both themes and in Portugue
   await page.screenshot({ path: 'test-results/mobile-player-settings.png', fullPage: true })
   await noSidewaysScroll(page)
 
-  await page.goto('/')
+  await page.goto('/map')
   await expect(page.getByTestId('player-settings-btn')).toBeVisible()
   for (const profile of safeProfiles) {
     await simulateSafeArea(page, profile)

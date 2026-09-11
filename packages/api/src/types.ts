@@ -97,6 +97,52 @@ export interface AccountMeResponse {
   participations: AccountParticipation[]
 }
 
+/** PF-03: the platform's XP. Never game points. */
+export type XpAwardKind = 'check_in' | 'base_completed' | 'game_completed' | 'placement' | 'reversal'
+
+export interface XpPlacement {
+  gameId: EntityId | null
+  gameName: string
+  endedAt: IsoDateTime
+  teamName: string | null
+  placement: number | null
+  tied: boolean
+  teams: number
+  completed: boolean
+  eligible: boolean
+  ineligibleReason: string | null
+  xp: number
+}
+
+export interface XpProfileResponse {
+  level: number
+  xp: number
+  xpForCurrentLevel: number
+  xpForNextLevel: number
+  gamesPlayed: number
+  gamesCompleted: number
+  basesCompleted: number
+  placements: XpPlacement[]
+}
+
+export interface XpRewardResponse {
+  /** `pending` while running (action XP included), `finalized` after the end, `invalidated` after reset. */
+  state: 'pending' | 'finalized' | 'invalidated'
+  finalizedAt: IsoDateTime | null
+  xp: number
+  awards: { kind: XpAwardKind; amount: number; count: number }[]
+  placement: { placement: number | null; tied: boolean; teams: number; completed: boolean; eligible: boolean; ineligibleReason: string | null } | null
+  /** Only for a linked participation. */
+  level: { level: number; xp: number; xpForCurrentLevel: number; xpForNextLevel: number } | null
+}
+
+export interface EndSummaryResponse {
+  status: GameStatus
+  pendingReviews: number
+  teams: number
+  players: number
+}
+
 export interface PlayerAccountResponse {
   linked: boolean
   email: string | null
@@ -701,4 +747,103 @@ export interface ApiErrorBody {
   code?: string
   errors?: Record<string, string>
   timestamp?: string
+}
+
+// ── PF-07/PF-08: publication and Explore ─────────────────────────────────
+
+/** Stable setting label for a public summary. */
+export type PublicationCategory = 'coast' | 'forest' | 'city' | 'other'
+
+/** `open`: a public admission team is designated; `code`: the organizer hands out join codes. */
+export type PublicationAdmission = 'open' | 'code'
+
+/** The publisher's summary. Saving it never lists or delists the game. */
+export interface GamePublicationRequest {
+  title: string
+  summary: string
+  place: string
+  /** Approximate public location, entered on purpose. Both or neither. */
+  lat?: number | null
+  lng?: number | null
+  category: PublicationCategory
+  /** A team of this game Explore may place new accounts on; null keeps public admission disabled. */
+  admissionTeamId?: EntityId | null
+}
+
+/** The publisher's (and admin's) view of a game's publication. */
+export interface GamePublicationResponse {
+  gameId: EntityId
+  gameName: string
+  gameStatus: GameStatus
+  organizer: string | null
+  title: string
+  summary: string
+  place: string
+  lat: number | null
+  lng: number | null
+  category: PublicationCategory
+  admissionTeamId: EntityId | null
+  admissionTeamName: string | null
+  listed: boolean
+  publishedAt: IsoDateTime | null
+  publishedById: EntityId | null
+  publishedByName: string | null
+  featured: boolean
+  featuredAt: IsoDateTime | null
+  updatedAt: IsoDateTime
+}
+
+/** Bounded Explore query. `lat`/`lng` together; `radiusKm` needs them. */
+export interface ExploreQuery {
+  q?: string
+  category?: PublicationCategory
+  featured?: boolean
+  lat?: number
+  lng?: number
+  radiusKm?: number
+  /** 0-based. */
+  page?: number
+  /** 1..50, default 20. */
+  size?: number
+}
+
+/**
+ * A listing as a signed-in account sees it: the deliberate public summary only.
+ * `joinable` is whether a new participation can be created from Explore now
+ * (admission open and the game live); a saved participation always recovers.
+ */
+export interface ExploreGameResponse {
+  gameId: EntityId
+  title: string
+  summary: string
+  place: string
+  lat: number | null
+  lng: number | null
+  category: PublicationCategory
+  organizer: string | null
+  gameStatus: GameStatus
+  admission: PublicationAdmission
+  joinable: boolean
+  featured: boolean
+  startDate: IsoDateTime | null
+  endDate: IsoDateTime | null
+  publishedAt: IsoDateTime
+  /** Only when the query carried a position and the listing has coordinates. */
+  distanceKm: number | null
+  /** This account already participates; `playerId` is that participation. */
+  joined: boolean
+  playerId: EntityId | null
+}
+
+export interface ExplorePageResponse {
+  items: ExploreGameResponse[]
+  page: number
+  size: number
+  total: number
+  hasMore: boolean
+}
+
+export interface ExploreJoinRequest {
+  displayName: string
+  deviceId: string
 }

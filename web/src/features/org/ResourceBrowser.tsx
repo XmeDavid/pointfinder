@@ -8,13 +8,23 @@ import {
   Plus,
   Trash2,
   Search,
-  Share2,
   FolderPlus,
   X,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Select } from '@/components/ui/select'
+import { getApiErrorMessage } from '@/lib/api/errors'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { cn } from '@/lib/utils'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
-import { useOrgResources, useGameResources, useOrgFolders, useGameFolders } from '@/hooks/queries/useResources'
+import {
+  useOrgResources,
+  useGameResources,
+  useOrgFolders,
+  useGameFolders,
+} from '@/hooks/queries/useResources'
 import {
   useCreateOrgResource,
   useCreateGameResource,
@@ -34,15 +44,23 @@ interface ResourceBrowserProps {
 
 function fileTypeIcon(contentType: string, type: 'file' | 'document') {
   if (type === 'document') return <FileText className="h-4 w-4 text-info" />
-  if (contentType.startsWith('image/')) return <span className="text-sm">🖼️</span>
-  if (contentType.startsWith('audio/')) return <span className="text-sm">🎵</span>
-  if (contentType.startsWith('video/')) return <span className="text-sm">🎬</span>
+  if (contentType.startsWith('image/'))
+    return <span className="text-sm">🖼️</span>
+  if (contentType.startsWith('audio/'))
+    return <span className="text-sm">🎵</span>
+  if (contentType.startsWith('video/'))
+    return <span className="text-sm">🎬</span>
   if (contentType.includes('pdf')) return <span className="text-sm">📄</span>
   return <File className="h-4 w-4 text-muted-foreground" />
 }
 
-export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrowserProps) {
+export function ResourceBrowser({
+  orgId,
+  gameId,
+  showShareToggle,
+}: ResourceBrowserProps) {
   const { t, i18n } = useTranslation()
+  const online = useOnlineStatus()
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingDocId, setEditingDocId] = useState<string | null>(null)
@@ -51,6 +69,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
   const [newFolderMode, setNewFolderMode] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [docContent, setDocContent] = useState('')
+  const [docName, setDocName] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scope = { orgId, gameId }
@@ -59,7 +78,12 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
     folderId: currentFolderId ?? undefined,
     search: searchQuery || undefined,
   })
-  const { data: gameResources = [] } = useGameResources(gameId, {
+  const {
+    data: gameResources = [],
+    isPending: gameLoading,
+    isError: gameError,
+    refetch: reloadGame,
+  } = useGameResources(gameId, {
     folderId: currentFolderId ?? undefined,
     search: searchQuery || undefined,
   })
@@ -75,23 +99,41 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
   const deleteResource = useDeleteResource(scope)
   const createFolder = useCreateFolder(scope)
   const deleteFolder = useDeleteFolder(scope)
+  const busy =
+    createOrgResource.isPending ||
+    createGameResource.isPending ||
+    updateResource.isPending ||
+    deleteResource.isPending
+  const error =
+    createOrgResource.error ||
+    createGameResource.error ||
+    updateResource.error ||
+    deleteResource.error ||
+    createFolder.error ||
+    deleteFolder.error
 
-  const handleUpload = useCallback((file: File) => {
-    const metadata = JSON.stringify({
-      name: file.name,
-      type: 'file',
-      folderId: currentFolderId,
-    })
-    const formData = new FormData()
-    formData.append('metadata', new Blob([metadata], { type: 'application/json' }))
-    formData.append('file', file)
+  const handleUpload = useCallback(
+    (file: File) => {
+      const metadata = JSON.stringify({
+        name: file.name,
+        type: 'file',
+        folderId: currentFolderId,
+      })
+      const formData = new FormData()
+      formData.append(
+        'metadata',
+        new Blob([metadata], { type: 'application/json' }),
+      )
+      formData.append('file', file)
 
-    if (orgId) {
-      createOrgResource.mutate(formData)
-    } else if (gameId) {
-      createGameResource.mutate(formData)
-    }
-  }, [orgId, gameId, currentFolderId, createOrgResource, createGameResource])
+      if (orgId) {
+        createOrgResource.mutate(formData)
+      } else if (gameId) {
+        createGameResource.mutate(formData)
+      }
+    },
+    [orgId, gameId, currentFolderId, createOrgResource, createGameResource],
+  )
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -100,6 +142,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
   }
 
   const handleNewDocument = useCallback(() => {
+    setSearchQuery('')
     const metadata = JSON.stringify({
       name: t('resources.untitledDocument'),
       type: 'document',
@@ -107,12 +150,16 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
       content: '',
     })
     const formData = new FormData()
-    formData.append('metadata', new Blob([metadata], { type: 'application/json' }))
+    formData.append(
+      'metadata',
+      new Blob([metadata], { type: 'application/json' }),
+    )
 
     const mutation = orgId ? createOrgResource : createGameResource
     mutation.mutate(formData, {
       onSuccess: (resource) => {
         setEditingDocId(resource.id)
+        setDocName(resource.name)
         setDocContent(resource.content ?? '')
       },
     })
@@ -131,30 +178,56 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
   }
 
   const handleDelete = (id: string) => {
-    if (confirm(t('resources.deleteConfirm', 'Are you sure you want to delete this resource?'))) {
+    if (
+      confirm(
+        t(
+          'resources.deleteConfirm',
+          'Are you sure you want to delete this resource?',
+        ),
+      )
+    ) {
       deleteResource.mutate(id)
     }
   }
 
   const handleDeleteFolder = (id: string) => {
-    if (confirm(t('resources.deleteFolderConfirm', 'Are you sure you want to delete this folder?'))) {
+    if (
+      confirm(
+        t(
+          'resources.deleteFolderConfirm',
+          'Are you sure you want to delete this folder?',
+        ),
+      )
+    ) {
       deleteFolder.mutate(id)
     }
   }
 
   const handleToggleShare = (resource: Resource) => {
-    updateResource.mutate({ id: resource.id, data: { sharedWithPlayers: !resource.sharedWithPlayers } })
+    updateResource.mutate({
+      id: resource.id,
+      data: { sharedWithPlayers: !resource.sharedWithPlayers },
+    })
   }
 
   const handleSaveDoc = (resource: Resource) => {
-    updateResource.mutate({ id: resource.id, data: { content: docContent } }, {
-      onSuccess: () => setEditingDocId(null),
-    })
+    updateResource.mutate(
+      {
+        id: resource.id,
+        data: { content: docContent, name: docName.trim() || resource.name },
+      },
+      {
+        onSuccess: () => setEditingDocId(null),
+      },
+    )
   }
 
   const handleCreateFolder = () => {
     if (newFolderName.trim()) {
-      createFolder.mutate({ name: newFolderName.trim(), parentId: currentFolderId ?? undefined })
+      createFolder.mutate({
+        name: newFolderName.trim(),
+        parentId: currentFolderId ?? undefined,
+      })
       setNewFolderName('')
       setNewFolderMode(false)
     }
@@ -164,12 +237,19 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
     ? folders.filter((f) => f.parentId === currentFolderId)
     : folders.filter((f) => f.parentId === null)
 
-  const editingDoc = editingDocId ? resources.find((r) => r.id === editingDocId) : null
+  const editingDoc = editingDocId
+    ? resources.find((r) => r.id === editingDocId)
+    : null
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-w-0 w-full" data-testid="resource-browser">
       {/* Left sidebar: folder tree */}
-      <div className="w-48 shrink-0 border-r border-border bg-muted/30 flex flex-col">
+      <div
+        className={cn(
+          'w-48 shrink-0 border-r border-border bg-muted/30 flex flex-col',
+          gameId && 'hidden',
+        )}
+      >
         <div className="p-3 border-b border-border">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             {t('resources.folders', 'Folders')}
@@ -206,7 +286,10 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
               <Folder className="h-3.5 w-3.5 shrink-0" />
               <span className="flex-1 truncate">{folder.name}</span>
               <button
-                onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteFolder(folder.id)
+                }}
                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-destructive transition-all cursor-pointer"
               >
                 <X className="h-3 w-3" />
@@ -250,26 +333,50 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
+        {gameId && (
+          <div className="px-3 pt-3 text-sm text-muted-foreground">
+            {t('resources.gameHelp')}
+          </div>
+        )}
+        {!online && (
+          <p role="status" className="p-3 text-sm">
+            {t('resources.offline')}
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="p-3 text-sm text-destructive">
+            {getApiErrorMessage(error, t('common.unknownError'))}
+          </p>
+        )}
+        {gameId && gameError && (
+          <div role="alert" className="p-3">
+            <p>{t('resources.loadError')}</p>
+            <Button variant="outline" onClick={() => void reloadGame()}>
+              {t('common.retry')}
+            </Button>
+          </div>
+        )}
         {/* Toolbar */}
-        <div className="flex items-center gap-2 p-3 border-b border-border">
+        <div className="flex flex-wrap items-center gap-2 p-3 border-b border-border">
           {/* Search */}
-          <div className="relative flex-1 max-w-sm">
+          <div className={cn('relative flex-1', gameId && 'basis-full')}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label={t('resources.search')}
               placeholder={t('resources.search', 'Search resources...')}
               className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
-          <div className="flex-1" />
-
           {/* New document */}
           <button
+            disabled={busy || !online}
+            data-testid="resource-new-document"
             onClick={handleNewDocument}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+            className="min-h-11 disabled:opacity-50 flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             {t('resources.newDocument', 'New document')}
@@ -277,8 +384,9 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
 
           {/* Upload */}
           <button
+            disabled={busy || !online}
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer"
+            className="min-h-11 disabled:opacity-50 flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer"
           >
             <Upload className="h-3.5 w-3.5" />
             {t('resources.upload', 'Upload file')}
@@ -286,12 +394,34 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
 
           <input
             ref={fileInputRef}
+            data-testid="resource-upload-input"
             type="file"
             className="hidden"
             onChange={handleFileInputChange}
           />
         </div>
 
+        {gameId && folders.length > 0 && (
+          <div className="px-3 pb-2">
+            <Select
+              aria-label={t('resources.folders')}
+              value={currentFolderId ?? ''}
+              onChange={(e) => setCurrentFolderId(e.target.value || null)}
+            >
+              <option value="">{t('common.all')}</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+        {gameId && gameLoading && (
+          <p role="status" className="p-3 text-sm">
+            {t('common.loading')}
+          </p>
+        )}
         {/* Resource list */}
         <div className="flex-1 overflow-y-auto p-3">
           {/* Sub-folders in current folder */}
@@ -304,7 +434,10 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
               <Folder className="h-4 w-4 shrink-0 text-warning" />
               <span className="flex-1 text-sm font-medium">{folder.name}</span>
               <button
-                onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteFolder(folder.id)
+                }}
                 className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -312,12 +445,14 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
             </div>
           ))}
 
-          {resources.length === 0 && visibleFolders.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm gap-2">
-              <File className="h-8 w-8 opacity-40" />
-              <span>{t('resources.noResources', 'No resources yet')}</span>
-            </div>
-          )}
+          {resources.length === 0 &&
+            visibleFolders.length === 0 &&
+            (!gameId || (!gameLoading && !gameError)) && (
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm gap-2">
+                <File className="h-8 w-8 opacity-40" />
+                <span>{t('resources.noResources', 'No resources yet')}</span>
+              </div>
+            )}
 
           {resources.map((resource) => (
             <div key={resource.id} className="group">
@@ -325,15 +460,21 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
                 <div className="border border-border rounded-md mb-2 overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/30">
                     <FileText className="h-4 w-4 text-info" />
-                    <span className="text-sm font-medium flex-1">{resource.name}</span>
+                    <Input
+                      aria-label={t('resources.documentTitle')}
+                      value={docName}
+                      onChange={(e) => setDocName(e.target.value)}
+                      className="min-w-0 flex-1"
+                    />
                     <button
+                      disabled={busy || !online}
                       onClick={() => handleSaveDoc(resource)}
-                      disabled={updateResource.isPending}
-                      className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md cursor-pointer hover:opacity-90 disabled:opacity-50"
+                      className="min-h-11 px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md cursor-pointer hover:opacity-90 disabled:opacity-50"
                     >
                       {t('common.save', 'Save')}
                     </button>
                     <button
+                      aria-label={t('common.close')}
                       onClick={() => setEditingDocId(null)}
                       className="p-1 rounded hover:bg-accent cursor-pointer text-muted-foreground"
                     >
@@ -343,7 +484,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
                   <RichTextEditor
                     content={docContent}
                     onChange={setDocContent}
-                    placeholder="Document content..."
+                    placeholder={t('resources.documentContent')}
                   />
                 </div>
               ) : (
@@ -376,6 +517,7 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
                         onClick={() => {
                           if (resource.type === 'document') {
                             setEditingDocId(resource.id)
+                            setDocName(resource.name)
                             setDocContent(resource.content ?? '')
                           }
                         }}
@@ -388,41 +530,44 @@ export function ResourceBrowser({ orgId, gameId, showShareToggle }: ResourceBrow
                       <span>·</span>
                       <span>{resource.createdByName}</span>
                       <span>·</span>
-                      <span>{new Date(resource.createdAt).toLocaleDateString(i18n.language)}</span>
+                      <span>
+                        {new Date(resource.createdAt).toLocaleDateString(
+                          i18n.language,
+                        )}
+                      </span>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0 transition-opacity">
-                    {showShareToggle && (
-                      <button
-                        onClick={() => handleToggleShare(resource)}
-                        title={t('resources.sharedWithPlayers', 'Shared with players')}
-                        className={cn(
-                          'p-1 rounded transition-colors cursor-pointer',
-                          resource.sharedWithPlayers
-                            ? 'text-primary bg-primary/10'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent',
-                        )}
-                      >
-                        <Share2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                  <div className="flex flex-wrap items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleRenameStart(resource)}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer text-xs"
+                      className="min-h-11 min-w-11 p-2 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer text-xs"
                       title={t('resources.rename', 'Rename')}
                     >
                       ✎
                     </button>
                     <button
                       onClick={() => handleDelete(resource.id)}
-                      className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                      className="min-h-11 min-w-11 p-2 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                       title={t('common.delete', 'Delete')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
+                </div>
+              )}
+              {showShareToggle && (
+                <div className="flex items-center justify-between gap-3 px-3 pb-3">
+                  <label htmlFor={`share-${resource.id}`} className="text-sm">
+                    {t('resources.shareWithPlayers')}
+                  </label>
+                  <Switch
+                    id={`share-${resource.id}`}
+                    checked={resource.sharedWithPlayers}
+                    disabled={busy || !online}
+                    onCheckedChange={() => handleToggleShare(resource)}
+                  />
                 </div>
               )}
             </div>

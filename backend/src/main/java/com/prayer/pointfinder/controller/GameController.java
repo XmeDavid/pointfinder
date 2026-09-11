@@ -67,6 +67,12 @@ public class GameController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Before ending: how many submissions are still unreviewed. Ending freezes results. */
+    @GetMapping("/{id}/end-summary")
+    public ResponseEntity<com.prayer.pointfinder.dto.response.EndSummaryResponse> endSummary(@PathVariable UUID id) {
+        return ResponseEntity.ok(gameService.endSummary(id));
+    }
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<GameResponse> updateStatus(@PathVariable UUID id,
                                                       @Valid @RequestBody UpdateGameStatusRequest request) {

@@ -1,0 +1,93 @@
+version: "3.8"
+x-connector: &connector
+  image: ghcr.io/xmedavid/pointfinder-cloudflared-supervisor@sha256:375908a0efe55ee47f1ae898cddda03097b7e352bdba1beaae9b52930dbefdf8
+  environment:
+    PF_PROBE_URL: http://origin:8080/_ha/ready
+    PF_PROBE_INTERVAL_SECONDS: "3"
+    PF_PROBE_TIMEOUT_SECONDS: "2"
+    PF_STOP_GRACE_SECONDS: "10"
+    PF_CLOUDFLARED_GRACE_PERIOD: "5s"
+  secrets:
+    - source: tunnel_token
+      target: tunnel_token
+      uid: "65532"
+      gid: "65532"
+      mode: 0400
+  read_only: true
+  stop_grace_period: 30s
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+services:
+  hetzner:
+    <<: *connector
+    networks: [hetzner_tunnel]
+    deploy:
+      replicas: 1
+      placement:
+        constraints: ["node.hostname == davidsbatista", "node.role == manager"]
+      resources:
+        limits: {memory: 128M, cpus: "0.50"}
+      update_config: {order: start-first, failure_action: rollback}
+  arthur:
+    <<: *connector
+    networks: [arthur_tunnel]
+    deploy:
+      replicas: 1
+      placement:
+        constraints: ["node.hostname == arthur", "node.role == manager"]
+      resources:
+        limits: {memory: 128M, cpus: "0.50"}
+      update_config: {order: start-first, failure_action: rollback}
+  proxy_hetzner:
+    image: haproxy@sha256:6343ce34a132a5dceaa24767d739df2bd519f8f7c1079ae39e4821334e8eb42e
+    environment: {PF_EDGE_NODE: hetzner}
+    configs:
+      - source: ingress_proxy
+        target: /usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      hetzner_tunnel: {aliases: [origin]}
+      application: {}
+    deploy:
+      replicas: 1
+      placement:
+        constraints: ["node.hostname == davidsbatista", "node.role == manager"]
+      resources:
+        limits: {memory: 64M, cpus: "0.25"}
+      update_config: {order: start-first, failure_action: rollback}
+  proxy_arthur:
+    image: haproxy@sha256:6343ce34a132a5dceaa24767d739df2bd519f8f7c1079ae39e4821334e8eb42e
+    environment: {PF_EDGE_NODE: arthur}
+    configs:
+      - source: ingress_proxy
+        target: /usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      arthur_tunnel: {aliases: [origin]}
+      application: {}
+    deploy:
+      replicas: 1
+      placement:
+        constraints: ["node.hostname == arthur", "node.role == manager"]
+      resources:
+        limits: {memory: 64M, cpus: "0.25"}
+      update_config: {order: start-first, failure_action: rollback}
+networks:
+  hetzner_tunnel:
+    driver: overlay
+    driver_opts:
+      com.docker.network.driver.mtu: "1200"
+  arthur_tunnel:
+    driver: overlay
+    driver_opts:
+      com.docker.network.driver.mtu: "1200"
+  application:
+    external: true
+    name: dokploy-network
+configs:
+  ingress_proxy:
+    external: true
+    name: pointfinder-ingress-haproxy-v3
+secrets:
+  tunnel_token:
+    external: true
+    name: pointfinder-cloudflare-tunnel-v1

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 
 export interface SuggestionItem {
   key: string
@@ -19,12 +19,13 @@ export const VariableSuggestionList = forwardRef<
   VariableSuggestionListProps
 >(function VariableSuggestionList({ items, command }, ref) {
   const [selected, setSelected] = useState(0)
-
-  useEffect(() => {
-    // Reset highlight when the suggestion list changes (different partial).
-
+  // Reset highlight when the suggestion list changes (different partial):
+  // derived during render, so no effect has to set state after the fact.
+  const [seenItems, setSeenItems] = useState(items)
+  if (seenItems !== items) {
+    setSeenItems(items)
     setSelected(0)
-  }, [items])
+  }
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }) => {

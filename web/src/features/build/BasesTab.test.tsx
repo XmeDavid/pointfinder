@@ -159,7 +159,7 @@ describe('ordered bases', () => {
   it('hides route controls when enforcement is off', async () => {
     renderBasesTab()
     await screen.findByText('Base Alpha')
-    expect(screen.queryByRole('button', { name: 'Arrange route' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Route' })).not.toBeInTheDocument()
   })
 
   it('keeps global numbering under search and arranges all bases', async () => {
@@ -178,7 +178,7 @@ describe('ordered bases', () => {
     await user.type(screen.getByPlaceholderText('Search bases...'), 'Bridge')
     await waitFor(() => expect(screen.queryByText('Forest')).not.toBeInTheDocument())
     expect(screen.getByLabelText('Base 2')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Arrange route' }))
+    await user.click(screen.getByRole('button', { name: 'Route' }))
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
     expect(screen.getByText('Forest')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
@@ -189,7 +189,7 @@ describe('ordered bases', () => {
   it('shows route numbers but locks rearrangement when live', async () => {
     server.use(http.get('/api/games/game-1', () => HttpResponse.json(createMockGame({ enforceBaseOrder: true, status: 'live' }))))
     renderBasesTab()
-    expect(await screen.findByRole('button', { name: 'Arrange route' })).toBeDisabled()
+    expect(await screen.findByRole('button', { name: 'Route' })).toBeDisabled()
     expect(screen.getByText('Base order can only be changed during setup.')).toBeInTheDocument()
   })
 })

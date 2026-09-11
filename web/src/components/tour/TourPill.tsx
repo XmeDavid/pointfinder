@@ -28,7 +28,7 @@ export function TourPill({ step, total, onResume, inline = false, position = 'bo
     <motion.div
       data-testid="tour-pill"
       className={cn(
-        inline ? 'relative inline-block' : 'fixed left-1/2 z-[70] -translate-x-1/2',
+        inline ? 'relative inline-block' : 'fixed left-1/2 z-[71] -translate-x-1/2',
       )}
       style={inline ? undefined : position === 'top' ? { top: 'calc(var(--safe-top) + 8px)' } : { bottom: 'calc(var(--safe-bottom) + 56px)' }}
       data-position={inline ? undefined : position}

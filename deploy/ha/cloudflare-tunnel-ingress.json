@@ -1,0 +1,9 @@
+{
+  "config": {
+    "ingress": [
+      {"hostname": "tunnel-check.pointfinder.ch", "service": "http://origin:8080"},
+      {"hostname": "tunnel-check.pointfinder.pt", "service": "http://origin:8080"},
+      {"service": "http_status:404"}
+    ]
+  }
+}

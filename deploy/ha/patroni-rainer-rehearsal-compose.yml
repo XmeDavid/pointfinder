@@ -1,0 +1,32 @@
+services:
+  patroni-rainer:
+    image: pointfinder-patroni:16.15-4.1.5-r5
+    environment:
+      PATRONI_NAME: rehearsal-rainer
+      PATRONI_ADDRESS: rehearsal-primary
+      POINTFINDER_API_ADDRESS: 100.75.57.44:18009
+      ADOPT_ONLY: "true"
+      POINTFINDER_WATCHDOG_MODE: required
+    devices: ["/dev/watchdog0:/dev/watchdog"]
+    ports:
+      - "100.75.57.44:18009:8008"
+    volumes:
+      - rehearsal-primary:/var/lib/postgresql/data
+      - /var/backups/pointfinder-ha/rehearsal-auth.json:/run/secrets/patroni_auth:ro
+      - /var/backups/pointfinder-ha/etcd-rehearsal.json:/run/secrets/etcd_auth:ro
+    networks:
+      quorum:
+        aliases: [rehearsal-primary]
+    stop_grace_period: 60s
+    # Rehearsal is retired for production adoption; do not redeploy while production owns the watchdog.
+    restart: "no"
+    mem_limit: 512m
+    cpus: 1.0
+networks:
+  quorum:
+    external: true
+    name: pointfinder-ha-clients
+volumes:
+  rehearsal-primary:
+    external: true
+    name: pointfinder-patroni-rehearsal-primary

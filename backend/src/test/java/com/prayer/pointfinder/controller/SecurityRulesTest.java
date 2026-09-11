@@ -40,7 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     PlayerController.class,
     PlayerAccountController.class,
     AccountController.class,
-    AdminOrgController.class
+    AdminOrgController.class,
+    ExploreController.class,
+    AdminPublicationController.class
 })
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class})
 @TestPropertySource(properties = {
@@ -67,6 +69,8 @@ class SecurityRulesTest {
     private com.prayer.pointfinder.service.PlayerAccountService playerAccountService;
     @MockitoBean
     private com.prayer.pointfinder.service.AccountService accountService;
+    @MockitoBean
+    private com.prayer.pointfinder.xp.XpService xpService;
 
     @MockitoBean
     private com.prayer.pointfinder.repository.UserSubscriptionRepository userSubscriptionRepository;
@@ -124,6 +128,11 @@ class SecurityRulesTest {
 
     @MockitoBean
     private com.prayer.pointfinder.service.OrgInvoiceService orgInvoiceService;
+    // PF-07/PF-08 controllers.
+    @MockitoBean
+    private com.prayer.pointfinder.service.ExploreService exploreService;
+    @MockitoBean
+    private com.prayer.pointfinder.service.GamePublicationService gamePublicationService;
 
     private static final String OPERATOR_TOKEN = "operator-jwt";
     private static final String PLAYER_TOKEN = "player-jwt";
@@ -235,6 +244,25 @@ class SecurityRulesTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/account/me"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void exploreAdmitsEveryAccountRoleButNoPlayerToken() throws Exception {
+        org.mockito.Mockito.when(exploreService.list(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new com.prayer.pointfinder.dto.response.ExplorePageResponse(java.util.List.of(), 0, 20, 0, false));
+        for (String token : new String[] {PARTICIPANT_TOKEN, OPERATOR_TOKEN, ADMIN_TOKEN}) {
+            mockMvc.perform(get("/api/explore/games").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+        }
+        mockMvc.perform(get("/api/explore/games").header("Authorization", "Bearer " + PLAYER_TOKEN))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/explore/games"))
+                .andExpect(status().isUnauthorized());
+        // Curation stays behind the admin tree.
+        mockMvc.perform(get("/api/admin/publications").header("Authorization", "Bearer " + PARTICIPANT_TOKEN))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/publications").header("Authorization", "Bearer " + OPERATOR_TOKEN))
+                .andExpect(status().isForbidden());
     }
 
     @Test

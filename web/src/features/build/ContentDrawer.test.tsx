@@ -9,7 +9,10 @@ import { createMockChallenge } from '@/test/factories/challenge'
 import { ContentDrawer } from './ContentDrawer'
 
 const platform = vi.hoisted(() => ({ native: false }))
-vi.mock('@/platform/runtime', () => ({ isNative: () => platform.native, isNativeEntry: () => platform.native }))
+vi.mock('@/platform/runtime', () => ({
+  isNative: () => platform.native,
+  isNativeEntry: () => platform.native,
+}))
 
 // Mock workspace store
 const mockStore = {
@@ -23,17 +26,29 @@ const mockStore = {
 }
 
 vi.mock('@/stores/workspace', () => ({
-  useWorkspaceStore: (selector: (s: typeof mockStore) => unknown) => selector(mockStore),
+  useWorkspaceStore: (selector: (s: typeof mockStore) => unknown) =>
+    selector(mockStore),
 }))
 
 // Mock framer motion so AnimatePresence doesn't interfere
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => {
+    div: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => {
       const htmlProps = Object.fromEntries(
         Object.entries(props).filter(
           ([key]) =>
-            !['initial', 'animate', 'exit', 'transition', 'variants', 'whileHover', 'whileTap'].includes(key),
+            ![
+              'initial',
+              'animate',
+              'exit',
+              'transition',
+              'variants',
+              'whileHover',
+              'whileTap',
+            ].includes(key),
         ),
       )
       return <div {...htmlProps}>{children}</div>
@@ -48,7 +63,7 @@ function renderDrawer() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <ContentDrawer gameId="game-1" />
+      <ContentDrawer gameId="game-1" onCreateBase={() => {}} />
     </QueryClientProvider>,
   )
 }
@@ -76,7 +91,9 @@ describe('ContentDrawer', () => {
 
     platform.native = true
     const { container } = renderDrawer()
-    expect(container.querySelector('[data-testid="tab-nfc"]')).toBeInTheDocument()
+    expect(
+      container.querySelector('[data-testid="tab-nfc"]'),
+    ).toBeInTheDocument()
   })
 
   it('clicking a tab calls setDrawerTab', async () => {
@@ -95,7 +112,9 @@ describe('ContentDrawer', () => {
   it('shows "+ New Challenge" button on challenges tab', () => {
     mockStore.drawerTab = 'challenges'
     renderDrawer()
-    expect(screen.getByTestId('new-entity-btn')).toHaveTextContent('New Challenge')
+    expect(screen.getByTestId('new-entity-btn')).toHaveTextContent(
+      'New Challenge',
+    )
   })
 
   it('shows auto-assign button only on bases tab', () => {
@@ -104,32 +123,49 @@ describe('ContentDrawer', () => {
 
     mockStore.drawerTab = 'challenges'
     const { container } = renderDrawer()
-    expect(container.querySelector('[data-testid="auto-assign-btn"]')).not.toBeInTheDocument()
+    expect(
+      container.querySelector('[data-testid="auto-assign-btn"]'),
+    ).not.toBeInTheDocument()
   })
 
   it('auto-assign pairs open bases with unused challenges and keeps existing assignments', async () => {
     const user = userEvent.setup()
-    let sent: Array<{ baseId: string; challengeId: string; teamId?: string }> = []
+    let sent: Array<{ baseId: string; challengeId: string; teamId?: string }> =
+      []
     server.use(
-      http.get('/api/games/game-1/bases', () => HttpResponse.json([
-        createMockBase({ id: 'b1', name: 'Mill' }),
-        createMockBase({ id: 'b2', name: 'Bridge' }),
-        createMockBase({ id: 'b3', name: 'Lookout', fixedChallengeId: 'c9' }),
-        createMockBase({ id: 'b4', name: 'Chapel' }),
-      ])),
-      http.get('/api/games/game-1/challenges', () => HttpResponse.json([
-        createMockChallenge({ id: 'c1', title: 'One' }),
-        createMockChallenge({ id: 'c2', title: 'Two' }),
-        createMockChallenge({ id: 'c3', title: 'Three' }),
-        createMockChallenge({ id: 'c9', title: 'Pinned to Lookout' }),
-      ])),
-      http.get('/api/games/game-1/assignments', () => HttpResponse.json([
-        { id: 'a1', gameId: 'game-1', baseId: 'b2', challengeId: 'c2', teamId: 'team-1' },
-      ])),
+      http.get('/api/games/game-1/bases', () =>
+        HttpResponse.json([
+          createMockBase({ id: 'b1', name: 'Mill' }),
+          createMockBase({ id: 'b2', name: 'Bridge' }),
+          createMockBase({ id: 'b3', name: 'Lookout', fixedChallengeId: 'c9' }),
+          createMockBase({ id: 'b4', name: 'Chapel' }),
+        ]),
+      ),
+      http.get('/api/games/game-1/challenges', () =>
+        HttpResponse.json([
+          createMockChallenge({ id: 'c1', title: 'One' }),
+          createMockChallenge({ id: 'c2', title: 'Two' }),
+          createMockChallenge({ id: 'c3', title: 'Three' }),
+          createMockChallenge({ id: 'c9', title: 'Pinned to Lookout' }),
+        ]),
+      ),
+      http.get('/api/games/game-1/assignments', () =>
+        HttpResponse.json([
+          {
+            id: 'a1',
+            gameId: 'game-1',
+            baseId: 'b2',
+            challengeId: 'c2',
+            teamId: 'team-1',
+          },
+        ]),
+      ),
       http.put('/api/games/game-1/assignments', async ({ request }) => {
         const body = (await request.json()) as { assignments: typeof sent }
         sent = body.assignments
-        return HttpResponse.json(sent.map((a, i) => ({ id: `n${i}`, gameId: 'game-1', ...a })))
+        return HttpResponse.json(
+          sent.map((a, i) => ({ id: `n${i}`, gameId: 'game-1', ...a })),
+        )
       }),
     )
     renderDrawer()
@@ -173,6 +209,8 @@ describe('ContentDrawer', () => {
     mockStore.drawerOpen = false
     const { container } = renderDrawer()
     // SlideDrawer should not render when open=false
-    expect(container.querySelector('[data-testid="slide-drawer"]')).not.toBeInTheDocument()
+    expect(
+      container.querySelector('[data-testid="slide-drawer"]'),
+    ).not.toBeInTheDocument()
   })
 })

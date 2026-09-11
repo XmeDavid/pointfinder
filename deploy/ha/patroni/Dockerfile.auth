@@ -1,0 +1,3 @@
+# Extend the exact locally verified r3 image without changing dependencies.
+FROM pointfinder-patroni:16.15-4.1.5-r3
+COPY entrypoint.py /usr/local/bin/pointfinder-patroni

@@ -310,5 +310,23 @@ buttons. It takes the edge that leaves the anchor uncovered, or the dialog the
 anchor lives in (a create form's buttons must stay reachable), moving to the top
 when only the top edge clears it or when the anchor fills most of the screen; on
 desktop it floats beside the anchor and flips against the viewport and the
-safe-area insets. Both live on the `z-[70]` tutorial layer:
+safe-area insets. The spotlight lives on `z-[70]`; the coach popup and resume pill live on
+`z-[71]`, above the dimming layer regardless of portal mount order. Both sit
 above drawers and menus, below toasts.
+
+## Operator editor density
+
+Keep single-field settings visible; a disclosure header must not consume as much
+space as the field it hides. Reserve compact summaries for larger optional editors,
+without repeating the section title inside. Show dependent fields beside the
+control that enables them, preserving entered values when hidden. Create a base
+directly and continue in its existing editor. Use player-facing concepts such as
+Challenge in base editing, rather than the underlying assignment terminology.
+An item-level Print action prints that item; Print all belongs at collection level.
+
+Base QR previews are buttons that open the shared `QrCodeViewer`. The viewer
+uses the canonical dialog focus trap in a body portal, keeps the code black on
+white in both themes, and saves a PNG through the platform share/download adapter.
+NFC writing stays in the selected base editor on capable native clients; browser
+clients explain the capability limit inline instead of sending the operator to
+search another page. Route and Assignments share a wrapping action row.

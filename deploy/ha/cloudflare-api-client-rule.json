@@ -1,0 +1,12 @@
+{
+  "name": "PointFinder API client compatibility",
+  "kind": "zone",
+  "phase": "http_config_settings",
+  "rules": [{
+    "description": "Allow non-browser API clients without disabling WAF or application authentication",
+    "expression": "http.host in {\"api.pointfinder.ch\" \"tunnel-check.pointfinder.ch\"}",
+    "action": "set_config",
+    "action_parameters": {"bic": false},
+    "enabled": true
+  }]
+}

@@ -37,7 +37,7 @@ export default function InboxScreen() {
 
   return (
     <Screen>
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
+      <Link to="/map" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ChevronLeft className="h-4 w-4" aria-hidden /> {t('map.title')}</Link>
       <h1 className="text-2xl font-semibold leading-tight">{t('inbox.title')}</h1>
 
       {list.isLoading && <LoadingState label={t('common.loading')} />}

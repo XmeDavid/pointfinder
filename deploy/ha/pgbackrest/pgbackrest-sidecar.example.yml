@@ -1,0 +1,51 @@
+# EXAMPLE ONLY — shows how the backup sidecar sits next to a production Patroni
+# service. Merge into the host-specific Dokploy Compose stack by hand
+# (patroni-production-hetzner.yml / patroni-production-rainer.yml); the Patroni
+# service itself must ALSO switch to the pgbackrest image and gain the shared
+# socket volume, otherwise archive_command cannot find /usr/bin/pgbackrest and
+# the sidecar cannot reach the socket.
+services:
+  patroni-hetzner:
+    image: pointfinder-patroni:16.15-4.1.5-production-pgbackrest-r1
+    volumes:
+      - /mnt/HC_Volume_105155434/pgdata:/var/lib/postgresql/data
+      - pg-socket:/var/run/postgresql
+      # Same postgres-readable copy pattern as the sidecar: the Patroni
+      # entrypoint does not install it today, so mount a uid-999-owned, 0400
+      # copy directly at the path archive_command reads.
+      - /etc/dokploy/pointfinder/ha-secrets/pgbackrest-postgres.conf:/run/pgbackrest/pgbackrest.conf:ro
+    # ...existing environment, devices, ports, secrets and network unchanged...
+
+  pgbackrest-hetzner:
+    image: pointfinder-patroni:16.15-4.1.5-production-pgbackrest-r1
+    entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-pgbackrest-runner"]
+    environment:
+      POINTFINDER_PGBACKREST_STANZA: pointfinder-production
+      POINTFINDER_PGBACKREST_FULL_WEEKDAY: "6"   # Sunday
+      POINTFINDER_PGBACKREST_HOUR: "3"           # UTC
+      POINTFINDER_PGBACKREST_MINUTE: "30"
+      POINTFINDER_PGBACKREST_RETRY_SECONDS: "900"
+      POINTFINDER_PGBACKREST_MAX_RETRIES: "6"
+    volumes:
+      - /mnt/HC_Volume_105155434/pgdata:/var/lib/postgresql/data
+      - pg-socket:/var/run/postgresql
+      - pgbackrest-runner-state:/var/lib/pgbackrest-runner
+      - pgbackrest-log:/var/log/pgbackrest
+      # Root-only on the host; the runner copies it to a postgres-owned 0400
+      # file under /run/pgbackrest before dropping privileges.
+      - /etc/dokploy/pointfinder/ha-secrets/pgbackrest.conf:/run/secrets/pgbackrest.conf:ro
+    networks: [quorum]
+    stop_grace_period: 120s
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  pg-socket:
+  pgbackrest-runner-state:
+  pgbackrest-log:
+
+networks:
+  quorum:
+    external: true
+    name: pointfinder-ha-clients

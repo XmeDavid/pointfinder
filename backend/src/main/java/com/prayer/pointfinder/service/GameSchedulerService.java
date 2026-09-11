@@ -40,6 +40,9 @@ public class GameSchedulerService {
     private final StageRepository stageRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final MeterRegistry meterRegistry;
+    private final com.prayer.pointfinder.xp.XpService xpService;
+    private final jakarta.persistence.EntityManager entityManager;
+    private final org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     /**
      * How old a completed-but-unlinked upload session must be before the
@@ -56,17 +59,14 @@ public class GameSchedulerService {
      * setup or live. Ended games keep their content and no longer count
      * anywhere, so a late "keep" still works.
      */
-    @Transactional(timeout = 10)
     public void expirePracticeGames() {
         Instant now = Instant.now();
         List<Game> expired = gameRepository.findByTutorialScenarioIsNotNullAndTutorialExpiresAtBeforeAndStatusNot(
                 now, GameStatus.ended);
-        for (Game game : expired) {
-            log.info("Ending expired practice game '{}' (id={}, scenario={})",
-                    game.getName(), game.getId(), game.getTutorialScenario());
-            if (gameRepository.endPracticeGameIfExpired(game.getId(), now) == 1) {
-                eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
-            }
+        for (Game candidate : expired) {
+            endThroughFinalizer(candidate.getId(), game -> game.getStatus() != GameStatus.ended
+                    && game.getTutorialScenario() != null && game.getTutorialExpiresAt() != null && game.getTutorialExpiresAt().isBefore(now),
+                    "Ending expired practice game '{}' (id={}, expired {})");
         }
     }
 
@@ -74,18 +74,40 @@ public class GameSchedulerService {
      * Runs every 60 seconds to check for live games that have passed their end date
      * and automatically transitions them to ended.
      */
-    @Transactional(timeout = 10)
+    /** Not transactional itself: every due game ends in its own transaction, so one big game cannot starve the rest. */
     public void autoEndGames() {
         Instant now = Instant.now();
         List<Game> expiredGames = gameRepository.findByStatusAndEndDateBefore(GameStatus.live, now);
-
-        for (Game game : expiredGames) {
-            log.info("Auto-ending game '{}' (id={}) - end date {} has passed",
-                    game.getName(), game.getId(), game.getEndDate());
-            if (gameRepository.endGameIfLiveAndDue(game.getId(), now) == 1) {
-                eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
-            }
+        for (Game candidate : expiredGames) {
+            endThroughFinalizer(candidate.getId(), game -> game.getStatus() == GameStatus.live
+                    && game.getEndDate() != null && game.getEndDate().isBefore(now), "Auto-ending game '{}' (id={}) - end date {} has passed");
         }
+    }
+
+    /**
+     * Every ending path finalizes XP the same way: lock the row, re-check that the
+     * game is still due (another node may have ended it), end it, finalize, broadcast.
+     */
+    private void endThroughFinalizer(UUID gameId, java.util.function.Predicate<Game> stillDue, String logMessage) {
+        org.springframework.transaction.support.TransactionTemplate perGame = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        perGame.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        perGame.setTimeout(30);
+        perGame.executeWithoutResult(status -> endLocked(gameId, stillDue, logMessage));
+    }
+
+    private void endLocked(UUID gameId, java.util.function.Predicate<Game> stillDue, String logMessage) {
+        Game game = gameRepository.findByIdForUpdate(gameId).orElse(null);
+        if (game == null) return;
+        // The candidate scan above already loaded this entity into the persistence
+        // context; the locked query hands back that cached instance, so re-read the
+        // row now that the lock is ours and another run may have ended it meanwhile.
+        entityManager.refresh(game);
+        if (!stillDue.test(game)) return;
+        log.info(logMessage, game.getName(), game.getId(), game.getEndDate() != null ? game.getEndDate() : game.getTutorialExpiresAt());
+        xpService.finalizeCycle(game);
+        game.setStatus(GameStatus.ended);
+        gameRepository.save(game);
+        eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
     }
 
     /**

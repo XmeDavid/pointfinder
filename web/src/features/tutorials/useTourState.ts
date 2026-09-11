@@ -81,7 +81,8 @@ export function useTourState(): TourState {
     scenarioId,
     gameId,
     routeGameId,
-    isDashboard: location.pathname === '/dashboard',
+    // Organizing lives in the account home's organize view; that is where dashboard steps anchor.
+    isDashboard: location.pathname === '/dashboard' && new URLSearchParams(location.search).get('view') === 'organize',
     isNative: isNative(),
     gamesAtStart,
     games: games ?? [],

@@ -5,6 +5,11 @@ const MISSING: FieldReading = { present: false, value: '', pressed: null }
 /** Zero-sized or entirely outside the viewport counts as "not there" for the tour. */
 export function isAnchorVisible(el: Element | null): boolean {
   if (!el) return false
+  // Content of a collapsed <details> keeps its layout box in Chromium, so the
+  // rect alone would call a hidden editor visible; only the summary counts.
+  const closed = el.closest('details:not([open])')
+  if (closed && !el.closest('summary')) return false
+  if (typeof el.checkVisibility === 'function' && !el.checkVisibility()) return false
   const rect = el.getBoundingClientRect()
   if (rect.width <= 0 || rect.height <= 0) return false
   const viewportWidth = window.innerWidth || 0

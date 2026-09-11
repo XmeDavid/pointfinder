@@ -13,7 +13,10 @@ import { createMockGame } from '@/test/factories/game'
 
 // Mock react-map-gl/maplibre (WebGL not available in jsdom)
 vi.mock('react-map-gl/maplibre', () => ({
-  default: ({ children, onClick }: {
+  default: ({
+    children,
+    onClick,
+  }: {
     children?: React.ReactNode
     onClick?: (event: {
       point: { x: number; y: number }
@@ -22,24 +25,35 @@ vi.mock('react-map-gl/maplibre', () => ({
   }) => (
     <div
       data-testid="map-container"
-      onClick={() => onClick?.({
-        point: { x: 240, y: 180 },
-        lngLat: { lat: 47.3769, lng: 8.5417 },
-      })}
+      onClick={() =>
+        onClick?.({
+          point: { x: 240, y: 180 },
+          lngLat: { lat: 47.3769, lng: 8.5417 },
+        })
+      }
     >
       {children}
     </div>
   ),
-  Marker: ({ children }: { children?: React.ReactNode }) => <div data-testid="marker">{children}</div>,
+  Marker: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="marker">{children}</div>
+  ),
   NavigationControl: () => null,
 }))
 
 // Mock motion/react to avoid animation complexity in tests
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
+    div: ({
+      children,
+      ...props
+    }: React.HTMLAttributes<HTMLDivElement> & {
+      children?: React.ReactNode
+    }) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }))
 
 function createWrapper() {
@@ -150,7 +164,7 @@ describe('GameWorkspace', () => {
     let requestBody: Record<string, unknown> | undefined
     server.use(
       http.post('/api/games/:gameId/bases', async ({ request }) => {
-        requestBody = await request.json() as Record<string, unknown>
+        requestBody = (await request.json()) as Record<string, unknown>
         return HttpResponse.json(
           createMockBase({
             id: 'placed-base',
@@ -168,14 +182,18 @@ describe('GameWorkspace', () => {
 
     await user.click(map)
 
-    expect(screen.getByRole('menu', { name: 'Map actions' })).toBeInTheDocument()
-    expect(screen.getByRole('menuitem', { name: 'Place base here' })).toHaveFocus()
+    expect(
+      screen.getByRole('menu', { name: 'Map actions' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('menuitem', { name: 'Place base here' }),
+    ).toHaveFocus()
 
     await user.click(screen.getByRole('menuitem', { name: 'Place base here' }))
 
     await waitFor(() => {
       expect(requestBody).toMatchObject({
-        name: 'Base 4',
+        name: 'New base',
         description: '',
         lat: 47.3769,
         lng: 8.5417,
@@ -189,9 +207,15 @@ describe('GameWorkspace', () => {
   it('does not offer base placement after setup has ended', async () => {
     const user = userEvent.setup()
     server.use(
-      http.get('/api/games/:id', ({ params }) => HttpResponse.json(
-        createMockGame({ id: params.id as string, status: 'live' }),
-      )),
+      http.get('/api/games/:id', ({ params }) =>
+        HttpResponse.json(
+          createMockGame({
+            id: params.id as string,
+            status: 'live',
+            enforceBaseOrder: true,
+          }),
+        ),
+      ),
     )
 
     renderWorkspace()

@@ -35,6 +35,8 @@ import static org.mockito.Mockito.when;
 class SubmissionServiceTest {
 
     @Mock
+    private com.prayer.pointfinder.xp.XpService xpService;
+    @Mock
     private SubmissionRepository submissionRepository;
     @Mock
     private GameRepository gameRepository;

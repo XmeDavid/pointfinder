@@ -15,7 +15,9 @@ export function GameCard({
   const { t } = useTranslation()
   return (
     <div
-      role="article"
+      role="button"
+      tabIndex={0}
+      onKeyDown={event=>{if(event.key === "Enter" || event.key === " "){event.preventDefault();onClick()}}}
       data-testid={`game-card-${game.id}`}
       onClick={onClick}
       className={cn(
