@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { SurfacePanel } from "@/components/layout/SurfacePanel";
 import { GameStatusBadge } from "@/components/status";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { BillingWarningBanner } from "@/components/feedback/BillingWarningBanner";
+import { FrozenBlocker } from "@/components/feedback/FrozenBlocker";
 import { setThemePreference } from "@/lib/theme";
 import { useLocalDesign, localDesign } from "../user-home/useLocalDesign";
 import { PlayingGames } from "../user-home/PlayingGames";
@@ -152,6 +154,8 @@ export function DashboardPage() {
           </Link>
         </div>
       </header>
+      {/* Operators still see billing problems on the page they land on. */}
+      <BillingWarningBanner />
       {(openError || (localDesign && local.isError)) && (
         <div role="alert" className="p-4 text-destructive">
           {t("connectionError")}
@@ -316,7 +320,9 @@ export function DashboardPage() {
         )}
         {page === "organize" &&
           (canOrganize ? (
-            <OrganizePanel />
+            <FrozenBlocker>
+              <OrganizePanel />
+            </FrozenBlocker>
           ) : (
             <EmptyState
               title={t("organizerAccess")}

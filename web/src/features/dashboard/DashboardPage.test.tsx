@@ -1,134 +1,62 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
-import { useTourStore } from '@/features/tutorials/store'
+import { accountAuth, renderPlayer } from '@/features/player/test/renderPlayer'
+import { useAuthStore } from '@/lib/auth/store'
 import { useWorkspaceContext } from '@/stores/workspaceContext'
 import { DashboardPage } from './DashboardPage'
 
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
-  return { ...actual, useNavigate: () => mockNavigate }
-})
-
-function renderPage() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <DashboardPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  )
-}
-
+/**
+ * The unified home serves three people: a visitor with no session, a player
+ * mid-game, and an operator. Each must land on something useful without the
+ * others' data leaking in.
+ */
 describe('DashboardPage', () => {
   beforeEach(() => {
-    mockNavigate.mockClear()
-  })
-
-  it('shows loading state initially', () => {
-    renderPage()
-    // Spinner renders a div with animate-spin
-    const spinner = document.querySelector('.animate-spin')
-    expect(spinner).toBeInTheDocument()
-  })
-
-  it('renders game cards after data loads', async () => {
-    renderPage()
-    // MSW returns two games: "Test Game 1" and "Test Game 2"
-    await waitFor(() => {
-      expect(screen.getByText('Test Game 1')).toBeInTheDocument()
-    })
-    expect(screen.getByText('Test Game 2')).toBeInTheDocument()
-  })
-
-  it('renders the page title', async () => {
-    renderPage()
-    expect(screen.getByText('PointFinder')).toBeInTheDocument()
-    expect(screen.getByText('Your Games')).toBeInTheDocument()
-  })
-
-  it('renders a create game button', () => {
-    renderPage()
-    expect(
-      screen.getByRole('button', { name: /new game/i }),
-    ).toBeInTheDocument()
-  })
-
-  it('search filters games by name', async () => {
-    const user = userEvent.setup()
-    renderPage()
-
-    // Wait for games to load
-    await waitFor(() => {
-      expect(screen.getByText('Test Game 1')).toBeInTheDocument()
-    })
-
-    // Type into search
-    const searchInput = screen.getByPlaceholderText('Search games...')
-    await user.type(searchInput, 'Game 1')
-
-    // Only the matching game should remain
-    await waitFor(() => {
-      expect(screen.getByText('Test Game 1')).toBeInTheDocument()
-      expect(screen.queryByText('Test Game 2')).not.toBeInTheDocument()
-    })
-  })
-
-  it('create game button opens dialog', async () => {
-    const user = userEvent.setup()
-    renderPage()
-
-    await user.click(screen.getByRole('button', { name: /new game/i }))
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByLabelText('Name')).toBeInTheDocument()
-  })
-
-  it('navigates to game on card click', async () => {
-    const user = userEvent.setup()
-    renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByText('Test Game 1')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByText('Test Game 1'))
-    expect(mockNavigate).toHaveBeenCalledWith('/game/game-1')
-  })
-})
-
-describe('DashboardPage tutorial welcome card', () => {
-  beforeEach(() => {
-    useTourStore.getState().reset()
-    useTourStore.setState({ progressHydrated: true })
+    useAuthStore.setState({ user: null, isAuthenticated: false, accessToken: null, hasHydrated: true })
     useWorkspaceContext.setState({ active: { type: 'personal' } })
   })
+  afterEach(() => useAuthStore.setState({ user: null, isAuthenticated: false, accessToken: null }))
 
-  it('shows the tutorial welcome card when the operator has no games', async () => {
-    server.use(http.get('/api/games', () => HttpResponse.json([])))
-
-    renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByTestId('tutorial-welcome-card')).toBeInTheDocument()
-    })
-    expect(screen.getByTestId('dashboard-empty-state')).toBeInTheDocument()
+  it('welcomes a visitor with discovery and a way to join, without an organize entry', async () => {
+    await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard' })
+    expect(await screen.findByTestId('user-experience')).toBeInTheDocument()
+    expect(screen.getAllByRole('navigation', { name: 'Main navigation' }).length).toBeGreaterThan(0)
+    expect(screen.queryAllByRole('link', { name: /Organize/ })).toHaveLength(0)
+    expect(screen.getByText('Join with a code')).toBeInTheDocument()
   })
 
-  it('hides the tutorial welcome card once games exist', async () => {
-    renderPage()
+  it('shows a player their current game and a way back to the map', async () => {
+    await renderPlayer(<DashboardPage />, { route: '/dashboard' })
+    expect(await screen.findByText('Serra da Estrela')).toBeInTheDocument()
+    expect(screen.getByText('Continue playing')).toBeInTheDocument()
+  })
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Game 1')).toBeInTheDocument()
-    })
-    expect(screen.queryByTestId('tutorial-welcome-card')).not.toBeInTheDocument()
+  it('lists a signed-in account\'s published games from Explore, offline-safe', async () => {
+    await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard', account: accountAuth })
+    expect((await screen.findAllByText('Coastal trail')).length).toBeGreaterThan(0)
+  })
+
+  it('shows the explore error state with a retry when the listing fails', async () => {
+    server.use(http.get('/api/explore/games', () => HttpResponse.json({ message: 'down' }, { status: 500 })))
+    await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard', account: accountAuth })
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Retry|Try again/ })).toBeInTheDocument()
+  })
+
+  it('gives an operator the Organize view with their games and a create button', async () => {
+    useAuthStore.setState({ user: { id: 'user-1', email: 'op@example.com', name: 'Op', role: 'operator', createdAt: '2026-01-01T00:00:00Z' }, isAuthenticated: true, accessToken: 'tok', hasHydrated: true })
+    await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard?view=organize' })
+    expect(await screen.findByTestId('create-game-btn')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Test Game 1')).toBeInTheDocument())
+    expect(screen.getAllByRole('link', { name: /Organize/ }).length).toBeGreaterThan(0)
+  })
+
+  it('hides Organize from a participant account', async () => {
+    useAuthStore.setState({ user: { id: 'user-2', email: 'ana@example.com', name: 'Ana', role: 'participant', createdAt: '2026-01-01T00:00:00Z' }, isAuthenticated: true, accessToken: 'tok', hasHydrated: true })
+    await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard', account: accountAuth })
+    await screen.findByTestId('user-experience')
+    expect(screen.queryAllByRole('link', { name: /Organize/ })).toHaveLength(0)
   })
 })

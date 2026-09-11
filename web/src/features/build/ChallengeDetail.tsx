@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { RuleSection } from './RuleSection'
 import { Switch } from '@/components/ui/switch'
 import { Save } from 'lucide-react'
@@ -182,29 +182,24 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const [previewTeamId, setPreviewTeamId] = useState<string | null>(null)
 
   // Sync local state when challenge data loads or challengeId changes
-  const syncedRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (challenge && syncedRef.current !== challengeId) {
-      syncedRef.current = challengeId
+  // Sync local state when challenge data loads or challengeId changes: derived during render
+  // (React's "adjusting state when a prop changes" pattern), so no effect sets state.
+  const [syncedId, setSyncedId] = useState<string | null>(null)
+  if (challenge && syncedId !== challengeId) {
+    setSyncedId(challengeId)
 
-      setLocalTitle(challenge.title)
-      setLocalAnswerType(challenge.answerType)
-      setLocalAutoValidate(challenge.autoValidate)
-      setLocalDescription(challenge.description)
-      setLocalContent(challenge.content)
-      setLocalCorrectAnswer(challenge.correctAnswer ?? [])
-      setLocalPoints(challenge.points.toString())
-      setLocalOperatorNotes(challenge.operatorNotes ?? '')
-      setLocalLocationBound(challenge.locationBound)
-      setLocalUnlocks(challenge.unlocksBaseIds ?? [])
-      setLocalCompletionContent(challenge.completionContent)
-    }
-  }, [challenge, challengeId])
-
-  // Reset sync tracker when challengeId changes so new data gets synced
-  useEffect(() => {
-    syncedRef.current = null
-  }, [challengeId])
+    setLocalTitle(challenge.title)
+    setLocalAnswerType(challenge.answerType)
+    setLocalAutoValidate(challenge.autoValidate)
+    setLocalDescription(challenge.description)
+    setLocalContent(challenge.content)
+    setLocalCorrectAnswer(challenge.correctAnswer ?? [])
+    setLocalPoints(challenge.points.toString())
+    setLocalOperatorNotes(challenge.operatorNotes ?? '')
+    setLocalLocationBound(challenge.locationBound)
+    setLocalUnlocks(challenge.unlocksBaseIds ?? [])
+    setLocalCompletionContent(challenge.completionContent)
+  }
 
   // For delete cascade count
   // Hidden bases this challenge may reveal; never its own pinned base.

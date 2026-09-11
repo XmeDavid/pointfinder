@@ -65,6 +65,12 @@ export const playerHandlers = [
     if (body.email === 'taken@example.com') return HttpResponse.json({ status: 400, message: 'Email already registered', code: 'EMAIL_ALREADY_TAKEN' }, { status: 400 })
     return HttpResponse.json({ accessToken: playerFixtures.accountToken, refreshToken: 'refresh-ana', user: { id: 'u-ana', email: body.email, name: body.name, role: 'participant', createdAt: '2026-09-05T08:00:00Z' } })
   }),
+  http.get('/api/account/profile', () => HttpResponse.json({ level: 1, xp: 250, xpForCurrentLevel: 200, xpForNextLevel: 510, gamesPlayed: 1, gamesCompleted: 1, basesCompleted: 3, placements: [
+    { gameId: 'g1', gameName: 'Serra da Estrela', endedAt: '2026-09-06T17:00:00Z', teamName: 'Owls', placement: 1, tied: false, teams: 4, completed: true, eligible: true, ineligibleReason: null, xp: 250 },
+  ] })),
+  http.get('/api/explore/games', () => HttpResponse.json({ items: [
+    { gameId: 'gx', title: 'Coastal trail', summary: 'A walk along the cliffs.', place: 'Nazaré', lat: 39.6, lng: -9.07, category: 'coast', organizer: 'Sea Scouts', gameStatus: 'live', admission: 'open', joinable: true, featured: true, startDate: null, endDate: null, publishedAt: '2026-09-10T08:00:00Z', distanceKm: null, joined: false, playerId: null },
+  ], page: 0, size: 20, total: 1, hasMore: false })),
   http.get('/api/account/me', ({ request }) => {
     if (request.headers.get('Authorization') !== `Bearer ${playerFixtures.accountToken}`) return HttpResponse.json({ status: 401, message: 'Unauthorized' }, { status: 401 })
     return HttpResponse.json(playerFixtures.accountMe)

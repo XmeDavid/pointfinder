@@ -66,6 +66,7 @@ export function CoachBubble({
   useLayoutEffect(() => {
     if (inline || !isDesktop || !anchorRect || !ref.current) return
     const box = ref.current.getBoundingClientRect()
+    // Measuring the rendered bubble before paint is the documented layout-effect case.
     setPlacement(
       placeBubble(
         { top: anchorRect.top, left: anchorRect.left, width: anchorRect.width, height: anchorRect.height },
