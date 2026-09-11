@@ -1,6 +1,6 @@
 # Personal experience imagery
 
-`coastal-trail.png` was generated with the built-in image generation tool on 2026-09-10. It is atmospheric illustrative artwork, not a photograph documenting the game's actual location. Forest and terrain assets are reused from the existing homepage.
+`coastal-trail.webp` was generated with the built-in image generation tool on 2026-09-10. It is atmospheric illustrative artwork, not a photograph documenting the game's actual location. Forest and terrain assets are reused from the existing homepage.
 
 Final prompt:
 

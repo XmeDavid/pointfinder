@@ -7,7 +7,7 @@ import type {
 import { cn } from "@/lib/utils";
 
 const categoryArt: Record<PublicationCategory, string> = {
-  coast: "/experience/coastal-trail.png",
+  coast: "/experience/coastal-trail.webp",
   forest: "/landing/illustrated/forest-footer.webp",
   city: "/landing/topo-terrain-light.webp",
   other: "/landing/illustrated/forest-footer.webp",
