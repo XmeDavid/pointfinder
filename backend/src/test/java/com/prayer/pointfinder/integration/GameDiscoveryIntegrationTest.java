@@ -18,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import com.prayer.pointfinder.entity.GamePublicationEvent;
+import com.prayer.pointfinder.repository.GamePublicationEventRepository;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import java.util.LinkedHashMap;
@@ -40,6 +43,7 @@ class GameDiscoveryIntegrationTest extends IntegrationTestBase {
 
     @Autowired private PlayerJoinRateLimiter rateLimiter;
     @Autowired private GamePublicationRepository publicationRepository;
+    @Autowired private GamePublicationEventRepository publicationEventRepository;
     private final ObjectMapper json = new ObjectMapper().findAndRegisterModules();
 
     private User owner;
@@ -245,6 +249,35 @@ class GameDiscoveryIntegrationTest extends IntegrationTestBase {
         ResponseEntity<String> asPlayer = restTemplate.exchange("/api/explore/games", HttpMethod.GET, new HttpEntity<>(headersWithAuth(playerAuthHeader(guest))), String.class);
         assertEquals(HttpStatus.FORBIDDEN, asPlayer.getStatusCode());
         assertEquals(HttpStatus.UNAUTHORIZED, restTemplate.getForEntity("/api/explore/games", String.class).getStatusCode());
+    }
+
+    @Test
+    void everyListingChangeLeavesAnAuditRowWithItsActor() {
+        assertEquals(HttpStatus.OK, publicationPut(owner, game, summary(falcons.getId())).getStatusCode());
+        assertEquals(HttpStatus.OK, publish(owner, game).getStatusCode());
+        assertEquals(HttpStatus.OK, call(admin, HttpMethod.POST, "/api/admin/publications/" + game.getId() + "/feature", null).getStatusCode());
+        assertEquals(HttpStatus.OK, call(owner, HttpMethod.POST, "/api/games/" + game.getId() + "/publication/unpublish", null).getStatusCode());
+
+        List<GamePublicationEvent> rows = publicationEventRepository.findByGameIdOrderByCreatedAtAsc(game.getId());
+        assertEquals(List.of("admission", "publish", "feature", "unpublish"),
+                rows.stream().map(GamePublicationEvent::getOperation).toList());
+        assertEquals(owner.getId(), rows.get(0).getActorUser().getId());
+        assertEquals("Lavos Pathfinder", rows.get(0).getActorNameSnapshot());
+        assertEquals(falcons.getId(), rows.get(0).getTeam().getId());
+        assertNull(rows.get(0).getPreviousTeam());
+        assertEquals(admin.getId(), rows.get(2).getActorUser().getId());
+        assertNull(rows.get(3).getTeam());
+    }
+
+    @Test
+    void listingChangesAreCappedPerAccount() {
+        for (int i = 0; i < 60; i++) {
+            assertEquals(HttpStatus.OK, publicationPut(owner, game, summary(null)).getStatusCode(), "change " + (i + 1));
+        }
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, publicationPut(owner, game, summary(null)).getStatusCode());
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, publish(owner, game).getStatusCode());
+        // The cap is per account: the platform admin still acts on the same game.
+        assertEquals(HttpStatus.OK, publish(admin, game).getStatusCode());
     }
 
     @Test

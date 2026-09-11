@@ -57,7 +57,13 @@ UI is integrated separately from this contract.
   that: every save/admission/publish/unpublish/feature/unfeature/join writes
   a `[PUBLICATION]` or `[EXPLORE]` log line with `operation=` and the acting
   `userId`/`adminId`, and the row keeps `published_by/at` and
-  `featured_by/at`. No new `ActivityEventType`.
+  `featured_by/at`. No new `ActivityEventType`. Since V79 every
+  admission/publish/unpublish/feature/unfeature change also writes a row to
+  `game_publication_events` (game, operation, acting account plus a name
+  snapshot, direct-joining team and the previous one), so a visibility flip
+  has a queryable trace beyond the log. One account may make 60 listing
+  changes an hour (`PublicationRateLimiter`, 429 `RATE_LIMITED` past that);
+  admin curation is not counted.
 - **Concurrency.** Every publication mutation (save, publish, unpublish,
   feature, unfeature) and the Explore join first take the pessimistic write
   lock on the game row (`GameRepository.findByIdForUpdate`), the same lock

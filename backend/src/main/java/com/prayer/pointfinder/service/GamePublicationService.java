@@ -4,6 +4,7 @@ import com.prayer.pointfinder.dto.request.GamePublicationRequest;
 import com.prayer.pointfinder.dto.response.GamePublicationResponse;
 import com.prayer.pointfinder.entity.Game;
 import com.prayer.pointfinder.entity.GamePublication;
+import com.prayer.pointfinder.entity.GamePublicationEvent;
 import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.OrgPermission;
 import com.prayer.pointfinder.entity.PublicationCategory;
@@ -13,7 +14,9 @@ import com.prayer.pointfinder.entity.UserRole;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.ForbiddenException;
+import com.prayer.pointfinder.exception.RateLimitExceededException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
+import com.prayer.pointfinder.repository.GamePublicationEventRepository;
 import com.prayer.pointfinder.repository.GamePublicationRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.OrgMembershipRepository;
@@ -61,6 +64,8 @@ public class GamePublicationService {
     private final GameAccessService gameAccessService;
     private final OrgMembershipRepository orgMembershipRepository;
     private final TeamRepository teamRepository;
+    private final GamePublicationEventRepository eventRepository;
+    private final PublicationRateLimiter rateLimiter;
 
     // ── Publisher ───────────────────────────────────────────────────────
 
@@ -75,6 +80,7 @@ public class GamePublicationService {
     @Transactional
     public GamePublicationResponse save(UUID gameId, GamePublicationRequest request) {
         Game game = requirePublisher(gameId);
+        throttle();
         if (game.isPracticeGame()) {
             throw new BadRequestException("Practice games cannot be published", ErrorCode.PUBLICATION_NOT_ALLOWED);
         }
@@ -98,6 +104,7 @@ public class GamePublicationService {
         log.info("[PUBLICATION] operation=save gameId={} userId={} listed={}", gameId, actor, publication.isListed());
         if (!Objects.equals(before, after)) {
             log.info("[PUBLICATION] operation=admission gameId={} userId={} teamId={} previousTeamId={}", gameId, actor, after, before);
+            audit(game, "admission", admissionTeam, before != null ? teamRepository.getReferenceById(before) : null);
         }
         return toResponse(publication);
     }
@@ -106,6 +113,7 @@ public class GamePublicationService {
     @Transactional
     public GamePublicationResponse publish(UUID gameId) {
         Game game = requirePublisher(gameId);
+        throttle();
         GamePublication publication = requirePublication(gameId);
         ensurePublishable(game);
         if (publication.getPublishedAt() == null) {
@@ -115,6 +123,7 @@ public class GamePublicationService {
             publication = publicationRepository.saveAndFlush(publication);
             log.info("[PUBLICATION] operation=publish gameId={} userId={} admissionTeamId={}", gameId, actor.getId(),
                     publication.getAdmissionTeam() != null ? publication.getAdmissionTeam().getId() : null);
+            audit(game, "publish", publication.getAdmissionTeam(), null);
         }
         return toResponse(publication);
     }
@@ -122,7 +131,8 @@ public class GamePublicationService {
     /** Delists the game; the summary stays as a draft and curation is cleared. Idempotent. */
     @Transactional
     public GamePublicationResponse unpublish(UUID gameId) {
-        requirePublisher(gameId);
+        Game game = requirePublisher(gameId);
+        throttle();
         GamePublication publication = requirePublication(gameId);
         if (publication.getPublishedAt() != null) {
             publication.setPublishedAt(null);
@@ -130,6 +140,7 @@ public class GamePublicationService {
             clearFeatured(publication);
             publication = publicationRepository.saveAndFlush(publication);
             log.info("[PUBLICATION] operation=unpublish gameId={} userId={}", gameId, SecurityUtils.getCurrentUser().getId());
+            audit(game, "unpublish", null, null);
         }
         return toResponse(publication);
     }
@@ -147,7 +158,7 @@ public class GamePublicationService {
     public GamePublicationResponse setFeatured(UUID gameId, boolean featured) {
         gameAccessService.ensureCurrentUserIsAdmin();
         User admin = SecurityUtils.getCurrentUser();
-        lockGame(gameId);
+        Game game = lockGame(gameId);
         GamePublication publication = requirePublication(gameId);
         if (featured && !publication.isListed()) {
             throw new BadRequestException("Only a listed publication can be featured", ErrorCode.PUBLICATION_NOT_ALLOWED);
@@ -161,6 +172,7 @@ public class GamePublicationService {
         }
         publication = publicationRepository.saveAndFlush(publication);
         log.info("[PUBLICATION] operation={} gameId={} adminId={}", featured ? "feature" : "unfeature", gameId, admin.getId());
+        audit(game, featured ? "feature" : "unfeature", null, null);
         return toResponse(publication);
     }
 
@@ -215,6 +227,28 @@ public class GamePublicationService {
         if (game.getStatus() == GameStatus.ended) {
             throw new BadRequestException("An ended game cannot be published", ErrorCode.PUBLICATION_NOT_ALLOWED);
         }
+    }
+
+    /** Well above any hand-driven pace; an account flipping listings in a loop is refused and logged. */
+    private void throttle() {
+        User actor = SecurityUtils.getCurrentUser();
+        if (!rateLimiter.tryAcquire(actor.getId())) {
+            log.warn("[PUBLICATION] operation=throttled userId={}", actor.getId());
+            throw new RateLimitExceededException("Too many listing changes. Please try again later.");
+        }
+    }
+
+    /** One audit row per listing change, carrying the acting account. */
+    private void audit(Game game, String operation, Team team, Team previousTeam) {
+        User actor = SecurityUtils.getCurrentUser();
+        eventRepository.save(GamePublicationEvent.builder()
+                .game(game)
+                .operation(operation)
+                .actorUser(actor)
+                .actorNameSnapshot(actor.getName())
+                .team(team)
+                .previousTeam(previousTeam)
+                .build());
     }
 
     private static void clearFeatured(GamePublication publication) {
