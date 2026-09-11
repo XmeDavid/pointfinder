@@ -25,6 +25,8 @@ import { useLocalDesign, localDesign } from "../user-home/useLocalDesign";
 import { PlayingGames } from "../user-home/PlayingGames";
 import { useAuth, useAccountSession } from "@/app/player/services";
 import { OrganizePanel } from "./OrganizePanel";
+import { WelcomeCard } from "@/features/tutorials/WelcomeCard";
+import { useGames } from "@/hooks/queries/useGames";
 import { useAccountProfile } from "@/features/profile/useAccountProfile";
 import { useAuthStore } from "@/lib/auth/store";
 import { DiscoverySection } from "../user-home/DiscoverySection";
@@ -177,6 +179,7 @@ export function DashboardPage() {
       >
         {page === "home" && (
           <>
+            {user && <FirstGameOffer />}
             <div className="ex-heading ex-heading-join">
               <div>
                 <p className="ex-eyebrow">
@@ -360,4 +363,10 @@ export function DashboardPage() {
       </nav>
     </div>
   );
+}
+
+/** The guided first game is offered on the home too, so a new organizer does not have to find the organize view first. */
+function FirstGameOffer() {
+  const { data: games } = useGames();
+  return <WelcomeCard games={games} />;
 }
