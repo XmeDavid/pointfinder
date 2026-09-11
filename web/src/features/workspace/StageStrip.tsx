@@ -49,9 +49,11 @@ export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus,
 
   return (
     <div
-      className={cn('flex min-w-0 items-center gap-1.5 overflow-x-auto scrollbar-none', className)}
+      className={cn('flex min-w-0 items-center gap-1.5', className)}
       data-testid="stage-strip"
     >
+      {/* Only the stage chips scroll; the create button stays in view, inside the safe area. */}
+      <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto scrollbar-none">
       {/* "All" button */}
       <button
         onClick={() => onSelectStage(null)}
@@ -99,6 +101,7 @@ export function StageStrip({ stages, selectedStageId, onSelectStage, gameStatus,
           </div>
         )
       })}
+      </div>
 
       {/* Create stage button */}
       <button
