@@ -51,7 +51,7 @@ export function TopBar({ game, stages }: TopBarProps) {
         {/* Left: Game name + status badge */}
         <div className="flex items-center gap-2 md:gap-3 shrink-0 min-w-0" data-testid="top-bar-primary">
           <Link to="/dashboard?view=organize" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-muted" aria-label={t("experience.backToOrganize")} data-testid="operator-back-btn"><ArrowLeft size={19}/></Link>
-          <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-none">{game.name}</span>
+          <span className="font-bold text-foreground text-sm truncate max-w-[120px] md:max-w-[200px]">{game.name}</span>
           <GameStatusBadge
             status={game.status}
             elapsed={elapsed}
