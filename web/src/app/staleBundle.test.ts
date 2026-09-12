@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { clearStaleBundleFlag, isStaleChunkError, recoverFromStaleBundle } from './staleBundle'
+import { isStaleChunkError, recoverFromStaleBundle } from './staleBundle'
 
 function fakeWindow() {
   const listeners = new Map<string, EventListener[]>()
@@ -27,8 +27,7 @@ describe('recoverFromStaleBundle', () => {
     expect(event.defaultPrevented).toBe(true)
     fire('vite:preloadError', new Event('vite:preloadError', { cancelable: true }))
     expect(reload).toHaveBeenCalledTimes(1)
-    clearStaleBundleFlag(win)
-    expect(store.size).toBe(0)
+    expect(store.size).toBe(1)
   })
 
   it('reloads on a rejected dynamic import but leaves other rejections alone', () => {

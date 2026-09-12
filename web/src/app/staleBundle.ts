@@ -2,8 +2,9 @@
  * After a deploy, a tab that still runs the previous build asks for lazy
  * chunks that no longer exist on the server. Vite reports that as
  * `vite:preloadError`; the browser as a rejected dynamic import. Either way
- * the only fix is a fresh page, so reload once. The session flag stops a
- * reload loop when the failure has some other cause.
+ * the only fix is a fresh page, so reload once per tab session. The flag is
+ * kept until the tab closes: clearing it after render would let a chunk that
+ * is truly broken reload the page forever instead of reaching the error screen.
  */
 const FLAG = 'pf.stale-bundle-reload'
 
@@ -34,14 +35,5 @@ export function recoverFromStaleBundle(win: Window = window): () => void {
   return () => {
     win.removeEventListener('vite:preloadError', onPreloadError)
     win.removeEventListener('unhandledrejection', onRejection)
-  }
-}
-
-/** Called once the app rendered: the next stale chunk may reload again. */
-export function clearStaleBundleFlag(win: Window = window): void {
-  try {
-    win.sessionStorage.removeItem(FLAG)
-  } catch {
-    /* ignore */
   }
 }

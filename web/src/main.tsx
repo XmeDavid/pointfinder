@@ -12,7 +12,7 @@ import { ErrorBoundary, AppErrorFallback } from './components/feedback/ErrorBoun
 import { LoadingState } from './components/feedback/LoadingState'
 import { ErrorState } from './components/feedback/ErrorState'
 import { initializeSafeArea } from './platform/safeArea'
-import { clearStaleBundleFlag, recoverFromStaleBundle } from './app/staleBundle'
+import { recoverFromStaleBundle } from './app/staleBundle'
 
 const dark = window.matchMedia('(prefers-color-scheme: dark)')
 const applyTheme = () => {
@@ -57,7 +57,6 @@ async function start() {
     const services = await getServices()
     const { default: App } = await import('./App')
     root.render(<StrictMode><ErrorBoundary fallback={<AppErrorFallback />}><App services={services} /></ErrorBoundary></StrictMode>)
-    clearStaleBundleFlag()
   } catch {
     root.render(<ErrorState title={i18n.t('common.error')} retryLabel={i18n.t('common.retry')} onRetry={() => void start()} />)
   }
