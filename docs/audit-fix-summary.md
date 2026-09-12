@@ -406,3 +406,13 @@ Full re-verification of all 22 findings. No regressions found. No new actionable
 **Confirmed still fixed:** All findings verified against current source. Key checks: ChallengeResponse.fixedBaseId present (line 23), StringListJsonConverter null guard intact (line 37), NotificationService uses PlayerPushToken with PushPlatform enum (no null-platform-as-iOS path), AuthController uses X-Forwarded-Host only (lines 120, 168-173, 207-209), FileController Content-Disposition set (line 81), MobileRealtimeClient parenthesized precedence fix intact (line 137) with MainActor comment (lines 120-128), MapLibreMapView passes parentViewController (line 433), SubmissionDetail uses i18n alt text (no hardcoded "Submission media" found), Android failed sync warning banner present (PlayerGameplayScreens.kt:129-138) with checkForFailedActions called from PlayerRootScreen.kt:341, contentDescription reduced to 1 decorative instance in labeled Button.
 
 **Remaining 2 deferred items:** No change in status. 9.4 (Android instrumentation tests) and 9.7 (E2E parity gaps) remain deferred as documented above.
+
+---
+
+## Verification (2026-09-12 automated pass)
+
+Full re-verification of all 22 findings. No regressions found. No new actionable items.
+
+**Confirmed still fixed:** All findings verified against current source. Key checks: ChallengeResponse.fixedBaseId present (line 23), StringListJsonConverter null guard intact (line 37), NotificationService uses PlayerPushToken with PushPlatform enum filtering (no null-as-iOS path), AuthController uses X-Forwarded-Host only, FileController Content-Disposition set (line 81), MobileRealtimeClient parenthesized precedence fix intact with MainActor comment, MapLibreMapView passes parentViewController (line 433), SubmissionDetail uses i18n alt text, Android failed sync warning present with checkForFailedActions called from PlayerRootScreen.kt:341, contentDescription reduced to 1 decorative instance in @Preview function.
+
+**Remaining 2 deferred items:** No change in status. 9.4 (Android instrumentation tests) and 9.7 (E2E parity gaps) remain deferred -- these require dedicated infrastructure (Compose test rules, test dispatchers) and incremental E2E coverage respectively.
