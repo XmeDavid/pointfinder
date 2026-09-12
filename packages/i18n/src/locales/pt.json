@@ -1636,7 +1636,7 @@
       "title": "PointFinder",
       "subtitle": "Explora, descobre e completa desafios com a tua equipa.",
       "joinGame": "Entrar num jogo",
-      "operatorLogin": "Sou operador"
+      "operatorLogin": "Iniciar sessão"
     },
     "join": {
       "title": "Entra na tua equipa",
@@ -2015,137 +2015,6 @@
       "rescan": "Visita a base necessária, depois regressa e lê esta etiqueta novamente.",
       "dependencyFailed": "Não foi possível sincronizar um check-in anterior. Resolve o problema, depois regressa e lê esta etiqueta novamente.",
       "unknownRoute": "Liga-te à internet para atualizar a ordem das bases antes de fazer check-in."
-    },
-    "onboarding": {
-      "download": {
-        "body": "Leva a aventura contigo. Descarrega o PointFinder no telemóvel e entra no teu jogo.",
-        "ios": "Descarregar para iOS",
-        "android": "Descarregar para Android"
-      },
-      "next": "Continuar",
-      "back": "Anterior",
-      "replay": "Explorar de novo",
-      "skip": "Saltar introdução",
-      "finish": "Vamos a isso",
-      "progress": "Etapa {{current}} de {{total}}",
-      "preview": "Sair da pré-visualização",
-      "language": "Idioma",
-      "introduction": "ENTRA NO JOGO",
-      "landing": "A TUA PRÓXIMA AVENTURA",
-      "loading": "A carregar a ilustração…",
-      "unavailable": "Ilustração indisponível. Podes continuar a história.",
-      "retry": "Tentar novamente",
-      "reduced": "Movimento reduzido: cada etapa permanece estática.",
-      "autoplay": {
-        "pause": "Pausar avanço automático",
-        "resume": "Retomar avanço automático"
-      },
-      "steps": {
-        "join": {
-          "title": "Junta-te à tua equipa",
-          "body": "Usa o código QR do convite ou o código do jogo para te juntares à tua equipa."
-        },
-        "map": {
-          "title": "Encontra a próxima base",
-          "body": "Quando o jogo começar, segue o mapa integrado e vai com a tua equipa até à próxima base."
-        },
-        "checkin": {
-          "title": "Regista a chegada",
-          "body": "Aproxima o telemóvel da etiqueta NFC, lê o código QR ou entra na área assinalada, conforme a configuração da base."
-        },
-        "challenge": {
-          "title": "Resolvam em equipa",
-          "body": "Tirem uma fotografia, respondam a uma pergunta ou concluam uma tarefa e enviem a resposta da equipa."
-        },
-        "submit": {
-          "title": "Resolvam em equipa",
-          "body": "Tirem uma fotografia, respondam a uma pergunta ou concluam a tarefa. Depois, enviem a resposta da equipa."
-        },
-        "explore": {
-          "title": "Continua a explorar",
-          "body": "Segue o percurso à medida que o jogo avança. Podem surgir novas bases conforme a tua equipa progride."
-        },
-        "compass": {
-          "title": "Um mundo para explorar",
-          "body": "Uma equipa. Uma aventura partilhada. Descobre até onde o PointFinder te leva."
-        }
-      },
-      "choice": {
-        "eyebrow": "BEM-VINDO AO POINTFINDER",
-        "title": "Participar ou organizar?",
-        "body": "Escolhe a história que se aplica a ti. Podes mudar a qualquer momento, e entrar num jogo ou iniciar sessão está sempre a um toque."
-      },
-      "roles": {
-        "participant": {
-          "label": "Vou participar",
-          "description": "Junta-te a uma equipa, encontra bases e resolve desafios.",
-          "short": "Participante"
-        },
-        "organizer": {
-          "label": "Vou organizar",
-          "description": "Planeia um jogo, coloca bases e conduz o jogo ao vivo.",
-          "short": "Organizador"
-        }
-      },
-      "changeRole": "Mudar de papel",
-      "organizerLanding": "O TEU JOGO ESPERA POR TI",
-      "organizerSteps": {
-        "plan": {
-          "title": "Cria a tua aventura",
-          "body": "Escolhe onde e quando jogar, coloca bases no mapa e adiciona métodos de check-in e desafios para as equipas.",
-          "next": "Colocar bases"
-        },
-        "bases": {
-          "title": "Cria a tua aventura",
-          "body": "Coloca bases no mapa, escolhe o método de check-in e adiciona os desafios que as equipas vão resolver.",
-          "next": "Ligar desafios"
-        },
-        "challenges": {
-          "title": "Cria e liga desafios",
-          "body": "Escreve as tarefas que as equipas vão resolver e liga cada uma às bases onde se abre.",
-          "next": "Convidar equipas"
-        },
-        "teams": {
-          "title": "Convida as tuas equipas",
-          "body": "Cria as equipas e distribui os códigos QR ou códigos de entrada para os jogadores se inscreverem.",
-          "next": "Entrar ao vivo"
-        },
-        "live": {
-          "title": "Conduz o jogo",
-          "body": "Quando a preparação estiver completa, coloca o jogo ao vivo e acompanha o progresso de cada equipa em tempo real.",
-          "next": "Rever resultados"
-        },
-        "review": {
-          "title": "Revê e celebra",
-          "body": "Revê as respostas, consulta pontuações e resultados e celebra com as tuas equipas."
-        },
-        "compass": {
-          "title": "O teu jogo, o teu mundo",
-          "body": "Cada base, desafio e equipa é tua para moldar. Inicia sessão e começa a construir."
-        }
-      },
-      "gate": {
-        "eyebrow": "ORGANIZAR UM JOGO",
-        "title": "Pronto para organizar?",
-        "body": "Cria uma conta gratuita para montares o teu primeiro jogo, ou inicia sessão se já tiveres uma. Também podes ver primeiro como funciona.",
-        "createAccount": "Criar conta",
-        "signIn": "Iniciar sessão",
-        "watchFirst": "Ver primeiro como funciona"
-      },
-      "account": {
-        "eyebrow": "BEM-VINDO AO POINTFINDER",
-        "title": "Queres uma visita rápida?",
-        "body": "Três passos até à tua primeira aventura: criar o jogo, convidar equipas e acompanhar o jogo ao vivo.",
-        "tour": "Fazer a visita rápida",
-        "dashboard": "Ir para o meu painel",
-        "landingBody": "Cada base, desafio e equipa é tua para moldar. O teu primeiro jogo começa no painel.",
-        "createFirstGame": "Criar o meu primeiro jogo"
-      },
-      "player": {
-        "back": "Voltar ao teu jogo"
-      },
-      "storyNavigation": "Passos da história",
-      "goToStep": "Ir para o passo {{current}} de {{total}}"
     },
     "tour": {
       "map": {
@@ -2671,17 +2540,6 @@
       "finish": {
         "title": "Variável feita",
         "body": "As variáveis funcionam em qualquer texto ou resposta de um desafio. Mantém este jogo de treino ou apaga-o."
-      }
-    },
-    "introduction": {
-      "title": "Como funciona o PointFinder",
-      "blurb": "A introdução de um minuto: planeamento, bases, desafios, equipas, jogo ao vivo e resultados.",
-      "watch": "Ver",
-      "watchAgain": "Ver outra vez",
-      "status": {
-        "completed": "Visto",
-        "skipped": "Ignorado",
-        "none": "Ainda não visto"
       }
     }
   },

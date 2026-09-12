@@ -1,5 +1,5 @@
 import { Menu, Moon, Sun, X } from "lucide-react";
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -13,14 +13,12 @@ export type LandingSection = { id: string; label: string };
 type LandingHeaderProps = {
   sections: LandingSection[];
   getStartedHref: string;
-  onGetStarted: (event: MouseEvent<HTMLElement>) => void;
-  onPreloadGetStarted: () => void;
 };
 
 const MENU_BREAKPOINT = "(min-width: 768px)";
 
 /** Sticky evergreen website header: section links, language, theme, login and the primary call to action. */
-export function LandingHeader({ sections, getStartedHref, onGetStarted, onPreloadGetStarted }: LandingHeaderProps) {
+export function LandingHeader({ sections, getStartedHref }: LandingHeaderProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -63,11 +61,6 @@ export function LandingHeader({ sections, getStartedHref, onGetStarted, onPreloa
     return () => media.removeEventListener("change", onChange);
   }, []);
 
-  const startFromMenu = (event: MouseEvent<HTMLElement>) => {
-    close();
-    onGetStarted(event);
-  };
-
   return (
     <header className="landing-header landing-dark sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -104,13 +97,7 @@ export function LandingHeader({ sections, getStartedHref, onGetStarted, onPreloa
           >
             {t("landing.nav.operatorLogin")}
           </Link>
-          <Link
-            to={getStartedHref}
-            className={cn(buttonVariants({ size: "sm" }))}
-            onClick={onGetStarted}
-            onMouseEnter={onPreloadGetStarted}
-            onFocus={onPreloadGetStarted}
-          >
+          <Link to={getStartedHref} className={cn(buttonVariants({ size: "sm" }))}>
             {t("landing.nav.getStarted")}
           </Link>
           <button
@@ -153,12 +140,7 @@ export function LandingHeader({ sections, getStartedHref, onGetStarted, onPreloa
           >
             {t("landing.nav.operatorLogin")}
           </Link>
-          <Link
-            to={getStartedHref}
-            className={cn(buttonVariants({ size: "lg" }), "mt-2 w-full")}
-            onClick={startFromMenu}
-            onFocus={onPreloadGetStarted}
-          >
+          <Link to={getStartedHref} className={cn(buttonVariants({ size: "lg" }), "mt-2 w-full")} onClick={() => close()}>
             {t("landing.nav.getStarted")}
           </Link>
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3">

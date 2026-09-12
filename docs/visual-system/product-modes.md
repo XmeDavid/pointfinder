@@ -28,19 +28,22 @@ Primary messages:
 - Let teams scan and solve.
 - Run the game live.
 
-## Auth / Onboarding
+## Auth
 
-Purpose: get the right person into the right post-login world.
+Purpose: get a person into the platform with the least ceremony. There is no
+onboarding step: sign-up lands on home, and the product explains itself through
+the guided tutorials and the in-game player tour.
 
 Visual direction:
 
 - Focused, calm, trusted.
 - More atmosphere than admin screens, less than marketing.
-- Clear split in action choices, but still one app.
+- One account for playing and organizing; guests still join a game with a code.
 
 Rules:
 
-- Login and join flows must clearly distinguish operator login from player join.
+- The native welcome offers Join a game and Sign in; the browser landing's
+  calls to action go to registration.
 - Avoid large amounts of explanatory copy.
 - Make error states specific and recoverable.
 - Do not make the user guess whether they are joining as a player or signing in as an operator.

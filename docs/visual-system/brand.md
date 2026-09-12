@@ -96,8 +96,8 @@ respect reduced motion and must not imply loading, sync, or directional state.
 
 Do not use the brand mark for team/base pins, a live heading indicator,
 navigation arrows, scan actions, or success/loading status. These remain domain
-icons with their existing meanings. A functional compass and onboarding compass
-illustration are not automatically branding replacements.
+icons with their existing meanings. A functional compass illustration is not
+automatically a branding replacement.
 
 ## Generated derivations
 

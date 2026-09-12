@@ -106,9 +106,6 @@ body {
   color: var(--color-foreground);
 }
 
-/* Fade the page into the app canvas; the welcome scene fades in after routing. */
-.landing-page-transitioning { opacity: 0; pointer-events: none; }
-
 /* One full-bleed hero at every width. The portrait crop follows the scouts;
    CSS scrims keep live copy readable without a separate image row. */
 .landing-hero {

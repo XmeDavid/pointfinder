@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
-import { tutorialProgressStore } from '@/test/msw/handlers/tutorials'
 import { useAuthStore } from '@/lib/auth/store'
 import { GuestGuard } from '@/lib/auth/GuestGuard'
 import { RegisterPage } from './RegisterPage'
@@ -51,7 +50,6 @@ const registered = { accessToken, user: { id: 'user-new', email: 'new@example.co
 
 beforeEach(() => {
   store.clear()
-  tutorialProgressStore.reset()
   useAuthStore.setState({ user: null, isAuthenticated: false, accessToken: null, hasHydrated: true })
   server.use(
     http.get(`/api/auth/invite/${TOKEN}`, () => HttpResponse.json({ email: 'new@example.com' })),
@@ -71,32 +69,12 @@ describe('RegisterPage', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/register')
   })
 
-  it('signs the new account in from the email link and plays the organizer story, marking it started for other devices', async () => {
-    mount(`/register/${TOKEN}`)
-    await completeRegistration()
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/welcome?play=organizer'))
-    expect(useAuthStore.getState().isAuthenticated).toBe(true)
-    expect(useAuthStore.getState().user?.id).toBe('user-new')
-    expect(tutorialProgressStore.puts().map((put) => [put.scenarioId, put.body.status])).toEqual([['introduction', 'in_progress']])
-    // Nothing marks the guided first game done or skipped.
-    expect(tutorialProgressStore.rows().map((row) => row.scenarioId)).toEqual(['introduction'])
-  })
-
-  it('skips the story for a visitor who already watched it anonymously, consuming that memory', async () => {
-    store.set('introduction.handoff.v1', JSON.stringify({ status: 'completed', at: '2026-09-08T09:00:00.000Z' }))
+  it('signs the new account in from the email link and lands on home', async () => {
     mount(`/register/${TOKEN}`)
     await completeRegistration()
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/dashboard'))
-    expect(tutorialProgressStore.puts().map((put) => put.body.status)).toEqual(['completed'])
-    expect(store.has('introduction.handoff.v1')).toBe(false)
-  })
-
-  it('still plays the story when the progress write fails, and owes it for the next sign-in', async () => {
-    server.use(http.put('/api/users/me/tutorials/introduction', () => HttpResponse.error()))
-    mount(`/register/${TOKEN}`)
-    await completeRegistration()
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/welcome?play=organizer'))
-    expect(store.get('introduction.account.user-new.v1')).toContain('"pending":true')
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+    expect(useAuthStore.getState().user?.id).toBe('user-new')
   })
 
   it('keeps the form and its error when the invite is refused, without signing anyone in', async () => {

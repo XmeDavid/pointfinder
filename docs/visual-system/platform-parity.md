@@ -48,17 +48,17 @@ hex values.
 
 ### Public / Marketing
 
-Web is the main public marketing surface. Native apps may have lightweight
-welcome/onboarding, but should not duplicate the full web landing page.
+Web is the main public marketing surface. Native apps have a lightweight
+welcome (join a game, sign in) and do not duplicate the web landing page.
 
-### Auth / Onboarding
+### Auth
 
 All platforms should clearly offer:
 
-- Player join.
-- Operator login.
+- Joining a game as a guest.
+- Signing in to, or creating, one account that can play and organize.
 
-This supports the "one app, different post-login worlds" model.
+There is no onboarding story or role choice; sign-up lands on home.
 
 ### Player Field Mode
 

@@ -13,7 +13,7 @@ export async function pushPermission(): Promise<PushPermission> {
   catch { return 'unavailable' }
 }
 
-/** Called by the settings/onboarding feature in response to a user gesture. */
+/** Called by the settings feature in response to a user gesture. */
 export async function requestPushPermission(): Promise<PushPermission> {
   if (!isNative()) return 'unavailable'
   const result = await (await import('tauri-plugin-pointfinder-push-api')).requestPermission()

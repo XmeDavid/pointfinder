@@ -35,13 +35,13 @@ afterEach(() => {
 })
 
 describe('LandingPage', () => {
-  it('keeps the account journey links the welcome world expects', () => {
+  it('sends every call to action to sign-up and keeps the footer links', () => {
     mount()
     const getStarted = screen.getAllByRole('link', { name: 'Get started' })
     expect(getStarted.length).toBeGreaterThan(0)
-    for (const link of getStarted) expect(link).toHaveAttribute('href', '/welcome')
-    expect(screen.getByRole('link', { name: 'Start free' })).toHaveAttribute('href', '/welcome?role=organizer')
-    expect(screen.getByRole('link', { name: 'Start monthly' })).toHaveAttribute('href', '/welcome?role=organizer')
+    for (const link of getStarted) expect(link).toHaveAttribute('href', '/register')
+    expect(screen.getByRole('link', { name: 'Start free' })).toHaveAttribute('href', '/register')
+    expect(screen.getByRole('link', { name: 'Start monthly' })).toHaveAttribute('href', '/register')
     expect(screen.getByTestId('landing-download-ios')).toHaveAttribute('href', 'https://apps.apple.com/app/pointfinder/id6759060734')
     expect(screen.getByTestId('landing-download-android')).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=com.prayer.pointfinder')
     expect(screen.getByRole('link', { name: 'Contact us' })).toHaveAttribute('href', expect.stringMatching(/^mailto:info@pointfinder\.pt/))
@@ -49,20 +49,10 @@ describe('LandingPage', () => {
     expect(screen.getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', '/faq')
   })
 
-  it('walks into the welcome world without a fade when motion is reduced', () => {
-    window.matchMedia = ((query: string) => ({
-      matches: query.includes('reduced-motion'),
-      media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      addListener: () => {},
-      removeListener: () => {},
-      onchange: null,
-      dispatchEvent: () => false,
-    })) as typeof window.matchMedia
+  it('goes straight to sign-up when Get started is clicked', () => {
     mount()
     fireEvent.click(screen.getAllByRole('link', { name: 'Get started' })[0])
-    expect(screen.getByTestId('location')).toHaveTextContent('/welcome')
+    expect(screen.getByTestId('location')).toHaveTextContent('/register')
   })
 
   it('opens and closes the phone menu from the keyboard and returns focus to the button', () => {
@@ -157,10 +147,10 @@ describe('LandingPage', () => {
     expect(screen.getByText('€30')).toBeInTheDocument()
     expect(screen.getByText('/ year')).toBeInTheDocument()
     expect(screen.getByText('Save €17.88 vs monthly')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Start yearly' })).toHaveAttribute('href', '/welcome?role=organizer')
+    expect(screen.getByRole('link', { name: 'Start yearly' })).toHaveAttribute('href', '/register')
     fireEvent.click(within(group).getByRole('button', { name: 'Monthly' }))
     expect(within(group).getByRole('button', { name: 'Monthly' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('€3.99')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Start monthly' })).toHaveAttribute('href', '/welcome?role=organizer')
+    expect(screen.getByRole('link', { name: 'Start monthly' })).toHaveAttribute('href', '/register')
   })
 })

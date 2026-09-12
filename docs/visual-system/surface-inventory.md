@@ -6,7 +6,7 @@ Status values: `foundation`, `in progress`, `not started`, `verified`. This inve
 |---|---|---|---|
 | Public | Landing, product explanation, FAQ/legal | tokens, buttons, editorial layout | in progress |
 | Public | Live/broadcast viewer | map, game status, loading/error | in progress |
-| Auth | Login, registration, recovery, invitations, onboarding | form primitives, banners, role choice | in progress |
+| Auth | Login, registration, recovery, invitations, native welcome | form primitives, banners | in progress |
 | Player field | Join, map/orient, scan/check-in, solve, submit | map markers, NFC prompt, sync queue, result | in progress |
 | Operator setup | Library and map-centered builder | readiness, inspector, tables, lifecycle | in progress |
 | Operator command | Live map, risk, team/base inspection | stats, activity, markers, rescue actions | in progress |

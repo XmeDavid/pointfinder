@@ -1636,7 +1636,7 @@
       "title": "PointFinder",
       "subtitle": "Explore, discover, and complete challenges with your team.",
       "joinGame": "Join a game",
-      "operatorLogin": "I'm an operator"
+      "operatorLogin": "Sign in"
     },
     "join": {
       "title": "Join your team",
@@ -2015,137 +2015,6 @@
       "rescan": "Visit the required base, then return and scan this tag again.",
       "dependencyFailed": "A previous check-in could not sync. Return and scan this tag again after resolving it.",
       "unknownRoute": "Connect to refresh the base order before checking in."
-    },
-    "onboarding": {
-      "download": {
-        "body": "Take the adventure with you. Download PointFinder on your phone, then join your game.",
-        "ios": "Download for iOS",
-        "android": "Download for Android"
-      },
-      "next": "Continue",
-      "back": "Back",
-      "replay": "Explore again",
-      "skip": "Skip introduction",
-      "finish": "Let’s go",
-      "progress": "Step {{current}} of {{total}}",
-      "preview": "Exit preview",
-      "language": "Language",
-      "introduction": "STEP INTO THE GAME",
-      "landing": "YOUR NEXT ADVENTURE",
-      "loading": "Loading illustration…",
-      "unavailable": "Illustration unavailable. You can still follow the story.",
-      "retry": "Retry image",
-      "reduced": "Reduced motion: each step stays still.",
-      "autoplay": {
-        "pause": "Pause auto-play",
-        "resume": "Resume auto-play"
-      },
-      "steps": {
-        "join": {
-          "title": "Join your team",
-          "body": "Use the invitation QR code or game code to join your team."
-        },
-        "map": {
-          "title": "Find your next base",
-          "body": "When the game starts, follow the integrated map and head to your next base together."
-        },
-        "checkin": {
-          "title": "Check in",
-          "body": "Tap the NFC tag, scan its QR code, or enter the marked area—depending on how that base is set up."
-        },
-        "challenge": {
-          "title": "Solve it together",
-          "body": "Take a photo, answer a question, or complete a task—then send your team’s submission."
-        },
-        "submit": {
-          "title": "Solve it together",
-          "body": "Take a photo, answer a question, or complete the task. Then send your team’s submission."
-        },
-        "explore": {
-          "title": "Keep exploring",
-          "body": "Follow the route as your game unfolds. New bases can appear as your team progresses."
-        },
-        "compass": {
-          "title": "The world is yours to explore",
-          "body": "One team. A shared adventure. See where PointFinder takes you."
-        }
-      },
-      "choice": {
-        "eyebrow": "WELCOME TO POINTFINDER",
-        "title": "Playing or organizing?",
-        "body": "Pick the story that fits you. You can switch at any time, and joining a game or signing in is always one tap away."
-      },
-      "roles": {
-        "participant": {
-          "label": "I’m participating",
-          "description": "Join a team, find bases and solve challenges.",
-          "short": "Participant"
-        },
-        "organizer": {
-          "label": "I’m organizing",
-          "description": "Plan a game, place bases and run it live.",
-          "short": "Organizer"
-        }
-      },
-      "changeRole": "Change role",
-      "organizerLanding": "YOUR GAME AWAITS",
-      "organizerSteps": {
-        "plan": {
-          "title": "Build your adventure",
-          "body": "Choose where and when to play, place bases on the map, and add check-in methods and challenges for your teams.",
-          "next": "Place bases"
-        },
-        "bases": {
-          "title": "Build your adventure",
-          "body": "Place bases on the map, choose their check-in method, and add the challenges teams will solve.",
-          "next": "Connect challenges"
-        },
-        "challenges": {
-          "title": "Create and connect challenges",
-          "body": "Write the tasks teams will solve, then link each one to the bases where it opens.",
-          "next": "Invite teams"
-        },
-        "teams": {
-          "title": "Invite your teams",
-          "body": "Create teams and hand out their QR codes or join codes so players can sign up.",
-          "next": "Go live"
-        },
-        "live": {
-          "title": "Run the game",
-          "body": "Once setup readiness is complete, go live and follow every team’s progress as it happens.",
-          "next": "Review results"
-        },
-        "review": {
-          "title": "Review and celebrate",
-          "body": "Review submissions, check scores and results, and celebrate with your teams."
-        },
-        "compass": {
-          "title": "Your game, your world",
-          "body": "Every base, challenge and team is yours to shape. Sign in and start building."
-        }
-      },
-      "gate": {
-        "eyebrow": "ORGANIZING A GAME",
-        "title": "Ready to organize?",
-        "body": "Create a free account to build your first game, or sign in if you already have one. You can also see how it works first.",
-        "createAccount": "Create an account",
-        "signIn": "Sign in",
-        "watchFirst": "See how it works first"
-      },
-      "account": {
-        "eyebrow": "WELCOME TO POINTFINDER",
-        "title": "Take a quick tour?",
-        "body": "Three short steps to your first adventure: build your game, invite teams and run it live.",
-        "tour": "Take a quick tour",
-        "dashboard": "Go to my dashboard",
-        "landingBody": "Every base, challenge and team is yours to shape. Your first game starts on the dashboard.",
-        "createFirstGame": "Create my first game"
-      },
-      "player": {
-        "back": "Back to your game"
-      },
-      "storyNavigation": "Story steps",
-      "goToStep": "Go to step {{current}} of {{total}}"
     },
     "tour": {
       "map": {
@@ -2671,17 +2540,6 @@
       "finish": {
         "title": "Variable done",
         "body": "Variables work anywhere in a challenge's text or answer. Keep this practice game or delete it."
-      }
-    },
-    "introduction": {
-      "title": "How PointFinder works",
-      "blurb": "The one-minute introduction: planning, bases, challenges, teams, going live and results.",
-      "watch": "Watch",
-      "watchAgain": "Watch again",
-      "status": {
-        "completed": "Watched",
-        "skipped": "Skipped",
-        "none": "Not watched yet"
       }
     }
   },

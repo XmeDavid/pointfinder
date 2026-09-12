@@ -6,7 +6,7 @@ This checklist is for AI agents and humans touching visual code.
 
 1. Identify the product mode:
    - Public / Marketing
-   - Auth / Onboarding
+   - Auth
    - Player Field
    - Operator Setup
    - Operator Command

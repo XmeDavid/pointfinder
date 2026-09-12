@@ -13,7 +13,7 @@ const heading = { en: 'Turn any place into an adventure.', pt: 'Transforma qualq
 const getStarted = { en: 'Get started', pt: 'Começar', de: 'Loslegen' } as const
 
 test.beforeEach(async ({ page }, info) => {
-  test.skip(info.project.name !== 'browser', 'The homepage is the browser build; native opens the welcome world')
+  test.skip(info.project.name !== 'browser', 'The homepage is the browser build; native opens the join screen')
   await page.emulateMedia({ reducedMotion: 'reduce' })
 })
 
@@ -64,7 +64,7 @@ test('the phone menu opens and closes from the keyboard and reaches every sectio
   await menu.getByRole('link', { name: 'Pricing' }).click()
   await expect(menu).toBeHidden()
   await expect(page.locator('#pricing')).toBeInViewport()
-  await expect(page.getByRole('link', { name: 'Start free' })).toHaveAttribute('href', '/welcome?role=organizer')
+  await expect(page.getByRole('link', { name: 'Start free' })).toHaveAttribute('href', '/register')
 
   // The theme and language live inside the menu on a phone.
   await toggle.click()
@@ -78,7 +78,7 @@ test('the phone menu opens and closes from the keyboard and reaches every sectio
   await expect(page.locator('html')).toHaveAttribute('lang', 'de')
 })
 
-test('a keyboard reaches the skip link, the sections and the welcome world on a desktop', async ({ page }) => {
+test('a keyboard reaches the skip link, the sections and sign-up on a desktop', async ({ page }) => {
   await page.goto('/')
   // The app shell renders after its async start; wait for the page before tabbing.
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -94,12 +94,12 @@ test('a keyboard reaches the skip link, the sections and the welcome world on a 
   await expect(page.locator('html')).toHaveClass(/dark/)
   await page.getByRole('link', { name: 'Get started' }).first().focus()
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/\/welcome$/)
-  await expect(page.getByTestId('onboarding-experience')).toHaveAttribute('data-step', 'choice')
+  await expect(page).toHaveURL(/\/register$/)
+  await expect(page.getByLabelText(/Email/)).toBeVisible()
 })
 
 test('reads fine when every image is blocked and no hero motion plays under reduced motion', async ({ page }) => {
-  await page.route(/\/(onboarding|landing)\/.*\.(webp|png|svg)$/, (route) => route.abort())
+  await page.route(/\/landing\/.*\.(webp|png|svg)$/, (route) => route.abort())
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   // Force lazy artwork to load too, so every failed image collapses.

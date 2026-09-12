@@ -1,7 +1,6 @@
 import { useAuth } from '@/app/player/services';
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/lib/auth/store";
-import { isPostAuthRedirectHeld } from "@/lib/auth/postAuth";
 
 /**
  * Wraps public-only routes (login, register).
@@ -13,6 +12,7 @@ import { isPostAuthRedirectHeld } from "@/lib/auth/postAuth";
 export function GuestGuard({ children }: { children: React.ReactNode }) {
   const player = useAuth();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.user?.role);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
 
   // Wait for Zustand to rehydrate from localStorage before deciding
@@ -26,9 +26,9 @@ export function GuestGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // A sign-in or registration on this very page picks its own destination once
-  // the session is up; it keeps the page mounted until then.
-  if (isAuthenticated && !isPostAuthRedirectHeld()) {
+  // A participant account has no operator home; the login page signs it back
+  // out and explains where to play, so the guard must not carry it away first.
+  if (isAuthenticated && role !== "participant") {
     return <Navigate to="/dashboard" replace />;
   }
 

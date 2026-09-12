@@ -5,8 +5,8 @@ import { isScenarioId, type AccountProgressRow, type TutorialProgress } from '@/
 /**
  * The caller's guided-tutorial progress.
  *
- * The account's `introduction` row lives in the same list but belongs to the
- * introduction feature, so it is filtered out here and the engine never sees it.
+ * Rows the engine does not know (the retired account `introduction` row still
+ * returned for older accounts) are filtered out here.
  *
  * `enabled` exists so `TourHost` can hold the request back until the operator
  * session is known; players and anonymous visitors must never call it.

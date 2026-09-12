@@ -17,7 +17,7 @@
 6. [Authentication & Authorization](#6-authentication--authorization)
 7. [Push Notifications](#7-push-notifications)
 8. [Broadcast Mode](#8-broadcast-mode)
-9. [Operator Onboarding and Tutorials](#9-operator-onboarding-and-tutorials)
+9. [Guided Tutorials](#9-guided-tutorials)
 10. [Plans, Workspaces and Clubs](#10-plans-workspaces-and-clubs)
 11. [Clubs and Invoicing](#11-clubs-and-invoicing)
 
@@ -1309,7 +1309,7 @@ A separate WebSocket client connects to `/ws` with an `X-Broadcast-Code` header 
 
 ---
 
-## 9. Operator Onboarding and Tutorials
+## 9. Guided Tutorials
 
 Guided tutorials teach an operator by doing, on their own real game. The engine
 never creates or changes anything: it spotlights the next control, explains what
@@ -1355,30 +1355,13 @@ for `first-game`. "Skip for now" writes a `skipped` row and hides the card
 permanently; the scenario stays available from the tutorials library at
 `/tutorials`. The card is never shown in an organization workspace.
 
-### The introduction is an account row, not a tutorial
+### The retired `introduction` row
 
-"How PointFinder works" is the one-minute organizer story in the welcome
-world. It has no steps and no practice game, but its status is per account so
-it follows the operator across devices: it is stored as the `introduction` row
-of the same table and allowlist, and the tutorial engine never sees it.
-
-- Registration signs the new account in and writes `in_progress` before the
-  story plays; finishing writes `completed`, skipping writes `skipped`. A
-  sign-in on any device reads the row: `completed` or `skipped` goes to the
-  dashboard as usual; no row or `in_progress` gets the gate (Take a quick tour
-  / Go to my dashboard), never the story by force. Declining writes `skipped`,
-  so an interrupted introduction resumes at the next sign-in but not at every
-  future one. The story stays replayable from the tutorials library.
-- A visitor who watched or skipped the organizer story anonymously carries that
-  into the next account created or signed in on the same device, once: the
-  handoff is claimed before any request and then cleared, and an existing
-  account row always wins over it.
-- The device keeps a per-user fallback of the last status it wrote. A failed
-  write is owed and retried at the next sign-in, an owed decision outranks a
-  stale server read, and only an unreadable server decides routing from it.
-- The story's closing "Create my first game" starts the guided `first-game`
-  tutorial on the dashboard; nothing is created until the operator chooses
-  that, and watching the introduction never marks `first-game` done or skipped.
+The illustrated "How PointFinder works" introduction and its account gate were
+removed on 2026-09-12: registration and sign-in land on home, and nothing reads
+or writes the row any more. `introduction` stays in the scenario allowlist only
+so rows written by older accounts keep validating; the web filters it out of the
+tutorial list and never renders it.
 
 ### Restart, not delete
 

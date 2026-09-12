@@ -1636,7 +1636,7 @@
       "title": "PointFinder",
       "subtitle": "Erkunde, entdecke und löse Aufgaben mit deinem Team.",
       "joinGame": "Einem Spiel beitreten",
-      "operatorLogin": "Ich bin Operator"
+      "operatorLogin": "Anmelden"
     },
     "join": {
       "title": "Tritt deinem Team bei",
@@ -2015,137 +2015,6 @@
       "rescan": "Besuche die erforderliche Basis. Kehre dann zurück und scanne diesen Tag erneut.",
       "dependencyFailed": "Ein vorheriger Check-in konnte nicht synchronisiert werden. Behebe das Problem, kehre dann zurück und scanne diesen Tag erneut.",
       "unknownRoute": "Verbinde dich mit dem Internet, um die Reihenfolge der Basen vor dem Check-in zu aktualisieren."
-    },
-    "onboarding": {
-      "download": {
-        "body": "Nimm das Abenteuer mit. Lade PointFinder auf dein Smartphone und tritt deinem Spiel bei.",
-        "ios": "Für iOS herunterladen",
-        "android": "Für Android herunterladen"
-      },
-      "next": "Weiter",
-      "back": "Zurück",
-      "replay": "Erneut entdecken",
-      "skip": "Einführung überspringen",
-      "finish": "Los geht’s",
-      "progress": "Schritt {{current}} von {{total}}",
-      "preview": "Vorschau verlassen",
-      "language": "Sprache",
-      "introduction": "STEIG INS SPIEL EIN",
-      "landing": "DEIN NÄCHSTES ABENTEUER",
-      "loading": "Illustration wird geladen…",
-      "unavailable": "Illustration nicht verfügbar. Du kannst der Geschichte trotzdem folgen.",
-      "retry": "Bild erneut laden",
-      "reduced": "Reduzierte Bewegung: Jeder Schritt bleibt unbewegt.",
-      "autoplay": {
-        "pause": "Autoplay pausieren",
-        "resume": "Autoplay fortsetzen"
-      },
-      "steps": {
-        "join": {
-          "title": "Schließe dich deinem Team an",
-          "body": "Scanne den QR-Code der Einladung oder gib den Spielcode ein, um deinem Team beizutreten."
-        },
-        "map": {
-          "title": "Finde die nächste Station",
-          "body": "Sobald das Spiel beginnt, folgt ihr der integrierten Karte gemeinsam zur nächsten Station."
-        },
-        "checkin": {
-          "title": "Melde dich an der Station an",
-          "body": "Halte dein Handy an den NFC-Tag, scanne den QR-Code oder betrete den markierten Bereich – je nach Einrichtung der Station."
-        },
-        "challenge": {
-          "title": "Löst die Aufgabe gemeinsam",
-          "body": "Macht ein Foto, beantwortet eine Frage oder löst eine Aufgabe und sendet die Antwort eures Teams ab."
-        },
-        "submit": {
-          "title": "Löst die Aufgabe gemeinsam",
-          "body": "Macht ein Foto, beantwortet eine Frage oder erledigt die Aufgabe. Reicht dann eure Teamantwort ein."
-        },
-        "explore": {
-          "title": "Entdecke immer mehr",
-          "body": "Folgt dem Weg durch euer Spiel. Mit eurem Fortschritt können neue Stationen erscheinen."
-        },
-        "compass": {
-          "title": "Eine Welt wartet auf euch",
-          "body": "Ein Team. Ein gemeinsames Abenteuer. Entdeckt, wohin PointFinder euch führt."
-        }
-      },
-      "choice": {
-        "eyebrow": "WILLKOMMEN BEI POINTFINDER",
-        "title": "Mitspielen oder organisieren?",
-        "body": "Wähle die Geschichte, die zu dir passt. Du kannst jederzeit wechseln, und Beitreten oder Anmelden ist immer nur einen Tipp entfernt."
-      },
-      "roles": {
-        "participant": {
-          "label": "Ich spiele mit",
-          "description": "Tritt einem Team bei, finde Stationen und löse Aufgaben.",
-          "short": "Mitspieler:in"
-        },
-        "organizer": {
-          "label": "Ich organisiere",
-          "description": "Plane ein Spiel, platziere Stationen und leite es live.",
-          "short": "Organisator:in"
-        }
-      },
-      "changeRole": "Rolle wechseln",
-      "organizerLanding": "DEIN SPIEL WARTET",
-      "organizerSteps": {
-        "plan": {
-          "title": "Gestalte dein Abenteuer",
-          "body": "Entscheide, wo und wann gespielt wird, platziere Stationen auf der Karte und füge Check-in-Methoden und Aufgaben für deine Teams hinzu.",
-          "next": "Stationen platzieren"
-        },
-        "bases": {
-          "title": "Gestalte dein Abenteuer",
-          "body": "Platziere Stationen auf der Karte, wähle die Check-in-Methode und füge Aufgaben für die Teams hinzu.",
-          "next": "Aufgaben verknüpfen"
-        },
-        "challenges": {
-          "title": "Erstelle und verknüpfe Aufgaben",
-          "body": "Schreibe die Aufgaben, die Teams lösen sollen, und verknüpfe jede mit den Stationen, an denen sie erscheint.",
-          "next": "Teams einladen"
-        },
-        "teams": {
-          "title": "Lade deine Teams ein",
-          "body": "Erstelle Teams und verteile ihre QR-Codes oder Beitrittscodes, damit sich alle anmelden können.",
-          "next": "Live gehen"
-        },
-        "live": {
-          "title": "Leite das Spiel",
-          "body": "Sobald die Vorbereitung abgeschlossen ist, gehst du live und verfolgst den Fortschritt jedes Teams in Echtzeit.",
-          "next": "Ergebnisse ansehen"
-        },
-        "review": {
-          "title": "Auswerten und feiern",
-          "body": "Sieh dir die Einreichungen an, prüfe Punkte und Ergebnisse und feiere mit deinen Teams."
-        },
-        "compass": {
-          "title": "Dein Spiel, deine Welt",
-          "body": "Jede Station, jede Aufgabe und jedes Team gestaltest du selbst. Melde dich an und leg los."
-        }
-      },
-      "gate": {
-        "eyebrow": "EIN SPIEL ORGANISIEREN",
-        "title": "Bereit zum Organisieren?",
-        "body": "Erstelle ein kostenloses Konto für dein erstes Spiel oder melde dich an, wenn du schon eines hast. Du kannst dir auch zuerst ansehen, wie es funktioniert.",
-        "createAccount": "Konto erstellen",
-        "signIn": "Anmelden",
-        "watchFirst": "Zuerst ansehen, wie es funktioniert"
-      },
-      "account": {
-        "eyebrow": "WILLKOMMEN BEI POINTFINDER",
-        "title": "Kurze Tour gefällig?",
-        "body": "Drei kurze Schritte zu deinem ersten Abenteuer: Spiel gestalten, Teams einladen und das Spiel live begleiten.",
-        "tour": "Kurze Tour starten",
-        "dashboard": "Zu meinem Dashboard",
-        "landingBody": "Jede Station, jede Aufgabe und jedes Team gestaltest du selbst. Dein erstes Spiel beginnt im Dashboard.",
-        "createFirstGame": "Mein erstes Spiel erstellen"
-      },
-      "player": {
-        "back": "Zurück zu deinem Spiel"
-      },
-      "storyNavigation": "Schritte der Geschichte",
-      "goToStep": "Zu Schritt {{current}} von {{total}}"
     },
     "tour": {
       "map": {
@@ -2671,17 +2540,6 @@
       "finish": {
         "title": "Variable fertig",
         "body": "Variablen funktionieren überall im Text oder in der Antwort einer Challenge. Behalte dieses Übungsspiel oder lösche es."
-      }
-    },
-    "introduction": {
-      "title": "So funktioniert PointFinder",
-      "blurb": "Die einminütige Einführung: Planung, Stationen, Aufgaben, Teams, Live-Spiel und Ergebnisse.",
-      "watch": "Ansehen",
-      "watchAgain": "Noch einmal ansehen",
-      "status": {
-        "completed": "Angesehen",
-        "skipped": "Übersprungen",
-        "none": "Noch nicht angesehen"
       }
     }
   },

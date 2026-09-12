@@ -13,7 +13,6 @@ import { useTourStore } from './store'
 import { scenarioList } from './scenarios'
 import { ScenarioCard } from './ScenarioCard'
 import { activePracticeGame, isPracticeGame, readPracticeCentre } from './practiceGame'
-import { IntroductionCard } from '@/features/introduction/IntroductionCard'
 import type { Scenario, ScenarioId, TutorialProgress } from './types'
 
 const PRACTICE_NAME_KEY: Partial<Record<ScenarioId, string>> = {
@@ -164,9 +163,6 @@ export function TutorialsPage() {
           <h1 className="text-xl font-semibold text-foreground">{t('tutorials.library.title')}</h1>
           <p className="text-sm text-muted-foreground">{t('tutorials.library.subtitle')}</p>
         </header>
-
-        {/* The introduction is not a guided scenario: it has no steps and no practice game. */}
-        <IntroductionCard />
 
         {busy && (
           <p className="text-sm text-muted-foreground" role="status" data-testid="tutorials-practice-busy">

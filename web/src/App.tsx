@@ -114,8 +114,6 @@ const CreateOrgPage = lazy(() =>
   })),
 );
 
-const Welcome = lazy(() => import("@/features/auth/Welcome"));
-
 const AdminPanelLazy = lazy(() =>
   import("@/features/admin/AdminPanel").then((m) => ({
     default: m.AdminPanel,
@@ -220,16 +218,8 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
     path: "/",
     element: <Home />,
   },
-  {
-    // The welcome world: role choice and account gate for visitors, the
-    // organizer story for operators, the participant story for players.
-    path: "/welcome",
-    element: (
-      <Suspense fallback={<PageSpinner />}>
-        <Welcome />
-      </Suspense>
-    ),
-  },
+  // The illustrated welcome world is gone; old links go straight to sign-up.
+  { path: "/welcome", element: <Navigate to="/register" replace /> },
   {
     path: "/login",
     element: (

@@ -9,8 +9,6 @@ import { FormLabel } from "@/components/ui/form-label";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/hooks/useAuth";
-import { holdPostAuthRedirect, releasePostAuthRedirect } from "@/lib/auth/postAuth";
-import { DASHBOARD_ROUTE, resolvePostRegistrationRoute } from "@/features/introduction/progress";
 import { useTranslation } from "react-i18next";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import axios from "@/platform/axios";
@@ -69,27 +67,14 @@ export function RegisterPage() {
       return;
     }
     setLoading(true);
-    // Registration signs the account in; the guest guard waits while the
-    // introduction is marked started, then the organizer story plays. Nothing
-    // asks for a second sign-in, and the email link works in any tab.
-    holdPostAuthRedirect();
+    // Registration signs the account in and lands on home. Nothing asks for a
+    // second sign-in, and the email link works in any tab.
     try {
       await register(token!, trimmedName, effectiveEmail, password);
-      const userId = useAuthStore.getState().user?.id;
-      let destination: string | null = DASHBOARD_ROUTE;
-      if (userId) {
-        try {
-          destination = await resolvePostRegistrationRoute(userId);
-        } catch {
-          destination = DASHBOARD_ROUTE;
-        }
-      }
-      // Null means the session changed underneath us; whoever owns it now decides.
-      if (destination) navigate(destination, { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(getApiErrorMessage(err, t("auth.registrationFailed")));
     } finally {
-      releasePostAuthRedirect();
       setLoading(false);
     }
   };

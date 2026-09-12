@@ -1,8 +1,8 @@
 import { Check, Gift, Smartphone, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { MouseEvent, ReactNode } from "react";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Fragment, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +17,8 @@ import { LandingHeader } from "./landing/LandingHeader";
 
 const CONTACT_HREF = contactHref();
 
-const WELCOME_STILL = "/onboarding/stories/participant-map.webp";
-const WELCOME_ROUTE = "/welcome";
-const ORGANIZER_GATE_ROUTE = "/welcome?role=organizer";
+/** Every call to action creates an account; the header keeps the sign-in link. */
+const REGISTER_ROUTE = "/register";
 
 // Mascot artwork is owned by artifacts/landing-mascot-v2; the original scenery
 // and workspace remain in artifacts/landing-illustrated-v1. Imported as
@@ -42,85 +41,7 @@ const CARTO_ATTRIBUTION_URL = "https://carto.com/attributions";
 
 export function LandingPage() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<BillingCycleOption>("monthly");
-  const [isWelcomeTransitionActive, setIsWelcomeTransitionActive] = useState(false);
-  const transitionTimer = useRef<number | null>(null);
-  const preloadedRef = useRef(false);
-
-  useEffect(
-    () => () => {
-      if (transitionTimer.current !== null) {
-        window.clearTimeout(transitionTimer.current);
-      }
-    },
-    [],
-  );
-
-  // Warm the welcome route and first still before fading into the scene.
-  const preloadWelcome = useCallback(() => {
-    if (preloadedRef.current || typeof window === "undefined") {
-      return;
-    }
-    preloadedRef.current = true;
-    void import("@/features/introduction/WelcomePage");
-    const img = new Image();
-    img.src = WELCOME_STILL;
-  }, []);
-
-  // Preload on idle even without hover.
-  useEffect(() => {
-    const idle = window.setTimeout(preloadWelcome, 1500);
-    return () => window.clearTimeout(idle);
-  }, [preloadWelcome]);
-
-  // "Get started" fades into the welcome world, where the visitor picks a role
-  // before anyone mentions an account. Pricing goes straight to the organizer's
-  // account choice.
-  const startWelcomeTransition = useCallback(
-    (to: string, event?: MouseEvent<HTMLElement>) => {
-      if (
-        event &&
-        (event.defaultPrevented ||
-          event.button !== 0 ||
-          event.metaKey ||
-          event.altKey ||
-          event.ctrlKey ||
-          event.shiftKey)
-      ) {
-        return;
-      }
-
-      event?.preventDefault();
-      if (isWelcomeTransitionActive) {
-        return;
-      }
-
-      const shouldReduceMotion =
-        typeof window !== "undefined" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (shouldReduceMotion) {
-        navigate(to);
-        return;
-      }
-
-      preloadWelcome();
-      setIsWelcomeTransitionActive(true);
-      transitionTimer.current = window.setTimeout(() => {
-        navigate(to);
-      }, 220);
-    },
-    [isWelcomeTransitionActive, navigate, preloadWelcome],
-  );
-  const startFromHero = useCallback(
-    (event?: MouseEvent<HTMLElement>) => startWelcomeTransition(WELCOME_ROUTE, event),
-    [startWelcomeTransition],
-  );
-  const startFromPricing = useCallback(
-    (event?: MouseEvent<HTMLElement>) => startWelcomeTransition(ORGANIZER_GATE_ROUTE, event),
-    [startWelcomeTransition],
-  );
 
   const sections = [
     { id: "how-it-works", label: t("landing.nav.howItWorks") },
@@ -157,24 +78,13 @@ export function LandingPage() {
   ];
 
   const getStartedLink = (className?: string) => (
-    <Link
-      to={WELCOME_ROUTE}
-      className={cn(buttonVariants({ size: "lg" }), "font-semibold", className)}
-      onClick={startFromHero}
-      onMouseEnter={preloadWelcome}
-      onFocus={preloadWelcome}
-    >
+    <Link to={REGISTER_ROUTE} className={cn(buttonVariants({ size: "lg" }), "font-semibold", className)}>
       {t("landing.nav.getStarted")}
     </Link>
   );
 
   return (
-    <div
-      className={cn(
-        "landing-page font-ui min-h-screen bg-background text-foreground",
-        isWelcomeTransitionActive && "landing-page-transitioning",
-      )}
-    >
+    <div className="landing-page font-ui min-h-screen bg-background text-foreground">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
@@ -182,12 +92,7 @@ export function LandingPage() {
         {t("landing.nav.skipToContent")}
       </a>
 
-      <LandingHeader
-        sections={sections}
-        getStartedHref={WELCOME_ROUTE}
-        onGetStarted={startFromHero}
-        onPreloadGetStarted={preloadWelcome}
-      />
+      <LandingHeader sections={sections} getStartedHref={REGISTER_ROUTE} />
 
       <main id="main" tabIndex={-1} className="focus:outline-none">
         {/* 1. Full-bleed forest hero: live copy on the dark left, the whole scene on the right. */}
@@ -316,8 +221,7 @@ export function LandingPage() {
                 suffix=""
                 features={freeFeatures}
                 cta={t("landing.pricing.startFree")}
-                href={ORGANIZER_GATE_ROUTE}
-                onStartClick={startFromPricing}
+                href={REGISTER_ROUTE}
               />
               <PricingCard
                 icon={Smartphone}
@@ -328,8 +232,7 @@ export function LandingPage() {
                 savings={yearly ? t("landing.pricing.yearlySavings") : t("landing.pricing.yearlyOfferSavings")}
                 features={yearly ? annualFeatures : monthlyFeatures}
                 cta={yearly ? t("landing.pricing.startYearly") : t("landing.pricing.startPersonal")}
-                href={ORGANIZER_GATE_ROUTE}
-                onStartClick={startFromPricing}
+                href={REGISTER_ROUTE}
                 highlighted
                 headerAction={
                   <BillingCycleToggle
@@ -472,7 +375,6 @@ type PricingCardProps = {
   highlighted?: boolean;
   external?: boolean;
   headerAction?: ReactNode;
-  onStartClick?: (event: MouseEvent<HTMLElement>) => void;
 };
 
 function PricingCard({
@@ -488,7 +390,6 @@ function PricingCard({
   highlighted,
   external,
   headerAction,
-  onStartClick,
 }: PricingCardProps) {
   return (
     <article
@@ -527,11 +428,7 @@ function PricingCard({
               {cta}
             </a>
           ) : (
-            <Link
-              to={href}
-              className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}
-              onClick={onStartClick}
-            >
+            <Link to={href} className={cn(buttonVariants({ variant: highlighted ? "default" : "outline" }), "w-full")}>
               {cta}
             </Link>
           )}

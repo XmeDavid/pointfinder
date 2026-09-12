@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store'
 import { GuestGuard } from './GuestGuard'
-import { holdPostAuthRedirect, releasePostAuthRedirect } from './postAuth'
 
 const player = vi.hoisted(() => ({ kind: 'anonymous' as string }))
 vi.mock('@/app/player/services', () => ({ useAuth: () => player }))
@@ -28,7 +27,6 @@ beforeEach(() => {
   useAuthStore.setState({ user: null, isAuthenticated: false, accessToken: null, hasHydrated: true })
 })
 afterEach(() => {
-  releasePostAuthRedirect()
   useAuthStore.setState({ user: null, isAuthenticated: false, accessToken: null })
 })
 
@@ -45,9 +43,8 @@ describe('GuestGuard', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/dashboard')
   })
 
-  it('keeps the page mounted while a sign-in on it is still choosing where to land', () => {
-    holdPostAuthRedirect()
-    useAuthStore.setState({ user: OPERATOR, isAuthenticated: true })
+  it('leaves a participant account on the page for the sign-in to refuse', () => {
+    useAuthStore.setState({ user: { ...OPERATOR, role: 'participant' }, isAuthenticated: true })
     mount()
     expect(screen.getByTestId('page')).toBeInTheDocument()
     expect(screen.getByTestId('location')).toHaveTextContent('/login')

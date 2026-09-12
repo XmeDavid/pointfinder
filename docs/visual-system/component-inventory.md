@@ -1,65 +1,18 @@
 # Component Inventory
 
-Component: OnboardingExperience / StoryIllustration
+Component: Welcome (native anonymous home)
 Status: canonical
-Location: `web/src/components/onboarding/OnboardingExperience.tsx`, `StoryIllustration.tsx`
-Modes: Auth / Onboarding. `/welcome` in browser and native; also the native
-anonymous home. Anonymous visitors choose participant or organizer; signed-in
-operators and joined players retain their own entry and exit actions.
-States: role choice; organizer account/tour gate; four participant and three organizer illustrated chapters; landing; Back, Next, Skip, replay and role changes; tappable progress
-dots; horizontal swipe (vertical scroll/pinch retained); keyboard focus moves to
-the new heading; image loading, failed image with retry, reduced motion,
-preferences unavailable, late preference reads, EN/PT/DE, light/dark, safe areas,
-small phones and landscape. Long copy can scroll vertically rather than overlap art.
-
-Transparent diorama art blends directly into the theme canvas, with no image card,
-frame or tinted backdrop. It occupies a separate region above copy on phones,
-beside it on larger screens; use contain to keep every subject intact.
-Controls never overlay character faces. Use canonical buttons and semantic tokens.
-Images are decorative; all instructional text and navigation are localized DOM.
-There is no WebGL import, autoplay, sensor use or image-dependent navigation gate.
-Only a brief CSS entrance transition animates, disabled for reduced motion.
-Eight generated WebP scenes live in `web/public/onboarding/stories/` and are bundled
-with Tauri for offline use. Source images/prompts and retired public 3D assets are
-preserved in `artifacts/onboarding-stories-v1/`; Blender work remains available.
-
-Participant: join → map → checkin → challenge. Organizer: plan (including bases and
-challenges) → teams → live. The final landing retains the `compass` state name for
-compatibility, with the last illustration. The welcome choice reuses the exploring
-scene; the organizer gate and merged planning chapter use the bases scene. Dots navigate chapters only;
-landing actions always require an explicit click. Choosing a role never changes
-authentication, routes, permissions or game state.
-
-Existing persistence remains: anonymous completion/Skip stores `{ version: 2, role }`
-in the platform v2 preference; choosing alone stores nothing. A late read cannot
-undo interaction; stalled reads unblock after 1.2 s. Existing completed visitors
-retain their landing. Anonymous organizer completion still hands off to the next
-registration/sign-in. Operator completion/skip uses the account `introduction`
-progress row and its existing retry behavior. First-game handoff creates nothing
-by itself. Joined players retain Back to your game. Native participants get `/join`;
-browser participants get store download links; organizers get account actions or
-their dashboard. Help and Tutorials retain replay entry points.
-
-Test IDs: existing role, gate, tour, landing, dashboard, player-back, back/next/skip/
-replay IDs remain. `onboarding-dot-1`–`4` are new. `onboarding-scene` now identifies
-the image region (`data-state` loading/ready/error); `onboarding-autoplay` is retired.
-Preview: `/dev/visual-system?onboarding=choice`, `?onboarding=gate`, or
-`?onboarding=1`–`5` for participants or `1`–`4` for organizers (chapters and landing); `&role=organizer`,
-`&mode=operator|player` retain their meanings. Previews never persist completion.
-Block `/onboarding/stories/*` to inspect image recovery.
-
-Component: IntroductionCard
-Status: canonical
-Location: `web/src/features/introduction/IntroductionCard.tsx`
-Modes: Operator / Tutorials library
-States: not watched yet, watched, skipped (badge hidden while progress is
-loading or failed; the Watch button always works), Watch / Watch again.
-Notes: "How PointFinder works" leads the tutorials library and replays the
-organizer story at `/welcome?play=organizer`. It is the account's
-`introduction` row, shared with the guided tutorials' cache entry but never a
-scenario card, a practice game or a first-game decision. Test ids:
-`tutorial-introduction-card`, `tutorial-introduction-status`,
-`tutorial-introduction-watch`.
+Location: `web/src/features/auth/Welcome.tsx`
+Modes: Auth. The native shell's home for a visitor with no session: brand mark,
+Join a game (`/join`) and Sign in (`/login`). The browser home is the public
+landing page, whose every call to action goes to `/register`.
+Notes: The illustrated welcome world, its role choice, organizer gate, story
+chapters and the account `introduction` row were retired on 2026-09-12: people
+sign up, land on home, and learn the product from the guided tutorials and the
+in-game player tour. `/welcome` redirects to `/register` for old links. The
+story stills' sources stay in `artifacts/onboarding-stories-v1/` for a possible
+"How it works" section of the landing page. Test ids: `welcome-join`,
+`welcome-sign-in`.
 
 Component: IntroductionPrompt
 Status: canonical
@@ -69,9 +22,8 @@ States: offered once after joining (hidden when the participant story was
 already watched on the device, after Not now, after opening, or when
 preferences cannot be read).
 Notes: A SurfacePanel under the map header; it never blocks the map, a pending
-tag or a queued action. Opens `/welcome?play=participant`, whose landing and
-chapters lead back to the game. Settings keeps the story under Help
-(`settings-how-it-works`). Test ids: `player-intro-prompt`,
+tag or a queued action. Opening it starts the in-game player tour on the map;
+Settings keeps the same tour under Help (`settings-how-it-works`). Test ids: `player-intro-prompt`,
 `player-intro-prompt-open`, `player-intro-prompt-dismiss`.
 
 Component: DocumentsScreen / DocumentScreen
@@ -138,21 +90,6 @@ pins, headings, scan actions or loading/sync state; functional compass and map
 icons keep their meanings. Emits no ids, titles or descriptions. Storybook
 `Brand/BrandMark`; harness section “Brand mark, lockup, tile and small sizes”.
 See `brand.md` for placement rules and the export pipeline.
-
-Component: WelcomeCompass
-Status: canonical
-Location: `web/src/components/compass/WelcomeCompass.tsx`
-Modes: Auth / Onboarding
-States: native magnetic heading and physical tilt, spring-back touch drag, slow
-idle turn (browser / unavailable / stale heading), background paused, reduced
-motion static, light/dark, small phones. Decorative and hidden from assistive
-technology; its cardinal letters are artwork, not navigation or player data.
-Notes: Ports the legacy native rose geometry using existing semantic colors.
-The scoped perspective and sonar rings belong to this onboarding illustration.
-Sensors use `web/src/platform/orientation.ts`; no sensor/location permission
-prompt or network access is introduced. Native sensors stop on page exit,
-background and reduced motion. Vertical touch scrolling remains available.
-Preview: `/dev/visual-system`, animated and static side by side.
 
 Seed inventory for the first web visual-system remediation slice. This is not a
 full audit; it records the canonical foundation added before larger refactors.
@@ -508,7 +445,7 @@ Notes: Permissions, invitations, removal confirmation, and membership APIs remai
 Component: QrScannerOverlay
 Status: canonical
 Location: `web/src/features/player/components/QrScannerOverlay.tsx`
-Modes: Auth / Onboarding, Player Field
+Modes: Auth, Player Field
 States: scanning, cancel, join caption, base check-in caption
 Notes: Tauri windowed-camera chrome with a safe-area-aware Back action and transparent scan target. The caller supplies `caption` and an optional `testId`; the default test id stays `player-qr-scanner` and the Back action keeps `player-join-scan-back-btn`. Camera permission and scanner lifecycle remain in the platform boundary.
 
@@ -807,9 +744,8 @@ Page structure and palette:
   `web/public/landing/illustrated/`. The workspace screenshot shows a fictional
   game in Costa de Lavos, Portugal, and carries an OpenStreetMap / CARTO
   attribution caption (test id `landing-map-attribution`).
-- Get started keeps the 220 ms fade into `/welcome` (immediate under reduced
-  motion, modified clicks untouched); pricing goes to `/welcome?role=organizer`;
-  the club card, login, store, FAQ and privacy routes are unchanged.
+- Get started and the free/personal pricing cards are plain links to
+  `/register`; the club card, login, store, FAQ and privacy routes are unchanged.
 - Coverage: `web/src/features/public/LandingPage.test.tsx` and
   `web/e2e/homepage.spec.ts` (phone menu from the keyboard, three languages,
   both themes, 320–1600 px without horizontal overflow, reduced motion, images

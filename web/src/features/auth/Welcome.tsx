@@ -3,16 +3,9 @@ import { Link } from 'react-router-dom'
 import { buttonVariants, cn } from '@/components'
 import { BrandMark } from '@/components/brand'
 import { Screen } from '@/features/player/components/Screen'
-import { lazy, Suspense } from 'react'
 
-const WelcomePage = lazy(() => import('@/features/introduction/WelcomePage').then((m) => ({ default: m.WelcomePage })))
-
-/** The native home for anonymous visitors: the same welcome world `/welcome` serves everywhere. */
+/** The native home for anonymous visitors: join a game, or sign in to an account. */
 export default function Welcome() {
-  return <Suspense fallback={<WelcomeLoading />}><WelcomePage /></Suspense>
-}
-
-export function WelcomeLoading() {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   return (
     <Screen className="justify-center">
@@ -23,8 +16,8 @@ export function WelcomeLoading() {
           <p className="mt-2 max-w-[34ch] text-muted-foreground">{t('welcome.subtitle')}</p>
         </div>
         <div className="flex w-full max-w-sm flex-col gap-3">
-          <Link to="/join" className={cn(buttonVariants({ size: 'lg' }), 'text-base')}>{t('welcome.joinGame')}</Link>
-          <Link to="/login" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'text-base')}>{t('welcome.operatorLogin')}</Link>
+          <Link to="/join" className={cn(buttonVariants({ size: 'lg' }), 'text-base')} data-testid="welcome-join">{t('welcome.joinGame')}</Link>
+          <Link to="/login" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'text-base')} data-testid="welcome-sign-in">{t('welcome.operatorLogin')}</Link>
         </div>
       </div>
     </Screen>
