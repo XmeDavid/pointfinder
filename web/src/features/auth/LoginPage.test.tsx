@@ -28,7 +28,7 @@ function mount() {
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
-          <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
+          <Route path="/login" element={<GuestGuard allowParticipant><LoginPage /></GuestGuard>} />
           <Route path="*" element={null} />
         </Routes>
         <Location />
@@ -55,6 +55,14 @@ describe('LoginPage', () => {
     server.use(http.post('/api/auth/login', () => HttpResponse.json({ accessToken, user: { id: 'user-2', email: 'ana@example.com', name: 'Ana', role: 'participant', createdAt: '2026-01-01T00:00:00Z' } })))
     mount()
     await signIn()
+    expect(await screen.findByText(/This is a player account/)).toBeInTheDocument()
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(screen.getByTestId('location')).toHaveTextContent('/login')
+  })
+
+  it('closes a participant session that arrives on the page and explains where to play', async () => {
+    useAuthStore.setState({ user: { id: 'user-2', email: 'ana@example.com', name: 'Ana', role: 'participant', createdAt: '2026-01-01T00:00:00Z' }, isAuthenticated: true, accessToken })
+    mount()
     expect(await screen.findByText(/This is a player account/)).toBeInTheDocument()
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(screen.getByTestId('location')).toHaveTextContent('/login')

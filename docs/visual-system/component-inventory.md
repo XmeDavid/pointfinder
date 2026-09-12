@@ -18,9 +18,8 @@ Component: IntroductionPrompt
 Status: canonical
 Location: `web/src/features/player/components/IntroductionPrompt.tsx`
 Modes: Player / Map
-States: offered once after joining (hidden when the participant story was
-already watched on the device, after Not now, after opening, or when
-preferences cannot be read).
+States: offered once after joining (hidden after Not now, after opening, or
+when preferences cannot be read).
 Notes: A SurfacePanel under the map header; it never blocks the map, a pending
 tag or a queued action. Opening it starts the in-game player tour on the map;
 Settings keeps the same tour under Help (`settings-how-it-works`). Test ids: `player-intro-prompt`,

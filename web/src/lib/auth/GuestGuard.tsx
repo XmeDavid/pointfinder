@@ -9,7 +9,7 @@ import { useAuthStore } from "@/lib/auth/store";
  * but isAuthenticated persisted in localStorage (plus the HttpOnly refresh
  * cookie) is enough to know the user has an active session.
  */
-export function GuestGuard({ children }: { children: React.ReactNode }) {
+export function GuestGuard({ children, allowParticipant = false }: { children: React.ReactNode; allowParticipant?: boolean }) {
   const player = useAuth();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const role = useAuthStore((s) => s.user?.role);
@@ -26,9 +26,10 @@ export function GuestGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // A participant account has no operator home; the login page signs it back
-  // out and explains where to play, so the guard must not carry it away first.
-  if (isAuthenticated && role !== "participant") {
+  // A participant account has no operator home. Only the login page handles
+  // one (it signs the session out and explains where to play), so only there
+  // does the guard leave it alone instead of carrying it to the dashboard.
+  if (isAuthenticated && !(allowParticipant && role === "participant")) {
     return <Navigate to="/dashboard" replace />;
   }
 

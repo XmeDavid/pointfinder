@@ -10,11 +10,11 @@ vi.mock('@/app/player/services', () => ({ useAuth: () => player }))
 const OPERATOR = { id: 'user-1', email: 'test@example.com', name: 'Test Operator', role: 'operator' as const, createdAt: '2026-01-01T00:00:00.000Z' }
 
 function Location() { return <span data-testid="location">{useLocation().pathname}</span> }
-function mount() {
+function mount(allowParticipant = false) {
   return render(
     <MemoryRouter initialEntries={['/login']}>
       <Routes>
-        <Route path="/login" element={<GuestGuard><div data-testid="page">login</div></GuestGuard>} />
+        <Route path="/login" element={<GuestGuard allowParticipant={allowParticipant}><div data-testid="page">login</div></GuestGuard>} />
         <Route path="*" element={null} />
       </Routes>
       <Location />
@@ -43,11 +43,18 @@ describe('GuestGuard', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/dashboard')
   })
 
-  it('leaves a participant account on the page for the sign-in to refuse', () => {
+  it('leaves a participant account on the login page for the sign-in to refuse', () => {
     useAuthStore.setState({ user: { ...OPERATOR, role: 'participant' }, isAuthenticated: true })
-    mount()
+    mount(true)
     expect(screen.getByTestId('page')).toBeInTheDocument()
     expect(screen.getByTestId('location')).toHaveTextContent('/login')
+  })
+
+  it('still sends a participant account away from the other guest pages', () => {
+    useAuthStore.setState({ user: { ...OPERATOR, role: 'participant' }, isAuthenticated: true })
+    mount()
+    expect(screen.queryByTestId('page')).not.toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent('/dashboard')
   })
 
   it('sends a joined player home', () => {

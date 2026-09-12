@@ -20,8 +20,10 @@ contains the selected PNGs with alpha; `assets.json` records final WebP sizes.
 The first diorama outputs painted checkerboards. A separate background-removal
 edit produced actual alpha; those opaque intermediates are not shipped.
 
-Shipping assets: `web/public/onboarding/stories/*.webp` (paths relative to the
-repository root). Encoding preserves alpha. Instructional text remains in the UI.
+The WebP scenes shipped as `web/public/onboarding/stories/*.webp` until the
+onboarding world was removed on 2026-09-12; this folder is now the only copy
+in the repository, kept for a possible "How it works" section on the landing
+page. Encoding preserves alpha.
 
 ## Deferred 3D work
 
@@ -33,9 +35,9 @@ for future work; this onboarding no longer imports or requests the renderer.
 
 The organizer planning and building steps are combined, using `organizer-bases.webp`.
 
-Open `/welcome` for the real flow, or `/dev/visual-system?onboarding=1` through
-`5` for chapters and completion (`&role=organizer` for the organizer).
-The canonical component contract is in `docs/visual-system/component-inventory.md`.
+There is no in-app preview any more: `/welcome` redirects to `/register` and
+the visual harness no longer renders the chapters. The retirement is recorded
+in `docs/visual-system/component-inventory.md`.
 This change does not build or publish an App Store / Play Store release.
 
 ## Final verification (2026-09-09)

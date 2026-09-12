@@ -67,7 +67,8 @@ export function RegisterPage() {
       return;
     }
     setLoading(true);
-    // Registration signs the account in and lands on home. Nothing asks for a
+    // Registration signs the account in and lands on the account home at
+    // /dashboard. Nothing asks for a
     // second sign-in, and the email link works in any tab.
     try {
       await register(token!, trimmedName, effectiveEmail, password);

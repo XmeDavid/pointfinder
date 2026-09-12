@@ -60,7 +60,6 @@ body {
   --color-muted-foreground: color-mix(in srgb, var(--pf-dataColor-atlasInk) 68%, var(--pf-dataColor-atlasCream));
   --color-border: color-mix(in srgb, var(--pf-dataColor-atlasInk) 14%, var(--pf-dataColor-atlasCream));
   overflow-x: clip;
-  transition: opacity 220ms ease;
 }
 .dark .landing-page {
   --color-background: var(--pf-dataColor-atlasEvergreenDeep);
@@ -257,7 +256,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-page { transition: none; }
   .landing-reveal,
   .landing-reveal-late {
     animation: none;

@@ -223,7 +223,7 @@ const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, elemen
   {
     path: "/login",
     element: (
-      <GuestGuard>
+      <GuestGuard allowParticipant>
         <Suspense fallback={<PageSpinner />}>
           <LoginPage />
         </Suspense>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "@/platform/axios";
 import { Link, useNavigate } from "react-router-dom";
 import { BrandTile } from "@/components/brand";
@@ -10,14 +10,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuthStore } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 
+function hasParticipantSession(): boolean {
+  const state = useAuthStore.getState();
+  return state.isAuthenticated && state.user?.role === "participant";
+}
+
 export function LoginPage() {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // A participant session that lands here (a stale phone sign-in, a bookmark)
+  // gets the same explanation a fresh participant sign-in gets.
+  const [error, setError] = useState(() => (hasParticipantSession() ? t("playerApp.login.participantOnly") : ""));
   const [loading, setLoading] = useState(false);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
+
+  // ...and is closed, so the guest guard never carries it to the dashboard.
+  useEffect(() => {
+    if (hasParticipantSession()) useAuthStore.getState().logout();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

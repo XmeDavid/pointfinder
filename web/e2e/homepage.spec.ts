@@ -95,7 +95,7 @@ test('a keyboard reaches the skip link, the sections and sign-up on a desktop', 
   await page.getByRole('link', { name: 'Get started' }).first().focus()
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/register$/)
-  await expect(page.getByLabelText(/Email/)).toBeVisible()
+  await expect(page.getByLabel(/Email/)).toBeVisible()
 })
 
 test('reads fine when every image is blocked and no hero motion plays under reduced motion', async ({ page }) => {
@@ -112,7 +112,6 @@ test('reads fine when every image is blocked and no hero motion plays under redu
   await expect(page.getByRole('heading', { name: 'Out in the field. Always in the loop.' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your next adventure starts here.' })).toBeVisible()
   expect(await page.locator('.landing-reveal').first().evaluate((el) => getComputedStyle(el).animationName)).toBe('none')
-  expect(await page.locator('.landing-page').evaluate((el) => getComputedStyle(el).transitionProperty)).toBe('none')
   expect(await overflowFree(page)).toBe(true)
   await page.setViewportSize({ width: 320, height: 568 })
   expect(await overflowFree(page)).toBe(true)
@@ -122,7 +121,6 @@ test('plays the hero arrival once when motion is allowed', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.goto('/')
   expect(await page.locator('.landing-reveal').first().evaluate((el) => getComputedStyle(el).animationName)).toBe('landingReveal')
-  await expect(page.locator('.landing-page')).toHaveCSS('transition-property', 'opacity')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 
