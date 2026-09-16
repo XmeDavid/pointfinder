@@ -54,7 +54,8 @@ public final class GameResponseMapper {
                 game.getDefaultCheckInRadiusM() != null ? game.getDefaultCheckInRadiusM() : 15,
                 game.getTutorialScenario(),
                 game.getTutorialExpiresAt(),
-                locationCheckInAllowed
+                locationCheckInAllowed,
+                game.getContentLanguage()
         );
     }
 }

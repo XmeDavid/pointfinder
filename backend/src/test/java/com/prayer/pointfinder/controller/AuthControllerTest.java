@@ -89,7 +89,7 @@ class AuthControllerTest {
                 new PlayerAuthResponse("recovered-jwt",
                         new PlayerAuthResponse.PlayerInfo(playerId, "Ana", "device-b"),
                         new PlayerAuthResponse.TeamInfo(UUID.randomUUID(), "Falcons", "#111111"),
-                        new PlayerAuthResponse.GameInfo(UUID.randomUUID(), "Camp", "", "live", "osm-classic")));
+                        new PlayerAuthResponse.GameInfo(UUID.randomUUID(), "Camp", "", "live", "osm-classic", null)));
 
         mockMvc.perform(post("/api/auth/player/recover")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -161,7 +161,7 @@ class AuthControllerTest {
                 "player-jwt-token",
                 new PlayerAuthResponse.PlayerInfo(playerId, "Scout", "device-123"),
                 new PlayerAuthResponse.TeamInfo(teamId, "Pathfinders", "#FF0000"),
-                new PlayerAuthResponse.GameInfo(gameId, "Test Game", "desc", "live", "osm-classic")
+                new PlayerAuthResponse.GameInfo(gameId, "Test Game", "desc", "live", "osm-classic", null)
         );
 
         when(playerService.joinTeam(any(PlayerJoinRequest.class))).thenReturn(response);
@@ -194,7 +194,7 @@ class AuthControllerTest {
                         "t",
                         new PlayerAuthResponse.PlayerInfo(playerId, "Eagle", "dev-abc"),
                         new PlayerAuthResponse.TeamInfo(teamId, "T", "#000"),
-                        new PlayerAuthResponse.GameInfo(gameId, "G", "", "live", "osm-classic")
+                        new PlayerAuthResponse.GameInfo(gameId, "G", "", "live", "osm-classic", null)
                 ));
 
         mockMvc.perform(post("/api/auth/player/join")

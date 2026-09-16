@@ -62,6 +62,8 @@ export interface Game {
   tileSource: string;
   unlockTrigger: string;
   enforceBaseOrder?: boolean;
+  /** ISO 639-1 code of the content's language; null when the organizer did not say. */
+  contentLanguage?: string | null;
   /**
    * Game-scoped tag vocabulary. Operator-only.
    * Populated by GET /api/games/{gameId}/tags — NOT embedded in GameResponse

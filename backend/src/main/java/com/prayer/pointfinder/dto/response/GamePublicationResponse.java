@@ -9,6 +9,8 @@ public record GamePublicationResponse(
         String gameName,
         String gameStatus,
         String organizer,
+        /** ISO 639-1 code of the game's content language, or null when the organizer did not say. */
+        String contentLanguage,
         String title,
         String summary,
         String place,

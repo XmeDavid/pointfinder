@@ -187,6 +187,7 @@ public class ExploreService {
                 p.getLng(),
                 p.getCategory().name(),
                 GamePublicationService.organizerOf(game),
+                game.getContentLanguage(),
                 game.getStatus().name(),
                 p.getAdmissionTeam() != null ? "open" : "code",
                 joinable(p),

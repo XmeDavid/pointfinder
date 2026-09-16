@@ -23,4 +23,6 @@ public class GameMetadataDto {
     private String defaultCheckInMethod;
     /** Default location radius in metres. Null on pre-V60 templates. */
     private Integer defaultCheckInRadiusM;
+    /** OW-33: ISO 639-1 code of the content's language; null when unknown. */
+    private String contentLanguage;
 }

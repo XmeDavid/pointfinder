@@ -54,4 +54,11 @@ public class CreateGameRequest {
      * practice games are always personal.
      */
     private UUID orgId;
+
+    /**
+     * OW-33: ISO 639-1 code of the language the game's content is written in
+     * ({@code pt}, {@code en}, {@code de}, ...). Omit to keep the current value;
+     * send an empty string to clear it back to unknown.
+     */
+    private String contentLanguage;
 }

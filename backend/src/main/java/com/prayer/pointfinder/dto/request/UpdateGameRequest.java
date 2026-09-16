@@ -37,4 +37,11 @@ public class UpdateGameRequest {
     @Min(value = 5, message = "Check-in radius must be at least 5 m")
     @Max(value = 200, message = "Check-in radius must be at most 200 m")
     private Integer defaultCheckInRadiusM;
+
+    /**
+     * OW-33: ISO 639-1 code of the language the game's content is written in
+     * ({@code pt}, {@code en}, {@code de}, ...). Omit to keep the current value;
+     * send an empty string to clear it back to unknown.
+     */
+    private String contentLanguage;
 }

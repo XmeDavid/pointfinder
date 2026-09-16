@@ -135,6 +135,7 @@ Header: `X-Forwarded-Host` (for email link generation)
   "endDate": "ISO8601 (optional)",
   "uniformAssignment": false,
   "tileSource": "osm | osm-classic | voyager | positron | swisstopo | swisstopo-sat",
+  "contentLanguage": "ISO 639-1 code of the game's content, e.g. pt (optional; null = unknown, empty string clears on update)",
   "orgId": "uuid (optional)"
 }
 ```

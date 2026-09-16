@@ -91,6 +91,7 @@ public class GameImportExportService {
                 .defaultCheckInRadiusM(game.getDefaultCheckInRadiusM() != null
                         ? game.getDefaultCheckInRadiusM() : 15)
                 .broadcastCode(game.getBroadcastCode())
+                .contentLanguage(game.getContentLanguage())
                 .build();
 
         // Export tag vocabulary
@@ -262,6 +263,8 @@ public class GameImportExportService {
                 .defaultCheckInRadiusM(data.getGame().getDefaultCheckInRadiusM() != null
                         ? CheckInVerificationService.clampRadiusM(data.getGame().getDefaultCheckInRadiusM())
                         : 15)
+                // A template with an unusable language code imports as unknown rather than failing.
+                .contentLanguage(importedContentLanguage(data.getGame().getContentLanguage()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .organization(resolveImportOrg(request.getOrgId()))
@@ -863,5 +866,13 @@ public class GameImportExportService {
             result.add(tag);
         }
         return result;
+    }
+
+    private static String importedContentLanguage(String raw) {
+        try {
+            return GameService.normalizeContentLanguage(raw);
+        } catch (BadRequestException ex) {
+            return null;
+        }
     }
 }

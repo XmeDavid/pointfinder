@@ -16,7 +16,7 @@ public record PlayerAuthResponse(
                 token,
                 new PlayerInfo(player.getId(), player.getDisplayName(), player.getDeviceId()),
                 new TeamInfo(team.getId(), team.getName(), team.getColor()),
-                new GameInfo(game.getId(), game.getName(), game.getDescription(), game.getStatus().name(), game.getTileSource())
+                new GameInfo(game.getId(), game.getName(), game.getDescription(), game.getStatus().name(), game.getTileSource(), game.getContentLanguage())
         );
     }
 
@@ -38,6 +38,8 @@ public record PlayerAuthResponse(
             String name,
             String description,
             String status,
-            String tileSource
+            String tileSource,
+            /** ISO 639-1 code of the game's content language, or null when unknown. */
+            String contentLanguage
     ) {}
 }

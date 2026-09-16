@@ -35,10 +35,12 @@ public record GameResponse(
          * only when enforcement is on and the plan excludes it. Null when
          * the caller did not resolve it (admin listings).
          */
-        Boolean locationCheckInAllowed
+        Boolean locationCheckInAllowed,
+        /** ISO 639-1 code of the content's language, or null when the organizer did not say. */
+        String contentLanguage
 ) {
     public GameResponse(UUID id, String name, String description, Instant startDate, Instant endDate, String status, UUID createdBy, List<UUID> operatorIds, Boolean uniformAssignment, Boolean broadcastEnabled, String broadcastCode, String tileSource, String unlockTrigger, UUID orgId, String orgName, Boolean enforceBaseOrder, String defaultCheckInMethod, Integer defaultCheckInRadiusM) {
-        this(id, name, description, startDate, endDate, status, createdBy, operatorIds, uniformAssignment, broadcastEnabled, broadcastCode, tileSource, unlockTrigger, orgId, orgName, enforceBaseOrder, defaultCheckInMethod, defaultCheckInRadiusM, null, null, null);
+        this(id, name, description, startDate, endDate, status, createdBy, operatorIds, uniformAssignment, broadcastEnabled, broadcastCode, tileSource, unlockTrigger, orgId, orgName, enforceBaseOrder, defaultCheckInMethod, defaultCheckInRadiusM, null, null, null, null);
     }
     public GameResponse(UUID id, String name, String description, Instant startDate, Instant endDate, String status, UUID createdBy, List<UUID> operatorIds, Boolean uniformAssignment, Boolean broadcastEnabled, String broadcastCode, String tileSource, String unlockTrigger, UUID orgId, String orgName) {
         this(id, name, description, startDate, endDate, status, createdBy, operatorIds, uniformAssignment, broadcastEnabled, broadcastCode, tileSource, unlockTrigger, orgId, orgName, false, "NFC", 15);

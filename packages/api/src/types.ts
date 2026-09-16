@@ -40,6 +40,8 @@ export interface PlayerAuthResponse {
     description: string
     status: GameStatus
     tileSource?: string | null
+    /** ISO 639-1 code of the game's content language; null when the organizer did not say. */
+    contentLanguage?: string | null
   }
 }
 
@@ -196,6 +198,8 @@ export interface Game {
   description: string
   status: GameStatus
   tileSource?: string
+  /** ISO 639-1 code of the content's language; null or absent when unknown. Empty string clears it on update. */
+  contentLanguage?: string | null
   startDate?: IsoDateTime | null
   endDate?: IsoDateTime | null
   createdBy?: EntityId | null
@@ -789,6 +793,8 @@ export interface GamePublicationResponse {
   gameName: string
   gameStatus: GameStatus
   organizer: string | null
+  /** ISO 639-1 code of the game's content language; null when the organizer did not say. */
+  contentLanguage: string | null
   title: string
   summary: string
   place: string
@@ -834,6 +840,8 @@ export interface ExploreGameResponse {
   lng: number | null
   category: PublicationCategory
   organizer: string | null
+  /** ISO 639-1 code of the game's content language; null when the organizer did not say. */
+  contentLanguage: string | null
   gameStatus: GameStatus
   admission: PublicationAdmission
   joinable: boolean

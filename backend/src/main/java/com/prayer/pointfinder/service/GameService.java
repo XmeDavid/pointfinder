@@ -148,6 +148,7 @@ public class GameService {
                 .unlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()))
                 .defaultCheckInMethod(validateCheckInMethod(request.getDefaultCheckInMethod()))
                 .defaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()))
+                .contentLanguage(normalizeContentLanguage(request.getContentLanguage()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .organization(organization)
@@ -210,6 +211,9 @@ public class GameService {
                 quotaService.enforceLocationCheckIn(game);
             }
             game.setDefaultCheckInMethod(method);
+        }
+        if (request.getContentLanguage() != null) {
+            game.setContentLanguage(normalizeContentLanguage(request.getContentLanguage()));
         }
         if (request.getDefaultCheckInRadiusM() != null) {
             Integer radius = clampDefaultRadius(request.getDefaultCheckInRadiusM());
@@ -433,6 +437,22 @@ public class GameService {
             throw new BadRequestException(
                     "Invalid check-in method: " + raw + ". Must be one of: NFC, QR, LOCATION");
         }
+    }
+
+    private static final java.util.regex.Pattern CONTENT_LANGUAGE = java.util.regex.Pattern.compile("[a-z]{2}");
+
+    /**
+     * Blank means unknown and is stored as null. Anything else must be a
+     * two-letter ISO 639-1 code; case is normalized so {@code PT} and
+     * {@code pt} are the same language.
+     */
+    static String normalizeContentLanguage(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String code = raw.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!CONTENT_LANGUAGE.matcher(code).matches()) {
+            throw new BadRequestException("Invalid content language: " + raw + ". Use a two-letter ISO 639-1 code such as pt, en or de");
+        }
+        return code;
     }
 
     private Integer clampDefaultRadius(Integer raw) {
