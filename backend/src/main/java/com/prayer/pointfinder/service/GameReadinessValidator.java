@@ -82,11 +82,10 @@ public class GameReadinessValidator {
                             baseCount, challengeCount));
         }
 
-        {
-            // No-op unless some route (the game's, or a stage's) is enforced.
+        List<com.prayer.pointfinder.entity.Stage> stages = stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId());
+        if (BaseOrderService.anyRouteEnforced(game, stages)) {
             BaseOrderService.validateDependencies(game, baseRepository.findByGameId(game.getId()),
-                    challengeRepository.findByGameId(game.getId()),
-                    stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId()),
+                    challengeRepository.findByGameId(game.getId()), stages,
                     assignmentRepository.findByGameId(game.getId()));
         }
 

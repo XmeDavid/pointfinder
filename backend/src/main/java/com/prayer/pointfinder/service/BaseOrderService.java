@@ -42,6 +42,30 @@ public class BaseOrderService {
     private final CheckInRepository checkInRepository;
     private final StageRepository stageRepository;
 
+    /**
+     * Everything a player-facing response needs about routes, computed once
+     * per request: numbers per base, one status per visible route, and the
+     * single-number summary older clients read.
+     */
+    public record RouteView(boolean anyEnforced, Map<UUID, Integer> sequenceNumbers, List<RouteStatusResponse> routes) {
+        /**
+         * The legacy pair only describes a game with exactly one enforced route;
+         * with several, an old client comparing numbers across routes would block
+         * wrongly, so it is told the game is unrestricted instead.
+         */
+        public boolean legacyEnforced() {
+            return routes.stream().filter(RouteStatusResponse::enforceBaseOrder).count() == 1;
+        }
+
+        public Integer legacyNextRequiredBaseNumber() {
+            if (!legacyEnforced()) return null;
+            for (RouteStatusResponse route : routes) {
+                if (route.enforceBaseOrder()) return route.nextRequiredBaseNumber(); // null once that route is done
+            }
+            return null;
+        }
+    }
+
     /** Route key of a base: its stage, or null for the default route. */
     private static UUID scopeOf(Base base) {
         return base.getStageId();
@@ -91,26 +115,30 @@ public class BaseOrderService {
                 .toList();
     }
 
-    /**
-     * Every route of the game with the team's next required number: stages
-     * in their order, then the default route when the game has bases outside
-     * a stage (or no stages at all).
-     */
-    public List<RouteStatusResponse> routes(Game game, UUID teamId) {
+    /** The routes a team can see and where it stands on each; three queries, whatever the caller then reads. */
+    public RouteView view(Game game, UUID teamId) {
         List<Stage> stages = stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId());
+        boolean any = anyRouteEnforced(game, stages);
+        if (!any) return new RouteView(false, Map.of(), List.of());
         List<Base> bases = orderedBases(game.getId());
         Map<UUID, Boolean> enforced = enforcement(game, stages);
         Map<UUID, Integer> numbers = numberRoutes(bases, enforced);
-        Set<UUID> checkedIn = anyRouteEnforced(game, stages) ? checkedInBases(game, teamId) : Set.of();
+        Set<UUID> checkedIn = checkedInBases(game, teamId);
         List<RouteStatusResponse> routes = new ArrayList<>();
+        // Only active stages: a player is not told that a closed stage exists or is ordered.
         for (Stage stage : stages) {
-            routes.add(routeStatus(stage.getId(), enforced, bases, numbers, checkedIn));
+            if (Boolean.TRUE.equals(stage.getIsActive())) routes.add(routeStatus(stage.getId(), enforced, bases, numbers, checkedIn));
         }
         boolean hasDefaultBases = bases.stream().anyMatch(b -> b.getStageId() == null);
         if (stages.isEmpty() || hasDefaultBases) {
             routes.add(routeStatus(null, enforced, bases, numbers, checkedIn));
         }
-        return routes;
+        return new RouteView(true, numbers, routes);
+    }
+
+    /** Every visible route of the game with the team's next required number. */
+    public List<RouteStatusResponse> routes(Game game, UUID teamId) {
+        return view(game, teamId).routes();
     }
 
     private static RouteStatusResponse routeStatus(UUID scope, Map<UUID, Boolean> enforced, List<Base> bases,
@@ -132,15 +160,12 @@ public class BaseOrderService {
     }
 
     /**
-     * The one number older clients read: the next required base of the first
-     * enforced route that still has one (stages in order, then the default
-     * route). Null when nothing is enforced or every enforced route is done.
+     * The one number older clients read: the next required base of the only
+     * enforced route. Null when nothing is enforced, when that route is done,
+     * or when several routes are enforced (see {@link RouteView#legacyEnforced()}).
      */
     public Integer nextRequiredBaseNumber(Game game, UUID teamId) {
-        return routes(game, teamId).stream()
-                .filter(r -> r.enforceBaseOrder() && r.nextRequiredBaseNumber() != null)
-                .map(RouteStatusResponse::nextRequiredBaseNumber)
-                .findFirst().orElse(null);
+        return view(game, teamId).legacyNextRequiredBaseNumber();
     }
 
     /** Call only after membership/NFC checks and the existing-check-in idempotency lookup. */
@@ -162,9 +187,11 @@ public class BaseOrderService {
 
     /**
      * Reject explicit unlock rules that require reaching the same or a later
-     * base of the same route. Routes are independent: a base in another
-     * stage may unlock this one regardless of position, and a trigger stage
-     * opens by activation rather than by route order.
+     * base. Within a route that means a later number; across routes it means
+     * a source in a stage that comes after the target's, since a later stage
+     * is not open yet when the team reaches the hidden base. Bases without a
+     * stage are always open, so they can unlock anything and are unlocked by
+     * nothing outside their own route.
      */
     public static void validateDependencies(Game game, List<Base> bases,
             List<com.prayer.pointfinder.entity.Challenge> challenges,
@@ -175,22 +202,29 @@ public class BaseOrderService {
         Map<UUID, Integer> numbers = numberRoutes(route, enforcement(game, stages));
         Map<UUID, UUID> scopeByBase = new HashMap<>();
         for (Base base : route) scopeByBase.put(base.getId(), scopeOf(base));
+        Map<UUID, Integer> stageOrder = new HashMap<>();
+        for (Stage stage : stages) stageOrder.put(stage.getId(), stage.getOrderIndex());
         for (var challenge : challenges) {
             for (Base target : challenge.getUnlocksBases()) {
                 if (!Boolean.TRUE.equals(target.getHidden()) || !numbers.containsKey(target.getId())) continue;
                 int targetNumber = numbers.get(target.getId());
                 UUID targetScope = scopeByBase.get(target.getId());
-                // A source outside the target's route is never blocked by it.
-                boolean sourceElsewhere = route.stream().anyMatch(source -> providesChallenge(source, challenge, assignments, game)
-                        && !Objects.equals(scopeByBase.get(source.getId()), targetScope));
-                boolean earlierSource = route.stream().anyMatch(source -> providesChallenge(source, challenge, assignments, game)
-                        && Objects.equals(scopeByBase.get(source.getId()), targetScope)
-                        && numbers.containsKey(source.getId()) && numbers.get(source.getId()) < targetNumber);
-                if (!sourceElsewhere && !earlierSource) {
+                boolean reachable = route.stream().anyMatch(source -> providesChallenge(source, challenge, assignments, game)
+                        && (Objects.equals(scopeByBase.get(source.getId()), targetScope)
+                                ? numbers.containsKey(source.getId()) && numbers.get(source.getId()) < targetNumber
+                                : routeComesBefore(scopeByBase.get(source.getId()), targetScope, stageOrder)));
+                if (!reachable) {
                     throw dependencyConflict(targetNumber);
                 }
             }
         }
+    }
+
+    /** Default route first (always open), then stages by their order. */
+    private static boolean routeComesBefore(UUID source, UUID target, Map<UUID, Integer> stageOrder) {
+        int s = source == null ? Integer.MIN_VALUE : stageOrder.getOrDefault(source, Integer.MAX_VALUE);
+        int t = target == null ? Integer.MIN_VALUE : stageOrder.getOrDefault(target, Integer.MAX_VALUE);
+        return s < t;
     }
 
     private static boolean providesChallenge(Base source, com.prayer.pointfinder.entity.Challenge challenge,

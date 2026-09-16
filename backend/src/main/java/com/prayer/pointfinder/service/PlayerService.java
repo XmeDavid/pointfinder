@@ -80,9 +80,7 @@ public class PlayerService {
 
         // Route order before proof: a team blocked by the route must not learn
         // whether its proof for a later base would have been accepted.
-        {
-            baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
-        }
+        baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
 
         CheckInVerificationService.VerifiedProof proof =
                 checkInVerificationService.verify(base, team, request, Instant.now());
@@ -474,7 +472,8 @@ public class PlayerService {
                         null,
                         null,
                         CheckInMethod.LOCATION.name(),
-                        b.resolvedCheckInRadiusM()))
+                        b.resolvedCheckInRadiusM(),
+                        b.getStageId()))
                 .toList();
         if (!geofenceOnly.isEmpty()) {
             List<PlayerBaseResponse> withGeofences = new ArrayList<>(bases);
@@ -515,6 +514,7 @@ public class PlayerService {
                 })
                 .toList();
 
+        BaseOrderService.RouteView routeView = baseOrderService.view(game, team.getId());
         return new GameDataResponse(
                 team.getGame().getStatus().name(),
                 game.getUnlockTrigger().name(),
@@ -522,9 +522,9 @@ public class PlayerService {
                 challenges,
                 assignments,
                 progress,
-                baseOrderService.anyRouteEnforced(game),
-                baseOrderService.nextRequiredBaseNumber(game, team.getId()),
-                baseOrderService.routes(game, team.getId()));
+                routeView.legacyEnforced(),
+                routeView.legacyNextRequiredBaseNumber(),
+                routeView.routes());
     }
 
     @Transactional(timeout = 10)

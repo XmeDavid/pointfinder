@@ -54,6 +54,7 @@ public class GameService {
     private final com.prayer.pointfinder.repository.TeamRepository teamRepository;
     private final com.prayer.pointfinder.repository.PlayerRepository playerRepository;
     private final com.prayer.pointfinder.repository.GameLifecycleEventRepository lifecycleEventRepository;
+    private final BaseOrderService baseOrderService;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -412,7 +413,7 @@ public class GameService {
     }
 
     private GameResponse toResponse(Game game) {
-        return GameResponseMapper.toResponse(game, quotaService.effectiveLocationCheckInAllowed(game));
+        return GameResponseMapper.toResponse(game, quotaService.effectiveLocationCheckInAllowed(game), baseOrderService.anyRouteEnforced(game));
     }
 
     private String validateTileSource(String tileSource) {

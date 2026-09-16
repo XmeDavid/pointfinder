@@ -1067,7 +1067,8 @@
     "UPLOAD_COMPLETED_CANNOT_CANCEL": "Este envio já terminou e não pode ser cancelado.",
     "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Outro envio já usa esta chave de item.",
     "CHOICE_OPTIONS_INVALID": "Verifica as opções: pelo menos duas, todas com texto, e o número certo de opções corretas para o tipo de desafio.",
-    "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para este desafio."
+    "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para este desafio.",
+    "CHOICE_ALREADY_ANSWERED": "A tua equipa já respondeu a esta."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",

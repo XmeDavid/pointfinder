@@ -135,8 +135,15 @@ public class SubmissionService {
         List<String> selectedOptionIds = null;
         if (ChoiceGrading.isChoice(challenge.getAnswerType())) {
             // OW-34: graded here, all-or-nothing; the answer key never leaves the server.
+            // One attempt per team: the options are enumerable, so retries would be a brute force.
+            boolean answered = submissionRepository.findByTeamIdAndChallengeIdAndBaseId(team.getId(), challenge.getId(), base.getId())
+                    .stream().anyMatch(s -> !s.isArchived());
+            if (answered) {
+                throw new BadRequestException("This team already answered this challenge", ErrorCode.CHOICE_ALREADY_ANSWERED);
+            }
             selectedOptionIds = ChoiceGrading.normalizeSelection(challenge, request.getSelectedOptionIds());
-            request.setAnswer(ChoiceGrading.readableAnswer(challenge, selectedOptionIds));
+            request.setAnswer(ChoiceGrading.readableAnswer(challenge, selectedOptionIds,
+                    text -> templateVariableService.resolveTemplate(text, gameId, challenge.getId(), team.getId())));
             status = ChoiceGrading.isCorrect(challenge, selectedOptionIds) ? SubmissionStatus.correct : SubmissionStatus.rejected;
         } else if (challenge.getAnswerType() == AnswerType.none) {
             // "None" challenges auto-approve immediately (check-in only)

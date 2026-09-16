@@ -47,6 +47,17 @@ class ChoiceGradingTest {
     }
 
     @Test
+    void duplicateTextsAreRefusedAndMissingIdsAreTakenFromTheSamePosition() {
+        assertThrows(BadRequestException.class, () ->
+                ChoiceGrading.normalizeOptions(AnswerType.single_choice, List.of(option(null, "Oak", true), option(null, "oak ", false))));
+        List<ChoiceOption> existing = List.of(new ChoiceOption("id-1", "Oak", true), new ChoiceOption("id-2", "Pine", false));
+        List<ChoiceOptionRequest> edited = ChoiceGrading.reconcileIds(existing, List.of(option(null, "Oak tree", true), option(null, "Pine", false), option(null, "Fir", false)));
+        assertEquals("id-1", edited.get(0).getId());
+        assertEquals("id-2", edited.get(1).getId());
+        assertNull(edited.get(2).getId(), "a new option gets its id when normalized");
+    }
+
+    @Test
     void singleChoiceTakesExactlyOneKnownOption() {
         Challenge c = choice(AnswerType.single_choice, new ChoiceOption("a", "Oak", true), new ChoiceOption("b", "Pine", false));
         assertEquals(List.of("a"), ChoiceGrading.normalizeSelection(c, List.of("a")));

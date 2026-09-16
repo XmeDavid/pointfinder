@@ -1067,7 +1067,8 @@
     "UPLOAD_COMPLETED_CANNOT_CANCEL": "Dieser Upload ist bereits abgeschlossen und kann nicht abgebrochen werden.",
     "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Ein anderer Upload verwendet diesen Element-Schlüssel bereits.",
     "CHOICE_OPTIONS_INVALID": "Prüfe die Optionen: mindestens zwei, jede mit Text, und die passende Zahl richtiger Optionen für den Aufgabentyp.",
-    "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Aufgabe."
+    "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Aufgabe.",
+    "CHOICE_ALREADY_ANSWERED": "Dein Team hat diese Aufgabe bereits beantwortet."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",

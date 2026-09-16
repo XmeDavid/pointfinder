@@ -80,6 +80,8 @@ class GameServiceTest {
     @Mock
     private com.prayer.pointfinder.repository.GameLifecycleEventRepository lifecycleEventRepository;
     @Mock
+    private BaseOrderService baseOrderService;
+    @Mock
     private com.prayer.pointfinder.repository.UserTutorialProgressRepository progressRepository;
     @Mock
     private TeamVariableRepository teamVariableRepository;
@@ -134,7 +136,7 @@ class GameServiceTest {
                         teamRepository, assignmentRepository, teamVariableService, stageRepository,
                         quotaService),
                 quotaService, progressRepository, organizationService,
-                xpService, submissionRepository, teamRepository, playerRepository, lifecycleEventRepository
+                xpService, submissionRepository, teamRepository, playerRepository, lifecycleEventRepository, baseOrderService
         );
 
         // Default stub: exportGame calls this to build the tags section

@@ -331,6 +331,22 @@ class BaseServiceTest {
     }
 
     @Test
+    void movingABaseBetweenStagesIsSetupOnlyOnceAnyRouteIsEnforced() {
+        game.setStatus(com.prayer.pointfinder.entity.GameStatus.live);
+        when(baseOrderService.anyRouteEnforced(game)).thenReturn(true);
+        UUID baseId = UUID.randomUUID();
+        Base base = Base.builder().id(baseId).game(game).name("Gate").stageId(UUID.randomUUID()).build();
+        when(baseRepository.findById(baseId)).thenReturn(java.util.Optional.of(base));
+        var request = new com.prayer.pointfinder.dto.request.UpdateBaseRequest();
+        request.setName("Gate");
+        request.setStageId(UUID.randomUUID());
+
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED,
+                assertThrows(BadRequestException.class, () -> baseService.updateBase(gameId, baseId, request)).getErrorCode());
+        verify(baseRepository, never()).save(any());
+    }
+
+    @Test
     void orderedRouteRejectsStructuralChangesOutsideSetup() {
         game.setEnforceBaseOrder(true);
         when(baseOrderService.anyRouteEnforced(game)).thenReturn(true);

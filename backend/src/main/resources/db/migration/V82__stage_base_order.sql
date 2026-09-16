@@ -4,6 +4,9 @@
 -- game-level flag as their "default route". Games that enforced order
 -- before this carried one route across all their stages; each of those
 -- stages now enforces its own route so no ordered game becomes free-order.
+-- This applies to running games too: their teams see per-stage numbers from
+-- now on instead of one count across stages. Leaving live games out would
+-- silently drop their order, which is the worse surprise.
 ALTER TABLE stages ADD COLUMN enforce_base_order BOOLEAN NOT NULL DEFAULT false;
 UPDATE stages s SET enforce_base_order = true
   FROM games g WHERE s.game_id = g.id AND g.enforce_base_order = true;

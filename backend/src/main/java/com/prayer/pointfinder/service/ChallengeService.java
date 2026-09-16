@@ -132,7 +132,8 @@ public class ChallengeService {
         challenge.setAnswerType(AnswerType.valueOf(request.getAnswerType()));
         challenge.setAutoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false);
         challenge.setCorrectAnswer(request.getCorrectAnswer());
-        challenge.setChoiceOptions(ChoiceGrading.normalizeOptions(challenge.getAnswerType(), request.getChoiceOptions()));
+        challenge.setChoiceOptions(ChoiceGrading.normalizeOptions(challenge.getAnswerType(),
+                ChoiceGrading.reconcileIds(challenge.getChoiceOptions(), request.getChoiceOptions())));
         challenge.setPoints(request.getPoints());
         challenge.setLocationBound(request.getLocationBound() != null ? request.getLocationBound() : false);
         challenge.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false);

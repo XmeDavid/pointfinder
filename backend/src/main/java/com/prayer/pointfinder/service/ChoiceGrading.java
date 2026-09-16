@@ -46,6 +46,7 @@ public final class ChoiceGrading {
             throw new BadRequestException("A choice challenge may have at most " + MAX_OPTIONS + " options", ErrorCode.CHOICE_OPTIONS_INVALID);
         }
         Set<String> ids = new HashSet<>();
+        Set<String> texts = new HashSet<>();
         List<ChoiceOption> options = new ArrayList<>();
         int correct = 0;
         for (ChoiceOptionRequest option : raw) {
@@ -59,6 +60,9 @@ public final class ChoiceGrading {
             String id = option.getId() != null && !option.getId().isBlank() ? option.getId().trim() : UUID.randomUUID().toString();
             if (!ids.add(id)) {
                 throw new BadRequestException("Option ids must be unique", ErrorCode.CHOICE_OPTIONS_INVALID);
+            }
+            if (!texts.add(text.toLowerCase(java.util.Locale.ROOT))) {
+                throw new BadRequestException("Two options cannot have the same text", ErrorCode.CHOICE_OPTIONS_INVALID);
             }
             if (option.isCorrect()) correct++;
             options.add(ChoiceOption.builder().id(id).text(text).correct(option.isCorrect()).build());
@@ -99,12 +103,30 @@ public final class ChoiceGrading {
         return correct.equals(new HashSet<>(selection));
     }
 
-    /** What an operator reads in the review queue: the chosen option texts, in option order. */
-    public static String readableAnswer(Challenge challenge, List<String> selection) {
+    /** What an operator reads in the review queue: the chosen option texts as the player saw them, in option order. */
+    public static String readableAnswer(Challenge challenge, List<String> selection, java.util.function.UnaryOperator<String> resolve) {
         Set<String> chosen = new HashSet<>(selection);
         return challenge.getChoiceOptions().stream()
                 .filter(o -> chosen.contains(o.getId()))
-                .map(ChoiceOption::getText)
+                .map(o -> resolve.apply(o.getText()))
                 .collect(Collectors.joining("; "));
+    }
+
+    public static String readableAnswer(Challenge challenge, List<String> selection) {
+        return readableAnswer(challenge, selection, java.util.function.UnaryOperator.identity());
+    }
+
+    /**
+     * An editor that round-trips texts but not ids would orphan every stored
+     * selection; missing ids are taken from the existing option in the same
+     * position before new ones are minted.
+     */
+    public static List<ChoiceOptionRequest> reconcileIds(List<ChoiceOption> existing, List<ChoiceOptionRequest> raw) {
+        if (raw == null || existing == null) return raw;
+        for (int i = 0; i < raw.size() && i < existing.size(); i++) {
+            ChoiceOptionRequest option = raw.get(i);
+            if (option != null && (option.getId() == null || option.getId().isBlank())) option.setId(existing.get(i).getId());
+        }
+        return raw;
     }
 }

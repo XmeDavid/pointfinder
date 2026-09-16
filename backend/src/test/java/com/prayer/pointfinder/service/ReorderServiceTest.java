@@ -52,6 +52,7 @@ class ReorderServiceTest {
             game.setStatus(com.prayer.pointfinder.entity.GameStatus.setup);
             game.setEnforceBaseOrder(true);
             when(gameRepository.findByIdForUpdate(gameId)).thenReturn(java.util.Optional.of(game));
+            org.mockito.Mockito.lenient().when(baseOrderService.anyRouteEnforced(game)).thenReturn(true);
             baseService = new BaseService(
                     baseRepository,
                     gameRepository,

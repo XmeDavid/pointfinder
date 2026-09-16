@@ -47,6 +47,7 @@ public class TeamService {
     private final com.prayer.pointfinder.xp.XpService xpService;
     private final GameAccessService gameAccessService;
     private final StageService stageService;
+    private final TemplateVariableService templateVariableService;
 
     @Transactional(readOnly = true)
     public List<TeamResponse> getTeamsByGame(UUID gameId) {
@@ -286,7 +287,8 @@ public class TeamService {
                     challenge.getAnswerType().name(),
                     challenge.getRequirePresenceToSubmit(),
                     challenge.getChoiceOptions() == null ? null : challenge.getChoiceOptions().stream()
-                            .map(o -> new com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse(o.getId(), o.getText())).toList());
+                            .map(o -> new com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse(o.getId(),
+                                    templateVariableService.resolveTemplate(o.getText(), base.getGame().getId(), challenge.getId(), team.getId()))).toList());
         }
 
         // P1 Phase 4 W4: CheckInResponse is shared between player and

@@ -54,6 +54,10 @@ class ChoiceChallengeIntegrationTest extends IntegrationTestBase {
         Base base = createBase(game, "Grove");
         Team team = createTeam(game, "Owls", "OWLS" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         Player player = createPlayer(team, "Rita", "choice-device-" + UUID.randomUUID());
+        Team other = createTeam(game, "Hawks", "HAWK" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+        Player otherPlayer = createPlayer(other, "Tomás", "choice-device-" + UUID.randomUUID());
+        Team third = createTeam(game, "Foxes", "FOXS" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+        Player thirdPlayer = createPlayer(third, "Ana", "choice-device-" + UUID.randomUUID());
 
         // Author: two correct options out of three; a single-choice body with two correct ones is refused.
         Map<String, Object> body = new LinkedHashMap<>();
@@ -90,7 +94,7 @@ class ChoiceChallengeIntegrationTest extends IntegrationTestBase {
         assertFalse(data.getBody().contains("\"correct\""));
         assertFalse(data.getBody().contains("choiceOptions"));
 
-        // A partial selection is wrong, without a hint; the full set is right.
+        // A partial selection is wrong, without a hint, and it was the team's one attempt.
         Map<String, Object> wrong = new LinkedHashMap<>();
         wrong.put("baseId", base.getId()); wrong.put("challengeId", challengeId); wrong.put("answer", "");
         wrong.put("selectedOptionIds", List.of(pineId)); wrong.put("idempotencyKey", UUID.randomUUID());
@@ -101,13 +105,25 @@ class ChoiceChallengeIntegrationTest extends IntegrationTestBase {
 
         Map<String, Object> right = new LinkedHashMap<>(wrong);
         right.put("selectedOptionIds", List.of(firId, pineId)); right.put("idempotencyKey", UUID.randomUUID());
-        JsonNode correct = node(restTemplate.exchange("/api/player/games/" + game.getId() + "/submissions", HttpMethod.POST, new HttpEntity<>(right, pl), String.class));
+        ResponseEntity<String> retry = restTemplate.exchange("/api/player/games/" + game.getId() + "/submissions", HttpMethod.POST, new HttpEntity<>(right, pl), String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, retry.getStatusCode(), "the options are enumerable, so there is one attempt per team");
+        assertEquals("CHOICE_ALREADY_ANSWERED", node(retry).get("code").asText());
+
+        // Another team's full set is right.
+        HttpHeaders pl2 = headersWithAuth(playerAuthHeader(otherPlayer));
+        restTemplate.exchange("/api/player/games/" + game.getId() + "/bases/" + base.getId() + "/check-in",
+                HttpMethod.POST, new HttpEntity<>(checkInRequestFor(base), pl2), String.class);
+        JsonNode correct = node(restTemplate.exchange("/api/player/games/" + game.getId() + "/submissions", HttpMethod.POST, new HttpEntity<>(right, pl2), String.class));
         assertEquals("correct", correct.get("status").asText());
         assertEquals("Pine; Fir", correct.get("answer").asText());
 
+        // An unknown option is refused before any attempt is spent.
+        HttpHeaders pl3 = headersWithAuth(playerAuthHeader(thirdPlayer));
+        restTemplate.exchange("/api/player/games/" + game.getId() + "/bases/" + base.getId() + "/check-in",
+                HttpMethod.POST, new HttpEntity<>(checkInRequestFor(base), pl3), String.class);
         Map<String, Object> unknown = new LinkedHashMap<>(wrong);
         unknown.put("selectedOptionIds", List.of("not-an-option")); unknown.put("idempotencyKey", UUID.randomUUID());
-        ResponseEntity<String> invalid = restTemplate.exchange("/api/player/games/" + game.getId() + "/submissions", HttpMethod.POST, new HttpEntity<>(unknown, pl), String.class);
+        ResponseEntity<String> invalid = restTemplate.exchange("/api/player/games/" + game.getId() + "/submissions", HttpMethod.POST, new HttpEntity<>(unknown, pl3), String.class);
         assertEquals(HttpStatus.BAD_REQUEST, invalid.getStatusCode());
         assertEquals("CHOICE_SELECTION_INVALID", node(invalid).get("code").asText());
 

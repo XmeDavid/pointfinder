@@ -148,6 +148,14 @@ class DtoContractTest {
     }
 
     @Test
+    void routeStatusResponse_matchesSnapshot() throws IOException {
+        RouteStatusResponse dto = new RouteStatusResponse(
+                UUID.fromString("b1c2d3e4-f5a6-7890-bcde-f12345678901"), true, 2);
+
+        assertMatchesSnapshot("RouteStatusResponse", dto);
+    }
+
+    @Test
     void leaderboardEntry_matchesSnapshot() throws IOException {
         LeaderboardEntry dto = new LeaderboardEntry(
                 UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012"),

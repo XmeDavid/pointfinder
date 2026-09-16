@@ -79,9 +79,12 @@ export function baseRoute(
 
 /** Null means this scan is allowed by available authority. Undefined requires a refresh. */
 export function missingPreviousBase(route: BaseRoute, base: BaseProgress | undefined): number | null | undefined {
+  if (!route.enabled || base?.checkedInAt) return null
   // Legacy single-route callers may pass a frontier without scopes.
-  const scope = route.scopes?.[routeKey(base)] ?? (route.scopes && Object.keys(route.scopes).length > 0 ? undefined : route)
-  if (!scope || !scope.enabled || base?.checkedInAt || scope.nextRequiredBaseNumber === null) return null
+  const scope = route.scopes ? route.scopes[routeKey(base)] : route
+  // A base whose route the phone does not know is stale data: refresh before trusting it.
+  if (!scope) return undefined
+  if (!scope.enabled || scope.nextRequiredBaseNumber === null) return null
   if (typeof base?.sequenceNumber !== 'number' || scope.nextRequiredBaseNumber === undefined) return undefined
   return base.sequenceNumber > scope.nextRequiredBaseNumber ? scope.nextRequiredBaseNumber : null
 }

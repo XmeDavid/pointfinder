@@ -77,8 +77,8 @@ describe('routes per stage', () => {
   })
   it('advances each route on its own pending proofs', () => {
     const route = baseRoute(staged, rows, [{ ...proof(1), baseId: 'r1' }])
-    expect(route.scopes[race]!.nextRequiredBaseNumber).toBe(2)
-    expect(route.scopes[race]!.provisionalCheckInIds).toEqual(['q1'])
+    expect(route.scopes![race]!.nextRequiredBaseNumber).toBe(2)
+    expect(route.scopes![race]!.provisionalCheckInIds).toEqual(['q1'])
     expect(missingPreviousBase(route, rows[3])).toBeNull()
   })
   it('treats a base of an unknown route as needing fresh authority', () => {
@@ -87,7 +87,7 @@ describe('routes per stage', () => {
   })
   it('reads an older server without routes as one default route', () => {
     const route = baseRoute(game, bases, [])
-    expect(Object.keys(route.scopes)).toEqual(['default'])
+    expect(Object.keys(route.scopes!)).toEqual(['default'])
     expect(missingPreviousBase(route, bases[2])).toBe(1)
   })
 })

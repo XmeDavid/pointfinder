@@ -189,6 +189,9 @@ public class BaseService {
         }
 
         // Stage assignment — write through (null clears)
+        if (!java.util.Objects.equals(base.getStageId(), request.getStageId()) && baseOrderService.anyRouteEnforced(base.getGame())) {
+            requireSetup(base.getGame()); // moving a base between routes renumbers both
+        }
         base.setStageId(request.getStageId());
 
         // Always write through tags — null clears all tags

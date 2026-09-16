@@ -386,7 +386,7 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
   "content": "string (rich text)",
   "completionContent": "string (rich text)",
   "answerType": "text | file | none | single_choice | multiple_choice",
-  "choiceOptions": "[{ id?, text, correct }] (required for the choice types; ids are assigned when omitted and stable afterwards; players get { id, text } as `options`)",
+  "choiceOptions": "[{ id?, text, correct }] (required for the choice types: 2 to 12 options, distinct texts of at most 500 characters; ids are assigned when omitted, kept by position on edits, and stable afterwards; players get { id, text } as `options`)",
   "autoValidate": false,
   "correctAnswer": ["string (optional, for autoValidate=true)"],
   "points": 10,
@@ -643,7 +643,8 @@ All three endpoints emit an `operator_override` activity event via the standard 
   "answer": "string (optional for file/none types)",
   "fileUrl": "string (optional, legacy single-file path)",
   "fileUrls": ["string (optional, multi-file path for chunked uploads)"],
-  "idempotencyKey": "UUID (optional, for offline dedup)"
+  "idempotencyKey": "UUID (optional, for offline dedup)",
+  "selectedOptionIds": "string[] (choice challenges only: the chosen option ids, exactly one for single_choice; graded on the server, one attempt per team and base, CHOICE_SELECTION_INVALID / CHOICE_ALREADY_ANSWERED)"
 }
 ```
 

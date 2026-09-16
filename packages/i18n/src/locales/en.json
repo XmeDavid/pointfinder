@@ -1067,7 +1067,8 @@
     "UPLOAD_COMPLETED_CANNOT_CANCEL": "This upload already finished and cannot be cancelled.",
     "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "A different upload already uses this item key.",
     "CHOICE_OPTIONS_INVALID": "Check the options: at least two, each with text, and the right number of correct ones for the challenge type.",
-    "CHOICE_SELECTION_INVALID": "Choose a valid option for this challenge."
+    "CHOICE_SELECTION_INVALID": "Choose a valid option for this challenge.",
+    "CHOICE_ALREADY_ANSWERED": "Your team already answered this one."
   },
   "realtimeHealth": {
     "title": "Realtime Health",

@@ -143,6 +143,8 @@ class SubmissionServiceTest {
                 .thenReturn(Optional.of(game));
 
         // Default: resolveTemplates passes through the input list unchanged
+        org.mockito.Mockito.lenient().when(templateVariableService.resolveTemplate(any(), any(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(0));
         org.mockito.Mockito.lenient().when(templateVariableService.resolveTemplates(any(), any(), any(), any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -347,6 +349,24 @@ class SubmissionServiceTest {
         assertEquals(challenge.getPoints(), saved.getValue().getPoints());
         assertEquals(List.of("b", "a"), response.selectedOptionIds());
         verify(stageService).openTriggeredStagesAfterCommit(gameId, request.getBaseId());
+    }
+
+    @Test
+    void createSubmissionRefusesASecondChoiceAttemptForTheSameTeamAndBase() {
+        challenge.setAnswerType(AnswerType.single_choice);
+        challenge.setChoiceOptions(List.of(
+                new com.prayer.pointfinder.entity.ChoiceOption("a", "Oak", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("b", "Pine", false)));
+        CreateSubmissionRequest request = buildDefaultRequest("");
+        request.setSelectedOptionIds(List.of("a"));
+        stubDefaultRepositories(null);
+        when(submissionRepository.findByTeamIdAndChallengeIdAndBaseId(teamId, challengeId, baseId))
+                .thenReturn(List.of(Submission.builder().status(SubmissionStatus.rejected).build()));
+
+        com.prayer.pointfinder.exception.BadRequestException ex = assertThrows(
+                com.prayer.pointfinder.exception.BadRequestException.class, () -> submissionService.createSubmission(gameId, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.CHOICE_ALREADY_ANSWERED, ex.getErrorCode());
+        verify(submissionRepository, never()).save(any());
     }
 
     @Test
