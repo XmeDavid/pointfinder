@@ -50,6 +50,13 @@ public record CheckInResponse(
             String content,
             String completionContent,
             String answerType,
-            Boolean requirePresenceToSubmit
-    ) {}
+            Boolean requirePresenceToSubmit,
+            /** OW-34: the options to choose from, id and text only; null unless the challenge is a choice challenge. */
+            java.util.List<PlayerChoiceOptionResponse> options
+    ) {
+        public ChallengeInfo(UUID id, String title, String description, String content, String completionContent,
+                String answerType, Boolean requirePresenceToSubmit) {
+            this(id, title, description, content, completionContent, answerType, requirePresenceToSubmit, null);
+        }
+    }
 }

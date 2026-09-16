@@ -49,6 +49,11 @@ public class Challenge {
     @Column(name = "correct_answer", columnDefinition = "TEXT")
     private List<String> correctAnswer;
 
+    /** OW-34: the options of a choice challenge, with the answer key; null for other answer types. */
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "choice_options", columnDefinition = "jsonb")
+    private List<ChoiceOption> choiceOptions;
+
     @Column(nullable = false)
     private Integer points;
 

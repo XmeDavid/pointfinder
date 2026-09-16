@@ -215,6 +215,12 @@ public enum ErrorCode {
     /** amountCents, dueDays, or termMonths was outside its allowed range. */
     INVOICE_AMOUNT_INVALID,
 
+    // ── Choice challenges (OW-34) ─────────────────────────────────────────
+    /** Options missing, blank, duplicated, too many, or the wrong number of correct ones for the type. */
+    CHOICE_OPTIONS_INVALID,
+    /** The selection is empty, names an unknown option, or picks several on a single-choice challenge. */
+    CHOICE_SELECTION_INVALID,
+
     // ── Resumable uploads ────────────────────────────────────────────────
     // Raised by ChunkedUploadService through UploadSessionException; the
     // response also carries `retryable` so a client knows whether to resend.

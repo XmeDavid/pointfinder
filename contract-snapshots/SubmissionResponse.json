@@ -14,5 +14,6 @@
   "reviewedBy": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "feedback": "Great work!",
   "points": 100,
-  "completionContent": "You found the hidden treasure!"
+  "completionContent": "You found the hidden treasure!",
+  "selectedOptionIds": null
 }

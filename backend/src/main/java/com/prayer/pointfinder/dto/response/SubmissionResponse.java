@@ -17,5 +17,13 @@ public record SubmissionResponse(
     UUID reviewedBy,
     String feedback,
     Integer points,
-    String completionContent
-) {}
+    String completionContent,
+    /** OW-34: the option ids a choice submission selected; null for other answer types. */
+    List<String> selectedOptionIds
+) {
+    public SubmissionResponse(UUID id, UUID teamId, UUID challengeId, UUID baseId, String answer, String fileUrl,
+            List<String> fileUrls, String status, Instant submittedAt, UUID reviewedBy, String feedback, Integer points,
+            String completionContent) {
+        this(id, teamId, challengeId, baseId, answer, fileUrl, fileUrls, status, submittedAt, reviewedBy, feedback, points, completionContent, null);
+    }
+}

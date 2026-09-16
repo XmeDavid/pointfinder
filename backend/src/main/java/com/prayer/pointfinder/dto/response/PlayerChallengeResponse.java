@@ -36,5 +36,14 @@ public record PlayerChallengeResponse(
     UUID id, UUID gameId, String title, String description, String content,
     String completionContent, String answerType, Boolean autoValidate,
     Boolean locationBound, Boolean requirePresenceToSubmit,
-    List<UUID> unlocksBaseIds, UUID fixedBaseId
-) {}
+    List<UUID> unlocksBaseIds, UUID fixedBaseId,
+    /** OW-34: the options to choose from, id and text only; null unless the challenge is a choice challenge. */
+    List<PlayerChoiceOptionResponse> options
+) {
+    public PlayerChallengeResponse(UUID id, UUID gameId, String title, String description, String content,
+            String completionContent, String answerType, Boolean autoValidate, Boolean locationBound,
+            Boolean requirePresenceToSubmit, List<UUID> unlocksBaseIds, UUID fixedBaseId) {
+        this(id, gameId, title, description, content, completionContent, answerType, autoValidate, locationBound,
+                requirePresenceToSubmit, unlocksBaseIds, fixedBaseId, null);
+    }
+}

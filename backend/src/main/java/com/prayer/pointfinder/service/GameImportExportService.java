@@ -153,6 +153,7 @@ public class GameImportExportService {
                             .answerType(challenge.getAnswerType())
                             .autoValidate(challenge.getAutoValidate())
                             .correctAnswer(challenge.getCorrectAnswer())
+                            .choiceOptions(challenge.getChoiceOptions())
                             .points(challenge.getPoints())
                             .locationBound(challenge.getLocationBound())
                             .requirePresenceToSubmit(challenge.getRequirePresenceToSubmit())
@@ -319,6 +320,7 @@ public class GameImportExportService {
                     .answerType(chDto.getAnswerType())
                     .autoValidate(chDto.getAutoValidate() != null ? chDto.getAutoValidate() : false)
                     .correctAnswer(chDto.getCorrectAnswer())
+                    .choiceOptions(importedOptions(chDto))
                     .points(chDto.getPoints())
                     .locationBound(chDto.getLocationBound() != null ? chDto.getLocationBound() : false)
                     .requirePresenceToSubmit(chDto.getRequirePresenceToSubmit() != null ? chDto.getRequirePresenceToSubmit() : false)
@@ -876,5 +878,17 @@ public class GameImportExportService {
         } catch (BadRequestException ex) {
             return null;
         }
+    }
+
+    /** OW-34: a template's options go through the same rules as the editor, so a broken template fails loudly. */
+    private static java.util.List<com.prayer.pointfinder.entity.ChoiceOption> importedOptions(ChallengeExportDto chDto) {
+        if (!ChoiceGrading.isChoice(chDto.getAnswerType())) return null;
+        java.util.List<com.prayer.pointfinder.dto.request.ChoiceOptionRequest> raw = chDto.getChoiceOptions() == null ? null
+                : chDto.getChoiceOptions().stream().map(o -> {
+                    var r = new com.prayer.pointfinder.dto.request.ChoiceOptionRequest();
+                    r.setId(o.getId()); r.setText(o.getText()); r.setCorrect(o.isCorrect());
+                    return r;
+                }).toList();
+        return ChoiceGrading.normalizeOptions(chDto.getAnswerType(), raw);
     }
 }

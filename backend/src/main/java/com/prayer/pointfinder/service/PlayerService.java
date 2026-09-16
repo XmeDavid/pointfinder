@@ -509,7 +509,8 @@ public class PlayerService {
                                 c.getRequirePresenceToSubmit(),
                                 c.getUnlocksBases().isEmpty() ? null :
                                         c.getUnlocksBases().stream().map(Base::getId).toList(),
-                                fixedBaseByChallenge.get(c.getId())
+                                fixedBaseByChallenge.get(c.getId()),
+                                playerOptions(c, gameId, teamId)
                         );
                 })
                 .toList();
@@ -563,6 +564,7 @@ public class PlayerService {
         submissionRequest.setChallengeId(request.getChallengeId());
         submissionRequest.setBaseId(request.getBaseId());
         submissionRequest.setAnswer(request.getAnswer());
+        submissionRequest.setSelectedOptionIds(request.getSelectedOptionIds());
         submissionRequest.setFileUrl(request.getFileUrl());
         submissionRequest.setFileUrls(request.getFileUrls());
         submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
@@ -643,7 +645,8 @@ public class PlayerService {
                     templateVariableService.resolveTemplate(
                             challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()),
                     challenge.getAnswerType().name(),
-                    challenge.getRequirePresenceToSubmit());
+                    challenge.getRequirePresenceToSubmit(),
+                    playerOptions(challenge, gameId, team.getId()));
         }
 
         // P1 Phase 4 W4: player-facing naming contract — CheckInResponse
@@ -664,5 +667,14 @@ public class PlayerService {
         if (team.getGame().getStatus() != GameStatus.live) {
             throw new BadRequestException("Game is not active yet");
         }
+    }
+
+    /** OW-34: the options a player may choose, texts resolved for the team, answer key left out. */
+    private List<com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse> playerOptions(Challenge challenge, UUID gameId, UUID teamId) {
+        if (challenge.getChoiceOptions() == null || !ChoiceGrading.isChoice(challenge.getAnswerType())) return null;
+        return challenge.getChoiceOptions().stream()
+                .map(o -> new com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse(o.getId(),
+                        templateVariableService.resolveTemplate(o.getText(), gameId, challenge.getId(), teamId)))
+                .toList();
     }
 }

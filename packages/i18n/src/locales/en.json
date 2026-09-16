@@ -1065,7 +1065,9 @@
     "UPLOAD_EMPTY_CHUNK": "An upload part was empty.",
     "UPLOAD_INCOMPLETE": "Some parts of this upload are still missing.",
     "UPLOAD_COMPLETED_CANNOT_CANCEL": "This upload already finished and cannot be cancelled.",
-    "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "A different upload already uses this item key."
+    "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "A different upload already uses this item key.",
+    "CHOICE_OPTIONS_INVALID": "Check the options: at least two, each with text, and the right number of correct ones for the challenge type.",
+    "CHOICE_SELECTION_INVALID": "Choose a valid option for this challenge."
   },
   "realtimeHealth": {
     "title": "Realtime Health",
@@ -1473,7 +1475,9 @@
       "pickerAnswer": {
         "text": "Text",
         "file": "File",
-        "none": "No answer"
+        "none": "No answer",
+        "single_choice": "Single choice",
+        "multiple_choice": "Multiple choice"
       },
       "open": "Link challenges",
       "title": "Link challenges",
@@ -1596,7 +1600,9 @@
       "createEmptyChallenge": "Create empty challenge",
       "challengeHere": "Challenge",
       "chooseExistingChallenge": "Choose an existing challenge",
-      "appearsAt": "Where this challenge appears"
+      "appearsAt": "Where this challenge appears",
+      "single_choice": "Single choice",
+      "multiple_choice": "Multiple choice"
     }
   },
   "command2": {

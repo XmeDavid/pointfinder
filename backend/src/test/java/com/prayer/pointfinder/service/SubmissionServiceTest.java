@@ -326,6 +326,48 @@ class SubmissionServiceTest {
     }
 
     @Test
+    void createSubmissionGradesAChoiceOnTheServerAndKeepsTheSelection() {
+        challenge.setAnswerType(AnswerType.multiple_choice);
+        challenge.setChoiceOptions(List.of(
+                new com.prayer.pointfinder.entity.ChoiceOption("a", "Oak", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("b", "Pine", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("c", "Fir", false)));
+        CreateSubmissionRequest request = buildDefaultRequest("");
+        request.setSelectedOptionIds(List.of("b", "a"));
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> saved = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(saved.capture());
+        assertEquals(SubmissionStatus.correct, saved.getValue().getStatus());
+        assertEquals(List.of("b", "a"), saved.getValue().getSelectedOptionIds());
+        assertEquals("Oak; Pine", saved.getValue().getAnswer(), "reviewers read the chosen texts");
+        assertEquals(challenge.getPoints(), saved.getValue().getPoints());
+        assertEquals(List.of("b", "a"), response.selectedOptionIds());
+        verify(stageService).openTriggeredStagesAfterCommit(gameId, request.getBaseId());
+    }
+
+    @Test
+    void createSubmissionRejectsAWrongChoiceWithoutRevealingTheKey() {
+        challenge.setAnswerType(AnswerType.single_choice);
+        challenge.setChoiceOptions(List.of(
+                new com.prayer.pointfinder.entity.ChoiceOption("a", "Oak", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("b", "Pine", false)));
+        CreateSubmissionRequest request = buildDefaultRequest("");
+        request.setSelectedOptionIds(List.of("b"));
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        assertEquals(SubmissionStatus.rejected.name(), response.status());
+        assertEquals("Pine", response.answer());
+        verify(stageService, never()).openTriggeredStagesAfterCommit(any(), any());
+    }
+
+    @Test
     void createSubmissionWithAnswerTypeNoneAutoApproves() {
         challenge.setAnswerType(AnswerType.none);
 

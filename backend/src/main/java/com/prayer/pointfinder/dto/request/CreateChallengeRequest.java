@@ -57,4 +57,7 @@ public class CreateChallengeRequest {
      */
     @Size(max = 20, message = "A challenge can have at most 20 tags")
     private List<UUID> tagIds;
+
+    /** OW-34: options of a choice challenge; required for single_choice and multiple_choice, ignored otherwise. */
+    private List<ChoiceOptionRequest> choiceOptions;
 }

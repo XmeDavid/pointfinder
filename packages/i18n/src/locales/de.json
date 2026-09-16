@@ -1065,7 +1065,9 @@
     "UPLOAD_EMPTY_CHUNK": "Ein Upload-Teil war leer.",
     "UPLOAD_INCOMPLETE": "Es fehlen noch Teile dieses Uploads.",
     "UPLOAD_COMPLETED_CANNOT_CANCEL": "Dieser Upload ist bereits abgeschlossen und kann nicht abgebrochen werden.",
-    "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Ein anderer Upload verwendet diesen Element-Schlüssel bereits."
+    "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Ein anderer Upload verwendet diesen Element-Schlüssel bereits.",
+    "CHOICE_OPTIONS_INVALID": "Prüfe die Optionen: mindestens zwei, jede mit Text, und die passende Zahl richtiger Optionen für den Aufgabentyp.",
+    "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Aufgabe."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",
@@ -1473,7 +1475,9 @@
       "pickerAnswer": {
         "text": "Text",
         "file": "Datei",
-        "none": "Keine Antwort"
+        "none": "Keine Antwort",
+        "single_choice": "Einfachauswahl",
+        "multiple_choice": "Mehrfachauswahl"
       },
       "open": "Aufgaben verknüpfen",
       "title": "Aufgaben verknüpfen",
@@ -1596,7 +1600,9 @@
       "createEmptyChallenge": "Leere Aufgabe erstellen",
       "challengeHere": "Aufgabe",
       "chooseExistingChallenge": "Vorhandene Aufgabe wählen",
-      "appearsAt": "Wo diese Aufgabe erscheint"
+      "appearsAt": "Wo diese Aufgabe erscheint",
+      "single_choice": "Einfachauswahl",
+      "multiple_choice": "Mehrfachauswahl"
     }
   },
   "command2": {

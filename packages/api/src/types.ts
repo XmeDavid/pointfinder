@@ -13,7 +13,7 @@ export type IsoDateTime = string
 export type GameStatus = 'setup' | 'live' | 'ended'
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'correct'
 export type BaseStatus = 'not_visited' | 'checked_in' | 'submitted' | 'completed' | 'rejected'
-export type AnswerType = 'text' | 'file' | 'none'
+export type AnswerType = 'text' | 'file' | 'none' | 'single_choice' | 'multiple_choice'
 export type UnlockTrigger = 'CHECK_IN' | 'SUBMISSION' | 'APPROVAL'
 export type UserRole = 'admin' | 'operator' | 'participant'
 export type PushPlatform = 'ios' | 'android'
@@ -262,11 +262,28 @@ export interface Challenge {
   unlocksBaseIds?: EntityId[] | null
   autoValidate?: boolean
   correctAnswer?: string[] | null
+  /** Operator view of a choice challenge's options, answer key included; absent on other types and on player responses. */
+  choiceOptions?: ChoiceOption[] | null
+  /** Player view of a choice challenge's options, id and text only; absent on other types and on operator responses. */
+  options?: PlayerChoiceOption[] | null
   locationBound?: boolean
   fixedBaseId?: EntityId | null
   requirePresenceToSubmit?: boolean
   operatorNotes?: string | null
   tagIds?: EntityId[] | null
+}
+
+/** One option of a choice challenge as the operator edits it. Omit `id` on a new option; ids are stable afterwards. */
+export interface ChoiceOption {
+  id?: string
+  text: string
+  correct: boolean
+}
+
+/** One option as a player sees it: no answer key. */
+export interface PlayerChoiceOption {
+  id: string
+  text: string
 }
 
 export interface Assignment {
@@ -339,6 +356,8 @@ export interface CheckInChallengeInfo {
   content: string
   completionContent?: string | null
   answerType: AnswerType
+  /** Options to choose from on a choice challenge, id and text only; absent otherwise. */
+  options?: PlayerChoiceOption[] | null
   points: number
   requirePresenceToSubmit?: boolean
 }
@@ -356,6 +375,8 @@ export interface PlayerSubmissionRequest {
   baseId: EntityId
   challengeId: EntityId
   answer: string
+  /** Chosen option ids on a choice challenge; exactly one for single_choice. */
+  selectedOptionIds?: string[] | null
   fileUrl?: string | null
   fileUrls?: string[] | null
   /** UUID chosen by the client so a retried request is not a duplicate. */
@@ -651,6 +672,8 @@ export interface UpsertChallengeRequest {
   answerType?: AnswerType
   autoValidate?: boolean
   correctAnswer?: string[]
+  /** Required for single_choice and multiple_choice; ignored on other types. */
+  choiceOptions?: ChoiceOption[] | null
   points?: number
   locationBound?: boolean
   fixedBaseId?: EntityId | null

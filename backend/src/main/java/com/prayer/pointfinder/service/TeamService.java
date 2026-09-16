@@ -284,7 +284,9 @@ public class TeamService {
                     challenge.getContent(),
                     challenge.getCompletionContent(),
                     challenge.getAnswerType().name(),
-                    challenge.getRequirePresenceToSubmit());
+                    challenge.getRequirePresenceToSubmit(),
+                    challenge.getChoiceOptions() == null ? null : challenge.getChoiceOptions().stream()
+                            .map(o -> new com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse(o.getId(), o.getText())).toList());
         }
 
         // P1 Phase 4 W4: CheckInResponse is shared between player and
