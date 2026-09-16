@@ -56,6 +56,7 @@ public class SubmissionService {
     private final MonitoringService monitoringService;
     private final UploadSessionRepository uploadSessionRepository;
     private final com.prayer.pointfinder.xp.XpService xpService;
+    private final StageService stageService;
 
     @Transactional(readOnly = true)
     public List<SubmissionResponse> getSubmissionsByGame(UUID gameId) {
@@ -212,6 +213,7 @@ public class SubmissionService {
         }
         if (status == SubmissionStatus.approved || status == SubmissionStatus.correct) {
             xpService.awardBaseCompleted(team, base);
+            openTriggeredStages(gameId, base.getId());
         }
 
         // Create activity event with actor capture (V36).
@@ -296,6 +298,7 @@ public class SubmissionService {
         }
         if (newStatus == SubmissionStatus.approved || newStatus == SubmissionStatus.correct) {
             xpService.awardBaseCompleted(submission.getTeam(), submission.getBase());
+            openTriggeredStages(gameId, submission.getBase().getId());
         }
 
         // Create activity event for the review
@@ -502,6 +505,7 @@ public class SubmissionService {
             throw ex;
         }
         xpService.awardBaseCompleted(team, base);
+        openTriggeredStages(gameId, base.getId());
 
         // ── Activity event: operator_override (V36 enum value) ──────────
         String reasonSuffix = request.getReason() != null && !request.getReason().isBlank()
@@ -687,5 +691,25 @@ public class SubmissionService {
                 s.getFeedback(),
                 s.getPoints(),
                 s.getChallenge().getCompletionContent());
+    }
+
+    /**
+     * A completed base may be the trigger of a stage (OW-21). The stage opens
+     * after this transaction commits, in its own transaction, so a submission
+     * that rolls back never opens a stage and the stage broadcast follows the
+     * submission broadcast.
+     */
+    private void openTriggeredStages(UUID gameId, UUID baseId) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            stageService.activateTriggeredStages(gameId, baseId);
+                        }
+                    });
+        } else {
+            stageService.activateTriggeredStages(gameId, baseId);
+        }
     }
 }

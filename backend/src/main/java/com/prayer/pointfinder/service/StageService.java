@@ -18,6 +18,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -192,6 +193,26 @@ public class StageService {
 
         broadcaster.broadcastStageUnlock(gameId, stageId);
         broadcaster.broadcastGameConfig(gameId, "stages", "activated");
+    }
+
+    /**
+     * Trigger stages: the first team to complete the trigger base opens the
+     * stage for everyone. Runs in its own transaction after the completing
+     * submission committed, so a rolled-back submission never opens a stage.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 10)
+    public void activateTriggeredStages(UUID gameId, UUID baseId) {
+        List<Stage> waiting = stageRepository.findByGameIdAndTransitionTypeAndTriggerBaseIdAndIsActiveFalse(
+                gameId, TransitionType.trigger, baseId);
+        for (Stage stage : waiting) {
+            if (stageRepository.activateIfTriggeredBy(stage.getId(), baseId) == 0) {
+                continue; // opened by a concurrent completion, or re-pointed by an operator meanwhile
+            }
+            log.info("[OP] operation=activateTriggeredStage gameId={} stageId={} name={} triggerBaseId={}",
+                    gameId, stage.getId(), stage.getName(), baseId);
+            broadcaster.broadcastStageUnlock(gameId, stage.getId());
+            broadcaster.broadcastGameConfig(gameId, "stages", "activated");
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
