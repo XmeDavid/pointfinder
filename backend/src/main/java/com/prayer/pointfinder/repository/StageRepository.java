@@ -42,4 +42,20 @@ public interface StageRepository extends JpaRepository<Stage, UUID> {
             + "AND s.transitionType = com.prayer.pointfinder.entity.TransitionType.scheduled "
             + "AND s.scheduledAt IS NOT NULL AND s.scheduledAt <= :now")
     int activateIfScheduledAndDue(@Param("stageId") UUID stageId, @Param("now") OffsetDateTime now);
+
+    /** Trigger stages still waiting on this base. */
+    List<Stage> findByGameIdAndTransitionTypeAndTriggerBaseIdAndIsActiveFalse(
+            UUID gameId, TransitionType transitionType, UUID triggerBaseId);
+
+    /**
+     * Activates a trigger stage only if it is still inactive and still bound to
+     * this base. Returns 1 when this call made the transition, 0 otherwise, so
+     * two teams completing the trigger base at once open the stage once and an
+     * operator who re-pointed the trigger meanwhile is not overwritten.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Stage s SET s.isActive = true WHERE s.id = :stageId AND s.isActive = false "
+            + "AND s.transitionType = com.prayer.pointfinder.entity.TransitionType.trigger "
+            + "AND s.triggerBaseId = :baseId")
+    int activateIfTriggeredBy(@Param("stageId") UUID stageId, @Param("baseId") UUID baseId);
 }

@@ -34,6 +34,7 @@ public class StageService {
     private final GameAccessService gameAccessService;
     private final GameEventBroadcaster broadcaster;
     private final EntityManager entityManager;
+    private final org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @Transactional(readOnly = true)
     public List<StageResponse> getStages(UUID gameId) {
@@ -192,6 +193,60 @@ public class StageService {
 
         broadcaster.broadcastStageUnlock(gameId, stageId);
         broadcaster.broadcastGameConfig(gameId, "stages", "activated");
+    }
+
+    /**
+     * A completed base may be the trigger of a stage (OW-21). The stage opens
+     * once the completing transaction has committed, so a rolled-back
+     * completion never opens a stage; outside a transaction it opens at once.
+     * A failure here is logged, never surfaced: the completion is already
+     * durable and must not be reported as failed to the client.
+     */
+    public void openTriggeredStagesAfterCommit(UUID gameId, UUID baseId) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            activateTriggeredStagesQuietly(gameId, baseId);
+                        }
+                    });
+        } else {
+            activateTriggeredStagesQuietly(gameId, baseId);
+        }
+    }
+
+    private void activateTriggeredStagesQuietly(UUID gameId, UUID baseId) {
+        try {
+            activateTriggeredStages(gameId, baseId);
+        } catch (RuntimeException ex) {
+            log.error("[OP] operation=activateTriggeredStage result=failed gameId={} triggerBaseId={}", gameId, baseId, ex);
+        }
+    }
+
+    /**
+     * Trigger stages: the first team to complete the trigger base opens the
+     * stage for everyone. Runs in its own transaction (an explicit template,
+     * so it also works when called from an after-commit hook on this bean).
+     */
+    public void activateTriggeredStages(UUID gameId, UUID baseId) {
+        org.springframework.transaction.support.TransactionTemplate own =
+                new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        own.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        own.setTimeout(10);
+        own.executeWithoutResult(status -> {
+            List<Stage> waiting = stageRepository.findByGameIdAndTransitionTypeAndTriggerBaseIdAndIsActiveFalse(
+                    gameId, TransitionType.trigger, baseId);
+            for (Stage stage : waiting) {
+                if (stageRepository.activateIfTriggeredBy(stage.getId(), baseId) == 0) {
+                    continue; // opened by a concurrent completion, or re-pointed by an operator meanwhile
+                }
+                log.info("[OP] operation=activateTriggeredStage gameId={} stageId={} name={} triggerBaseId={}",
+                        gameId, stage.getId(), stage.getName(), baseId);
+                broadcaster.broadcastStageUnlock(gameId, stage.getId());
+                broadcaster.broadcastGameConfig(gameId, "stages", "activated");
+            }
+        });
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

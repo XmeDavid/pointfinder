@@ -77,7 +77,8 @@ class DtoContractTest {
                         "Forest Adventure",
                         "A scouting game in the forest",
                         "live",
-                        "osm-classic"
+                        "osm-classic",
+                        "en"
                 )
         );
 

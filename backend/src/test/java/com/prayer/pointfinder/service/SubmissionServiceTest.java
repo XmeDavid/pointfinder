@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +67,9 @@ class SubmissionServiceTest {
     private ThumbnailService thumbnailService;
     @Mock
     private MonitoringService monitoringService;
+
+    @Mock
+    private StageService stageService;
 
     @InjectMocks
     private SubmissionService submissionService;
@@ -337,6 +341,21 @@ class SubmissionServiceTest {
         assertEquals(SubmissionStatus.approved, submissionCaptor.getValue().getStatus());
         assertEquals(SubmissionStatus.approved.name(), response.status());
         assertEquals(challenge.getPoints(), submissionCaptor.getValue().getPoints());
+        // A completed base may open a trigger stage (OW-21).
+        verify(stageService).openTriggeredStagesAfterCommit(gameId, request.getBaseId());
+    }
+
+    @Test
+    void createSubmissionLeftPendingDoesNotOpenTriggerStages() {
+        CreateSubmissionRequest request = buildDefaultRequest("needs a look");
+
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        assertEquals(SubmissionStatus.pending.name(), response.status());
+        verify(stageService, never()).openTriggeredStagesAfterCommit(any(), any());
     }
 
     @Test

@@ -25,6 +25,7 @@ class PlayerJoinServiceTest {
     @Mock private GameAccessService gameAccessService;
     @Mock private JwtTokenProvider tokenProvider;
     @Mock private QuotaService quotaService;
+    @Mock private com.prayer.pointfinder.repository.ActivityEventRepository activityEventRepository;
     @InjectMocks private PlayerJoinService playerJoinService;
 
     @Test
@@ -75,6 +76,7 @@ class PlayerJoinServiceTest {
         assertEquals("New Name", existingPlayer.getDisplayName());
         verify(playerRepository).findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(deviceId, gameId);
         verify(playerRepository).save(existingPlayer);
+        verify(activityEventRepository, org.mockito.Mockito.never()).save(any());
     }
 
     @Test
@@ -174,6 +176,14 @@ class PlayerJoinServiceTest {
         assertEquals("jwt-token", response.token());
         assertEquals("setup", response.game().status());
         assertEquals("Setup Player", response.player().displayName());
+        // Membership history: the first join is audited as team_join.
+        org.mockito.ArgumentCaptor<com.prayer.pointfinder.entity.ActivityEvent> event =
+                org.mockito.ArgumentCaptor.forClass(com.prayer.pointfinder.entity.ActivityEvent.class);
+        verify(activityEventRepository).save(event.capture());
+        assertEquals(com.prayer.pointfinder.entity.ActivityEventType.team_join, event.getValue().getType());
+        assertEquals(teamId, event.getValue().getTeam().getId());
+        assertEquals("Setup Player", event.getValue().getActorDisplayNameSnapshot());
+        assertEquals(deviceId, event.getValue().getActorDeviceIdSnapshot());
     }
 
     @Test

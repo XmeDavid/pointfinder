@@ -15,6 +15,7 @@
     "name": "Forest Adventure",
     "description": "A scouting game in the forest",
     "status": "live",
-    "tileSource": "osm-classic"
+    "tileSource": "osm-classic",
+    "contentLanguage": "en"
   }
 }

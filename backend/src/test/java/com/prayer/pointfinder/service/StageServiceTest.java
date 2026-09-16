@@ -38,6 +38,7 @@ class StageServiceTest {
     @Mock private GameAccessService gameAccessService;
     @Mock private GameEventBroadcaster broadcaster;
     @Mock private EntityManager entityManager;
+    @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @InjectMocks private StageService stageService;
 
@@ -256,6 +257,38 @@ class StageServiceTest {
         assertEquals("Stage 1 Updated", response.name());
         assertEquals("trigger", response.transitionType());
         assertEquals(triggerBaseId, response.triggerBaseId());
+    }
+
+    // ── activateTriggeredStages ──────────────────────────────────────
+
+    @Test
+    void activateTriggeredStages_opensTheStageWaitingOnTheBaseAndBroadcastsOnce() {
+        UUID baseId = UUID.randomUUID();
+        Stage waiting = Stage.builder().id(UUID.randomUUID()).game(game).name("Stage 2")
+                .transitionType(TransitionType.trigger).triggerBaseId(baseId).isActive(false).build();
+        when(stageRepository.findByGameIdAndTransitionTypeAndTriggerBaseIdAndIsActiveFalse(gameId, TransitionType.trigger, baseId))
+                .thenReturn(List.of(waiting));
+        when(stageRepository.activateIfTriggeredBy(waiting.getId(), baseId)).thenReturn(1);
+
+        stageService.activateTriggeredStages(gameId, baseId);
+
+        verify(broadcaster).broadcastStageUnlock(gameId, waiting.getId());
+        verify(broadcaster).broadcastGameConfig(gameId, "stages", "activated");
+    }
+
+    @Test
+    void activateTriggeredStages_staysQuietWhenAnotherCompletionAlreadyOpenedIt() {
+        UUID baseId = UUID.randomUUID();
+        Stage waiting = Stage.builder().id(UUID.randomUUID()).game(game).name("Stage 2")
+                .transitionType(TransitionType.trigger).triggerBaseId(baseId).isActive(false).build();
+        when(stageRepository.findByGameIdAndTransitionTypeAndTriggerBaseIdAndIsActiveFalse(gameId, TransitionType.trigger, baseId))
+                .thenReturn(List.of(waiting));
+        when(stageRepository.activateIfTriggeredBy(waiting.getId(), baseId)).thenReturn(0);
+
+        stageService.activateTriggeredStages(gameId, baseId);
+
+        verify(broadcaster, never()).broadcastStageUnlock(any(), any());
+        verify(broadcaster, never()).broadcastGameConfig(any(), any(), any());
     }
 
     // ── reorderStages ────────────────────────────────────────────────

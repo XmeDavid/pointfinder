@@ -278,6 +278,7 @@ public class GamePublicationService {
                 game.getName(),
                 game.getStatus().name(),
                 organizerOf(game),
+                game.getContentLanguage(),
                 titleOf(game),
                 p.getSummary(),
                 p.getPlace(),

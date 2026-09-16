@@ -53,6 +53,7 @@ public class GameService {
     private final com.prayer.pointfinder.repository.SubmissionRepository submissionRepository;
     private final com.prayer.pointfinder.repository.TeamRepository teamRepository;
     private final com.prayer.pointfinder.repository.PlayerRepository playerRepository;
+    private final com.prayer.pointfinder.repository.GameLifecycleEventRepository lifecycleEventRepository;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -147,6 +148,7 @@ public class GameService {
                 .unlockTrigger(validateUnlockTrigger(request.getUnlockTrigger()))
                 .defaultCheckInMethod(validateCheckInMethod(request.getDefaultCheckInMethod()))
                 .defaultCheckInRadiusM(clampDefaultRadius(request.getDefaultCheckInRadiusM()))
+                .contentLanguage(normalizeContentLanguage(request.getContentLanguage()))
                 .status(GameStatus.setup)
                 .createdBy(currentUser)
                 .organization(organization)
@@ -209,6 +211,9 @@ public class GameService {
                 quotaService.enforceLocationCheckIn(game);
             }
             game.setDefaultCheckInMethod(method);
+        }
+        if (request.getContentLanguage() != null) {
+            game.setContentLanguage(normalizeContentLanguage(request.getContentLanguage()));
         }
         if (request.getDefaultCheckInRadiusM() != null) {
             Integer radius = clampDefaultRadius(request.getDefaultCheckInRadiusM());
@@ -322,8 +327,26 @@ public class GameService {
         }
         game.setStatus(target);
         game = gameRepository.save(game);
+        lifecycleEventRepository.save(com.prayer.pointfinder.entity.GameLifecycleEvent.builder()
+                .game(game)
+                .fromStatus(fromStatus)
+                .toStatus(target)
+                .reason(com.prayer.pointfinder.entity.GameLifecycleEvent.REASON_OPERATOR)
+                .actorUser(currentOperator)
+                .actorNameSnapshot(currentOperator.getName())
+                .resetProgress(target == GameStatus.setup && resetProgress)
+                .build());
         eventBroadcaster.broadcastGameStatus(game.getId(), game.getStatus().name());
         return toResponse(game);
+    }
+
+    /** OW-14: every lifecycle transition of the game, oldest first, with who or what made it. */
+    @Transactional(readOnly = true)
+    public List<com.prayer.pointfinder.dto.response.GameLifecycleEventResponse> lifecycleEvents(UUID id) {
+        gameAccessService.ensureCurrentUserCanAccessGame(id);
+        return lifecycleEventRepository.findByGameIdOrderByCreatedAtAsc(id).stream()
+                .map(com.prayer.pointfinder.dto.response.GameLifecycleEventResponse::from)
+                .toList();
     }
 
     /** What the operator sees before ending: how many submissions are still unreviewed. */
@@ -414,6 +437,22 @@ public class GameService {
             throw new BadRequestException(
                     "Invalid check-in method: " + raw + ". Must be one of: NFC, QR, LOCATION");
         }
+    }
+
+    private static final java.util.Set<String> ISO_639_1 = java.util.Set.of(java.util.Locale.getISOLanguages());
+
+    /**
+     * Blank means unknown and is stored as null. Anything else must be an
+     * ISO 639-1 code the JVM knows; case is normalized so {@code PT} and
+     * {@code pt} are the same language.
+     */
+    static String normalizeContentLanguage(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String code = raw.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!ISO_639_1.contains(code)) {
+            throw new BadRequestException("Invalid content language: " + raw + ". Use a two-letter ISO 639-1 code such as pt, en or de");
+        }
+        return code;
     }
 
     private Integer clampDefaultRadius(Integer raw) {

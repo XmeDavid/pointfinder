@@ -74,6 +74,36 @@ class GameStatusTransitionsTest extends IntegrationTestBase {
                 new HttpEntity<>(req, ctx.opHeaders), GameResponse.class);
     }
 
+    // ── Lifecycle audit (OW-14) ──────────────────────────────────────
+
+    @Test
+    void everyTransitionLeavesAnAuditRowWithTheOperatorAndTheResetFlag() {
+        GameContext ctx = createReadyGame("AUD");
+        transition(ctx, "live");
+        transition(ctx, "ended");
+        transitionWithReset(ctx, "setup", true);
+
+        ResponseEntity<GameLifecycleEventResponse[]> resp = restTemplate.exchange(
+                "/api/games/" + ctx.gameId + "/lifecycle-events", HttpMethod.GET,
+                new HttpEntity<>(ctx.opHeaders), GameLifecycleEventResponse[].class);
+        assertEquals(HttpStatus.OK, resp.getStatusCode());
+        GameLifecycleEventResponse[] rows = resp.getBody();
+        assertEquals(3, rows.length);
+        assertEquals("setup", rows[0].fromStatus());
+        assertEquals("live", rows[0].toStatus());
+        assertEquals("live", rows[1].fromStatus());
+        assertEquals("ended", rows[1].toStatus());
+        assertEquals("ended", rows[2].fromStatus());
+        assertEquals("setup", rows[2].toStatus());
+        for (GameLifecycleEventResponse row : rows) {
+            assertEquals("operator", row.reason());
+            assertNotNull(row.actorUserId());
+            assertNotNull(row.actorName());
+        }
+        assertFalse(rows[0].resetProgress());
+        assertTrue(rows[2].resetProgress());
+    }
+
     // ── Valid transitions ────────────────────────────────────────────
 
     @Test

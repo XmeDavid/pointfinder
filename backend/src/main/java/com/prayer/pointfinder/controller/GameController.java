@@ -73,6 +73,12 @@ public class GameController {
         return ResponseEntity.ok(gameService.endSummary(id));
     }
 
+    /** OW-14: every lifecycle transition of the game, oldest first, with who or what made it. */
+    @GetMapping("/{id}/lifecycle-events")
+    public ResponseEntity<java.util.List<com.prayer.pointfinder.dto.response.GameLifecycleEventResponse>> lifecycleEvents(@PathVariable UUID id) {
+        return ResponseEntity.ok(gameService.lifecycleEvents(id));
+    }
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<GameResponse> updateStatus(@PathVariable UUID id,
                                                       @Valid @RequestBody UpdateGameStatusRequest request) {

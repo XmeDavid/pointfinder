@@ -24,6 +24,8 @@ export interface Game {
   broadcastEnabled: boolean
   broadcastCode: string | null
   tileSource: string
+  /** ISO 639-1 code of the content's language; null when the organizer did not say. */
+  contentLanguage?: string | null
   unlockTrigger: string
   tags?: import('./tag').GameTag[]
   orgId?: string | null

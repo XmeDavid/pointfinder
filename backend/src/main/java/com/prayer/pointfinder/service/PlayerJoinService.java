@@ -8,6 +8,9 @@ import com.prayer.pointfinder.entity.Player;
 import com.prayer.pointfinder.entity.Team;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ErrorCode;
+import com.prayer.pointfinder.entity.ActivityEvent;
+import com.prayer.pointfinder.entity.ActivityEventType;
+import com.prayer.pointfinder.repository.ActivityEventRepository;
 import com.prayer.pointfinder.repository.GameRepository;
 import com.prayer.pointfinder.repository.PlayerRepository;
 import com.prayer.pointfinder.repository.TeamRepository;
@@ -28,6 +31,7 @@ public class PlayerJoinService {
     private final QuotaService quotaService;
     private final PlayerRepository playerRepository;
     private final GameRepository gameRepository;
+    private final ActivityEventRepository activityEventRepository;
     private final GameAccessService gameAccessService;
 
     @Transactional(timeout = 10)
@@ -48,6 +52,7 @@ public class PlayerJoinService {
         Player player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(request.getDeviceId(), game.getId())
                 .orElse(null);
 
+        boolean firstJoin = player == null;
         if (player == null) {
             // Enforce player limits only for new players (not rejoins)
             quotaService.enforcePracticeGamePlayerLimit(game);
@@ -73,7 +78,8 @@ public class PlayerJoinService {
         try {
             player = playerRepository.save(player);
         } catch (DataIntegrityViolationException ex) {
-            // Concurrent join with same deviceId -- re-fetch the winner
+            // Concurrent join with same deviceId -- re-fetch the winner; it wrote the team_join row.
+            firstJoin = false;
             player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(
                     request.getDeviceId(), game.getId())
                     .orElseThrow(() -> new BadRequestException("Join failed, please try again"));
@@ -87,6 +93,20 @@ public class PlayerJoinService {
             player = playerRepository.save(player);
         }
 
+        if (firstJoin) {
+            // Membership history: the first join of a device is an audit event like a team switch.
+            activityEventRepository.save(ActivityEvent.builder()
+                    .game(game)
+                    .type(ActivityEventType.team_join)
+                    .team(team)
+                    .message(player.getDisplayName() + " joined " + team.getName())
+                    .timestamp(java.time.Instant.now())
+                    .actorPlayer(player)
+                    .actorDisplayNameSnapshot(player.getDisplayName())
+                    .actorDeviceIdSnapshot(player.getDeviceId())
+                    .sourceSurface("player_app")
+                    .build());
+        }
         // Generate JWT token using the persisted player ID
         String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
 

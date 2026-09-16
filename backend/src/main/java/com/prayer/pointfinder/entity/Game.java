@@ -118,6 +118,14 @@ public class Game {
     @Column(name = "tutorial_scenario", length = 64)
     private String tutorialScenario;
 
+    /**
+     * OW-33: ISO 639-1 code of the language the organizer wrote the game's
+     * content in (bases, challenges, documents). Null means unknown, never
+     * "any"; it is shown where accounts choose or join a game.
+     */
+    @Column(name = "content_language", length = 8)
+    private String contentLanguage;
+
     @Column(name = "tutorial_expires_at")
     private Instant tutorialExpiresAt;
 
