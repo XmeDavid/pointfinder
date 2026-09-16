@@ -22,5 +22,6 @@
   "tutorialScenario": null,
   "tutorialExpiresAt": null,
   "locationCheckInAllowed": null,
-  "contentLanguage": null
+  "contentLanguage": null,
+  "routeOrderEnforced": null
 }

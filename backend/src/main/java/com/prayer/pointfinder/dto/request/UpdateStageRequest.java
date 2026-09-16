@@ -19,4 +19,6 @@ public class UpdateStageRequest {
     private OffsetDateTime scheduledAt;
 
     private UUID triggerBaseId;
+    /** OW-40: enforce visiting this stage's bases in route order. Null keeps the current value. */
+    private Boolean enforceBaseOrder;
 }

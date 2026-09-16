@@ -264,7 +264,7 @@ Checks run in this order, in `PlayerService.checkIn`:
 
 1. **Guards** — the player belongs to the game, the game is `live`, the base belongs to the game.
 2. **Idempotency** — one active row per `(team, base)` (partial unique index `idx_check_ins_team_base` on `archived = false`). A repeat returns the existing row unchanged, whatever proof was sent and whoever created the original row (including an operator rescue).
-3. **Base order** — when `enforce_base_order` is on, a later base is rejected with `PREVIOUS_BASE_REQUIRED`. This runs *before* verification, so a blocked team never learns whether its proof would have passed.
+3. **Base order** — when the base's route is enforced (its stage's `enforce_base_order`, or the game's for bases without a stage), a later base of that route is rejected with `PREVIOUS_BASE_REQUIRED`. Routes are independent: nothing of another stage is required first. This runs *before* verification, so a blocked team never learns whether its proof would have passed.
 4. **Verification** — `CheckInVerificationService.verify` against the base's own method.
 
 **Verification rules**
@@ -365,6 +365,10 @@ either way, so this is a UX guardrail, not a security boundary.
 | `text` | Free-form text input | Optional (if `autoValidate = true` and correct answer matches) |
 | `file` | Photo or video upload | Never (always requires operator review) |
 | `none` | Check-in only, no answer required | Always (status → `approved` immediately) |
+| `single_choice` | OW-34: pick one of the challenge's options | Always, on the server: `correct` when the chosen option is the one marked correct, else `rejected` |
+| `multiple_choice` | OW-34: pick one or more options | Always, on the server, all-or-nothing: `correct` only when the chosen set equals the set marked correct |
+
+Choice challenges carry `choiceOptions` (`id`, `text`, `correct`) on operator DTOs and templates; players receive `options` with `id` and `text` only, so the answer key is structurally absent from every player response, including after a wrong answer. A submission sends `selectedOptionIds`; the server validates the selection (`CHOICE_SELECTION_INVALID`), stores the ids next to a readable `answer` made of the chosen texts, and grades it. A team gets one attempt per base on a choice challenge (`CHOICE_ALREADY_ANSWERED` afterwards), since the options are enumerable. Option ids are stable across edits so old submissions keep pointing at what was chosen. Saving a choice challenge validates its options (`CHOICE_OPTIONS_INVALID`: at least two, each with text, exactly one correct for single choice, at least one for multiple choice, at most 12) and forces `autoValidate`.
 
 ### Submission Status Lifecycle
 

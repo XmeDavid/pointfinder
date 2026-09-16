@@ -132,7 +132,20 @@ public class SubmissionService {
 
         // Determine initial status
         SubmissionStatus status = SubmissionStatus.pending;
-        if (challenge.getAnswerType() == AnswerType.none) {
+        List<String> selectedOptionIds = null;
+        if (ChoiceGrading.isChoice(challenge.getAnswerType())) {
+            // OW-34: graded here, all-or-nothing; the answer key never leaves the server.
+            // One attempt per team: the options are enumerable, so retries would be a brute force.
+            boolean answered = submissionRepository.findByTeamIdAndChallengeIdAndBaseId(team.getId(), challenge.getId(), base.getId())
+                    .stream().anyMatch(s -> !s.isArchived());
+            if (answered) {
+                throw new BadRequestException("This team already answered this challenge", ErrorCode.CHOICE_ALREADY_ANSWERED);
+            }
+            selectedOptionIds = ChoiceGrading.normalizeSelection(challenge, request.getSelectedOptionIds());
+            request.setAnswer(ChoiceGrading.readableAnswer(challenge, selectedOptionIds,
+                    text -> templateVariableService.resolveTemplate(text, gameId, challenge.getId(), team.getId())));
+            status = ChoiceGrading.isCorrect(challenge, selectedOptionIds) ? SubmissionStatus.correct : SubmissionStatus.rejected;
+        } else if (challenge.getAnswerType() == AnswerType.none) {
             // "None" challenges auto-approve immediately (check-in only)
             status = SubmissionStatus.approved;
         } else if (challenge.getAutoValidate() && challenge.getAnswerType() == AnswerType.text
@@ -174,6 +187,7 @@ public class SubmissionService {
                 .challenge(challenge)
                 .base(base)
                 .answer(request.getAnswer() != null ? request.getAnswer() : "")
+                .selectedOptionIds(selectedOptionIds)
                 .fileUrl(request.getFileUrl())
                 .fileUrls(request.getFileUrls())
                 .status(status)
@@ -690,6 +704,7 @@ public class SubmissionService {
                 s.getReviewedBy() != null ? s.getReviewedBy().getId() : null,
                 s.getFeedback(),
                 s.getPoints(),
-                s.getChallenge().getCompletionContent());
+                s.getChallenge().getCompletionContent(),
+                s.getSelectedOptionIds());
     }
 }

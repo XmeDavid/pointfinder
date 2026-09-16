@@ -22,6 +22,8 @@ public class ChallengeExportDto {
     private AnswerType answerType;
     private Boolean autoValidate;
     private List<String> correctAnswer;
+    /** OW-34: options with the answer key; null unless the challenge is a choice challenge. */
+    private List<com.prayer.pointfinder.entity.ChoiceOption> choiceOptions;
     private Integer points;
     private Boolean locationBound;
     private Boolean requirePresenceToSubmit;

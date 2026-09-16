@@ -52,3 +52,42 @@ it('keeps pending dependencies when the locally advanced tail is unknown', () =>
   expect(route.nextRequiredBaseNumber).toBeUndefined()
   expect(route.provisionalCheckInIds).toEqual(['q3'])
 })
+
+describe('routes per stage', () => {
+  const explore = 'stage-explore'
+  const race = 'stage-race'
+  const rows = [
+    { baseId: 'e1', stageId: explore, status: 'not_visited', checkedInAt: null },
+    { baseId: 'e2', stageId: explore, status: 'not_visited', checkedInAt: null },
+    { baseId: 'r1', stageId: race, sequenceNumber: 1, status: 'not_visited', checkedInAt: null },
+    { baseId: 'r2', stageId: race, sequenceNumber: 2, status: 'not_visited', checkedInAt: null },
+  ] as BaseProgress[]
+  const staged = { enforceBaseOrder: true, nextRequiredBaseNumber: 1, routes: [
+    { stageId: explore, enforceBaseOrder: false, nextRequiredBaseNumber: null },
+    { stageId: race, enforceBaseOrder: true, nextRequiredBaseNumber: 1 },
+  ] }
+
+  it('gates only the ordered stage and leaves the free stage alone', () => {
+    const route = baseRoute(staged, rows, [])
+    expect(missingPreviousBase(route, rows[1])).toBeNull()
+    expect(missingPreviousBase(route, rows[3])).toBe(1)
+    expect(missingPreviousBase(route, rows[2])).toBeNull()
+    expect(route.enabled).toBe(true)
+    expect(route.nextRequiredBaseNumber).toBe(1)
+  })
+  it('advances each route on its own pending proofs', () => {
+    const route = baseRoute(staged, rows, [{ ...proof(1), baseId: 'r1' }])
+    expect(route.scopes![race]!.nextRequiredBaseNumber).toBe(2)
+    expect(route.scopes![race]!.provisionalCheckInIds).toEqual(['q1'])
+    expect(missingPreviousBase(route, rows[3])).toBeNull()
+  })
+  it('treats a base of an unknown route as needing fresh authority', () => {
+    const route = baseRoute(staged, rows, [])
+    expect(missingPreviousBase(route, { baseId: 'x', stageId: 'stage-new', sequenceNumber: 2 } as BaseProgress)).toBeUndefined()
+  })
+  it('reads an older server without routes as one default route', () => {
+    const route = baseRoute(game, bases, [])
+    expect(Object.keys(route.scopes!)).toEqual(['default'])
+    expect(missingPreviousBase(route, bases[2])).toBe(1)
+  })
+})

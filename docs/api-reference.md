@@ -385,7 +385,8 @@ A future slice will add `GET /api/games/:gameId/snapshot?lastSeenVersion=N`. Whe
   "description": "string",
   "content": "string (rich text)",
   "completionContent": "string (rich text)",
-  "answerType": "text | file | none",
+  "answerType": "text | file | none | single_choice | multiple_choice",
+  "choiceOptions": "[{ id?, text, correct }] (required for the choice types: 2 to 12 options, distinct texts of at most 500 characters; ids are assigned when omitted, kept by position on edits, and stable afterwards; players get { id, text } as `options`)",
   "autoValidate": false,
   "correctAnswer": ["string (optional, for autoValidate=true)"],
   "points": 10,
@@ -642,7 +643,8 @@ All three endpoints emit an `operator_override` activity event via the standard 
   "answer": "string (optional for file/none types)",
   "fileUrl": "string (optional, legacy single-file path)",
   "fileUrls": ["string (optional, multi-file path for chunked uploads)"],
-  "idempotencyKey": "UUID (optional, for offline dedup)"
+  "idempotencyKey": "UUID (optional, for offline dedup)",
+  "selectedOptionIds": "string[] (choice challenges only: the chosen option ids, exactly one for single_choice; graded on the server, one attempt per team and base, CHOICE_SELECTION_INVALID / CHOICE_ALREADY_ANSWERED)"
 }
 ```
 
@@ -1455,9 +1457,12 @@ checked against the same quota.
   "isActive": false,
   "baseIds": ["UUID", "..."],
   "createdAt": "ISO-8601",
-  "updatedAt": "ISO-8601"
+  "updatedAt": "ISO-8601",
+  "enforceBaseOrder": false
 }
 ```
+
+**Routes (OW-40).** Base order is enforced per route. A stage's bases are one route, numbered from 1 in `orderIndex` order and gated only among themselves; stages are sequenced by activation, not by route position. Bases without a stage form the default route governed by the game's `enforceBaseOrder`, which is also the only route of a game without stages. `enforceBaseOrder` on a stage changes only during setup (`BASE_ORDER_LOCKED` otherwise). Player DTOs carry `stageId` on bases and progress rows, `sequenceNumber` within the base's route, and `routes: [{ stageId, enforceBaseOrder, nextRequiredBaseNumber }]` on the game data and snapshot; the game-level `enforceBaseOrder` / `nextRequiredBaseNumber` pair summarises the first enforced route that still has a next base.
 
 **CreateStageRequest / UpdateStageRequest**
 ```json
@@ -1466,7 +1471,8 @@ checked against the same quota.
   "description": "string (optional)",
   "transitionType": "manual | scheduled | trigger",
   "scheduledAt": "ISO-8601 (required if transitionType='scheduled')",
-  "triggerBaseId": "UUID (required if transitionType='trigger')"
+  "triggerBaseId": "UUID (required if transitionType='trigger')",
+  "enforceBaseOrder": "boolean (optional; setup only)"
 }
 ```
 

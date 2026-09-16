@@ -345,6 +345,42 @@ class ChallengeServiceTest {
     // ── P1 Phase 4 W2: operator-only challenge notes ──────────────────
 
     @Test
+    void createChoiceChallengeValidatesOptionsAndKeepsTheKeyOnTheOperatorDto() {
+        CreateChallengeRequest request = new CreateChallengeRequest();
+        request.setTitle("Which tree?");
+        request.setContent("");
+        request.setCompletionContent("");
+        request.setAnswerType("single_choice");
+        request.setAutoValidate(false);
+        request.setPoints(20);
+        request.setCorrectAnswer(List.of("stale free-text key"));
+        com.prayer.pointfinder.dto.request.ChoiceOptionRequest oak = new com.prayer.pointfinder.dto.request.ChoiceOptionRequest();
+        oak.setText("Oak"); oak.setCorrect(true);
+        com.prayer.pointfinder.dto.request.ChoiceOptionRequest pine = new com.prayer.pointfinder.dto.request.ChoiceOptionRequest();
+        pine.setText("Pine"); pine.setCorrect(false);
+        request.setChoiceOptions(List.of(oak, pine));
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(game);
+        when(challengeRepository.save(any(Challenge.class))).thenAnswer(invocation -> {
+            Challenge saved = invocation.getArgument(0);
+            if (saved.getId() == null) saved.setId(UUID.randomUUID());
+            return saved;
+        });
+        when(baseRepository.findByFixedChallengeId(any(UUID.class))).thenReturn(List.of());
+
+        ChallengeResponse response = challengeService.createChallenge(gameId, request);
+
+        assertEquals(2, response.choiceOptions().size());
+        assertNotNull(response.choiceOptions().get(0).id());
+        assertEquals(true, response.choiceOptions().get(0).correct());
+        assertEquals(true, response.autoValidate(), "choice challenges are always graded by the server");
+        assertEquals(null, response.correctAnswer(), "no free-text key on a choice challenge");
+
+        request.setChoiceOptions(List.of(oak));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.CHOICE_OPTIONS_INVALID,
+                assertThrows(BadRequestException.class, () -> challengeService.createChallenge(gameId, request)).getErrorCode());
+    }
+
+    @Test
     void createChallengePersistsOperatorNotes() {
         CreateChallengeRequest request = new CreateChallengeRequest();
         request.setTitle("Hidden treasure");

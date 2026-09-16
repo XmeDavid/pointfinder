@@ -27,4 +27,7 @@ public class PlayerSubmissionRequest {
      * If provided and a submission with this key exists, returns the existing submission.
      */
     private UUID idempotencyKey;
+
+    /** OW-34: the option ids chosen on a choice challenge. */
+    private List<String> selectedOptionIds;
 }

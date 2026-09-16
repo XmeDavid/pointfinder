@@ -114,6 +114,7 @@ public class GameSnapshotService {
 
         long memberCount = playerRepository.countByTeamId(team.getId());
 
+        BaseOrderService.RouteView routeView = baseOrderService.view(game, team.getId());
         return new PlayerSnapshotResponse(
                 stateVersion,
                 now,
@@ -126,10 +127,10 @@ public class GameSnapshotService {
                         game.getTileSource(),
                         game.getStartDate(),
                         game.getEndDate(),
-                        Boolean.TRUE.equals(game.getEnforceBaseOrder()),
-                        Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                                ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null,
-                        game.getContentLanguage()
+                        routeView.legacyEnforced(),
+                        routeView.legacyNextRequiredBaseNumber(),
+                        game.getContentLanguage(),
+                        routeView.routes()
                 ),
                 new PlayerSnapshotResponse.TeamInfo(
                         team.getId(),
@@ -201,7 +202,7 @@ public class GameSnapshotService {
                         game.getUniformAssignment(),
                         game.getBroadcastEnabled(),
                         game.getBroadcastCode(),
-                        Boolean.TRUE.equals(game.getEnforceBaseOrder())
+                        baseOrderService.anyRouteEnforced(game)
                 ),
                 teamInfos,
                 leaderboard,

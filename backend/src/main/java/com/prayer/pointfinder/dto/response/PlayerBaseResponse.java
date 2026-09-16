@@ -59,8 +59,15 @@ public record PlayerBaseResponse(
      * Resolved radius in metres (base override, else the game default). Never
      * null, so the arrival detector never has to guess.
      */
-    Integer checkInRadiusM
+    Integer checkInRadiusM,
+    /** OW-40: the base's stage, which is also its route; null for the default route. */
+    UUID stageId
 ) {
+    public PlayerBaseResponse(UUID id, UUID gameId, Double lat, Double lng, Boolean nfcLinked, Boolean hidden, UUID fixedChallengeId,
+            Integer sequenceNumber, String checkInMethod, Integer checkInRadiusM) {
+        this(id, gameId, lat, lng, nfcLinked, hidden, fixedChallengeId, sequenceNumber, checkInMethod, checkInRadiusM, null);
+    }
+
     public PlayerBaseResponse(UUID id, UUID gameId, Double lat, Double lng, Boolean nfcLinked, Boolean hidden, UUID fixedChallengeId) {
         this(id, gameId, lat, lng, nfcLinked, hidden, fixedChallengeId, null, "NFC", 15);
     }

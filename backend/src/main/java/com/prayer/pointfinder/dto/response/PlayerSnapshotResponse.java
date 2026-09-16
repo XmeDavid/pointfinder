@@ -55,11 +55,13 @@ public record PlayerSnapshotResponse(
             Boolean enforceBaseOrder,
             @JsonInclude(JsonInclude.Include.ALWAYS) Integer nextRequiredBaseNumber,
             /** ISO 639-1 code of the game's content language; null when the organizer did not say. */
-            @JsonInclude(JsonInclude.Include.ALWAYS) String contentLanguage
+            @JsonInclude(JsonInclude.Include.ALWAYS) String contentLanguage,
+            /** OW-40: every route (one per stage, plus the default route) with the team's next required base. */
+            @JsonInclude(JsonInclude.Include.ALWAYS) List<RouteStatusResponse> routes
     ) {
         public GameInfo(UUID id, String name, String description, String status, String unlockTrigger,
                 String tileSource, Instant startDate, Instant endDate) {
-            this(id, name, description, status, unlockTrigger, tileSource, startDate, endDate, false, null, null);
+            this(id, name, description, status, unlockTrigger, tileSource, startDate, endDate, false, null, null, List.of());
         }
     }
 

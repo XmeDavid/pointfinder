@@ -13,4 +13,6 @@ export interface Stage {
   baseIds: string[]
   createdAt: string
   updatedAt: string
+  /** The stage's bases are visited in route order. */
+  enforceBaseOrder: boolean
 }

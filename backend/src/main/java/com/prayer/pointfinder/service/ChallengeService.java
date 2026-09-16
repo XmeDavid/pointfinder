@@ -4,6 +4,7 @@ import com.prayer.pointfinder.dto.request.CreateChallengeRequest;
 import com.prayer.pointfinder.dto.request.ReorderRequest;
 import com.prayer.pointfinder.dto.request.UpdateChallengeRequest;
 import com.prayer.pointfinder.dto.response.ChallengeResponse;
+import com.prayer.pointfinder.dto.response.ChoiceOptionResponse;
 import com.prayer.pointfinder.entity.AnswerType;
 import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Challenge;
@@ -73,6 +74,7 @@ public class ChallengeService {
                 .answerType(AnswerType.valueOf(request.getAnswerType()))
                 .autoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false)
                 .correctAnswer(request.getCorrectAnswer())
+                .choiceOptions(ChoiceGrading.normalizeOptions(AnswerType.valueOf(request.getAnswerType()), request.getChoiceOptions()))
                 .points(request.getPoints())
                 .locationBound(request.getLocationBound() != null ? request.getLocationBound() : false)
                 .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
@@ -83,6 +85,7 @@ public class ChallengeService {
         if (challenge.getAnswerType() == AnswerType.none) {
             challenge.setRequirePresenceToSubmit(false);
         }
+        applyChoiceRules(challenge);
 
         challenge = challengeRepository.save(challenge);
 
@@ -129,6 +132,8 @@ public class ChallengeService {
         challenge.setAnswerType(AnswerType.valueOf(request.getAnswerType()));
         challenge.setAutoValidate(request.getAutoValidate() != null ? request.getAutoValidate() : false);
         challenge.setCorrectAnswer(request.getCorrectAnswer());
+        challenge.setChoiceOptions(ChoiceGrading.normalizeOptions(challenge.getAnswerType(),
+                ChoiceGrading.reconcileIds(challenge.getChoiceOptions(), request.getChoiceOptions())));
         challenge.setPoints(request.getPoints());
         challenge.setLocationBound(request.getLocationBound() != null ? request.getLocationBound() : false);
         challenge.setRequirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false);
@@ -142,6 +147,7 @@ public class ChallengeService {
         if (challenge.getAnswerType() == AnswerType.none) {
             challenge.setRequirePresenceToSubmit(false);
         }
+        applyChoiceRules(challenge);
 
         challenge = challengeRepository.save(challenge);
 
@@ -291,8 +297,18 @@ public class ChallengeService {
                 unlocksBaseIds,
                 fixedBaseId,
                 c.getOperatorNotes(),
-                tagIds.isEmpty() ? null : tagIds
+                tagIds.isEmpty() ? null : tagIds,
+                c.getChoiceOptions() == null ? null : c.getChoiceOptions().stream()
+                        .map(o -> new ChoiceOptionResponse(o.getId(), o.getText(), o.isCorrect())).toList()
         );
+    }
+
+    /** A choice challenge is always graded by the server and never carries a free-text answer key. */
+    private static void applyChoiceRules(Challenge challenge) {
+        if (ChoiceGrading.isChoice(challenge.getAnswerType())) {
+            challenge.setAutoValidate(true);
+            challenge.setCorrectAnswer(null);
+        }
     }
 
     /**

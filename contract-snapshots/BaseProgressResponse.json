@@ -10,5 +10,6 @@
   "submissionStatus": "approved",
   "sequenceNumber": null,
   "checkInMethod": "NFC",
-  "checkInRadiusM": 15
+  "checkInRadiusM": 15,
+  "stageId": null
 }

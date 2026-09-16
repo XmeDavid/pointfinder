@@ -1065,7 +1065,10 @@
     "UPLOAD_EMPTY_CHUNK": "Uma parte do envio estava vazia.",
     "UPLOAD_INCOMPLETE": "Ainda faltam partes deste envio.",
     "UPLOAD_COMPLETED_CANNOT_CANCEL": "Este envio já terminou e não pode ser cancelado.",
-    "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Outro envio já usa esta chave de item."
+    "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Outro envio já usa esta chave de item.",
+    "CHOICE_OPTIONS_INVALID": "Verifica as opções: pelo menos duas, todas com texto, e o número certo de opções corretas para o tipo de desafio.",
+    "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para este desafio.",
+    "CHOICE_ALREADY_ANSWERED": "A tua equipa já respondeu a esta."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
@@ -1473,7 +1476,9 @@
       "pickerAnswer": {
         "text": "Texto",
         "file": "Ficheiro",
-        "none": "Sem resposta"
+        "none": "Sem resposta",
+        "single_choice": "Escolha única",
+        "multiple_choice": "Escolha múltipla"
       },
       "open": "Ligar desafios",
       "title": "Ligar desafios",
@@ -1596,7 +1601,9 @@
       "createEmptyChallenge": "Criar desafio vazio",
       "challengeHere": "Desafio",
       "chooseExistingChallenge": "Escolher um desafio existente",
-      "appearsAt": "Onde aparece este desafio"
+      "appearsAt": "Onde aparece este desafio",
+      "single_choice": "Escolha única",
+      "multiple_choice": "Escolha múltipla"
     }
   },
   "command2": {

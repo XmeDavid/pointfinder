@@ -6,6 +6,7 @@ import com.prayer.pointfinder.dto.request.UpdateStageRequest;
 import com.prayer.pointfinder.dto.response.StageResponse;
 import com.prayer.pointfinder.entity.Base;
 import com.prayer.pointfinder.entity.Game;
+import com.prayer.pointfinder.entity.GameStatus;
 import com.prayer.pointfinder.entity.Stage;
 import com.prayer.pointfinder.entity.TransitionType;
 import com.prayer.pointfinder.exception.BadRequestException;
@@ -35,6 +36,7 @@ public class StageService {
     private final GameEventBroadcaster broadcaster;
     private final EntityManager entityManager;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
+    private final BaseOrderService baseOrderService;
 
     @Transactional(readOnly = true)
     public List<StageResponse> getStages(UUID gameId) {
@@ -52,6 +54,14 @@ public class StageService {
 
         int existingCount = stageRepository.countByGameId(gameId);
         boolean isFirstStage = existingCount == 0;
+        // A new stage changes which bases belong to which route: setup only once any route is enforced.
+        if (baseOrderService.anyRouteEnforced(game) && game.getStatus() != GameStatus.setup) {
+            throw new BadRequestException("Base order can only be changed during setup", ErrorCode.BASE_ORDER_LOCKED);
+        }
+        // The first stage captures every base of the default route, so it inherits that route's rule
+        // unless the operator said otherwise.
+        boolean enforce = request.getEnforceBaseOrder() != null ? request.getEnforceBaseOrder()
+                : isFirstStage && Boolean.TRUE.equals(game.getEnforceBaseOrder());
 
         Stage stage = Stage.builder()
                 .game(game)
@@ -62,6 +72,7 @@ public class StageService {
                 .scheduledAt(request.getScheduledAt())
                 .triggerBaseId(request.getTriggerBaseId())
                 .isActive(isFirstStage)
+                .enforceBaseOrder(enforce)
                 .build();
 
         stage = stageRepository.save(stage);
@@ -118,6 +129,13 @@ public class StageService {
         stage.setTransitionType(transitionType);
         stage.setScheduledAt(request.getScheduledAt());
         stage.setTriggerBaseId(request.getTriggerBaseId());
+        if (request.getEnforceBaseOrder() != null && !request.getEnforceBaseOrder().equals(stage.getEnforceBaseOrder())) {
+            // Like the game-level flag, a route is a setup-time structure.
+            if (stage.getGame().getStatus() != GameStatus.setup) {
+                throw new BadRequestException("Base order can only be changed during setup", ErrorCode.BASE_ORDER_LOCKED);
+            }
+            stage.setEnforceBaseOrder(request.getEnforceBaseOrder());
+        }
 
         stage = stageRepository.save(stage);
 
@@ -268,7 +286,8 @@ public class StageService {
                 stage.getIsActive(),
                 baseIds.isEmpty() ? List.of() : baseIds,
                 stage.getCreatedAt(),
-                stage.getUpdatedAt()
+                stage.getUpdatedAt(),
+                Boolean.TRUE.equals(stage.getEnforceBaseOrder())
         );
     }
 

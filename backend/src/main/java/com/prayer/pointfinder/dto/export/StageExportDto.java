@@ -24,4 +24,6 @@ public class StageExportDto {
     private String scheduledAt;
     /** References a base tempId (not a real UUID). Null unless transitionType is 'trigger'. */
     private String triggerBaseTempId;
+    /** OW-40: the stage's bases are visited in route order. */
+    private Boolean enforceBaseOrder;
 }

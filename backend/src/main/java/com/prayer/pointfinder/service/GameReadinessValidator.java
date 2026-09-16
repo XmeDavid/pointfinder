@@ -82,10 +82,10 @@ public class GameReadinessValidator {
                             baseCount, challengeCount));
         }
 
-        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) {
+        List<com.prayer.pointfinder.entity.Stage> stages = stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId());
+        if (BaseOrderService.anyRouteEnforced(game, stages)) {
             BaseOrderService.validateDependencies(game, baseRepository.findByGameId(game.getId()),
-                    challengeRepository.findByGameId(game.getId()),
-                    stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId()),
+                    challengeRepository.findByGameId(game.getId()), stages,
                     assignmentRepository.findByGameId(game.getId()));
         }
 

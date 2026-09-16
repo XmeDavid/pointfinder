@@ -80,9 +80,7 @@ public class PlayerService {
 
         // Route order before proof: a team blocked by the route must not learn
         // whether its proof for a later base would have been accepted.
-        if (Boolean.TRUE.equals(base.getGame().getEnforceBaseOrder())) {
-            baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
-        }
+        baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
 
         CheckInVerificationService.VerifiedProof proof =
                 checkInVerificationService.verify(base, team, request, Instant.now());
@@ -174,8 +172,7 @@ public class PlayerService {
         UnlockTrigger unlockTrigger = game.getUnlockTrigger();
 
         List<Base> bases = baseRepository.findByGameId(gameId);
-        Map<UUID, Integer> sequenceNumbers = Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                ? baseOrderService.sequenceNumbers(game) : Map.of();
+        Map<UUID, Integer> sequenceNumbers = baseOrderService.sequenceNumbers(game);
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
         List<Assignment> assignments = assignmentRepository.findByGameIdAndTeamId(gameId, team.getId());
@@ -314,7 +311,8 @@ public class PlayerService {
                     submissionStatus,
                     sequenceNumbers.get(bId),
                     base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
-                    base.resolvedCheckInRadiusM());
+                    base.resolvedCheckInRadiusM(),
+                    base.getStageId());
         }).filter(Objects::nonNull).toList();
     }
 
@@ -338,8 +336,7 @@ public class PlayerService {
                 .map(Stage::getId)
                 .collect(Collectors.toSet());
 
-        Map<UUID, Integer> sequenceNumbers = Boolean.TRUE.equals(player.getTeam().getGame().getEnforceBaseOrder())
-                ? baseOrderService.sequenceNumbers(player.getTeam().getGame()) : Map.of();
+        Map<UUID, Integer> sequenceNumbers = baseOrderService.sequenceNumbers(player.getTeam().getGame());
         return baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .filter(b -> b.getStageId() == null || activeStageIds.contains(b.getStageId()))
@@ -354,7 +351,8 @@ public class PlayerService {
                         base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
                         sequenceNumbers.get(base.getId()),
                         base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
-                        base.resolvedCheckInRadiusM()
+                        base.resolvedCheckInRadiusM(),
+                        base.getStageId()
                 ))
                 .toList();
     }
@@ -474,7 +472,8 @@ public class PlayerService {
                         null,
                         null,
                         CheckInMethod.LOCATION.name(),
-                        b.resolvedCheckInRadiusM()))
+                        b.resolvedCheckInRadiusM(),
+                        b.getStageId()))
                 .toList();
         if (!geofenceOnly.isEmpty()) {
             List<PlayerBaseResponse> withGeofences = new ArrayList<>(bases);
@@ -509,11 +508,13 @@ public class PlayerService {
                                 c.getRequirePresenceToSubmit(),
                                 c.getUnlocksBases().isEmpty() ? null :
                                         c.getUnlocksBases().stream().map(Base::getId).toList(),
-                                fixedBaseByChallenge.get(c.getId())
+                                fixedBaseByChallenge.get(c.getId()),
+                                playerOptions(c, gameId, teamId)
                         );
                 })
                 .toList();
 
+        BaseOrderService.RouteView routeView = baseOrderService.view(game, team.getId());
         return new GameDataResponse(
                 team.getGame().getStatus().name(),
                 game.getUnlockTrigger().name(),
@@ -521,9 +522,9 @@ public class PlayerService {
                 challenges,
                 assignments,
                 progress,
-                Boolean.TRUE.equals(game.getEnforceBaseOrder()),
-                Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                        ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null);
+                routeView.legacyEnforced(),
+                routeView.legacyNextRequiredBaseNumber(),
+                routeView.routes());
     }
 
     @Transactional(timeout = 10)
@@ -563,6 +564,7 @@ public class PlayerService {
         submissionRequest.setChallengeId(request.getChallengeId());
         submissionRequest.setBaseId(request.getBaseId());
         submissionRequest.setAnswer(request.getAnswer());
+        submissionRequest.setSelectedOptionIds(request.getSelectedOptionIds());
         submissionRequest.setFileUrl(request.getFileUrl());
         submissionRequest.setFileUrls(request.getFileUrls());
         submissionRequest.setIdempotencyKey(request.getIdempotencyKey());
@@ -643,7 +645,8 @@ public class PlayerService {
                     templateVariableService.resolveTemplate(
                             challenge.getCompletionContent(), gameId, challenge.getId(), team.getId()),
                     challenge.getAnswerType().name(),
-                    challenge.getRequirePresenceToSubmit());
+                    challenge.getRequirePresenceToSubmit(),
+                    playerOptions(challenge, gameId, team.getId()));
         }
 
         // P1 Phase 4 W4: player-facing naming contract — CheckInResponse
@@ -664,5 +667,14 @@ public class PlayerService {
         if (team.getGame().getStatus() != GameStatus.live) {
             throw new BadRequestException("Game is not active yet");
         }
+    }
+
+    /** OW-34: the options a player may choose, texts resolved for the team, answer key left out. */
+    private List<com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse> playerOptions(Challenge challenge, UUID gameId, UUID teamId) {
+        if (challenge.getChoiceOptions() == null || !ChoiceGrading.isChoice(challenge.getAnswerType())) return null;
+        return challenge.getChoiceOptions().stream()
+                .map(o -> new com.prayer.pointfinder.dto.response.PlayerChoiceOptionResponse(o.getId(),
+                        templateVariableService.resolveTemplate(o.getText(), gameId, challenge.getId(), teamId)))
+                .toList();
     }
 }

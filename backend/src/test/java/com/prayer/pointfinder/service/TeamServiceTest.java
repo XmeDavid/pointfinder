@@ -39,6 +39,9 @@ class TeamServiceTest {
     @Mock
     private StageService stageService;
 
+    @Mock
+    private TemplateVariableService templateVariableService;
+
     @InjectMocks
     private TeamService teamService;
 

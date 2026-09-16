@@ -27,6 +27,11 @@ public final class GameResponseMapper {
      *        entitlement from {@code QuotaService}, or null when unresolved.
      */
     public static GameResponse toResponse(Game game, Boolean locationCheckInAllowed) {
+        return toResponse(game, locationCheckInAllowed, null);
+    }
+
+    /** @param routeOrderEnforced whether any route is enforced (OW-40), or null when unresolved. */
+    public static GameResponse toResponse(Game game, Boolean locationCheckInAllowed, Boolean routeOrderEnforced) {
         List<UUID> operatorIds = game.getOperators().stream()
                 .map(User::getId)
                 .toList();
@@ -55,7 +60,8 @@ public final class GameResponseMapper {
                 game.getTutorialScenario(),
                 game.getTutorialExpiresAt(),
                 locationCheckInAllowed,
-                game.getContentLanguage()
+                game.getContentLanguage(),
+                routeOrderEnforced
         );
     }
 }

@@ -29,4 +29,7 @@ public class CreateSubmissionRequest {
      * Optional idempotency key for offline sync deduplication.
      */
     private UUID idempotencyKey;
+
+    /** OW-34: the option ids chosen on a choice challenge. */
+    private List<String> selectedOptionIds;
 }

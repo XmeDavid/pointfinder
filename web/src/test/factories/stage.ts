@@ -14,6 +14,8 @@ export function createMockStage(overrides?: Partial<Stage>): Stage {
     scheduledAt: null,
     triggerBaseId: null,
     isActive: counter === 1,
+
+    enforceBaseOrder: false,
     baseIds: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

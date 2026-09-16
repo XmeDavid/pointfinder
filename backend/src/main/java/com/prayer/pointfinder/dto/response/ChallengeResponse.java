@@ -21,5 +21,15 @@ public record ChallengeResponse(
     String completionContent, String answerType, Boolean autoValidate,
     List<String> correctAnswer, Integer points, Boolean locationBound,
     Boolean requirePresenceToSubmit, List<UUID> unlocksBaseIds, UUID fixedBaseId,
-    String operatorNotes, List<UUID> tagIds
-) {}
+    String operatorNotes, List<UUID> tagIds,
+    /** OW-34: options with the answer key; null unless the challenge is a choice challenge. */
+    List<ChoiceOptionResponse> choiceOptions
+) {
+    public ChallengeResponse(UUID id, UUID gameId, String title, String description, String content,
+            String completionContent, String answerType, Boolean autoValidate, List<String> correctAnswer, Integer points,
+            Boolean locationBound, Boolean requirePresenceToSubmit, List<UUID> unlocksBaseIds, UUID fixedBaseId,
+            String operatorNotes, List<UUID> tagIds) {
+        this(id, gameId, title, description, content, completionContent, answerType, autoValidate, correctAnswer, points,
+                locationBound, requirePresenceToSubmit, unlocksBaseIds, fixedBaseId, operatorNotes, tagIds, null);
+    }
+}

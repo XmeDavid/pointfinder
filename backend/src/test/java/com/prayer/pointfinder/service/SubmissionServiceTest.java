@@ -143,6 +143,8 @@ class SubmissionServiceTest {
                 .thenReturn(Optional.of(game));
 
         // Default: resolveTemplates passes through the input list unchanged
+        org.mockito.Mockito.lenient().when(templateVariableService.resolveTemplate(any(), any(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(0));
         org.mockito.Mockito.lenient().when(templateVariableService.resolveTemplates(any(), any(), any(), any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -323,6 +325,66 @@ class SubmissionServiceTest {
     void createSubmissionAutoValidationStoresRejectedStatusWhenNoAnswerMatchesMultiple() {
         givenAutoValidationChallenge(List.of("Open Sesame", "Abracadabra"));
         assertAutoValidationStatus("wrong answer", SubmissionStatus.rejected);
+    }
+
+    @Test
+    void createSubmissionGradesAChoiceOnTheServerAndKeepsTheSelection() {
+        challenge.setAnswerType(AnswerType.multiple_choice);
+        challenge.setChoiceOptions(List.of(
+                new com.prayer.pointfinder.entity.ChoiceOption("a", "Oak", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("b", "Pine", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("c", "Fir", false)));
+        CreateSubmissionRequest request = buildDefaultRequest("");
+        request.setSelectedOptionIds(List.of("b", "a"));
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        ArgumentCaptor<Submission> saved = ArgumentCaptor.forClass(Submission.class);
+        verify(submissionRepository).save(saved.capture());
+        assertEquals(SubmissionStatus.correct, saved.getValue().getStatus());
+        assertEquals(List.of("b", "a"), saved.getValue().getSelectedOptionIds());
+        assertEquals("Oak; Pine", saved.getValue().getAnswer(), "reviewers read the chosen texts");
+        assertEquals(challenge.getPoints(), saved.getValue().getPoints());
+        assertEquals(List.of("b", "a"), response.selectedOptionIds());
+        verify(stageService).openTriggeredStagesAfterCommit(gameId, request.getBaseId());
+    }
+
+    @Test
+    void createSubmissionRefusesASecondChoiceAttemptForTheSameTeamAndBase() {
+        challenge.setAnswerType(AnswerType.single_choice);
+        challenge.setChoiceOptions(List.of(
+                new com.prayer.pointfinder.entity.ChoiceOption("a", "Oak", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("b", "Pine", false)));
+        CreateSubmissionRequest request = buildDefaultRequest("");
+        request.setSelectedOptionIds(List.of("a"));
+        stubDefaultRepositories(null);
+        when(submissionRepository.findByTeamIdAndChallengeIdAndBaseId(teamId, challengeId, baseId))
+                .thenReturn(List.of(Submission.builder().status(SubmissionStatus.rejected).build()));
+
+        com.prayer.pointfinder.exception.BadRequestException ex = assertThrows(
+                com.prayer.pointfinder.exception.BadRequestException.class, () -> submissionService.createSubmission(gameId, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.CHOICE_ALREADY_ANSWERED, ex.getErrorCode());
+        verify(submissionRepository, never()).save(any());
+    }
+
+    @Test
+    void createSubmissionRejectsAWrongChoiceWithoutRevealingTheKey() {
+        challenge.setAnswerType(AnswerType.single_choice);
+        challenge.setChoiceOptions(List.of(
+                new com.prayer.pointfinder.entity.ChoiceOption("a", "Oak", true),
+                new com.prayer.pointfinder.entity.ChoiceOption("b", "Pine", false)));
+        CreateSubmissionRequest request = buildDefaultRequest("");
+        request.setSelectedOptionIds(List.of("b"));
+        stubDefaultRepositories(null);
+        stubSubmissionSave();
+
+        SubmissionResponse response = submissionService.createSubmission(gameId, request);
+
+        assertEquals(SubmissionStatus.rejected.name(), response.status());
+        assertEquals("Pine", response.answer());
+        verify(stageService, never()).openTriggeredStagesAfterCommit(any(), any());
     }
 
     @Test

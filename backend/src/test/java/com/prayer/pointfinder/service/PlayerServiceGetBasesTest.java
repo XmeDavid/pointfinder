@@ -35,6 +35,7 @@ class PlayerServiceGetBasesTest {
     @Mock private JwtTokenProvider tokenProvider;
     @Mock private SubmissionService submissionService;
     @Mock private TeamLocationRepository teamLocationRepository;
+    @Mock private BaseOrderService baseOrderService;
     @Mock private PlayerLocationRepository playerLocationRepository;
     @Mock private GameAccessService gameAccessService;
     @Mock private OperatorPushNotificationService operatorPushNotificationService;

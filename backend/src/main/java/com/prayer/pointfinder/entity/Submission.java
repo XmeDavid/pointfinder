@@ -34,6 +34,11 @@ public class Submission {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String answer;
 
+    /** OW-34: the option ids a choice submission selected; the readable texts are in {@code answer}. */
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "selected_option_ids", columnDefinition = "jsonb")
+    private List<String> selectedOptionIds;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "submission_status")
     private SubmissionStatus status;

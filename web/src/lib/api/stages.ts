@@ -7,6 +7,8 @@ export interface CreateStageDto {
   transitionType: 'scheduled' | 'trigger' | 'manual'
   scheduledAt?: string | null
   triggerBaseId?: string | null
+  /** Enforce visiting this stage's bases in route order. Omit to keep the current value. */
+  enforceBaseOrder?: boolean
   baseIds?: string[]
 }
 

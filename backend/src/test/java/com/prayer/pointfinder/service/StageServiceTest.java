@@ -39,6 +39,7 @@ class StageServiceTest {
     @Mock private GameEventBroadcaster broadcaster;
     @Mock private EntityManager entityManager;
     @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @Mock private BaseOrderService baseOrderService;
 
     @InjectMocks private StageService stageService;
 
@@ -257,6 +258,80 @@ class StageServiceTest {
         assertEquals("Stage 1 Updated", response.name());
         assertEquals("trigger", response.transitionType());
         assertEquals(triggerBaseId, response.triggerBaseId());
+    }
+
+    // ── enforceBaseOrder (OW-40) ─────────────────────────────────────
+
+    @Test
+    void createStage_firstStageInheritsTheGameRouteRule() {
+        Game ordered = Game.builder().id(gameId).name("Game").status(com.prayer.pointfinder.entity.GameStatus.setup).enforceBaseOrder(true).build();
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(ordered);
+        when(stageRepository.countByGameId(gameId)).thenReturn(0);
+        when(stageRepository.save(any(Stage.class))).thenAnswer(inv -> { Stage s = inv.getArgument(0); s.setId(UUID.randomUUID()); return s; });
+        when(stageRepository.findById(any())).thenAnswer(inv -> Optional.of(Stage.builder().id(inv.getArgument(0)).game(ordered)
+                .name("Explore").description("").orderIndex(0).transitionType(TransitionType.manual).isActive(true).enforceBaseOrder(true).build()));
+        when(baseRepository.findByStageId(any())).thenReturn(List.of());
+        CreateStageRequest request = new CreateStageRequest();
+        request.setName("Explore");
+        request.setTransitionType("manual");
+
+        StageResponse response = stageService.createStage(gameId, request);
+
+        org.mockito.ArgumentCaptor<Stage> saved = org.mockito.ArgumentCaptor.forClass(Stage.class);
+        verify(stageRepository).save(saved.capture());
+        assertEquals(true, saved.getValue().getEnforceBaseOrder(), "the captured default route stays ordered");
+        assertEquals(true, response.enforceBaseOrder());
+    }
+
+    @Test
+    void createStage_isSetupOnlyOnceAnyRouteIsEnforced() {
+        Game live = Game.builder().id(gameId).name("Game").status(com.prayer.pointfinder.entity.GameStatus.live).build();
+        when(gameAccessService.getAccessibleGame(gameId)).thenReturn(live);
+        when(baseOrderService.anyRouteEnforced(live)).thenReturn(true);
+        CreateStageRequest request = new CreateStageRequest();
+        request.setName("Race");
+        request.setTransitionType("manual");
+
+        com.prayer.pointfinder.exception.BadRequestException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                com.prayer.pointfinder.exception.BadRequestException.class, () -> stageService.createStage(gameId, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED, ex.getErrorCode());
+        verify(stageRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStage_baseOrderFlagIsSetupOnly() {
+        UUID stageId = UUID.randomUUID();
+        Game live = Game.builder().id(gameId).name("Game").status(com.prayer.pointfinder.entity.GameStatus.live).build();
+        Stage stage = Stage.builder().id(stageId).game(live).name("Race").description("")
+                .orderIndex(1).transitionType(TransitionType.manual).isActive(false).enforceBaseOrder(false).build();
+        when(stageRepository.findById(stageId)).thenReturn(Optional.of(stage));
+        UpdateStageRequest request = new UpdateStageRequest();
+        request.setName("Race");
+        request.setTransitionType("manual");
+        request.setEnforceBaseOrder(true);
+
+        com.prayer.pointfinder.exception.BadRequestException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                com.prayer.pointfinder.exception.BadRequestException.class, () -> stageService.updateStage(gameId, stageId, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED, ex.getErrorCode());
+    }
+
+    @Test
+    void updateStage_baseOrderFlagRoundTripsDuringSetup() {
+        UUID stageId = UUID.randomUUID();
+        Game setup = Game.builder().id(gameId).name("Game").status(com.prayer.pointfinder.entity.GameStatus.setup).build();
+        Stage stage = Stage.builder().id(stageId).game(setup).name("Race").description("")
+                .orderIndex(1).transitionType(TransitionType.manual).isActive(false).enforceBaseOrder(false).build();
+        when(stageRepository.findById(stageId)).thenReturn(Optional.of(stage));
+        when(stageRepository.save(any(Stage.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(baseRepository.findByStageId(stageId)).thenReturn(List.of());
+        UpdateStageRequest request = new UpdateStageRequest();
+        request.setName("Race");
+        request.setTransitionType("manual");
+        request.setEnforceBaseOrder(true);
+
+        StageResponse response = stageService.updateStage(gameId, stageId, request);
+
+        assertEquals(true, response.enforceBaseOrder());
     }
 
     // ── activateTriggeredStages ──────────────────────────────────────
