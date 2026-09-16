@@ -82,7 +82,8 @@ public class GameReadinessValidator {
                             baseCount, challengeCount));
         }
 
-        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) {
+        {
+            // No-op unless some route (the game's, or a stage's) is enforced.
             BaseOrderService.validateDependencies(game, baseRepository.findByGameId(game.getId()),
                     challengeRepository.findByGameId(game.getId()),
                     stageRepository.findByGameIdOrderByOrderIndexAsc(game.getId()),

@@ -80,7 +80,7 @@ public class PlayerService {
 
         // Route order before proof: a team blocked by the route must not learn
         // whether its proof for a later base would have been accepted.
-        if (Boolean.TRUE.equals(base.getGame().getEnforceBaseOrder())) {
+        {
             baseOrderService.requirePreviousBases(base.getGame(), team.getId(), baseId);
         }
 
@@ -174,8 +174,7 @@ public class PlayerService {
         UnlockTrigger unlockTrigger = game.getUnlockTrigger();
 
         List<Base> bases = baseRepository.findByGameId(gameId);
-        Map<UUID, Integer> sequenceNumbers = Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                ? baseOrderService.sequenceNumbers(game) : Map.of();
+        Map<UUID, Integer> sequenceNumbers = baseOrderService.sequenceNumbers(game);
         List<CheckIn> checkIns = checkInRepository.findByGameIdAndTeamId(gameId, team.getId());
         List<Submission> submissions = submissionRepository.findByTeamId(team.getId());
         List<Assignment> assignments = assignmentRepository.findByGameIdAndTeamId(gameId, team.getId());
@@ -314,7 +313,8 @@ public class PlayerService {
                     submissionStatus,
                     sequenceNumbers.get(bId),
                     base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
-                    base.resolvedCheckInRadiusM());
+                    base.resolvedCheckInRadiusM(),
+                    base.getStageId());
         }).filter(Objects::nonNull).toList();
     }
 
@@ -338,8 +338,7 @@ public class PlayerService {
                 .map(Stage::getId)
                 .collect(Collectors.toSet());
 
-        Map<UUID, Integer> sequenceNumbers = Boolean.TRUE.equals(player.getTeam().getGame().getEnforceBaseOrder())
-                ? baseOrderService.sequenceNumbers(player.getTeam().getGame()) : Map.of();
+        Map<UUID, Integer> sequenceNumbers = baseOrderService.sequenceNumbers(player.getTeam().getGame());
         return baseRepository.findByGameId(gameId).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getHidden()))
                 .filter(b -> b.getStageId() == null || activeStageIds.contains(b.getStageId()))
@@ -354,7 +353,8 @@ public class PlayerService {
                         base.getFixedChallenge() != null ? base.getFixedChallenge().getId() : null,
                         sequenceNumbers.get(base.getId()),
                         base.getCheckInMethod() != null ? base.getCheckInMethod().name() : CheckInMethod.NFC.name(),
-                        base.resolvedCheckInRadiusM()
+                        base.resolvedCheckInRadiusM(),
+                        base.getStageId()
                 ))
                 .toList();
     }
@@ -521,9 +521,9 @@ public class PlayerService {
                 challenges,
                 assignments,
                 progress,
-                Boolean.TRUE.equals(game.getEnforceBaseOrder()),
-                Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                        ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null);
+                baseOrderService.anyRouteEnforced(game),
+                baseOrderService.nextRequiredBaseNumber(game, team.getId()),
+                baseOrderService.routes(game, team.getId()));
     }
 
     @Transactional(timeout = 10)

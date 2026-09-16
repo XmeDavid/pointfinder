@@ -42,8 +42,15 @@ public record BaseProgressResponse(
         /** Resolved check-in method: {@code NFC}, {@code QR}, or {@code LOCATION}. Never null. */
         String checkInMethod,
         /** Resolved radius in metres (base override, else the game default). Never null. */
-        Integer checkInRadiusM
+        Integer checkInRadiusM,
+        /** OW-40: the base's stage, which is also its route; null for the default route. */
+        UUID stageId
 ) {
+    public BaseProgressResponse(UUID baseId, String challengeTitle, Double lat, Double lng, Boolean nfcLinked, String status,
+            Instant checkedInAt, UUID challengeId, String submissionStatus, Integer sequenceNumber, String checkInMethod, Integer checkInRadiusM) {
+        this(baseId, challengeTitle, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus, sequenceNumber, checkInMethod, checkInRadiusM, null);
+    }
+
     public BaseProgressResponse(UUID baseId, String challengeTitle, Double lat, Double lng, Boolean nfcLinked, String status, Instant checkedInAt, UUID challengeId, String submissionStatus) {
         this(baseId, challengeTitle, lat, lng, nfcLinked, status, checkedInAt, challengeId, submissionStatus, null, "NFC", 15);
     }

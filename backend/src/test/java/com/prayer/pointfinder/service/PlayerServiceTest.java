@@ -119,6 +119,9 @@ class PlayerServiceTest {
     @Mock
     private StageService stageService;
 
+    @Mock
+    private BaseOrderService baseOrderService;
+
     @InjectMocks
     private PlayerService playerService;
 
@@ -338,7 +341,7 @@ class PlayerServiceTest {
         when(baseRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(game.getId())).thenReturn(List.of(first, second));
         when(assignmentRepository.findByBaseId(second.getId())).thenReturn(List.of(assignment));
         org.springframework.test.util.ReflectionTestUtils.setField(playerService, "baseOrderService",
-                new BaseOrderService(baseRepository, checkInRepository));
+                new BaseOrderService(baseRepository, checkInRepository, stageRepository));
         var request = new com.prayer.pointfinder.dto.request.CheckInRequest();
         request.setNfcToken("scan-token");
         BadRequestException error = assertThrows(BadRequestException.class,

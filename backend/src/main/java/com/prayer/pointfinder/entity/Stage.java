@@ -49,6 +49,11 @@ public class Stage {
     @Builder.Default
     private Boolean isActive = false;
 
+    /** OW-40: this stage's bases form an ordered route of their own. */
+    @Column(name = "enforce_base_order", nullable = false)
+    @Builder.Default
+    private Boolean enforceBaseOrder = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

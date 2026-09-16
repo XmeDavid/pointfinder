@@ -264,7 +264,7 @@ Checks run in this order, in `PlayerService.checkIn`:
 
 1. **Guards** — the player belongs to the game, the game is `live`, the base belongs to the game.
 2. **Idempotency** — one active row per `(team, base)` (partial unique index `idx_check_ins_team_base` on `archived = false`). A repeat returns the existing row unchanged, whatever proof was sent and whoever created the original row (including an operator rescue).
-3. **Base order** — when `enforce_base_order` is on, a later base is rejected with `PREVIOUS_BASE_REQUIRED`. This runs *before* verification, so a blocked team never learns whether its proof would have passed.
+3. **Base order** — when the base's route is enforced (its stage's `enforce_base_order`, or the game's for bases without a stage), a later base of that route is rejected with `PREVIOUS_BASE_REQUIRED`. Routes are independent: nothing of another stage is required first. This runs *before* verification, so a blocked team never learns whether its proof would have passed.
 4. **Verification** — `CheckInVerificationService.verify` against the base's own method.
 
 **Verification rules**

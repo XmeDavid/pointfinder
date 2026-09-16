@@ -333,6 +333,7 @@ class BaseServiceTest {
     @Test
     void orderedRouteRejectsStructuralChangesOutsideSetup() {
         game.setEnforceBaseOrder(true);
+        when(baseOrderService.anyRouteEnforced(game)).thenReturn(true);
         for (var status : List.of(com.prayer.pointfinder.entity.GameStatus.live,
                 com.prayer.pointfinder.entity.GameStatus.ended)) {
             game.setStatus(status);
@@ -350,6 +351,7 @@ class BaseServiceTest {
     @Test
     void routeRejectsDuplicatesForeignAndMissingBasesBeforeWritingAnything() {
         game.setEnforceBaseOrder(true);
+        when(baseOrderService.anyRouteEnforced(game)).thenReturn(true);
         UUID one = UUID.randomUUID(), two = UUID.randomUUID();
         when(baseRepository.findByGameId(gameId)).thenReturn(List.of(
                 Base.builder().id(one).build(), Base.builder().id(two).build()));

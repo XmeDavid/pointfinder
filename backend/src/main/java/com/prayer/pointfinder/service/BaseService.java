@@ -60,10 +60,8 @@ public class BaseService {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
         List<Base> bases = baseRepository.findByGameIdOrderByOrderIndexAscCreatedAtAsc(gameId).stream()
                 .sorted(BaseOrderService.ROUTE_ORDER).toList();
-        java.util.Map<UUID, Integer> numbers = new java.util.HashMap<>();
-        if (!bases.isEmpty() && Boolean.TRUE.equals(bases.getFirst().getGame().getEnforceBaseOrder())) {
-            for (int i = 0; i < bases.size(); i++) numbers.put(bases.get(i).getId(), i + 1);
-        }
+        java.util.Map<UUID, Integer> numbers = bases.isEmpty() ? java.util.Map.of()
+                : baseOrderService.sequenceNumbers(bases.getFirst().getGame());
         return bases.stream().map(base -> toResponse(base, numbers.get(base.getId()))).toList();
     }
 
@@ -71,7 +69,7 @@ public class BaseService {
     public void reorderBases(UUID gameId, ReorderRequest request) {
         Game game = lockAccessibleGame(gameId);
         requireSetup(game);
-        if (!Boolean.TRUE.equals(game.getEnforceBaseOrder())) {
+        if (!baseOrderService.anyRouteEnforced(game)) {
             throw new BadRequestException("Enable base order before arranging the route",
                     com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_DISABLED);
         }
@@ -91,7 +89,7 @@ public class BaseService {
     @Transactional(timeout = 10)
     public BaseResponse createBase(UUID gameId, CreateBaseRequest request) {
         Game game = lockAccessibleGame(gameId);
-        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) requireSetup(game);
+        if (baseOrderService.anyRouteEnforced(game)) requireSetup(game);
         quotaService.enforceBasesPerGameLimit(game);
 
         Challenge fixedChallenge = null;
@@ -252,7 +250,7 @@ public class BaseService {
     @Transactional(timeout = 10)
     public void deleteBase(UUID gameId, UUID baseId) {
         Game game = lockAccessibleGame(gameId);
-        if (Boolean.TRUE.equals(game.getEnforceBaseOrder())) requireSetup(game);
+        if (baseOrderService.anyRouteEnforced(game)) requireSetup(game);
         Base base = baseRepository.findById(baseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Base", baseId));
         ensureBaseBelongsToGame(base, gameId);
@@ -333,8 +331,7 @@ public class BaseService {
     }
 
     private BaseResponse toResponse(Base base) {
-        return toResponse(base, Boolean.TRUE.equals(base.getGame().getEnforceBaseOrder())
-                ? baseOrderService.sequenceNumbers(base.getGame()).get(base.getId()) : null);
+        return toResponse(base, baseOrderService.sequenceNumbers(base.getGame()).get(base.getId()));
     }
 
     private BaseResponse toResponse(Base base, Integer sequenceNumber) {

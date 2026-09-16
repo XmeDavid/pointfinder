@@ -24,9 +24,14 @@ public record GameDataResponse(
         List<PlayerChallengeResponse> challenges,
         List<AssignmentResponse> assignments,
         List<BaseProgressResponse> progress,
-        Boolean enforceBaseOrder, Integer nextRequiredBaseNumber
+        Boolean enforceBaseOrder, Integer nextRequiredBaseNumber,
+        /** OW-40: every route (one per stage, plus the default route) with the team's next required base. */
+        List<RouteStatusResponse> routes
 ) {
     public GameDataResponse(String gameStatus, String unlockTrigger, List<PlayerBaseResponse> bases, List<PlayerChallengeResponse> challenges, List<AssignmentResponse> assignments, List<BaseProgressResponse> progress) {
-        this(gameStatus, unlockTrigger, bases, challenges, assignments, progress, false, null);
+        this(gameStatus, unlockTrigger, bases, challenges, assignments, progress, false, null, List.of());
+    }
+    public GameDataResponse(String gameStatus, String unlockTrigger, List<PlayerBaseResponse> bases, List<PlayerChallengeResponse> challenges, List<AssignmentResponse> assignments, List<BaseProgressResponse> progress, Boolean enforceBaseOrder, Integer nextRequiredBaseNumber) {
+        this(gameStatus, unlockTrigger, bases, challenges, assignments, progress, enforceBaseOrder, nextRequiredBaseNumber, List.of());
     }
 }

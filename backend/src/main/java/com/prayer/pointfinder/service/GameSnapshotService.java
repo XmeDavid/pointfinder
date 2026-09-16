@@ -126,10 +126,10 @@ public class GameSnapshotService {
                         game.getTileSource(),
                         game.getStartDate(),
                         game.getEndDate(),
-                        Boolean.TRUE.equals(game.getEnforceBaseOrder()),
-                        Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                                ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null,
-                        game.getContentLanguage()
+                        baseOrderService.anyRouteEnforced(game),
+                        baseOrderService.nextRequiredBaseNumber(game, team.getId()),
+                        game.getContentLanguage(),
+                        baseOrderService.routes(game, team.getId())
                 ),
                 new PlayerSnapshotResponse.TeamInfo(
                         team.getId(),

@@ -6,10 +6,15 @@ import com.prayer.pointfinder.dto.response.CheckInResponse;
 import com.prayer.pointfinder.entity.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.http.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BaseOrderIntegrationTest extends IntegrationTestBase {
+    @Autowired private com.prayer.pointfinder.repository.StageRepository stageRepository;
+
     @Test
     void sharedBaseRouteEnforcesTeamVisitsAndPreservesDifferentAssignedChallenges() {
         User operator = createOperator("route@integration.test", "password123");
@@ -67,5 +72,64 @@ class BaseOrderIntegrationTest extends IntegrationTestBase {
                 new HttpEntity<>(settings, headersWithAuth(operatorAuthHeader(operator))), JsonNode.class);
         assertEquals(HttpStatus.BAD_REQUEST, frozen.getStatusCode());
         assertEquals("BASE_ORDER_LOCKED", frozen.getBody().path("code").asText());
+    }
+
+    @Test
+    void routesAreScopedToStagesAndTheFlagIsSetupOnly() {
+        User operator = createOperator("stageroute@integration.test", "password123");
+        Game game = createGame(operator, "Staged", GameStatus.setup);
+        Base e1 = createBase(game, "Explore 1"); e1.setOrderIndex(0); e1.setNfcToken("expl0001"); baseRepository.save(e1);
+        Base e2 = createBase(game, "Explore 2"); e2.setOrderIndex(1); e2.setNfcToken("expl0002"); baseRepository.save(e2);
+        Base r1 = createBase(game, "Race 1"); r1.setOrderIndex(2); r1.setNfcToken("race0001"); baseRepository.save(r1);
+        Base r2 = createBase(game, "Race 2"); r2.setOrderIndex(3); r2.setNfcToken("race0002"); baseRepository.save(r2);
+        HttpHeaders op = headersWithAuth(operatorAuthHeader(operator));
+
+        // The first stage captures every base; the race stage is created ordered and takes the race bases.
+        var explore = restTemplate.exchange("/api/games/" + game.getId() + "/stages", HttpMethod.POST,
+                new HttpEntity<>(java.util.Map.of("name", "Explore", "transitionType", "manual"), op), JsonNode.class).getBody();
+        var race = restTemplate.exchange("/api/games/" + game.getId() + "/stages", HttpMethod.POST,
+                new HttpEntity<>(java.util.Map.of("name", "Race", "transitionType", "manual", "enforceBaseOrder", true), op), JsonNode.class).getBody();
+        assertFalse(explore.get("enforceBaseOrder").asBoolean());
+        assertTrue(race.get("enforceBaseOrder").asBoolean());
+        UUID raceId = UUID.fromString(race.get("id").asText());
+        for (Base b : List.of(r1, r2)) { b.setStageId(raceId); baseRepository.save(b); }
+        stageRepository.findById(raceId).ifPresent(st -> { st.setIsActive(true); stageRepository.save(st); });
+
+        Team a = createTeam(game, "A", "STAGEA1");
+        Player playerA = createPlayer(a, "Alice", "stage-device-a");
+        HttpHeaders headersA = headersWithAuth(playerAuthHeader(playerA));
+        game.setStatus(GameStatus.live); gameRepository.save(game);
+        String baseUrl = "/api/player/games/" + game.getId() + "/bases/";
+
+        // Explore bases are free in any order; the race must start at its first base.
+        assertEquals(HttpStatus.OK, restTemplate.exchange(baseUrl + e2.getId() + "/check-in", HttpMethod.POST,
+                new HttpEntity<>(checkInRequestFor(e2), headersA), CheckInResponse.class).getStatusCode());
+        var blocked = restTemplate.exchange(baseUrl + r2.getId() + "/check-in", HttpMethod.POST,
+                new HttpEntity<>(checkInRequestFor(r2), headersA), JsonNode.class);
+        assertEquals(HttpStatus.BAD_REQUEST, blocked.getStatusCode());
+        assertEquals("1", blocked.getBody().path("errors").path("nextRequiredBaseNumber").asText());
+        assertEquals(HttpStatus.OK, restTemplate.exchange(baseUrl + r1.getId() + "/check-in", HttpMethod.POST,
+                new HttpEntity<>(checkInRequestFor(r1), headersA), CheckInResponse.class).getStatusCode());
+        assertEquals(HttpStatus.OK, restTemplate.exchange(baseUrl + r2.getId() + "/check-in", HttpMethod.POST,
+                new HttpEntity<>(checkInRequestFor(r2), headersA), CheckInResponse.class).getStatusCode());
+
+        var snapshot = restTemplate.exchange("/api/games/" + game.getId() + "/snapshot", HttpMethod.GET,
+                new HttpEntity<>(headersA), JsonNode.class).getBody();
+        assertTrue(snapshot.path("game").path("enforceBaseOrder").asBoolean());
+        assertEquals(2, snapshot.path("game").path("routes").size());
+        JsonNode raceRoute = null;
+        for (JsonNode r : snapshot.path("game").path("routes")) if (raceId.toString().equals(r.path("stageId").asText(null))) raceRoute = r;
+        assertTrue(raceRoute.path("enforceBaseOrder").asBoolean());
+        assertTrue(raceRoute.path("nextRequiredBaseNumber").isNull(), "the race route is finished");
+        for (JsonNode row : snapshot.path("progress")) {
+            boolean inRace = raceId.toString().equals(row.path("stageId").asText(null));
+            assertEquals(inRace, !row.path("sequenceNumber").isNull(), "only the ordered stage numbers its bases");
+        }
+
+        // The flag is a setup-time structure.
+        var locked = restTemplate.exchange("/api/games/" + game.getId() + "/stages/" + raceId, HttpMethod.PUT,
+                new HttpEntity<>(java.util.Map.of("name", "Race", "transitionType", "manual", "enforceBaseOrder", false), op), JsonNode.class);
+        assertEquals(HttpStatus.BAD_REQUEST, locked.getStatusCode());
+        assertEquals("BASE_ORDER_LOCKED", locked.getBody().path("code").asText());
     }
 }

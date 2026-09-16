@@ -259,6 +259,44 @@ class StageServiceTest {
         assertEquals(triggerBaseId, response.triggerBaseId());
     }
 
+    // ── enforceBaseOrder (OW-40) ─────────────────────────────────────
+
+    @Test
+    void updateStage_baseOrderFlagIsSetupOnly() {
+        UUID stageId = UUID.randomUUID();
+        Game live = Game.builder().id(gameId).name("Game").status(com.prayer.pointfinder.entity.GameStatus.live).build();
+        Stage stage = Stage.builder().id(stageId).game(live).name("Race").description("")
+                .orderIndex(1).transitionType(TransitionType.manual).isActive(false).enforceBaseOrder(false).build();
+        when(stageRepository.findById(stageId)).thenReturn(Optional.of(stage));
+        UpdateStageRequest request = new UpdateStageRequest();
+        request.setName("Race");
+        request.setTransitionType("manual");
+        request.setEnforceBaseOrder(true);
+
+        com.prayer.pointfinder.exception.BadRequestException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                com.prayer.pointfinder.exception.BadRequestException.class, () -> stageService.updateStage(gameId, stageId, request));
+        assertEquals(com.prayer.pointfinder.exception.ErrorCode.BASE_ORDER_LOCKED, ex.getErrorCode());
+    }
+
+    @Test
+    void updateStage_baseOrderFlagRoundTripsDuringSetup() {
+        UUID stageId = UUID.randomUUID();
+        Game setup = Game.builder().id(gameId).name("Game").status(com.prayer.pointfinder.entity.GameStatus.setup).build();
+        Stage stage = Stage.builder().id(stageId).game(setup).name("Race").description("")
+                .orderIndex(1).transitionType(TransitionType.manual).isActive(false).enforceBaseOrder(false).build();
+        when(stageRepository.findById(stageId)).thenReturn(Optional.of(stage));
+        when(stageRepository.save(any(Stage.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(baseRepository.findByStageId(stageId)).thenReturn(List.of());
+        UpdateStageRequest request = new UpdateStageRequest();
+        request.setName("Race");
+        request.setTransitionType("manual");
+        request.setEnforceBaseOrder(true);
+
+        StageResponse response = stageService.updateStage(gameId, stageId, request);
+
+        assertEquals(true, response.enforceBaseOrder());
+    }
+
     // ── activateTriggeredStages ──────────────────────────────────────
 
     @Test

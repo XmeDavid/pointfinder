@@ -1455,9 +1455,12 @@ checked against the same quota.
   "isActive": false,
   "baseIds": ["UUID", "..."],
   "createdAt": "ISO-8601",
-  "updatedAt": "ISO-8601"
+  "updatedAt": "ISO-8601",
+  "enforceBaseOrder": false
 }
 ```
+
+**Routes (OW-40).** Base order is enforced per route. A stage's bases are one route, numbered from 1 in `orderIndex` order and gated only among themselves; stages are sequenced by activation, not by route position. Bases without a stage form the default route governed by the game's `enforceBaseOrder`, which is also the only route of a game without stages. `enforceBaseOrder` on a stage changes only during setup (`BASE_ORDER_LOCKED` otherwise). Player DTOs carry `stageId` on bases and progress rows, `sequenceNumber` within the base's route, and `routes: [{ stageId, enforceBaseOrder, nextRequiredBaseNumber }]` on the game data and snapshot; the game-level `enforceBaseOrder` / `nextRequiredBaseNumber` pair summarises the first enforced route that still has a next base.
 
 **CreateStageRequest / UpdateStageRequest**
 ```json
@@ -1466,7 +1469,8 @@ checked against the same quota.
   "description": "string (optional)",
   "transitionType": "manual | scheduled | trigger",
   "scheduledAt": "ISO-8601 (required if transitionType='scheduled')",
-  "triggerBaseId": "UUID (required if transitionType='trigger')"
+  "triggerBaseId": "UUID (required if transitionType='trigger')",
+  "enforceBaseOrder": "boolean (optional; setup only)"
 }
 ```
 

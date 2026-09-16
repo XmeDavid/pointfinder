@@ -210,6 +210,7 @@ public class GameImportExportService {
                         .scheduledAt(stage.getScheduledAt() != null ? stage.getScheduledAt().toString() : null)
                         .triggerBaseTempId(stage.getTriggerBaseId() != null ?
                                 baseIdMap.get(stage.getTriggerBaseId()) : null)
+                        .enforceBaseOrder(Boolean.TRUE.equals(stage.getEnforceBaseOrder()))
                         .build())
                 .toList();
 
@@ -434,6 +435,7 @@ public class GameImportExportService {
                         .scheduledAt(scheduledAt)
                         .triggerBaseId(triggerBaseId)
                         .isActive(isFirst) // first stage is active by default
+                        .enforceBaseOrder(Boolean.TRUE.equals(stageDto.getEnforceBaseOrder()))
                         .build();
                 stage = stageRepository.save(stage);
                 stageEntityMap.put(stageDto.getTempId(), stage);
