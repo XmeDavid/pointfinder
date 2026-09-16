@@ -786,8 +786,8 @@ V36 also extends the `activity_event_type` Postgres enum with three new values t
 | Value | Reserved for |
 |---|---|
 | `operator_override` | Phase 2 mark-completed and unlock-override operator rescue actions. |
-| `team_join` | Phase 3 membership history — player joins a team for the first time. |
-| `team_switch` | Phase 3 membership history — player moves from one team to another inside the same game. |
+| `team_join` | Membership history — a device joins a team for the first time (`PlayerJoinService.joinTeam`); rejoins do not repeat it. |
+| `team_switch` | Membership history — a phone moves from a guest participation to the account's saved one (`PlayerAccountService.recover`). |
 
 Adding the values now means Phases 2 and 3 do not need a second enum migration.
 
@@ -989,7 +989,7 @@ Indexes: `idx_stages_game_id`, `idx_stages_game_order (game_id, order_index)`, `
 | `scheduled` | A backend scheduler activates the stage at `scheduled_at`. |
 | `trigger` | The stage activates when any team completes the base identified by `trigger_base_id`. |
 
-All three call the same `StageService.activateStage(gameId, stageId)` code path, which is idempotent (`STAGE_ALREADY_ACTIVE` is not thrown — re-activation is a no-op).
+Manual and scheduled activation call `StageService.activateStage(gameId, stageId)`, which is idempotent (re-activation is a no-op). Trigger stages open through `StageService.activateTriggeredStages(gameId, baseId)` after the completing submission commits: an approved or auto-validated submission, or an operator marking the base complete; pending or rejected submissions and bare check-ins do not count.
 
 ### Creation semantics
 
@@ -1004,7 +1004,7 @@ Subsequent stages are created with `is_active = false` and bases must be explici
 ### Reorder and delete
 
 - **Reorder** (`PATCH /stages/reorder`) sends the full ordered list of stage IDs; the service updates `order_index` atomically.
-- **Delete** clears `bases.stage_id` to `NULL` for every base attached to the stage (they become "no-stage" bases, i.e., always visible), then deletes the stage row. `STAGE_HAS_BASES` is reserved for future policy but currently the delete cascades without warning.
+- **Delete** clears `bases.stage_id` to `NULL` for every base attached to the stage (they become "no-stage" bases, i.e., always visible), then deletes the stage row; there is no "stage still has bases" refusal.
 
 ### Broadcasts
 
@@ -1016,9 +1016,7 @@ Every CRUD operation emits `broadcaster.broadcastGameConfig(gameId, "stages", ac
 |------|------|---------|
 | `STAGE_NOT_FOUND` | 404 | Stage ID does not exist. |
 | `STAGE_GAME_MISMATCH` | 400 | Stage exists but belongs to a different game than the URL path's `gameId`. |
-| `STAGE_HAS_BASES` | 400 | Reserved; not emitted by current delete flow (which auto-detaches). |
 | `STAGE_TRIGGER_BASE_NOT_FOUND` | 400 | Update payload set `transitionType='trigger'` with a `triggerBaseId` that does not exist. |
-| `STAGE_ALREADY_ACTIVE` | — | Reserved; not thrown — `activateStage` is idempotent and returns silently. |
 
 ### Operator workflow
 

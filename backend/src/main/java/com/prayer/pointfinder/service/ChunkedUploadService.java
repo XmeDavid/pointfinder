@@ -12,6 +12,7 @@ import com.prayer.pointfinder.entity.UploadSession;
 import com.prayer.pointfinder.entity.UploadSessionStatus;
 import com.prayer.pointfinder.config.ChunkedUploadProperties;
 import com.prayer.pointfinder.exception.BadRequestException;
+import com.prayer.pointfinder.exception.ErrorCode;
 import com.prayer.pointfinder.exception.FileStorageException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.exception.UploadSessionException;
@@ -96,7 +97,7 @@ public class ChunkedUploadService {
     @Transactional(timeout = 10)
     public UploadSessionResponse createSession(UUID gameId, Player authPlayer, UploadSessionInitRequest request) {
         if (!uploadProps.getChunk().isEnabled()) {
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOADS_DISABLED",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOADS_DISABLED.name(),
                     "Chunked uploads are temporarily disabled");
         }
         Player player = loadPlayer(authPlayer);
@@ -128,7 +129,7 @@ public class ChunkedUploadService {
                 now
         );
         if (playerActiveSessions >= uploadProps.getLimits().getMaxActiveSessionsPerPlayer()) {
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_LIMIT",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_SESSION_LIMIT.name(),
                     "Too many active upload sessions for player");
         }
         long activeBytesForGame = uploadSessionRepository.sumActiveBytesByGame(
@@ -137,7 +138,7 @@ public class ChunkedUploadService {
                 now
         );
         if (activeBytesForGame + metadata.totalSizeBytes() > uploadProps.getLimits().getMaxActiveBytesPerGame()) {
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_GAME_CAPACITY",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_GAME_CAPACITY.name(),
                     "Game upload capacity exceeded, retry later");
         }
 
@@ -203,17 +204,17 @@ public class ChunkedUploadService {
         rejectIfNotAcceptingChunks(session);
         if (chunkIndex < 0 || chunkIndex >= session.getTotalChunks()) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "invalid_chunk_index").increment();
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_CHUNK_INDEX", "Invalid chunk index");
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INVALID_CHUNK_INDEX.name(), "Invalid chunk index");
         }
         if (chunkBytes == null || chunkBytes.length == 0) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "empty_chunk").increment();
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_EMPTY_CHUNK", "Chunk payload is empty");
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_EMPTY_CHUNK.name(), "Chunk payload is empty");
         }
 
         int expectedChunkSize = expectedChunkSize(session, chunkIndex);
         if (chunkBytes.length != expectedChunkSize) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "size_mismatch").increment();
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_CHUNK_SIZE_MISMATCH",
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_CHUNK_SIZE_MISMATCH.name(),
                     "Chunk size mismatch for index " + chunkIndex);
         }
 
@@ -234,7 +235,7 @@ public class ChunkedUploadService {
         Instant now = Instant.now();
         if (expireSessionIfStale(session, now)) {
             meterRegistry.counter("uploads.chunks.failed", "reason", "session_expired").increment();
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_SESSION_EXPIRED.name(),
                     "Upload session has expired");
         }
         if (bytesPresent) {
@@ -271,13 +272,13 @@ public class ChunkedUploadService {
             throw sessionNotActive(session);
         }
         if (expireSessionIfStale(session, Instant.now())) {
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_SESSION_EXPIRED.name(),
                     "Upload session has expired");
         }
 
         long uploadedCount = uploadSessionChunkRepository.countBySessionId(sessionId);
         if (uploadedCount != session.getTotalChunks()) {
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INCOMPLETE.name(),
                     "Not all chunks have been uploaded");
         }
         List<Integer> missingChunkFiles = findUploadedChunksWithMissingFiles(session);
@@ -286,7 +287,7 @@ public class ChunkedUploadService {
                     uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(sessionId, chunkIndex)
             );
             meterRegistry.counter("uploads.chunks.recovered_missing_file").increment(missingChunkFiles.size());
-            throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
+            throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INCOMPLETE.name(),
                     "Uploaded chunk data is incomplete; retry missing chunks");
         }
 
@@ -321,7 +322,7 @@ public class ChunkedUploadService {
         UploadSession session = getAuthorizedSession(gameId, sessionId, authPlayer);
         lockForUpdate(session);
         if (session.getStatus() == UploadSessionStatus.completed) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_COMPLETED_CANNOT_CANCEL",
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_COMPLETED_CANNOT_CANCEL.name(),
                     "Completed uploads cannot be cancelled");
         }
         session.setStatus(UploadSessionStatus.cancelled);
@@ -440,31 +441,31 @@ public class ChunkedUploadService {
     private SessionMetadata validateSessionMetadata(UploadSessionInitRequest request) {
         long totalSizeBytes = request.getTotalSizeBytes() != null ? request.getTotalSizeBytes() : 0L;
         if (totalSizeBytes <= 0) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", "totalSizeBytes must be positive");
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INVALID_METADATA.name(), "totalSizeBytes must be positive");
         }
         if (totalSizeBytes > fileStorageService.maxFileSizeBytes()) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_FILE_TOO_LARGE", "File size exceeds allowed limit");
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_FILE_TOO_LARGE.name(), "File size exceeds allowed limit");
         }
 
         String contentType = normalizeContentType(request.getContentType());
         if (contentType.isBlank()) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", "contentType is required");
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INVALID_METADATA.name(), "contentType is required");
         }
         try {
             fileStorageService.validateChunkedUploadMetadata(contentType, totalSizeBytes);
         } catch (BadRequestException ex) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", ex.getMessage());
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INVALID_METADATA.name(), ex.getMessage());
         }
 
         int chunkSizeBytes = request.getChunkSizeBytes() != null ? request.getChunkSizeBytes() : uploadProps.getChunk().getDefaultSizeBytes();
         if (chunkSizeBytes <= 0 || chunkSizeBytes > uploadProps.getChunk().getMaxSizeBytes()) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA",
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INVALID_METADATA.name(),
                     "chunkSizeBytes must be between 1 and " + uploadProps.getChunk().getMaxSizeBytes());
         }
 
         long calculatedTotalChunks = (totalSizeBytes + chunkSizeBytes - 1L) / chunkSizeBytes;
         if (calculatedTotalChunks > Integer.MAX_VALUE) {
-            throw permanent(HttpStatus.BAD_REQUEST, "UPLOAD_INVALID_METADATA", "total chunk count is too large");
+            throw permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INVALID_METADATA.name(), "total chunk count is too large");
         }
 
         return new SessionMetadata(
@@ -501,7 +502,7 @@ public class ChunkedUploadService {
                     || (session.getChunkSizeBytes() == metadata.chunkSizeBytes()
                         && session.getTotalChunks() == metadata.totalChunks()));
         if (!compatible) {
-            throw permanent(HttpStatus.CONFLICT, "UPLOAD_MEDIA_ITEM_KEY_CONFLICT",
+            throw permanent(HttpStatus.CONFLICT, ErrorCode.UPLOAD_MEDIA_ITEM_KEY_CONFLICT.name(),
                     "mediaItemKey already belongs to different upload metadata");
         }
     }
@@ -619,9 +620,9 @@ public class ChunkedUploadService {
 
     private UploadSessionException sessionNotActive(UploadSession session) {
         if (session.getStatus() == UploadSessionStatus.expired) {
-            return retryable(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_EXPIRED", "Upload session has expired");
+            return retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_SESSION_EXPIRED.name(), "Upload session has expired");
         }
-        return permanent(HttpStatus.BAD_REQUEST, "UPLOAD_SESSION_NOT_ACTIVE", "Upload session is not active");
+        return permanent(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_SESSION_NOT_ACTIVE.name(), "Upload session is not active");
     }
 
     private List<Integer> findUploadedChunksWithMissingFiles(UploadSession session) {
@@ -697,7 +698,7 @@ public class ChunkedUploadService {
                 if (!chunkStore.exists(session.getId(), i)) {
                     uploadSessionChunkRepository.deleteBySessionIdAndChunkIndex(session.getId(), i);
                     deleteQuietly(assembledPath);
-                    throw retryable(HttpStatus.BAD_REQUEST, "UPLOAD_INCOMPLETE",
+                    throw retryable(HttpStatus.BAD_REQUEST, ErrorCode.UPLOAD_INCOMPLETE.name(),
                             "Uploaded chunk data is incomplete; retry missing chunks");
                 }
                 chunkStore.copyTo(session.getId(), i, outputStream);

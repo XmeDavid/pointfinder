@@ -50,12 +50,8 @@ public enum ErrorCode {
     STAGE_NOT_FOUND,
     /** The stage does not belong to the specified game. */
     STAGE_GAME_MISMATCH,
-    /** The stage still has bases assigned; unassign them first. */
-    STAGE_HAS_BASES,
     /** The trigger base referenced by this stage does not exist. */
     STAGE_TRIGGER_BASE_NOT_FOUND,
-    /** The stage is already the active stage for its game. */
-    STAGE_ALREADY_ACTIVE,
 
     // ── Auth / profile ───────────────────────────────────────────────────
     /** The current password provided does not match the account's stored password. */
@@ -218,4 +214,34 @@ public enum ErrorCode {
     INVOICE_STRIPE_CALL_FAILED,
     /** amountCents, dueDays, or termMonths was outside its allowed range. */
     INVOICE_AMOUNT_INVALID,
+
+    // ── Resumable uploads ────────────────────────────────────────────────
+    // Raised by ChunkedUploadService through UploadSessionException; the
+    // response also carries `retryable` so a client knows whether to resend.
+    /** Media uploads are switched off on this server. */
+    UPLOADS_DISABLED,
+    /** Content type, size, item key or chunk size missing or out of range. */
+    UPLOAD_INVALID_METADATA,
+    /** Declared size exceeds the per-file limit. */
+    UPLOAD_FILE_TOO_LARGE,
+    /** The game has reached its media storage limit. */
+    UPLOAD_GAME_CAPACITY,
+    /** Too many active upload sessions for this player. */
+    UPLOAD_SESSION_LIMIT,
+    /** The session passed its expiry before completion; start again. */
+    UPLOAD_SESSION_EXPIRED,
+    /** The session is completed, cancelled or expired. */
+    UPLOAD_SESSION_NOT_ACTIVE,
+    /** Chunk index outside the declared range. */
+    UPLOAD_INVALID_CHUNK_INDEX,
+    /** A non-final chunk did not have the declared chunk size. */
+    UPLOAD_CHUNK_SIZE_MISMATCH,
+    /** A chunk carried no bytes. */
+    UPLOAD_EMPTY_CHUNK,
+    /** Completion requested while chunks are still missing (retryable). */
+    UPLOAD_INCOMPLETE,
+    /** A completed session cannot be cancelled. */
+    UPLOAD_COMPLETED_CANNOT_CANCEL,
+    /** Another session already owns this media item key. */
+    UPLOAD_MEDIA_ITEM_KEY_CONFLICT,
 }
