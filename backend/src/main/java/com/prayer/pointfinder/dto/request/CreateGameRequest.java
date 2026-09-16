@@ -57,8 +57,7 @@ public class CreateGameRequest {
 
     /**
      * OW-33: ISO 639-1 code of the language the game's content is written in
-     * ({@code pt}, {@code en}, {@code de}, ...). Omit to keep the current value;
-     * send an empty string to clear it back to unknown.
+     * ({@code pt}, {@code en}, {@code de}, ...). Omit or leave blank when unknown.
      */
     private String contentLanguage;
 }

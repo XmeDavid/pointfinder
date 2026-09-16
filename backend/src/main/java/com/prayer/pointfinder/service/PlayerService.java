@@ -39,6 +39,7 @@ public class PlayerService {
     private final SubmissionService submissionService;
     private final GameAccessService gameAccessService;
     private final OperatorPushNotificationService operatorPushNotificationService;
+    private final StageService stageService;
     private final TemplateVariableService templateVariableService;
     private final BaseUnlockOverrideRepository baseUnlockOverrideRepository;
     private final StageRepository stageRepository;
@@ -120,6 +121,10 @@ public class PlayerService {
         }
 
         xpService.awardCheckIn(team, base);
+        // When the game unlocks on check-in, the check-in is the completion that may open a trigger stage.
+        if (base.getGame().getUnlockTrigger() == com.prayer.pointfinder.entity.UnlockTrigger.CHECK_IN) {
+            stageService.openTriggeredStagesAfterCommit(gameId, baseId);
+        }
 
         // Create activity event with full player actor capture (V36).
         // Structured twin of the feed message. The operator UI reads these to

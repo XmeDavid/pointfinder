@@ -36,6 +36,9 @@ class TeamServiceTest {
     @Mock
     private GameEventBroadcaster eventBroadcaster;
 
+    @Mock
+    private StageService stageService;
+
     @InjectMocks
     private TeamService teamService;
 

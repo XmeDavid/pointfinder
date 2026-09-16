@@ -439,17 +439,17 @@ public class GameService {
         }
     }
 
-    private static final java.util.regex.Pattern CONTENT_LANGUAGE = java.util.regex.Pattern.compile("[a-z]{2}");
+    private static final java.util.Set<String> ISO_639_1 = java.util.Set.of(java.util.Locale.getISOLanguages());
 
     /**
-     * Blank means unknown and is stored as null. Anything else must be a
-     * two-letter ISO 639-1 code; case is normalized so {@code PT} and
+     * Blank means unknown and is stored as null. Anything else must be an
+     * ISO 639-1 code the JVM knows; case is normalized so {@code PT} and
      * {@code pt} are the same language.
      */
     static String normalizeContentLanguage(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String code = raw.trim().toLowerCase(java.util.Locale.ROOT);
-        if (!CONTENT_LANGUAGE.matcher(code).matches()) {
+        if (!ISO_639_1.contains(code)) {
             throw new BadRequestException("Invalid content language: " + raw + ". Use a two-letter ISO 639-1 code such as pt, en or de");
         }
         return code;

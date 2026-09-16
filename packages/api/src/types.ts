@@ -460,6 +460,8 @@ export interface PlayerSnapshotGameInfo {
   status: GameStatus
   enforceBaseOrder?: boolean
   nextRequiredBaseNumber?: number | null
+  /** ISO 639-1 code of the game's content language; null when the organizer did not say. */
+  contentLanguage?: string | null
   unlockTrigger?: UnlockTrigger | null
   tileSource?: string | null
   startDate?: IsoDateTime | null

@@ -53,11 +53,13 @@ public record PlayerSnapshotResponse(
             Instant startDate,
             Instant endDate,
             Boolean enforceBaseOrder,
-            @JsonInclude(JsonInclude.Include.ALWAYS) Integer nextRequiredBaseNumber
+            @JsonInclude(JsonInclude.Include.ALWAYS) Integer nextRequiredBaseNumber,
+            /** ISO 639-1 code of the game's content language; null when the organizer did not say. */
+            @JsonInclude(JsonInclude.Include.ALWAYS) String contentLanguage
     ) {
         public GameInfo(UUID id, String name, String description, String status, String unlockTrigger,
                 String tileSource, Instant startDate, Instant endDate) {
-            this(id, name, description, status, unlockTrigger, tileSource, startDate, endDate, false, null);
+            this(id, name, description, status, unlockTrigger, tileSource, startDate, endDate, false, null, null);
         }
     }
 

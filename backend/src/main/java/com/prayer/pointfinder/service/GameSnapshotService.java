@@ -128,7 +128,8 @@ public class GameSnapshotService {
                         game.getEndDate(),
                         Boolean.TRUE.equals(game.getEnforceBaseOrder()),
                         Boolean.TRUE.equals(game.getEnforceBaseOrder())
-                                ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null
+                                ? baseOrderService.nextRequiredBaseNumber(game, team.getId()) : null,
+                        game.getContentLanguage()
                 ),
                 new PlayerSnapshotResponse.TeamInfo(
                         team.getId(),

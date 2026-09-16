@@ -28,6 +28,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,11 +44,17 @@ class StageTriggerIntegrationTest extends IntegrationTestBase {
 
     @Autowired private StageRepository stageRepository;
 
-    private record Setup(UUID gameId, UUID stageTwoId, UUID baseId, UUID challengeId, HttpHeaders operator, HttpHeaders player) {}
+    private record Setup(UUID gameId, UUID stageTwoId, UUID baseId, UUID challengeId, UUID teamId, HttpHeaders operator, HttpHeaders player) {}
 
     private Setup liveGameWithTriggerStage(String tag) {
+        return liveGameWithTriggerStage(tag, com.prayer.pointfinder.entity.UnlockTrigger.COMPLETED);
+    }
+
+    private Setup liveGameWithTriggerStage(String tag, com.prayer.pointfinder.entity.UnlockTrigger unlockTrigger) {
         User operator = createOperator("trigger-" + tag + "@test.com", "Password1");
         Game game = createGame(operator, "Trigger " + tag, GameStatus.setup);
+        game.setUnlockTrigger(unlockTrigger);
+        game = gameRepository.save(game);
         Base gate = createBase(game, "Gate " + tag);
         Challenge challenge = createChallenge(game, "Open the gate", AnswerType.text, 10);
         Team team = createTeam(game, "Falcons", "TRG" + tag.toUpperCase());
@@ -71,7 +78,7 @@ class StageTriggerIntegrationTest extends IntegrationTestBase {
         HttpHeaders player = headersWithAuth("Bearer " + joined.getBody().token());
         restTemplate.exchange("/api/player/games/" + game.getId() + "/bases/" + gate.getId() + "/check-in",
                 HttpMethod.POST, new HttpEntity<>(checkInRequestFor(gate), player), CheckInResponse.class);
-        return new Setup(game.getId(), second.getId(), gate.getId(), challenge.getId(), operatorHeaders, player);
+        return new Setup(game.getId(), second.getId(), gate.getId(), challenge.getId(), team.getId(), operatorHeaders, player);
     }
 
     private SubmissionResponse submit(Setup s, String answer) {
@@ -109,6 +116,41 @@ class StageTriggerIntegrationTest extends IntegrationTestBase {
         review(s, pending.id(), ReviewStatus.approved);
 
         assertTrue(active(s.stageTwoId()), "the approved completion opened the trigger stage");
+    }
+
+    @Test
+    void anAutoValidatedCorrectAnswerOpensTheStageWithoutReview() {
+        Setup s = liveGameWithTriggerStage("auto");
+        Challenge challenge = challengeRepository.findById(s.challengeId()).orElseThrow();
+        challenge.setCorrectAnswer(java.util.List.of("the key"));
+        challenge.setAutoValidate(true);
+        challengeRepository.save(challenge);
+
+        SubmissionResponse result = submit(s, "The Key");
+
+        assertEquals("correct", result.status());
+        assertTrue(active(s.stageTwoId()), "auto-validation is a completion too");
+    }
+
+    @Test
+    void anOperatorMarkingTheBaseCompleteOpensTheStage() {
+        Setup s = liveGameWithTriggerStage("mark");
+        Map<String, Object> body = Map.of("challengeId", s.challengeId(), "reason", "tag broken, team was there");
+        ResponseEntity<String> marked = restTemplate.exchange(
+                "/api/games/" + s.gameId() + "/teams/" + s.teamId() + "/bases/" + s.baseId() + "/mark-completed",
+                HttpMethod.POST, new HttpEntity<>(body, s.operator()), String.class);
+        assertEquals(HttpStatus.CREATED, marked.getStatusCode(), marked.getBody());
+
+        assertTrue(active(s.stageTwoId()));
+    }
+
+    @Test
+    void aCheckInOpensTheStageOnlyWhenTheGameUnlocksOnCheckIn() {
+        Setup s = liveGameWithTriggerStage("chk", com.prayer.pointfinder.entity.UnlockTrigger.CHECK_IN);
+        assertTrue(active(s.stageTwoId()), "the setup check-in completed the trigger base for a check-in game");
+
+        Setup t = liveGameWithTriggerStage("sub", com.prayer.pointfinder.entity.UnlockTrigger.SUBMISSION);
+        assertFalse(active(t.stageTwoId()), "a check-in is not a completion when the game unlocks on submission");
     }
 
     @Test

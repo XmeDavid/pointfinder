@@ -342,7 +342,7 @@ class SubmissionServiceTest {
         assertEquals(SubmissionStatus.approved.name(), response.status());
         assertEquals(challenge.getPoints(), submissionCaptor.getValue().getPoints());
         // A completed base may open a trigger stage (OW-21).
-        verify(stageService).activateTriggeredStages(gameId, request.getBaseId());
+        verify(stageService).openTriggeredStagesAfterCommit(gameId, request.getBaseId());
     }
 
     @Test
@@ -355,7 +355,7 @@ class SubmissionServiceTest {
         SubmissionResponse response = submissionService.createSubmission(gameId, request);
 
         assertEquals(SubmissionStatus.pending.name(), response.status());
-        verify(stageService, never()).activateTriggeredStages(any(), any());
+        verify(stageService, never()).openTriggeredStagesAfterCommit(any(), any());
     }
 
     @Test

@@ -135,7 +135,7 @@ Header: `X-Forwarded-Host` (for email link generation)
   "endDate": "ISO8601 (optional)",
   "uniformAssignment": false,
   "tileSource": "osm | osm-classic | voyager | positron | swisstopo | swisstopo-sat",
-  "contentLanguage": "ISO 639-1 code of the game's content, e.g. pt (optional; null = unknown, empty string clears on update)",
+  "contentLanguage": "ISO 639-1 code of the game's content, e.g. pt (optional; omit or blank = unknown; on PUT an empty string clears it)",
   "orgId": "uuid (optional)"
 }
 ```
@@ -1472,7 +1472,7 @@ checked against the same quota.
 
 **Broadcasts**: `game_config` on every CRUD; `stage_unlock` additionally fires on activation (including the auto-activation of the first stage). See `docs/realtime-and-mobile.md`.
 
-**Error codes**: `STAGE_NOT_FOUND`, `STAGE_GAME_MISMATCH`, `STAGE_HAS_BASES`, `STAGE_TRIGGER_BASE_NOT_FOUND`, `STAGE_ALREADY_ACTIVE` (see Error Codes appendix below).
+**Error codes**: `STAGE_NOT_FOUND`, `STAGE_GAME_MISMATCH`, `STAGE_TRIGGER_BASE_NOT_FOUND` (see Error Codes appendix below). Activation is idempotent and deletion detaches bases, so there is no "already active" or "still has bases" refusal.
 
 ---
 
@@ -1819,9 +1819,29 @@ All error responses include a machine-readable `code` field in addition to the h
 |---|---|---|---|---|
 | `STAGE_NOT_FOUND` | 404 Not Found | The stage ID does not exist | Client referenced a deleted or never-created stage | Refresh the stage list (`GET /games/:gameId/stages`) and retry against a known ID |
 | `STAGE_GAME_MISMATCH` | 400 Bad Request | The stage exists but belongs to a different game than the URL path's `gameId` | Client crossed games in a single request (e.g. stale tab) | Use the correct `gameId` for the stage, or fetch the stage via its own game |
-| `STAGE_HAS_BASES` | 400 Bad Request | Reserved for future policy; current `DELETE /stages/:id` flow auto-detaches bases instead | — | N/A |
 | `STAGE_TRIGGER_BASE_NOT_FOUND` | 400 Bad Request | `transitionType='trigger'` was set with a `triggerBaseId` that does not exist | Operator deleted the trigger base between picking it and saving | Pick a valid base from the current list and retry |
-| `STAGE_ALREADY_ACTIVE` | — | Reserved; `activateStage` is idempotent and does not throw when re-activating an active stage | — | N/A |
+
+### Upload Error Codes
+
+Raised by the resumable upload endpoints through `UploadSessionException`; the response also carries `retryable`.
+
+| Code | HTTP Status | Meaning | Retryable |
+|---|---|---|---|
+| `UPLOADS_DISABLED` | 400 | Media uploads are switched off on this server | no |
+| `UPLOAD_INVALID_METADATA` | 400 | Content type, size, item key or chunk size missing or out of range | no |
+| `UPLOAD_FILE_TOO_LARGE` | 400 | Declared size exceeds the per-file limit | no |
+| `UPLOAD_GAME_CAPACITY` | 400 | The game has reached its media storage limit | no |
+| `UPLOAD_SESSION_LIMIT` | 400 | Too many active upload sessions for this player | yes, after finishing or cancelling one |
+| `UPLOAD_SESSION_EXPIRED` | 400 | The session passed its expiry before completion; start again | no |
+| `UPLOAD_SESSION_NOT_ACTIVE` | 400 | The session is completed, cancelled or expired | no |
+| `UPLOAD_INVALID_CHUNK_INDEX` | 400 | Chunk index outside the declared range | no |
+| `UPLOAD_CHUNK_SIZE_MISMATCH` | 400 | A non-final chunk did not have the declared chunk size | no |
+| `UPLOAD_EMPTY_CHUNK` | 400 | A chunk carried no bytes | no |
+| `UPLOAD_INCOMPLETE` | 400 | Completion requested while chunks are still missing | yes, send the missing chunks |
+| `UPLOAD_COMPLETED_CANNOT_CANCEL` | 400 | A completed session cannot be cancelled | no |
+| `UPLOAD_MEDIA_ITEM_KEY_CONFLICT` | 409 | Another session already owns this media item key | no |
+
+Statuses are the ones `ChunkedUploadService` raises today (all 400 except the key conflict); the code and `retryable`, not the status, are the contract.
 
 ### Variable Error Codes
 

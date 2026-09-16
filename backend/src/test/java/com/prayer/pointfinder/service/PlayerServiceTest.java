@@ -116,6 +116,9 @@ class PlayerServiceTest {
     @Mock
     private CheckInVerificationService checkInVerificationService;
 
+    @Mock
+    private StageService stageService;
+
     @InjectMocks
     private PlayerService playerService;
 

@@ -46,6 +46,7 @@ public class TeamService {
     private final GameEventBroadcaster eventBroadcaster;
     private final com.prayer.pointfinder.xp.XpService xpService;
     private final GameAccessService gameAccessService;
+    private final StageService stageService;
 
     @Transactional(readOnly = true)
     public List<TeamResponse> getTeamsByGame(UUID gameId) {
@@ -235,6 +236,9 @@ public class TeamService {
             return buildCheckInResponse(existing2, base, team);
         }
         xpService.awardCheckIn(team, base);
+        if (game.getUnlockTrigger() == com.prayer.pointfinder.entity.UnlockTrigger.CHECK_IN) {
+            stageService.openTriggeredStagesAfterCommit(game.getId(), baseId);
+        }
 
         ActivityEvent event = ActivityEvent.builder()
                 .game(game)

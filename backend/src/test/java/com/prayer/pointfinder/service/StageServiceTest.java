@@ -38,6 +38,7 @@ class StageServiceTest {
     @Mock private GameAccessService gameAccessService;
     @Mock private GameEventBroadcaster broadcaster;
     @Mock private EntityManager entityManager;
+    @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @InjectMocks private StageService stageService;
 

@@ -10,6 +10,6 @@ import java.util.UUID;
 
 public interface GameLifecycleEventRepository extends JpaRepository<GameLifecycleEvent, UUID> {
 
-    @Query("SELECT e FROM GameLifecycleEvent e LEFT JOIN FETCH e.actorUser WHERE e.game.id = :gameId ORDER BY e.createdAt ASC")
+    @Query("SELECT e FROM GameLifecycleEvent e LEFT JOIN FETCH e.actorUser WHERE e.game.id = :gameId ORDER BY e.createdAt ASC, e.id ASC")
     List<GameLifecycleEvent> findByGameIdOrderByCreatedAtAsc(@Param("gameId") UUID gameId);
 }

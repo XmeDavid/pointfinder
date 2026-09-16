@@ -78,7 +78,8 @@ public class PlayerJoinService {
         try {
             player = playerRepository.save(player);
         } catch (DataIntegrityViolationException ex) {
-            // Concurrent join with same deviceId -- re-fetch the winner
+            // Concurrent join with same deviceId -- re-fetch the winner; it wrote the team_join row.
+            firstJoin = false;
             player = playerRepository.findFirstByDeviceIdAndTeamGameIdOrderByCreatedAtDesc(
                     request.getDeviceId(), game.getId())
                     .orElseThrow(() -> new BadRequestException("Join failed, please try again"));

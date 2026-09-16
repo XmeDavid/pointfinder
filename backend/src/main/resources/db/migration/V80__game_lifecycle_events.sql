@@ -1,7 +1,8 @@
 -- OW-14: every game lifecycle transition (setup → live → ended and the
 -- reverts) is kept as an audit row: who did it, or which scheduler path, and
 -- whether progress was erased. activity_events is team-scoped, which a
--- lifecycle change is not, so this is its own table.
+-- lifecycle change is not, so this is its own table. Rows go with the game
+-- on deletion: the trail describes a game that exists, not deleted ones.
 CREATE TABLE game_lifecycle_events (
     id                  UUID PRIMARY KEY,
     game_id             UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
