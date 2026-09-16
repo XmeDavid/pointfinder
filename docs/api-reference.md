@@ -116,6 +116,7 @@ Header: `X-Forwarded-Host` (for email link generation)
 | DELETE | `/games/:id` | Operator | Delete game (cascades all data). An org game additionally needs `DELETE_GAMES` in that org |
 | PATCH | `/games/:id/status` | Operator | Transition game status |
 | GET | `/games/:id/end-summary` | Operator | `{ status, pendingReviews, teams, players }` for the end confirmation. Ending finalizes XP and freezes results; review, manual completion and rescue answer `GAME_ENDED` afterwards |
+| GET | `/games/:id/lifecycle-events` | Operator | Every lifecycle transition of the game, oldest first: `{ id, fromStatus, toStatus, reason, actorUserId, actorName, resetProgress, createdAt }`. `reason` is `operator` (with the acting account), `scheduled_end` or `practice_expired` |
 | GET | `/games/:id/operators` | Operator | List operators for game |
 | POST | `/games/:id/operators/:userId` | Operator | Add operator to game |
 | DELETE | `/games/:id/operators/:userId` | Operator | Remove operator from game |

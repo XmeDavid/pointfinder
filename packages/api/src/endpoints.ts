@@ -37,6 +37,7 @@ import type {
   GamePublicationRequest,
   GamePublicationResponse,
   EndSummaryResponse,
+  GameLifecycleEventResponse,
   XpProfileResponse,
   XpRewardResponse,
   ParticipantRegisterRequest,
@@ -199,6 +200,7 @@ export function createApi(http: HttpClient) {
     setStatus: (gameId: EntityId, body: UpdateGameStatusRequest) => http.patch<Game>(`${g(gameId)}/status`, body),
     /** Before ending: pending reviews that ending would leave unreviewed. Ending freezes results. */
     endSummary: (gameId: EntityId) => http.get<EndSummaryResponse>(`${g(gameId)}/end-summary`),
+    lifecycleEvents: (gameId: EntityId) => http.get<GameLifecycleEventResponse[]>(`${g(gameId)}/lifecycle-events`),
     /** Canonical operator state including scores. */
     snapshot: (gameId: EntityId) => http.get<OperatorSnapshotResponse>(`${g(gameId)}/snapshot`),
     operators: (gameId: EntityId) => http.get<UserResponse[]>(`${g(gameId)}/operators`),

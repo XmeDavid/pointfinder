@@ -71,6 +71,9 @@ class GameSchedulerServiceTest {
         org.mockito.Mockito.lenient().when(transactionManager.getTransaction(any())).thenReturn(mock(org.springframework.transaction.TransactionStatus.class));
     }
 
+    @Mock
+    private com.prayer.pointfinder.repository.GameLifecycleEventRepository lifecycleEventRepository;
+
     @InjectMocks
     private GameSchedulerService gameSchedulerService;
 
@@ -108,6 +111,13 @@ class GameSchedulerServiceTest {
         gameSchedulerService.autoEndGames();
 
         verify(gameRepository).save(expiredGame);
+        org.mockito.ArgumentCaptor<com.prayer.pointfinder.entity.GameLifecycleEvent> audit =
+                org.mockito.ArgumentCaptor.forClass(com.prayer.pointfinder.entity.GameLifecycleEvent.class);
+        verify(lifecycleEventRepository).save(audit.capture());
+        org.junit.jupiter.api.Assertions.assertEquals("scheduled_end", audit.getValue().getReason());
+        org.junit.jupiter.api.Assertions.assertEquals(GameStatus.live, audit.getValue().getFromStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(GameStatus.ended, audit.getValue().getToStatus());
+        org.junit.jupiter.api.Assertions.assertNull(audit.getValue().getActorUser());
         assertEquals(GameStatus.ended, expiredGame.getStatus());
         verify(xpService).finalizeCycle(expiredGame);
         verify(eventBroadcaster).broadcastGameStatus(gameId, GameStatus.ended.name());

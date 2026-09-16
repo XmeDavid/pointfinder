@@ -53,6 +53,7 @@ public class GameService {
     private final com.prayer.pointfinder.repository.SubmissionRepository submissionRepository;
     private final com.prayer.pointfinder.repository.TeamRepository teamRepository;
     private final com.prayer.pointfinder.repository.PlayerRepository playerRepository;
+    private final com.prayer.pointfinder.repository.GameLifecycleEventRepository lifecycleEventRepository;
 
     // Public spectator broadcast codes are unauthenticated and expose live
     // team GPS, so they must resist enumeration. 10 chars over the 32-symbol
@@ -322,8 +323,26 @@ public class GameService {
         }
         game.setStatus(target);
         game = gameRepository.save(game);
+        lifecycleEventRepository.save(com.prayer.pointfinder.entity.GameLifecycleEvent.builder()
+                .game(game)
+                .fromStatus(fromStatus)
+                .toStatus(target)
+                .reason(com.prayer.pointfinder.entity.GameLifecycleEvent.REASON_OPERATOR)
+                .actorUser(currentOperator)
+                .actorNameSnapshot(currentOperator.getName())
+                .resetProgress(target == GameStatus.setup && resetProgress)
+                .build());
         eventBroadcaster.broadcastGameStatus(game.getId(), game.getStatus().name());
         return toResponse(game);
+    }
+
+    /** OW-14: every lifecycle transition of the game, oldest first, with who or what made it. */
+    @Transactional(readOnly = true)
+    public List<com.prayer.pointfinder.dto.response.GameLifecycleEventResponse> lifecycleEvents(UUID id) {
+        gameAccessService.ensureCurrentUserCanAccessGame(id);
+        return lifecycleEventRepository.findByGameIdOrderByCreatedAtAsc(id).stream()
+                .map(com.prayer.pointfinder.dto.response.GameLifecycleEventResponse::from)
+                .toList();
     }
 
     /** What the operator sees before ending: how many submissions are still unreviewed. */

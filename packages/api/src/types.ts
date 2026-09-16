@@ -136,6 +136,19 @@ export interface XpRewardResponse {
   level: { level: number; xp: number; xpForCurrentLevel: number; xpForNextLevel: number } | null
 }
 
+/** OW-14: one lifecycle transition of a game, oldest first when listed. */
+export interface GameLifecycleEventResponse {
+  id: EntityId
+  fromStatus: GameStatus
+  toStatus: GameStatus
+  /** `operator`, `scheduled_end` or `practice_expired`. */
+  reason: 'operator' | 'scheduled_end' | 'practice_expired'
+  actorUserId: EntityId | null
+  actorName: string | null
+  resetProgress: boolean
+  createdAt: IsoDateTime
+}
+
 export interface EndSummaryResponse {
   status: GameStatus
   pendingReviews: number

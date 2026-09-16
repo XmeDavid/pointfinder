@@ -38,6 +38,7 @@ public class GameSchedulerService {
     private final ChunkedUploadService chunkedUploadService;
     private final UploadSessionRepository uploadSessionRepository;
     private final StageRepository stageRepository;
+    private final com.prayer.pointfinder.repository.GameLifecycleEventRepository lifecycleEventRepository;
     private final GameEventBroadcaster eventBroadcaster;
     private final MeterRegistry meterRegistry;
     private final com.prayer.pointfinder.xp.XpService xpService;
@@ -66,7 +67,7 @@ public class GameSchedulerService {
         for (Game candidate : expired) {
             endThroughFinalizer(candidate.getId(), game -> game.getStatus() != GameStatus.ended
                     && game.getTutorialScenario() != null && game.getTutorialExpiresAt() != null && game.getTutorialExpiresAt().isBefore(now),
-                    "Ending expired practice game '{}' (id={}, expired {})");
+                    "Ending expired practice game '{}' (id={}, expired {})", GameLifecycleEvent.REASON_PRACTICE_EXPIRED);
         }
     }
 
@@ -80,7 +81,8 @@ public class GameSchedulerService {
         List<Game> expiredGames = gameRepository.findByStatusAndEndDateBefore(GameStatus.live, now);
         for (Game candidate : expiredGames) {
             endThroughFinalizer(candidate.getId(), game -> game.getStatus() == GameStatus.live
-                    && game.getEndDate() != null && game.getEndDate().isBefore(now), "Auto-ending game '{}' (id={}) - end date {} has passed");
+                    && game.getEndDate() != null && game.getEndDate().isBefore(now), "Auto-ending game '{}' (id={}) - end date {} has passed",
+                    GameLifecycleEvent.REASON_SCHEDULED_END);
         }
     }
 
@@ -88,14 +90,14 @@ public class GameSchedulerService {
      * Every ending path finalizes XP the same way: lock the row, re-check that the
      * game is still due (another node may have ended it), end it, finalize, broadcast.
      */
-    private void endThroughFinalizer(UUID gameId, java.util.function.Predicate<Game> stillDue, String logMessage) {
+    private void endThroughFinalizer(UUID gameId, java.util.function.Predicate<Game> stillDue, String logMessage, String reason) {
         org.springframework.transaction.support.TransactionTemplate perGame = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         perGame.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         perGame.setTimeout(30);
-        perGame.executeWithoutResult(status -> endLocked(gameId, stillDue, logMessage));
+        perGame.executeWithoutResult(status -> endLocked(gameId, stillDue, logMessage, reason));
     }
 
-    private void endLocked(UUID gameId, java.util.function.Predicate<Game> stillDue, String logMessage) {
+    private void endLocked(UUID gameId, java.util.function.Predicate<Game> stillDue, String logMessage, String reason) {
         Game game = gameRepository.findByIdForUpdate(gameId).orElse(null);
         if (game == null) return;
         // The candidate scan above already loaded this entity into the persistence
@@ -104,9 +106,13 @@ public class GameSchedulerService {
         entityManager.refresh(game);
         if (!stillDue.test(game)) return;
         log.info(logMessage, game.getName(), game.getId(), game.getEndDate() != null ? game.getEndDate() : game.getTutorialExpiresAt());
+        GameStatus from = game.getStatus();
         xpService.finalizeCycle(game);
         game.setStatus(GameStatus.ended);
         gameRepository.save(game);
+        // OW-14: the scheduler's endings are audited like an operator's, without an actor.
+        lifecycleEventRepository.save(GameLifecycleEvent.builder()
+                .game(game).fromStatus(from).toStatus(GameStatus.ended).reason(reason).build());
         eventBroadcaster.broadcastGameStatus(game.getId(), GameStatus.ended.name());
     }
 
