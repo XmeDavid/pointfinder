@@ -38,7 +38,7 @@ import java.util.UUID;
  * {@code tags}, {@code color}, nor {@code name}/{@code baseName} appear
  * in the serialized response body.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * — P1 Operator Workflow and Content Model.
  */
 public record PlayerBaseResponse(

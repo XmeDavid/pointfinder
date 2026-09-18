@@ -73,7 +73,15 @@
       "deleteTeamMembers_one": "This team has {{count}} member.",
       "deleteTeamMembers_other": "This team has {{count}} members."
     },
-    "close": "Close"
+    "close": "Close",
+    "chips": {
+      "placeholder": "Type an answer, or {{example}} for a team value",
+      "add": "Add an accepted answer",
+      "edit": "Edit {{value}}",
+      "editing": "Editing {{value}}",
+      "remove": "Remove {{value}}",
+      "suggestions": "Team values"
+    }
   },
   "auth": {
     "signIn": "Sign In",
@@ -295,7 +303,24 @@
       "stale": "Stale",
       "unknown": "No signal"
     },
-    "locationSignalAria": "Location signal: {{label}}"
+    "locationSignalAria": "Location signal: {{label}}",
+    "save": {
+      "idle": "No unsaved changes",
+      "local": "Unsaved changes",
+      "storageError": "Draft storage unavailable",
+      "storageErrorHint": "Keep this editor open or save online. These edits could not be kept on this device.",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "error": "Could not save",
+      "conflict": "Changed elsewhere",
+      "conflictHint": "This item changed on the server while you were editing. Keep your version or use the latest one.",
+      "retry": "Retry",
+      "discard": "Discard changes",
+      "keepMine": "Keep my version",
+      "useLatest": "Use latest",
+      "restored": "Recovered your unsaved changes."
+    },
+    "saveAria": "Save status: {{label}}"
   },
   "lifecycle": {
     "goLive": "Go Live",
@@ -1015,6 +1040,7 @@
     "EMAIL_ALREADY_TAKEN": "That email address is already in use.",
     "EMAIL_CHANGE_TOKEN_INVALID": "This email confirmation link is not valid.",
     "EMAIL_CHANGE_TOKEN_EXPIRED": "This email confirmation link has expired. Request a new one.",
+    "ORGANIZER_ROLE_REQUIRED": "This account does not have organizer access.",
     "ACCOUNT_FROZEN": "Your account is frozen. Update your payment method to continue.",
     "NFC_TOKEN_REQUIRED": "This base needs its NFC tag scanned to check in.",
     "CHECK_IN_METHOD_MISMATCH": "The check-in proof does not match how this base is checked in.",
@@ -1449,7 +1475,7 @@
     "noChallengesYet": "No challenges yet",
     "noTeamsYet": "No teams yet",
     "baseDescription": "Base description...",
-    "correctAnswerPlaceholder": "Comma-separated accepted answers",
+    "correctAnswerPlaceholder": "Type an answer and press Enter",
     "operatorNotesPlaceholder": "Internal notes visible only to operators...",
     "completionPlaceholder": "What teams see after completing this challenge...",
     "challengeContentPlaceholder": "Challenge content...",
@@ -1603,7 +1629,10 @@
       "chooseExistingChallenge": "Choose an existing challenge",
       "appearsAt": "Where this challenge appears",
       "single_choice": "Single choice",
-      "multiple_choice": "Multiple choice"
+      "multiple_choice": "Multiple choice",
+      "saveBaseFirst": "The base could not be saved. Fix it or retry before opening its challenge.",
+      "baseInvalid": "Fix the base details before opening its challenge.",
+      "resumingChallenge": "Finishing the challenge you started…"
     }
   },
   "command2": {
@@ -2148,7 +2177,11 @@
     "legacyAppsNote": "The legacy iOS and Android apps cannot complete QR or location bases.",
     "ready": "Ready to launch",
     "remaining_one": "{{count}} item remaining",
-    "remaining_other": "{{count}} items remaining"
+    "remaining_other": "{{count}} items remaining",
+    "checking": "Checking readiness…",
+    "unavailable": "Readiness could not be checked.",
+    "retry": "Retry",
+    "blockersTitle": "Before going live"
   },
   "tutorials": {
     "menu": "Tutorials",
@@ -2234,7 +2267,7 @@
       },
       "orient": {
         "title": "Your readiness checklist",
-        "body": "The map is your canvas: bases sit on it and everything else hangs off them. This pill counts what is still missing before the game can go live. Open it any time for the full list.",
+        "body": "The map is your canvas: bases sit on it and everything else hangs off them. This pill lists what still blocks going live and offers Go live once nothing does.",
         "aside": "It only appears while the game is in setup."
       },
       "place-base": {
@@ -2357,7 +2390,7 @@
         "body": "Every check has passed. Going live fixes the route, hands the challenges to the teams and opens check-ins. You can come back to setup afterwards.",
         "branch": {
           "nfcPending": "One NFC base still has no tag written, and that is the only thing left. Write it from the Tags & codes tab, or switch that base to a QR code or GPS instead.",
-          "notReady": "Some checks are still red. Open the checklist to see which — usually a base with no challenge, a missing team, or an NFC tag that has not been written yet."
+          "notReady": "Some checks are still red. The pill lists which — usually a base with no challenge, a missing team, or an NFC tag that has not been written yet — and each one opens the editor to fix it."
         }
       },
       "modes": {
@@ -2416,7 +2449,7 @@
       },
       "readiness": {
         "title": "Before you go live",
-        "body": "The route itself has no check here: every base is numbered automatically. This pill still guards bases, challenges, teams, assignments and check-in methods. Expand it any time to see what is missing."
+        "body": "The route itself has no check here: every base is numbered automatically. This pill still guards bases, challenges, teams, assignments and check-in methods, and lists only what is missing."
       },
       "finish": {
         "title": "Route done",
@@ -2446,7 +2479,7 @@
       },
       "readiness": {
         "title": "Hidden bases still count",
-        "body": "Readiness treats a hidden base like any other: it needs a working check-in method, and an NFC one needs a linked tag. Expand the pill for the full checklist before going live."
+        "body": "Readiness treats a hidden base like any other: it needs a working check-in method, and an NFC one needs a linked tag. The pill lists only what is missing; Go live appears once it is all done."
       },
       "finish": {
         "title": "Hidden and clued",
@@ -2791,7 +2824,13 @@
     "backToDiscoveries": "Back to discoveries",
     "discoveryOtherTeam": "This phone already belongs to another team in this game. Open your saved participation in Play.",
     "admissionClosed": "This game is no longer accepting new players here. Check with the organizer.",
-    "discoveryOffline": "You’re offline. Reconnect to find games or join."
+    "discoveryOffline": "You’re offline. Reconnect to find games or join.",
+    "organizerSessionLoading": "Opening your organizer workspace…",
+    "organizerSessionError": "Could not open your organizer workspace.",
+    "organizerSessionDenied": "This account cannot organize games.",
+    "continueOrganizing": "Continue organizing",
+    "continueOrganizingLoading": "Finding your last organized game…",
+    "continueOrganizingError": "Could not load your last organized game"
   },
   "publication": {
     "heading": "Make it public",

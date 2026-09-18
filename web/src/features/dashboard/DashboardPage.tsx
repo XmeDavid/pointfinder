@@ -25,6 +25,8 @@ import { useLocalDesign, localDesign } from "../user-home/useLocalDesign";
 import { PlayingGames } from "../user-home/PlayingGames";
 import { useAuth, useAccountSession } from "@/app/player/services";
 import { OrganizePanel } from "./OrganizePanel";
+import { OrganizerSessionBridge } from "./OrganizerSessionBridge";
+import { ContinueOrganizing } from "./ContinueOrganizing";
 import { WelcomeCard } from "@/features/tutorials/WelcomeCard";
 import { useGames } from "@/hooks/queries/useGames";
 import { useAccountProfile } from "@/features/profile/useAccountProfile";
@@ -57,7 +59,14 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const account = useAccountSession();
   const signedIn = !!user || account.kind === "operator";
-  const canOrganize = !!user && user.role !== "participant";
+  const operatorCanOrganize = !!user && user.role !== "participant";
+  // OW-01: an organizer signed in through the player entry holds an account
+  // session; Organize is offered and the operator session is exchanged for
+  // it on entry. A participant account never gets the entry.
+  const accountCanOrganize =
+    !user && account.kind === "operator" && account.role !== "participant";
+  const canOrganize = operatorCanOrganize || accountCanOrganize;
+  const hasActivePlay = player.kind === "player" && (local.status ?? player.gameStatus) !== "ended";
   const displayName =
     user?.name ??
     (account.kind === "operator"
@@ -206,7 +215,7 @@ export function DashboardPage() {
                 )}
               </Button>
             </div>
-            {(localDesign || player.kind === "player") && (
+            {(localDesign || hasActivePlay) && (
               <section
                 className="ex-current-game"
                 aria-label={t("ongoingGame")}
@@ -279,6 +288,7 @@ export function DashboardPage() {
                 </SurfacePanel>
               </section>
             )}
+            {!localDesign && !hasActivePlay && canOrganize && <ContinueOrganizing />}
           </>
         )}
         {(page === "explore" || page === "home") && <DiscoverySection />}
@@ -322,10 +332,12 @@ export function DashboardPage() {
           </>
         )}
         {page === "organize" &&
-          (canOrganize ? (
+          (operatorCanOrganize ? (
             <FrozenBlocker>
               <OrganizePanel />
             </FrozenBlocker>
+          ) : accountCanOrganize ? (
+            <OrganizerSessionBridge />
           ) : (
             <EmptyState
               title={t("organizerAccess")}

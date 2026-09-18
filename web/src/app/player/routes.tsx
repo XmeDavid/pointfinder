@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useAuth, useAccountSession } from './services'
 import { useAuthStore } from '@/lib/auth/store'
 import { isNativeEntry } from '@/platform/runtime'
 import { LoadingState } from '@/components/feedback/LoadingState'
+import { consumeResumeTarget, resumeTarget } from '@/app/resume'
 
 const Join = lazy(() => import('@/features/player/Join'))
 const Logbook = lazy(() => import('@/features/player/LogbookScreen'))
@@ -23,10 +24,19 @@ export function Home() {
   const auth = useAuth()
   const account = useAccountSession()
   const operator = useAuthStore((s) => s.isAuthenticated)
+  const operatorId = useAuthStore((s) => (s.isAuthenticated ? (s.user?.id ?? null) : null))
   const nativeEntry = isNativeEntry()
+  // OW-38: a cold start after the phone killed the app lands here; go back to
+  // the screen the same session was on instead of Home. A launch deep link
+  // navigates afterwards and therefore still wins; a sign-out cleared the record.
+  const resume = resumeTarget({ userId: operatorId, playerId: auth.kind === 'player' ? auth.playerId : null, accountId: account.kind === 'operator' ? account.userId : null })
+  useEffect(() => {
+    if (resume) consumeResumeTarget()
+  }, [resume])
   // Everyone is a player and an organizer now: any session opens on the one account home.
   let page = <Landing />
-  if (auth.kind === 'player' || operator || account.kind === 'operator') page = <Navigate to="/dashboard" replace />
+  if (resume) page = <Navigate to={resume} replace />
+  else if (auth.kind === 'player' || operator || account.kind === 'operator') page = <Navigate to="/dashboard" replace />
   else if (nativeEntry) page = <Welcome />
   return <Suspense fallback={<LoadingState />}>{page}</Suspense>
 }

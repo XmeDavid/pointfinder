@@ -19,7 +19,7 @@ spring:
   # SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD) or via a
   # profile-specific application-{profile}.yml. The Docker Compose files and
   # CI workflows set these through their respective environment blocks.
-  # See docs/infrastructure.md for the full list of required env vars.
+  # See the active Compose manifest and .env.example for required env vars.
   datasource:
     hikari:
       maximum-pool-size: 20
@@ -126,7 +126,7 @@ app:
   # Defaults to the container hostname. Two replicas must not share a value.
   instance-id: ${APP_INSTANCE_ID:}
   # Two-active-backend coordination. Every default is safe for one instance;
-  # see docs/ha-application-readiness.md for the rollout gates.
+  # see deploy/ha/OPERATIONS.md for the rollout gates.
   ha:
     outbox:
       enabled: ${APP_HA_OUTBOX_ENABLED:true}

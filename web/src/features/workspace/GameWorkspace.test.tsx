@@ -43,6 +43,7 @@ vi.mock('react-map-gl/maplibre', () => ({
 
 // Mock motion/react to avoid animation complexity in tests
 vi.mock('motion/react', () => ({
+  useReducedMotion: () => true,
   motion: {
     div: ({
       children,

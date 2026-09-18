@@ -112,7 +112,8 @@ class ReorderServiceTest {
                     gameAccessService,
                     eventBroadcaster,
                     gameTagRepository,
-                    resourceEmbedService
+                    resourceEmbedService,
+                    null
             );
         }
 

@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * principal id captured by {@code MobileWebSocketAuthHandshakeInterceptor}
  * in the session attributes; connect/disconnect from the same principal
  * within the metrics service reconnect window is classified as a
- * reconnect. See docs/realtime-and-mobile.md §8.
+ * reconnect. See docs/product/contracts.md section "Realtime, audit and operations".
  */
 @Slf4j
 @Component

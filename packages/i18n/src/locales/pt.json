@@ -73,7 +73,15 @@
       "deleteTeamMembers_one": "Esta equipa tem {{count}} membro.",
       "deleteTeamMembers_other": "Esta equipa tem {{count}} membros."
     },
-    "close": "Fechar"
+    "close": "Fechar",
+    "chips": {
+      "placeholder": "Escreve uma resposta, ou {{example}} para um valor da equipa",
+      "add": "Adicionar uma resposta aceite",
+      "edit": "Editar {{value}}",
+      "editing": "A editar {{value}}",
+      "remove": "Remover {{value}}",
+      "suggestions": "Valores da equipa"
+    }
   },
   "auth": {
     "signIn": "Entrar",
@@ -295,7 +303,24 @@
       "stale": "Desatualizado",
       "unknown": "Sem sinal"
     },
-    "locationSignalAria": "Sinal de localização: {{label}}"
+    "locationSignalAria": "Sinal de localização: {{label}}",
+    "save": {
+      "idle": "Sem alterações por guardar",
+      "local": "Alterações por guardar",
+      "storageError": "Armazenamento de rascunhos indisponível",
+      "storageErrorHint": "Mantenha este editor aberto ou guarde online. Não foi possível guardar estas alterações neste dispositivo.",
+      "saving": "A guardar…",
+      "saved": "Guardado",
+      "error": "Não foi possível guardar",
+      "conflict": "Alterado noutro lado",
+      "conflictHint": "Este item mudou no servidor enquanto editava. Mantenha a sua versão ou use a mais recente.",
+      "retry": "Tentar novamente",
+      "discard": "Descartar alterações",
+      "keepMine": "Manter a minha versão",
+      "useLatest": "Usar a mais recente",
+      "restored": "Recuperámos as suas alterações por guardar."
+    },
+    "saveAria": "Estado de gravação: {{label}}"
   },
   "lifecycle": {
     "goLive": "Iniciar Jogo",
@@ -1015,6 +1040,7 @@
     "EMAIL_ALREADY_TAKEN": "Esse endereço de email já está a ser utilizado.",
     "EMAIL_CHANGE_TOKEN_INVALID": "Esta ligação de confirmação de email não é válida.",
     "EMAIL_CHANGE_TOKEN_EXPIRED": "Esta ligação de confirmação de email expirou. Pede uma nova.",
+    "ORGANIZER_ROLE_REQUIRED": "Esta conta não tem acesso de organizador.",
     "ACCOUNT_FROZEN": "A tua conta está congelada. Atualiza o método de pagamento para continuar.",
     "NFC_TOKEN_REQUIRED": "Esta base precisa que a etiqueta NFC seja lida para fazer check-in.",
     "CHECK_IN_METHOD_MISMATCH": "A prova de check-in não corresponde à forma de check-in desta base.",
@@ -1449,7 +1475,7 @@
     "noChallengesYet": "Ainda sem desafios",
     "noTeamsYet": "Ainda sem equipas",
     "baseDescription": "Descrição da base...",
-    "correctAnswerPlaceholder": "Respostas aceites separadas por vírgula",
+    "correctAnswerPlaceholder": "Escreve uma resposta e prime Enter",
     "operatorNotesPlaceholder": "Notas internas visíveis apenas para operadores...",
     "completionPlaceholder": "O que as equipas veem após concluir este desafio...",
     "challengeContentPlaceholder": "Conteúdo do desafio...",
@@ -1603,7 +1629,10 @@
       "chooseExistingChallenge": "Escolher um desafio existente",
       "appearsAt": "Onde aparece este desafio",
       "single_choice": "Escolha única",
-      "multiple_choice": "Escolha múltipla"
+      "multiple_choice": "Escolha múltipla",
+      "saveBaseFirst": "Não foi possível guardar a base. Corrija ou tente novamente antes de abrir o desafio.",
+      "baseInvalid": "Corrija os dados da base antes de abrir o desafio.",
+      "resumingChallenge": "A concluir o desafio que começou…"
     }
   },
   "command2": {
@@ -2148,7 +2177,11 @@
     "legacyAppsNote": "As apps antigas de iOS e Android não conseguem concluir bases QR ou de localização.",
     "ready": "Pronto para arrancar",
     "remaining_one": "Falta {{count}} item",
-    "remaining_other": "Faltam {{count}} itens"
+    "remaining_other": "Faltam {{count}} itens",
+    "checking": "A verificar a prontidão…",
+    "unavailable": "Não foi possível verificar a prontidão.",
+    "retry": "Repetir",
+    "blockersTitle": "Antes de arrancar"
   },
   "tutorials": {
     "menu": "Tutoriais",
@@ -2234,7 +2267,7 @@
       },
       "orient": {
         "title": "A tua lista de prontidão",
-        "body": "O mapa é a tua tela: as bases assentam nele e tudo o resto depende delas. Esta pastilha conta o que ainda falta para o jogo arrancar. Abre-a quando quiseres a lista completa.",
+        "body": "O mapa é a tua tela: as bases assentam nele e tudo o resto depende delas. Esta pastilha lista o que ainda impede o arranque e oferece Iniciar jogo quando nada faltar.",
         "aside": "Só aparece enquanto o jogo está em configuração."
       },
       "place-base": {
@@ -2357,7 +2390,7 @@
         "body": "Passaram todas as verificações. Arrancar fixa o percurso, entrega os desafios às equipas e abre os check-ins. Podes voltar à configuração depois.",
         "branch": {
           "nfcPending": "Falta gravar a etiqueta de uma base NFC, e é a única coisa em falta. Grava-a no separador Etiquetas e códigos, ou muda essa base para código QR ou GPS.",
-          "notReady": "Ainda há verificações a vermelho. Abre a lista para veres quais — normalmente uma base sem desafio, uma equipa em falta, ou uma etiqueta NFC por gravar."
+          "notReady": "Ainda há verificações a vermelho. A pastilha lista quais — normalmente uma base sem desafio, uma equipa em falta, ou uma etiqueta NFC por gravar — e cada uma abre o editor para a resolver."
         }
       },
       "modes": {
@@ -2416,7 +2449,7 @@
       },
       "readiness": {
         "title": "Antes de arrancares",
-        "body": "O percurso não tem verificação aqui: cada base é numerada automaticamente. Esta pastilha continua a vigiar bases, desafios, equipas, atribuições e métodos de check-in. Abre-a quando quiseres para ver o que falta."
+        "body": "O percurso não tem verificação aqui: cada base é numerada automaticamente. Esta pastilha continua a vigiar bases, desafios, equipas, atribuições e métodos de check-in, e lista apenas o que falta."
       },
       "finish": {
         "title": "Percurso pronto",
@@ -2446,7 +2479,7 @@
       },
       "readiness": {
         "title": "As bases escondidas contam",
-        "body": "A prontidão trata uma base escondida como qualquer outra: precisa de um método de check-in válido e, se for NFC, de uma etiqueta ligada. Abre a pastilha para veres a lista antes de arrancares."
+        "body": "A prontidão trata uma base escondida como qualquer outra: precisa de um método de check-in válido e, se for NFC, de uma etiqueta ligada. A pastilha lista apenas o que falta; Iniciar jogo aparece quando estiver tudo pronto."
       },
       "finish": {
         "title": "Escondida e com pista",
@@ -2791,7 +2824,13 @@
     "backToDiscoveries": "Voltar às descobertas",
     "discoveryOtherTeam": "Este telemóvel já pertence a outra equipa neste jogo. Abre a tua participação guardada em Jogar.",
     "admissionClosed": "Este jogo já não aceita novos jogadores por aqui. Contacta o organizador.",
-    "discoveryOffline": "Estás offline. Liga-te para encontrar jogos ou participar."
+    "discoveryOffline": "Estás offline. Liga-te para encontrar jogos ou participar.",
+    "organizerSessionLoading": "A abrir o seu espaço de organizador…",
+    "organizerSessionError": "Não foi possível abrir o seu espaço de organizador.",
+    "organizerSessionDenied": "Esta conta não pode organizar jogos.",
+    "continueOrganizing": "Continuar a organizar",
+    "continueOrganizingLoading": "A procurar o último jogo que organizaste…",
+    "continueOrganizingError": "Não foi possível carregar o último jogo que organizaste"
   },
   "publication": {
     "heading": "Tornar público",

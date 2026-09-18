@@ -47,7 +47,7 @@ import java.util.stream.IntStream;
  * {@link PlayerSnapshotResponse}. Operators see the full leaderboard,
  * per-team scores, pending-review counters, and upload observability.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * (P0 Track 2 Slice 1).
  */
 @Service

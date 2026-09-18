@@ -13,6 +13,9 @@ export type { BaseProgressBadgeProps, BaseProgressStatus } from './BaseProgressB
 export { SyncStatusBadge } from './SyncStatusBadge'
 export type { SyncStatus, SyncStatusBadgeProps } from './SyncStatusBadge'
 
+export { SaveStatusIndicator } from './SaveStatusIndicator'
+export type { SaveState, SaveStatusIndicatorProps } from './SaveStatusIndicator'
+
 export { NfcStatusBadge } from './NfcStatusBadge'
 export type { NfcStatus, NfcStatusBadgeProps } from './NfcStatusBadge'
 

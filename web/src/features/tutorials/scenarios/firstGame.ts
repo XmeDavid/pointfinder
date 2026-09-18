@@ -354,13 +354,15 @@ const steps: Step[] = [
   {
     id: 'go-live',
     route: 'workspace',
-    // `go-live-btn` only mounts inside the expanded checklist once every check passes.
+    // `go-live-btn` mounts in the pill once every check passes; until then the
+    // pill lists the blockers, so the step points at the pill itself.
     anchor: (s) => (s.readiness.allPassed ? 'go-live-btn' : 'readiness-indicator'),
     prepare: (a, s) => {
       ensureBuild(a, s)
       // The readiness panel sits behind the drawer's scrim while a tab is open.
       a.closeDrawer()
       a.setSettingsPanelOpen(false)
+      // Shows the remaining blockers; a ready pill has nothing to expand.
       a.setReadinessExpanded(true)
     },
     done: { kind: 'predicate', test: (s) => s.game?.status === 'live' },

@@ -1,8 +1,14 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { ChevronDown, Pin, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { TagPicker } from '@/components/data/TagPicker'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useAuthStore } from '@/lib/auth/store'
+import { getApiErrorMessage } from '@/lib/api/errors'
+import { SaveStatusIndicator } from '@/components/status'
+import { draftKey } from './drafts/draftStore'
+import { useEntityDraft } from './drafts/useEntityDraft'
+import { baseDraftFields, baseDraftIsValid, type BaseDraftFields } from './drafts/baseDraft'
 import { useBases } from '@/hooks/queries/useBases'
 import { useAssignments } from '@/hooks/queries/useAssignments'
 import { useChallenges } from '@/hooks/queries/useChallenges'
@@ -56,48 +62,80 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
 
   const base = bases.find((b) => b.id === baseId)
 
-  // Local form state
+  // Local form state lives in a persisted, account-scoped draft: it survives
+  // opening a challenge, a killed WebView and a failed save, and a refetch
+  // never overwrites what the operator typed.
   const methodLabel = useCheckInMethodLabel()
   const locationAllowed = isLocationCheckInAllowed(game)
-  const [localName, setLocalName] = useState(base?.name ?? '')
-  const [localDescription, setLocalDescription] = useState(
-    base?.description ?? '',
+  const accountId = useAuthStore((s) => s.user?.id)
+  const serverFields = useMemo(
+    () => (base ? baseDraftFields(base) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      base?.id,
+      base?.name,
+      base?.description,
+      base?.lat,
+      base?.lng,
+      base?.hidden,
+      base?.checkInMethod,
+      base?.checkInRadiusM,
+    ],
   )
-  const [localLat, setLocalLat] = useState(base?.lat?.toString() ?? '')
-  const [localLng, setLocalLng] = useState(base?.lng?.toString() ?? '')
-  const [localHidden, setLocalHidden] = useState(base?.hidden ?? false)
-  const [localMethod, setLocalMethod] = useState<CheckInMethod>(
-    base?.checkInMethod ?? 'NFC',
+  const saveFields = useCallback(
+    async (fields: BaseDraftFields) => {
+      const current = bases.find((b) => b.id === baseId)
+      if (!current) throw new Error(t('build.baseNotFound'))
+      const radius = parseCheckInRadiusInput(fields.radius)
+      const updated = await updateBase.mutateAsync({
+        baseId,
+        dto: {
+          name: fields.name,
+          description: fields.description,
+          lat: Number.parseFloat(fields.lat),
+          lng: Number.parseFloat(fields.lng),
+          hidden: fields.hidden,
+          tagIds: current.tagIds,
+          fixedChallengeId: current.fixedChallengeId,
+          checkInMethod: fields.method,
+          checkInRadiusM: fields.method === 'LOCATION' && radius.ok ? radius.value : null,
+        },
+      })
+      return baseDraftFields(updated)
+    },
+    [bases, baseId, updateBase, t],
   )
-  const [localRadius, setLocalRadius] = useState(
-    base?.checkInRadiusM != null ? String(base.checkInRadiusM) : '',
+  const describeSaveError = useCallback(
+    (error: unknown) => getApiErrorMessage(error, t('common.unknownError')),
+    [t],
   )
+  const draft = useEntityDraft<BaseDraftFields>({
+    key: draftKey(accountId, gameId, 'base', baseId),
+    server: serverFields,
+    validate: baseDraftIsValid,
+    save: saveFields,
+    describeError: describeSaveError,
+  })
+  const fields = draft.fields ?? serverFields
+  const localName = fields?.name ?? ''
+  const localDescription = fields?.description ?? ''
+  const localLat = fields?.lat ?? ''
+  const localLng = fields?.lng ?? ''
+  const localHidden = fields?.hidden ?? false
+  const localMethod: CheckInMethod = fields?.method ?? 'NFC'
+  const localRadius = fields?.radius ?? ''
+  const update = draft.update
+  const setLocalName = (name: string) => update({ name })
+  const setLocalDescription = (description: string) => update({ description })
+  const setLocalLat = (lat: string) => update({ lat })
+  const setLocalLng = (lng: string) => update({ lng })
+  const setLocalHidden = (hidden: boolean) => update({ hidden })
+  const setLocalMethod = (method: CheckInMethod) => update({ method })
+  const setLocalRadius = (radius: string) => update({ radius })
   const [preciseCoordinatesOpen, setPreciseCoordinatesOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
-
-  // Reset local state when base changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalName(base?.name ?? '')
-    setLocalDescription(base?.description ?? '')
-    setLocalLat(base?.lat?.toString() ?? '')
-    setLocalLng(base?.lng?.toString() ?? '')
-    setLocalHidden(base?.hidden ?? false)
-    setLocalMethod(base?.checkInMethod ?? 'NFC')
-    setLocalRadius(
-      base?.checkInRadiusM != null ? String(base.checkInRadiusM) : '',
-    )
-    setPreciseCoordinatesOpen(false)
-  }, [
-    baseId,
-    base?.name,
-    base?.description,
-    base?.lat,
-    base?.lng,
-    base?.hidden,
-    base?.checkInMethod,
-    base?.checkInRadiusM,
-  ])
+  // Why a challenge could not be opened: the base must be saved first.
+  const [openBlocked, setOpenBlocked] = useState<string | null>(null)
 
   // Derived data
   const baseAssignments = useMemo(
@@ -132,35 +170,39 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
     gameDefaultRadius,
   )
 
-  const isDirty =
-    localName !== (base?.name ?? '') ||
-    localDescription !== (base?.description ?? '') ||
-    localLat !== (base?.lat?.toString() ?? '') ||
-    localLng !== (base?.lng?.toString() ?? '') ||
-    localHidden !== (base?.hidden ?? false) ||
-    localMethod !== (base?.checkInMethod ?? 'NFC') ||
-    localRadius !==
-      (base?.checkInRadiusM != null ? String(base.checkInRadiusM) : '')
-
-  const canSave = coordinatesValid && radiusValid && !updateBase.isPending
+  const isDirty = draft.isDirty
+  const saving = draft.status.state === 'saving'
+  // One validity rule for the button, the background save and the challenge guard.
+  const canSave = !!fields && baseDraftIsValid(fields) && !saving && !draft.conflict
 
   const handleSave = () => {
-    if (!base || !canSave || !parsedRadius.ok) return
-    updateBase.mutate({
-      baseId: base.id,
-      dto: {
-        name: localName,
-        description: localDescription,
-        lat: parsedLat,
-        lng: parsedLng,
-        hidden: localHidden,
-        tagIds: base.tagIds,
-        fixedChallengeId: base.fixedChallengeId,
-        checkInMethod: localMethod,
-        checkInRadiusM: localMethod === 'LOCATION' ? parsedRadius.value : null,
-      },
-    })
+    if (!base || !canSave) return
+    setOpenBlocked(null)
+    void draft.saveNow()
   }
+
+  /**
+   * A challenge is created, linked or opened only after this base is saved:
+   * the drawer switches tabs and the base editor unmounts, so anything not
+   * on the server by then would otherwise have to be recovered from the draft.
+   */
+  const ensureSavedBeforeChallenge = useCallback(async (): Promise<boolean> => {
+    if (!fields) return false
+    if (!baseDraftIsValid(fields)) {
+      setOpenBlocked(t('build.editor.baseInvalid'))
+      return false
+    }
+    const saved = await draft.saveNow()
+    setOpenBlocked(saved ? null : t('build.editor.saveBaseFirst'))
+    return saved
+  }, [fields, draft, t])
+
+  const openChallengeAfterSave = useCallback(
+    async (challengeId: string) => {
+      if (await ensureSavedBeforeChallenge()) openBaseChallenge(baseId, challengeId)
+    },
+    [ensureSavedBeforeChallenge, openBaseChallenge, baseId],
+  )
 
   if (!base) {
     return (
@@ -219,6 +261,15 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
               className="w-full px-3 py-2 text-base rounded-md bg-background border border-border text-foreground resize-none"
             />
           </div>
+          <SaveStatusIndicator
+            state={draft.status.state}
+            error={draft.status.error}
+            onRetry={() => void draft.saveNow()}
+            onDiscard={draft.discard}
+            onKeepMine={draft.keepMine}
+            onUseLatest={draft.discard}
+            data-testid="base-save-status"
+          />
         </div>
       </section>
 
@@ -229,8 +280,18 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
         assignments={assignments}
         challenges={challenges}
         teams={teams}
+        beforeOpenChallenge={ensureSavedBeforeChallenge}
         onOpenChallenge={(id) => openBaseChallenge(baseId, id)}
       />
+      {openBlocked && (
+        <p
+          role="alert"
+          data-testid="base-save-blocked"
+          className="mt-2 text-xs text-destructive"
+        >
+          {openBlocked}
+        </p>
+      )}
 
       <section
         className="border-t border-border pt-4 mt-4"
@@ -553,7 +614,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
                 <div className="flex items-center gap-2">
                   <Pin className="h-4 w-4 text-primary" />
                   <button
-                    onClick={() => openBaseChallenge(baseId, fixedChallenge.id)}
+                    onClick={() => void openChallengeAfterSave(fixedChallenge.id)}
                     className="text-sm text-primary hover:underline cursor-pointer"
                     data-testid="fixed-challenge-link"
                   >
@@ -569,8 +630,8 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
           </section>
         </>
       )}
-      {/* Save button */}
-      {isDirty && (
+      {/* Save button: valid edits also save on their own after a pause. */}
+      {(isDirty || saving) && (
         <div className="sticky bottom-0 z-10 border-t border-border bg-card py-3 mt-4">
           <button
             onClick={handleSave}
@@ -579,7 +640,7 @@ export function BaseDetail({ baseId, gameId }: BaseDetailProps) {
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
           >
             <Save className="h-4 w-4" />
-            {t(updateBase.isPending ? 'build.compose.saving' : 'common.save')}
+            {t(saving ? 'build.compose.saving' : 'common.save')}
           </button>
         </div>
       )}

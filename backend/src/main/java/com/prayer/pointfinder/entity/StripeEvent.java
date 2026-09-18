@@ -9,7 +9,7 @@ import java.time.Instant;
  * One row per Stripe event this backend has already applied. Stripe redelivers
  * events on any non-2xx reply and on its own retry schedule, so every handler
  * records the event id in the same transaction as its effect; a redelivery
- * finds the row and skips. See docs/business-logic.md, "Webhook idempotency".
+ * finds the row and skips. See docs/product/contracts.md, "Webhook idempotency".
  */
 @Entity
 @Table(name = "stripe_events")

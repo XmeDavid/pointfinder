@@ -4,6 +4,7 @@ import com.prayer.pointfinder.dto.request.CreateChallengeRequest;
 import com.prayer.pointfinder.dto.request.ReorderRequest;
 import com.prayer.pointfinder.dto.request.UpdateChallengeRequest;
 import com.prayer.pointfinder.dto.response.ChallengeResponse;
+import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.service.ChallengeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ChallengeController {
 
+    private static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
+
     private final ChallengeService challengeService;
 
     @GetMapping
@@ -26,10 +29,31 @@ public class ChallengeController {
         return ResponseEntity.ok(challengeService.getChallengesByGame(gameId));
     }
 
+    /**
+     * Creates a challenge. An optional idempotency key — body field
+     * {@code idempotencyKey}, or the {@code Idempotency-Key} header when the
+     * body has none — makes a retry of the same create return the challenge
+     * already made for that key in this game (OW-04). Fresh creates and
+     * replays both answer 201 with the standard {@link ChallengeResponse}, so
+     * a client that lost the first response needs no special handling.
+     */
     @PostMapping
     public ResponseEntity<ChallengeResponse> createChallenge(@PathVariable UUID gameId,
-                                                              @Valid @RequestBody CreateChallengeRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(challengeService.createChallenge(gameId, request));
+                                                              @Valid @RequestBody CreateChallengeRequest request,
+                                                              @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = false)
+                                                              String idempotencyKeyHeader) {
+        if (request.getIdempotencyKey() == null && idempotencyKeyHeader != null && !idempotencyKeyHeader.isBlank()) {
+            request.setIdempotencyKey(parseIdempotencyKey(idempotencyKeyHeader));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(challengeService.createChallengeIdempotent(gameId, request));
+    }
+
+    private static UUID parseIdempotencyKey(String header) {
+        try {
+            return UUID.fromString(header.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException(IDEMPOTENCY_KEY_HEADER + " header must be a UUID");
+        }
     }
 
     @PutMapping("/{challengeId}")

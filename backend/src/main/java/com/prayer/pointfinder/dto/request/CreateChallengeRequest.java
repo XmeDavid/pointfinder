@@ -60,4 +60,12 @@ public class CreateChallengeRequest {
 
     /** OW-34: options of a choice challenge; required for single_choice and multiple_choice, ignored otherwise. */
     private List<ChoiceOptionRequest> choiceOptions;
+
+    /**
+     * Optional client-generated idempotency key, scoped per game. A repeat
+     * create with the same key returns the existing challenge instead of
+     * creating another one (OW-04). The {@code Idempotency-Key} request
+     * header is accepted as a fallback when this field is absent.
+     */
+    private UUID idempotencyKey;
 }

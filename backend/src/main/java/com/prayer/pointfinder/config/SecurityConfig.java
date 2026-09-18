@@ -104,7 +104,7 @@ public class SecurityConfig {
                 // check. This carve-out must come BEFORE the blanket
                 // /api/games/** matcher below, otherwise Spring Security
                 // would reject player JWTs at the filter chain.
-                // See docs/business-logic.md "State Snapshot and Version Contract".
+                // See docs/product/contracts.md "Realtime, audit and operations".
                 .requestMatchers(HttpMethod.GET, "/api/games/*/snapshot")
                 .hasAnyRole("ADMIN", "OPERATOR", "PLAYER")
                 .requestMatchers("/api/games/**", "/api/invites/**", "/api/users/**")

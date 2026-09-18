@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
@@ -17,6 +17,7 @@ import { createMockBase, resetBaseCounter } from '@/test/factories/base'
 import { resetTeamCounter } from '@/test/factories/team'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { ChallengeDetail } from './ChallengeDetail'
+import { useDraftStore } from './drafts/draftStore'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -31,6 +32,8 @@ const gameId = 'game-1'
 
 describe('ChallengeDetail', () => {
   beforeEach(() => {
+    // Drafts are module state scoped by account/game/entity; tests share the key.
+    useDraftStore.getState().resetAll()
     resetChallengeCounter()
     resetAssignmentCounter()
     resetBaseCounter()
@@ -514,6 +517,7 @@ describe('ChallengeDetail', () => {
 
 describe('ChallengeDetail keeps what it does not edit', () => {
   beforeEach(() => {
+    useDraftStore.getState().resetAll()
     resetChallengeCounter()
     resetAssignmentCounter()
     resetBaseCounter()
@@ -665,4 +669,118 @@ it('keeps accepted answers only while automatic checking is on and retains their
   expect(screen.queryByTestId('correct-answer-input')).not.toBeInTheDocument()
   await userEvent.click(toggle)
   expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('FOX')
+})
+
+describe('ChallengeDetail keeps answers that are still being typed', () => {
+  beforeEach(() => {
+    useDraftStore.getState().resetAll()
+    resetChallengeCounter()
+    resetAssignmentCounter()
+    resetBaseCounter()
+    resetTeamCounter()
+    useWorkspaceStore.getState().reset()
+  })
+
+  /** A challenge the server actually keeps: what is PUT is what the next GET returns. */
+  function setupAnswerChallenge(onPut?: (body: Record<string, unknown>) => void) {
+    let current = createMockChallenge({
+      id: 'ch-typing',
+      title: 'Riddle',
+      answerType: 'text',
+      autoValidate: true,
+      correctAnswer: ['FOX'],
+    })
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => HttpResponse.json([current])),
+      http.put('/api/games/:gameId/challenges/:challengeId', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>
+        onPut?.(body)
+        current = { ...current, ...body, correctAnswer: (body.correctAnswer as string[] | undefined) ?? [] }
+        return HttpResponse.json(current)
+      }),
+    )
+  }
+
+  it('commits the pending answer when automatic checking is switched off, and keeps the answers stored', async () => {
+    const user = userEvent.setup()
+    const puts: Record<string, unknown>[] = []
+    setupAnswerChallenge((body) => puts.push(body))
+    render(<ChallengeDetail gameId={gameId} challengeId="ch-typing" />, { wrapper: createWrapper() })
+
+    await user.type(await screen.findByTestId('chip-add-input'), 'WOLF')
+    await user.click(screen.getByTestId('auto-validate-toggle'))
+    expect(screen.queryByTestId('correct-answer-input')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('save-challenge'))
+    await waitFor(() => expect(puts.length).toBeGreaterThan(0))
+    const last = puts[puts.length - 1]
+    expect(last.autoValidate).toBe(false)
+    expect(last.correctAnswer).toEqual(['FOX', 'WOLF'])
+
+    await user.click(screen.getByTestId('auto-validate-toggle'))
+    expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('FOX')
+    expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('WOLF')
+  })
+
+  it('commits the pending answer when Save is pressed', async () => {
+    const user = userEvent.setup()
+    const puts: Record<string, unknown>[] = []
+    setupAnswerChallenge((body) => puts.push(body))
+    render(<ChallengeDetail gameId={gameId} challengeId="ch-typing" />, { wrapper: createWrapper() })
+
+    await user.type(await screen.findByTestId('chip-add-input'), 'WOLF')
+    await user.click(screen.getByTestId('save-challenge'))
+
+    await waitFor(() => expect(puts.length).toBeGreaterThan(0))
+    expect(puts[puts.length - 1].correctAnswer).toEqual(['FOX', 'WOLF'])
+  })
+
+  it('discards unfinished answer text with the rest of the draft', async () => {
+    const user = userEvent.setup()
+    setupAnswerChallenge()
+    render(<ChallengeDetail gameId={gameId} challengeId="ch-typing" />, { wrapper: createWrapper() })
+    await user.type(await screen.findByTestId('challenge-title-input'), '!')
+    await user.type(screen.getByTestId('chip-add-input'), 'WOLF')
+    // Programmatic activation also covers assistive activation without a blur.
+    fireEvent.click(screen.getByTestId('challenge-save-status-discard'))
+    expect(screen.getByTestId('chip-add-input')).toHaveValue('')
+    expect(screen.getByTestId('challenge-title-input')).toHaveValue('Riddle')
+    await user.click(screen.getByTestId('auto-validate-toggle'))
+    await user.click(screen.getByTestId('auto-validate-toggle'))
+    expect(screen.getByTestId('correct-answer-input')).not.toHaveTextContent('WOLF')
+  })
+
+  it('keeps a half-typed answer and an open chip edit when an earlier autosave lands', async () => {
+    const user = userEvent.setup()
+    const puts: Record<string, unknown>[] = []
+    setupAnswerChallenge((body) => puts.push(body))
+    render(<ChallengeDetail gameId={gameId} challengeId="ch-typing" />, { wrapper: createWrapper() })
+
+    // A title edit schedules the background save; the chips are then edited
+    // while it is on its way.
+    await user.type(await screen.findByTestId('challenge-title-input'), '!')
+    await user.click(screen.getByTestId('chip-edit-0'))
+    await user.type(screen.getByTestId('chip-edit-input'), 'ES')
+
+    await waitFor(() => expect(puts.length).toBe(1), { timeout: 4000 })
+    await waitFor(() => expect(screen.getByTestId('challenge-save-status')).toHaveTextContent('Saved'))
+    // The landed row replaced the fields; the open edit was not touched.
+    expect(screen.getByTestId('chip-edit-input')).toHaveValue('FOXES')
+    expect(screen.getByTestId('challenge-title-input')).toHaveValue('Riddle!')
+
+    await user.keyboard('{Enter}')
+    expect(screen.queryByTestId('chip-edit-input')).not.toBeInTheDocument()
+    expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('FOXES')
+
+    // Same for the add field: the chip edit and the title share one background save.
+    await user.type(screen.getByTestId('challenge-title-input'), '?')
+    await user.type(screen.getByTestId('chip-add-input'), 'WOL')
+    await waitFor(() => expect(puts.length).toBe(2), { timeout: 4000 })
+    await waitFor(() => expect(screen.getByTestId('challenge-save-status')).toHaveTextContent('Saved'))
+    expect(puts[1].correctAnswer).toEqual(['FOXES'])
+    expect(screen.getByTestId('chip-add-input')).toHaveValue('WOL')
+    await user.keyboard('F{Enter}')
+    expect(screen.getByTestId('correct-answer-input')).toHaveTextContent('WOLF')
+    await waitFor(() => expect(puts[puts.length - 1].correctAnswer).toEqual(['FOXES', 'WOLF']), { timeout: 4000 })
+  }, 20000)
 })

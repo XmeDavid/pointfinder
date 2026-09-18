@@ -20,6 +20,8 @@ public interface ChallengeRepository extends JpaRepository<Challenge, UUID> {
 
     long countByGameId(UUID gameId);
 
+    Optional<Challenge> findByGameIdAndIdempotencyKey(UUID gameId, UUID idempotencyKey);
+
     @Query("SELECT c FROM Challenge c WHERE c.game.id = :gameId AND c.unlocksBases IS NOT EMPTY")
     List<Challenge> findByGameIdAndUnlocksBasesNotEmpty(@Param("gameId") UUID gameId);
 

@@ -26,6 +26,12 @@ export interface CreateChallengeDto {
    * Same privacy contract as `operatorNotes`.
    */
   tagIds?: string[];
+  /**
+   * Optional client-generated UUID, scoped per game. Resending it after an
+   * uncertain outcome (offline, restart) returns the same challenge instead
+   * of creating a duplicate. Also sent as the `Idempotency-Key` header.
+   */
+  idempotencyKey?: string;
 }
 
 export const challengesApi = {
@@ -36,7 +42,11 @@ export const challengesApi = {
 
   create: async (data: CreateChallengeDto & { gameId: string }): Promise<Challenge> => {
     const { gameId, ...body } = data;
-    const { data: result } = await apiClient.post(`/games/${gameId}/challenges`, body);
+    const { data: result } = await apiClient.post(
+      `/games/${gameId}/challenges`,
+      body,
+      body.idempotencyKey ? { headers: { "Idempotency-Key": body.idempotencyKey } } : undefined,
+    );
     return result;
   },
 

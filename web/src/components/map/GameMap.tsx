@@ -8,6 +8,7 @@ import { onForeground } from '@/platform/lifecycle'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useMapCamera } from './useMapCamera'
 
 interface GameMapProps {
   className?: string
@@ -21,6 +22,7 @@ interface GameMapProps {
   onMapRef?: (ref: MapRef | null) => void
   /** Called when the map background is clicked (not a marker) */
   onClick?: (event: MapMouseEvent) => void
+  persistenceKey?: string
 }
 
 export function GameMap({
@@ -32,9 +34,11 @@ export function GameMap({
   fitPoints,
   onMapRef,
   onClick,
+  persistenceKey,
 }: GameMapProps) {
   const { t } = useTranslation()
   const mapRef = useRef<MapRef>(null)
+  const camera = useMapCamera(mapRef, persistenceKey)
   const loaded = useRef(false)
   const [attempt, setAttempt] = useState(0)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -90,7 +94,7 @@ export function GameMap({
 
   // Fit bounds once when points are available
   useEffect(() => {
-    if (hasFitted.current || !fitPoints || fitPoints.length === 0 || !mapRef.current) return
+    if (!camera.ready || camera.hasCamera || hasFitted.current || !fitPoints || fitPoints.length === 0 || !mapRef.current) return
     hasFitted.current = true
 
     if (fitPoints.length === 1) {
@@ -104,7 +108,7 @@ export function GameMap({
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
       { padding: 80, duration: 800 }
     )
-  }, [fitPoints])
+  }, [fitPoints, camera.ready, camera.hasCamera])
 
   return (
     <div className={cn('relative', className)} data-testid="map-wrapper">
@@ -113,11 +117,13 @@ export function GameMap({
         ref={setMapRef}
         {...viewState}
         onMove={handleMove}
+        onMoveStart={camera.onMoveStart}
+        onMoveEnd={camera.onMoveEnd}
         onClick={onClick}
         mapStyle={mapStyle ?? DARK_STYLE_URL}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
-        onLoad={() => { loaded.current = true; setStatus('ready') }}
+        onLoad={() => { loaded.current = true; setStatus('ready'); camera.onLoad() }}
         onError={() => { if (!loaded.current) setStatus('error') }}
       >
         <NavigationControl position="bottom-right" />

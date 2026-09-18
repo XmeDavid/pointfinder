@@ -38,7 +38,7 @@ const value = (input: string | number): LimitEntry => ({ mode: 'value', input: S
 const unlimited: LimitEntry = { mode: 'unlimited', input: '' }
 
 /**
- * The standard deal. Documented in `docs/business-logic.md` § "Clubs and
+ * The standard deal. Documented in `docs/product/contracts.md` § "Clubs and
  * Invoicing"; keep the two in step.
  */
 export const CLUB_LIMIT_FIELDS: LimitField[] = [

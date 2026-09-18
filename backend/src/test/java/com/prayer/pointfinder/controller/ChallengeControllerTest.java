@@ -97,7 +97,7 @@ class ChallengeControllerTest {
                 null, null, null, null
         );
 
-        when(challengeService.createChallenge(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
+        when(challengeService.createChallengeIdempotent(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -273,7 +273,7 @@ class ChallengeControllerTest {
                 null, null, "Equipment: blue flag, 30m rope", null
         );
 
-        when(challengeService.createChallenge(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
+        when(challengeService.createChallengeIdempotent(eq(GAME_ID), any(CreateChallengeRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/games/" + GAME_ID + "/challenges")
                         .contentType(MediaType.APPLICATION_JSON)

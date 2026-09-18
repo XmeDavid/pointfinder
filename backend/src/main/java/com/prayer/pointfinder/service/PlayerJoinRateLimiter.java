@@ -18,10 +18,9 @@ import java.time.Instant;
  *   <li>Device ID: {@value #MAX_DEVICE_ATTEMPTS} attempts per {@value #WINDOW_SECONDS}s</li>
  * </ul>
  *
- * <p>This is a backend-side safety net. The primary defense for join-flood
- * attacks is the nginx {@code player_join_limit} zone (5 r/m / IP). Nginx
- * handles the anonymous IP-based flood; this service handles the cases nginx
- * cannot see (device ID abuse, or cases where nginx is bypassed in dev/test).
+ * <p>Application limits protect both nginx and direct HAProxy ingress. The
+ * nginx {@code player_join_limit} zone adds an edge limit only on paths
+ * routed through nginx; HAProxy does not inherit that configuration.
  *
  * <p>Counters live in the shared {@link RateLimitStore} so alternating join
  * attempts between two backends draw from one allowance. If the store cannot

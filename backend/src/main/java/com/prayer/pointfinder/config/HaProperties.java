@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * <p>Every knob here has a single-instance-safe default so the same image can
  * run as one replica today and as two replicas after the rollout gates in
- * {@code docs/ha-application-readiness.md} pass. Nothing under {@code app.ha}
+ * {@code deploy/ha/OPERATIONS.md} pass. Nothing under {@code app.ha}
  * references billing configuration.
  */
 @Data

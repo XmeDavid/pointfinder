@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *       dashboard widget. Lifetime counters alone cannot answer "is the
  *       game alive right now?", so the rolling window is a product
  *       requirement (see the acceptance scenario in
- *       {@code docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md}).
+ *       {@code docs/product/contracts.md}).
  *       The rolling list is trimmed on every read.</li>
  * </ol>
  *

@@ -6,7 +6,7 @@ package com.prayer.pointfinder.entity;
  * with a term and per-deal quota overrides).
  *
  * <p>The Postgres {@code org_tier} type still carries the retired 'base' and
- * 'high' labels; V65 migrated every row off them. See docs/business-logic.md,
+ * 'high' labels; V65 migrated every row off them. See docs/product/contracts.md,
  * "Clubs and invoicing".
  */
 public enum OrgTier {

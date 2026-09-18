@@ -8,6 +8,7 @@ import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
 import { useProgress } from '@/hooks/queries/useMonitoring'
+import { useAuthStore } from '@/lib/auth/store'
 import { useWorkspaceStore } from '@/stores/workspace'
 import type { MapMouseEvent, MapRef } from 'react-map-gl/maplibre'
 import { GameMap } from '@/components/map/GameMap'
@@ -26,6 +27,13 @@ import ResultsOverlay from '@/features/results/ResultsOverlay'
 import { Button } from '@/components/ui/button'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useCreateBase } from '@/hooks/mutations/useBaseMutations'
+import { recordOrganizedGame } from '@/features/dashboard/organizingRecency'
+import {
+  applyWorkspaceSnapshot,
+  loadWorkspaceSnapshot,
+  saveWorkspaceSnapshot,
+  workspacePersistenceEnabled,
+} from '@/stores/workspacePersistence'
 
 interface PendingMapAction {
   position: { x: number; y: number }
@@ -35,11 +43,14 @@ interface PendingMapAction {
 export function GameWorkspace() {
   const { t } = useTranslation()
   const { id: gameId } = useParams<{ id: string }>()
+  const accountId = useAuthStore(s => s.user?.id)
 
   // --- Data queries ---
   const {
     data: game,
     isLoading: gameLoading,
+    isFetching: gameFetching,
+    isFetchedAfterMount: gameFetched,
     error: gameError,
   } = useGame(gameId)
   const { data: stages = [] } = useStages(gameId)
@@ -93,6 +104,37 @@ export function GameWorkspace() {
     }
     return map
   }, [impersonatedTeamId, progress])
+
+  // Restore only after the game has passed its access check. A user action
+  // while storage is loading wins over the older saved workspace.
+  const authorizedGameId = game?.id
+  const organizedOrgId = game?.orgId ?? null
+  useEffect(() => {
+    if (!accountId || !authorizedGameId || gameLoading || gameFetching || !gameFetched || gameError) return
+    // Recency is a convenience; unavailable local storage cannot block editing.
+    void recordOrganizedGame(accountId, authorizedGameId, organizedOrgId).catch(() => {})
+  }, [accountId, authorizedGameId, organizedOrgId, gameLoading, gameFetching, gameFetched, gameError])
+  useEffect(() => {
+    if (!authorizedGameId || !accountId || !workspacePersistenceEnabled()) return
+    let active = true
+    let ready = false
+    let changed = false
+    const unsubscribe = useWorkspaceStore.subscribe((state) => {
+      if (!active) return
+      if (!ready) changed = true
+      else saveWorkspaceSnapshot(accountId, authorizedGameId, state)
+    })
+    void loadWorkspaceSnapshot(accountId, authorizedGameId).then((snapshot) => {
+      if (!active) return
+      if (!changed && snapshot) applyWorkspaceSnapshot(snapshot)
+      ready = true
+      if (changed) saveWorkspaceSnapshot(accountId, authorizedGameId, useWorkspaceStore.getState())
+    })
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [accountId, authorizedGameId])
 
   // Reset workspace store on unmount
   useEffect(() => {
@@ -222,6 +264,8 @@ export function GameWorkspace() {
         </OverlayPanel>
       )}
       <GameMap
+        key={gameId}
+        persistenceKey={accountId && gameId ? `operator:${accountId}:${gameId}` : undefined}
         className="workspace-map h-full w-full"
         mapStyle={getStyleUrl(game.tileSource)}
         initialCenter={
