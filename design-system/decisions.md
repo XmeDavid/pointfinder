@@ -14,6 +14,6 @@ Owner: PointFinder frontend. Canonical React primitives, Storybook and semantic
 theme now live in `web/`; generators write to `web/src/generated`. Tauri embeds
 the same frontend with platform-specific adapters. Existing player screens are
 migrated without claiming native journey parity. Legacy Swift/Compose adapters
-remain until the device rollout checklist in `docs/frontend-consolidation.md` is
+remain until the device rollout checklist in `docs/store-submission/release-checklist.md` is
 complete. Resolve remaining player media/push and device UX gaps before retiring
 the old platform applications.

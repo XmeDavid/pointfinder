@@ -59,7 +59,7 @@ Good refactors should reduce inline styling and make future feature work easier.
 
 ## Token Migration
 
-Current platform tokens are partial. During migration:
+Generated platform tokens already share `design-system/tokens.json`. During adoption:
 
 - Add missing semantic tokens before using a new color or shape.
 - Map platform-native names to visual-system names in comments if needed.
@@ -84,9 +84,9 @@ When replacing local UI with components:
 
 ## Harness Migration
 
-The desired web harness should become the review surface for this system.
+Use the existing `/dev/visual-system` harness and Storybook as review surfaces.
 
-First harness targets:
+Maintain canonical states for:
 
 - Buttons and badges.
 - Empty, loading, and error states.

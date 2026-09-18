@@ -124,7 +124,7 @@ web/src/features/*/             screens and feature entry points
 
 Do not create a new cross-feature component inside a feature folder. Promote it.
 
-## Proposed Native Shape
+## Legacy Native Shape
 
 iOS:
 
@@ -146,8 +146,8 @@ feature/<feature>/          feature screens and local components
 ui/theme/                   tokens and theme helpers
 ```
 
-The current native structure may differ. New work should use or move toward
-these boundaries when practical.
+These are legacy SwiftUI/Compose boundaries. Tauri uses the shared `web/` UI
+and platform adapters; do not create another native frontend.
 
 ## Reuse Threshold
 

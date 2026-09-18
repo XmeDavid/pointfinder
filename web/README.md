@@ -15,5 +15,5 @@ bun run --cwd web test
 bun run --cwd web test:e2e
 ```
 
-[Architecture and rollout](../docs/frontend-consolidation.md) ·
+[Architecture and rollout](../docs/product/repository-context.md) ·
 [Visual system](../docs/visual-system/README.md)

@@ -1,7 +1,7 @@
 # PointFinder product vision
 
 Status: long-term product direction, not an implementation specification or release commitment.
-Reviewed against the repository on 2026-09-09. Based on the product owner's spoken vision, subsequently transcribed and clarified with project context.
+Reviewed against the repository on 2026-09-09; extended with the owner's quiz, stage-order and content-language direction on 2026-09-12. Based on the product owner's spoken vision, subsequently transcribed and clarified with project context.
 
 ## Purpose
 
@@ -99,6 +99,12 @@ The intended audiences are:
 Audience is not a paywall and not public publication. Both files and documents should follow the same access rules. Extend existing unlock concepts to resource access rather than creating unrelated file-only mechanics. Server-side downloads and embeds must enforce the same rules as lists. Already downloaded offline material cannot be reliably recalled; visibility changes must acknowledge that limit.
 
 Global challenges are objectives available without checking in at a particular base: find a person, take a photo, solve an overarching puzzle, or finish an activity-wide task. They should reuse challenge submission, validation, scoring, and audit behavior. Availability may be immediate, stage-based, time-limited, or unlocked. Game-scoped global challenges can precede objectives shared across a multi-game activity.
+
+Quizzes extend challenges into collections of rich questions, including text and multiple choice with images. Organizers can assign question points and a passing threshold. A quiz may be encountered at a base or be a game-wide objective, initially hidden and unlocked through a completed base. Share useful question authoring and grading between quizzes and standalone challenges; preserve team progress and define attempts, review, retries and rewards before implementation. See PF-15 and OW-34/35.
+
+Stages should support different ways of exploring within the same game: for example, free exploration in the first stage and an ordered route in the second. Stage progression, base visibility, ordered visits and challenge completion are distinct rules. Stage-scoped ordering is the requested direction; the current global ordering contract needs a compatible migration (OW-40).
+
+Game content has its own language, independent of the interface language. Organizers should declare it so participants can judge whether they can understand the user-generated challenges. This metadata does not imply automatic content translation (OW-33).
 
 Lightweight branding should let organizers add an event name, logo, and imagery to relevant participant and operator surfaces. Limited accent choices may follow. This should feel integrated into a camp while retaining PointFinder's canonical brand geometry, semantic tokens, accessibility, and native platform behavior; full white-labeling is not the current goal.
 

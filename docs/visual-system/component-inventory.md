@@ -126,7 +126,7 @@ Status: canonical
 Location: `web/src/components/status/SyncStatusBadge.tsx`\
 Modes: Operator Command, Player Field  
 States: online, offline, sync pending, sync failed  
-Notes: Web badge foundation only; native sync banners still need parity work.
+Notes: Shared player SyncBanner and legacy native banners exist; see the preview matrix for coverage and open work for per-file upload feedback.
 
 Component: NfcStatusBadge  
 Status: canonical  
@@ -217,15 +217,15 @@ Modes: Operator Command, map overlays
 States: overlay surface  
 Notes: May remain for existing map-overlay usage. New operational panels should prefer `SurfacePanel`; new floating overlays should prefer `OverlayPanel`.
 
-Component: GameCard local status badge  
-Status: needs refactor  
+Component: GameCard status badge\
+Status: canonical\
 Location: `web/src/features/dashboard/GameCard.tsx`\
 Modes: Dashboard  
 States: setup, live, ended  
 Notes: Migrated to `GameStatusBadge`; card shell itself remains feature-local.
 
-Component: TopBar local status badge  
-Status: needs refactor  
+Component: TopBar status badge\
+Status: canonical\
 Location: `web/src/features/workspace/TopBar.tsx`\
 Modes: Operator Setup, Operator Command, Review, Results  
 States: setup, live, ended  
@@ -278,7 +278,7 @@ Status: needs refactor
 Location: `web/src/components/map/TeamMarkers.tsx`\
 Modes: Operator Command  
 States: active, stale, no signal, selected, clustered  
-Notes: Web stale/no-signal styling now uses semantic tokens; clustering and cross-platform parity remain future work.
+Notes: Web markers already cluster, support tap-to-zoom, and update stale states; remaining hardcoded map strokes and device parity need review (OW-12/15).
 
 Component: PlayerFieldStatusBanner
 Status: canonical
@@ -464,7 +464,7 @@ Modes: Operator Setup, Operator Command, Player Field
 States: numbered, unnumbered, long route number, light/dark, localized accessible label
 Notes: A base's one-based route number is separate from its progress or NFC state.
 Used beside existing status components in lists, details, and map markers.
-Preview: `/dev/visual-system`. See `docs/specs/2026-09-05-enforced-base-order.md`.
+Preview: `/dev/visual-system`. See `docs/product/contracts.md`.
 
 Component: BaseRouteNotice
 Status: canonical
@@ -568,7 +568,7 @@ proven). Icons are lucide `Nfc`, `QrCode` and `MapPin`; they are intentionally
 not added to `design-system/icons.json`, whose generators also feed the legacy
 Swift and Compose apps that cannot play QR or location bases. Icon-only usage
 always carries a localized `aria-label`. Preview: `/dev/visual-system`.
-See `docs/specs/2026-09-05-check-in-methods-design.md`.
+See `docs/product/contracts.md`.
 
 Component: CheckInVerificationBadge
 Status: canonical
@@ -623,7 +623,7 @@ Notes: Reads the shared player location store; it never starts a watch of its ow
 The panel reports, it does not check in: the runtime arrival detector owns the
 automatic proof. "I'm here" sends a claimed geo proof with the dwell buffer and is
 disabled until the dwell rule passes. Test ids `player-location-panel` and
-`player-im-here-btn`. See `docs/specs/2026-09-05-check-in-methods-design.md`.
+`player-im-here-btn`. See `docs/product/contracts.md`.
 
 Component: ArrivalToast
 Status: canonical
@@ -651,7 +651,7 @@ Fills with `var(--pf-color-surface-tourScrim)`, the lighter tour scrim, so light
 and dark both dim without hiding the map. `pointer-events-none` end to end — the
 tour dims, it never blocks, and the operator can wander off at any moment. Test
 ids `tour-spotlight` and `tour-spotlight-hole`. Preview: Storybook
-`Tutorials/Spotlight`. See `docs/specs/2026-09-06-operator-tutorials-design.md`.
+`Tutorials/Spotlight`. See `docs/product/contracts.md`.
 
 Component: CoachBubble
 Status: canonical
@@ -896,7 +896,7 @@ ReadinessIndicator links to the affected editor and only changes operating mode
 after successful Go Live. Existing libraries, grid and per-team variants remain.
 
 Local seeded accounts/games/documents and discovery use real APIs. PublicationSection extends existing Game Settings with a deliberate summary, optional map location and explicit admission. DiscoverySection uses authenticated Explore queries. No prototype labels or duplicate production pages.
-See `docs/specs/2026-09-10-unified-user-experience.md` for scope and remaining gates.
+See `docs/product/repository-context.md` for implemented scope and `docs/product/open-work.md` for remaining gates.
 
 `QrCodeViewer` is the shared operator code preview: click to open a full-screen
 canonical dialog; save a PNG through the browser/native share adapter. BaseDetail
@@ -907,3 +907,29 @@ The game content drawer exposes Documents through the existing ResourceBrowser
 with gameId and showShareToggle. Game scope uses a narrow toolbar, optional folder
 selector, visible touch actions, and canonical sharing switches. Written content
 stays in the editor on failure; sharing reflects server acknowledgement.
+
+Component: SaveStatusIndicator
+Status: canonical
+Location: `web/src/components/status/SaveStatusIndicator.tsx`
+Modes: Operator Setup. Base and challenge content editors.
+States: idle, unsaved local edits, saving, server-confirmed saved, failed save with retry/discard, changed elsewhere with keep/use-latest, unavailable draft storage. Uses canonical StatusBadge/Button; EN/PT/DE, both themes and reduced motion. Test ids: `base-save-status`, `challenge-save-status` plus action suffixes. Preview: Storybook `Status/SaveStatusIndicator` and `/dev/visual-system`.
+Notes: An unsaved/local status is not a server save. Storage failures keep in-memory edits and offer an online save. Background saving applies to content edits; lifecycle, publishing and deletion stay explicit. Conflicts detect changes in refetched server data, not a server revision lock.
+
+
+Component: VariableAwareChipInput
+Status: canonical
+Location: `web/src/components/inputs/VariableAwareChipInput.tsx`
+Modes: Operator Setup
+States: empty, literal/variable answers, unknown variable, partial-reference suggestions, in-place editing, long localized labels. Existing variable suggestions support keyboard and pointer selection. Pending input survives autosave; explicit draft discard clears it. Preview: `/dev/visual-system`, `harness-answer-chips`.
+
+Component: ReadinessPanel
+Status: canonical
+Location: `web/src/features/build/ReadinessPanel.tsx`
+Modes: Operator Setup
+States: loading, error/retry, actionable blockers, ready with Go live only, launching, launch error, optional legacy-method notice; reduced motion. `ReadinessIndicator` supplies queries and mutations. Preview: `/dev/visual-system`, `harness-readiness`.
+
+Component: ContinueOrganizingCard
+Status: canonical
+Location: `web/src/features/dashboard/ContinueOrganizing.tsx`
+Modes: Account Home / Operator Setup
+States: setup/live/ended and long game title; canonical SurfacePanel, GameStatusBadge and Button. `ContinueOrganizing` handles account/workspace-scoped history, fresh authorization, loading/error/retry and account-entry session exchange. Active play takes priority. Preview: `/dev/visual-system`, `harness-continue-organizing`; browser/native-artifact Home smoke tests.

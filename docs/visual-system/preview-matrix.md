@@ -8,6 +8,10 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Player next/required base, hidden destination, route completed | yes | pending | pending |
 | Core controls and feedback | yes | pending | pending |
 | Semantic status and sync | yes | pending | pending |
+| Base/challenge save status: local, saving, saved, failed/retry, conflict choices, storage unavailable | yes (also Storybook) | n/a | n/a |
+| Accepted-answer chips: literals, variables, unknown keys, suggestions and editing | yes | n/a | n/a |
+| Readiness: loading, retry, blockers, Go live, launching and refused launch | yes | n/a | n/a |
+| Continue organizing: setup/live/ended and long game name | yes | n/a | n/a |
 | Player field banners and submission states | pending | yes | yes |
 | Player QR scanner chrome | partial | n/a | n/a |
 | Public homepage: forest hero, cream steps, organizer guide + workspace, pricing, forest call to action; phone menu, three languages, both themes, reduced motion, images blocked, 320–1600 px | no (Playwright `web/e2e/homepage.spec.ts`, Vitest `LandingPage.test.tsx`) | n/a | n/a |
@@ -67,4 +71,5 @@ motion. Mobile smoke checks include player tour/back/settings, documents/history
 operator entry, direct map placement and existing base editor. Focused tests cover
 legend fade/recall, empty-challenge linking retry, readiness, settings and editor
 rules. Physical device, expired-session and full offline/recovery journeys still
-need verification. See the unified UX spec for exact evidence and limitations.
+need verification. See [repository context](../product/repository-context.md) and the
+[release checklist](../store-submission/release-checklist.md) for current scope and gates.

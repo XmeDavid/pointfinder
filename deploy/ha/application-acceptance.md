@@ -2,9 +2,9 @@
 
 Scope: application readiness only. Do not increase production replicas until all
 required gates below pass. Implementation and test evidence belongs in
-`docs/ha-application-readiness.md`; this checklist defines acceptance independently.
+`deploy/ha/OPERATIONS.md`; this checklist defines acceptance independently.
 
-September 9 result: application changes implemented; 190 focused tests passed on
+Historical September 9 result (superseded by the deployment evidence in OPERATIONS.md): application changes implemented; 190 focused tests passed on
 the current source tree, followed by Codex's real-socket two-application test.
 The isolated HA-only release baseline passed the combined 191 tests and built
 successfully, without pending billing V66/V67. No production deployment or scaling
