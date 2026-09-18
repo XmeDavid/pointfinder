@@ -19,7 +19,7 @@
 #       /usr/local/bin/pointfinder-alert-pusher --test-email
 services:
   alert-pusher:
-    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r1
+    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r2
     entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher"]
     user: "999:999"
     environment:
@@ -27,6 +27,11 @@ services:
       POINTFINDER_ALERT_STALE_SECONDS: "180"
       POINTFINDER_ALERT_COALESCE_SECONDS: "600"
       POINTFINDER_ALERT_MAX_EMAILS_PER_HOUR: "12"
+      # Hysteresis defaults (seconds); listed for visibility only.
+      # POINTFINDER_ALERT_ALERT_DEBOUNCE_SECONDS: "90"
+      # POINTFINDER_ALERT_CRITICAL_DEBOUNCE_SECONDS: "0"
+      # POINTFINDER_ALERT_RECOVERY_CONFIRM_SECONDS: "180"
+      # POINTFINDER_ALERT_STARTUP_GRACE_SECONDS: "120"
     volumes:
       - monitor-state:/monitor-state:ro
       - alert-state:/state

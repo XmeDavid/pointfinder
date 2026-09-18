@@ -2,7 +2,22 @@
 
 See [the availability plan](../../docs/high-availability-plan.md) for architecture and rollout gates.
 
-## Latest verified state — September 10 (supersedes historical entries below)
+## Latest incident repair — September 17
+
+Rainer's standby recovered a recycled-WAL gap from the encrypted S3 archive
+and is streaming again, with zero lag observed on unchanged timeline 12.
+Patroni's shared `postgresql.recovery_conf.restore_command` now enables this
+fallback automatically. Both Dokploy DB stacks run monitor/pusher `r2`, with
+expected-peer and real-lag checks, sustained-recovery confirmation, bounded
+incident history and less transient email noise. PostgreSQL/backup containers
+were not restarted. The external monitor is now executing automatically with
+over 2,000 recorded cycles; the old provider-blocked note is superseded.
+
+See [the repair and verification record](../../docs/monitoring-repair-2026-09-17.md)
+and [the original monitoring review](../../docs/monitoring-review-2026-09-17.md).
+No application release, topology change, paid service or quorum bypass was made.
+
+## September 10 verified baseline (historical)
 
 ### Automatic production releases completed
 

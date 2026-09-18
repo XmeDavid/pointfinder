@@ -5,6 +5,10 @@ is running on both production PostgreSQL hosts with pgBackRest 2.59.1. All 24
 runner unit tests passed locally and inside Linux. The current Hetzner image
 ID is `sha256:5e44f413a3bb178d096665c4996d953d1c3d42c5f09cbf89efc1c423285a6747`.
 Encrypted WAL archiving and primary-only scheduled backup sidecars are active.
+September 17: standby archive retrieval is now also configured in Patroni's
+shared dynamic configuration. This repairs catch-up after an outage exceeds
+the primary's bounded live WAL retention; see
+`../repair-replication-archive.py` and the September 17 monitoring incident record.
 The first full backup completed at 06:44:47 UTC. Synthetic PITR and an isolated
 restore of the real encrypted S3 backup to 06:45:40.683376 UTC both passed;
 the real restore matched the production system ID, 69 migrations and 46 tables.
@@ -85,9 +89,14 @@ Environment overrides, all prefixed `POINTFINDER_PGBACKREST_`: `STANZA`,
 5. **Patroni** (you own this step). DCS via `patronictl edit-config`:
    `postgresql.parameters.archive_mode: "on"` and
    `archive_command: "pgbackrest --config=/run/pgbackrest/pgbackrest.conf --stanza=pointfinder-production archive-push %p"`;
-   `archive_mode` needs the rolling restart. Recommended local additions later:
-   `postgresql.recovery_conf.restore_command: "pgbackrest --config=/run/pgbackrest/pgbackrest.conf --stanza=pointfinder-production archive-get %f \"%p\""`
-   and `create_replica_methods: [pgbackrest, basebackup]` with
+   `archive_mode` needs the rolling restart. Also required, and applied
+   September 17 in the shared DCS (not just the bootstrap configuration):
+   `postgresql.recovery_conf.restore_command: 'pgbackrest --config=/run/pgbackrest/pgbackrest.conf --stanza=pointfinder-production --log-level-console=off archive-get "%f" "%p"'`.
+   `patroni-backup-control.py enable-archive` now configures both push and
+   retrieval, and asserts both read back correctly. Existing standbys pick up
+   this reloadable setting without restarting the primary.
+   A separate, **not implemented** possible addition is
+   `create_replica_methods: [pgbackrest, basebackup]` with
    `pgbackrest: {command: "pgbackrest --config=... --stanza=pointfinder-production --delta restore", keep_data: true, no_params: true, no_leader: 1}`
    (Patroni replica-bootstrap docs, verified 2026-09-10). Do not add
    `restore_command` before `stanza-create`, or standby startup logs constant
@@ -101,9 +110,11 @@ Environment overrides, all prefixed `POINTFINDER_PGBACKREST_`: `STANZA`,
 
 ## Limitations
 
-- Automated standby bootstrap/archive fallback is not configured. Existing
-  streaming replication and controlled rewind/failback passed. A disaster
-  restore remains an explicit operator procedure, not an unattended restore.
+- Archive fallback for an existing standby is configured. It still requires
+  the entire missing WAL chain to remain available and decryptable in S3.
+  Automated empty-standby bootstrap from pgBackRest is not configured. A
+  disaster restore or reseed after archive expiry remains an explicit
+  operator procedure, not an unattended overwrite of PGDATA.
 - Backups always run on the primary; `backup-standby` (offloading to Rainer)
   needs pgBackRest TLS/SSH host access between containers and was not set up.
 - Two sidecars (one per host) with separate local state files rely on

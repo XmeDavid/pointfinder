@@ -5,7 +5,10 @@ Run from the repository root:
     python3 -m unittest discover -s deploy/ha/alerting -v
 
 No test opens a network connection: the transport, clock, secret file and
-report file are all fakes or temporary files.
+report file are all fakes or temporary files. ``pusher()`` disables the
+debounce, recovery-confirmation and startup-grace windows unless a test
+passes them explicitly, so the transition tests read as raw semantics and
+``HysteresisTests`` opts in.
 """
 import datetime
 import json
@@ -25,6 +28,8 @@ UTC = datetime.timezone.utc
 NOW = datetime.datetime(2026, 9, 10, 12, 0, tzinfo=UTC)
 API_KEY = 're_SECRET_KEY_do_not_leak_9f8e7d'
 PROVIDER_BODY = '{"id":"provider-body-must-not-leak-1234"}'
+NO_HYSTERESIS = dict(alert_debounce_seconds=0, critical_debounce_seconds=0, recovery_confirm_seconds=0,
+                     startup_grace_seconds=0)
 
 
 class Clock:
@@ -75,6 +80,7 @@ class PusherTestCase(unittest.TestCase):
                'POINTFINDER_ALERT_MONITOR_STATE_DIR': str(self.monitor_dir),
                'POINTFINDER_ALERT_STATE_DIR': str(self.state_dir),
                'POINTFINDER_ALERT_SECRET_PATH': str(self.secret_path)}
+        env.update({'POINTFINDER_ALERT_' + k.upper(): str(v) for k, v in NO_HYSTERESIS.items()})
         env.update({'POINTFINDER_ALERT_' + k.upper(): str(v) for k, v in overrides.items()})
         return mod.Settings(env)
 
@@ -128,7 +134,8 @@ class TransitionTests(PusherTestCase):
             self.clock.advance(30)
             self.write_report('ok')
         self.assertEqual(self.transport.calls, [])
-        self.assertFalse((self.state_dir / 'alert-state.json').exists())
+        self.assertIsNone(self.state()['delivered'])
+        self.assertIsNone(self.state()['pending'])
         self.assertTrue((self.state_dir / 'pusher-status.json').exists())
 
     def test_ok_to_critical_alerts_once_despite_changing_reasons(self):
@@ -230,6 +237,185 @@ class TransitionTests(PusherTestCase):
         self.write_report('ok')
         pusher.tick()
         self.assertEqual(len(self.transport.calls), 1, 'no recovery for an alert that was never delivered')
+
+
+class HysteresisTests(PusherTestCase):
+    """Debounce, recovery confirmation and startup grace with default windows."""
+
+    def defaults(self):
+        return self.pusher(alert_debounce_seconds=90, critical_debounce_seconds=0, recovery_confirm_seconds=180,
+                           startup_grace_seconds=120)
+
+    def test_warning_recovery_storm_produces_no_email_pairs(self):
+        # The observed Rainer pattern: one-minute ok intervals between warnings.
+        warning = {'replication': ('warning', 'wal receiver absent')}
+        self.write_report('warning', warning)
+        pusher = self.defaults()
+        with self.assertLogs(mod.LOG, logging.INFO) as logs:
+            pusher.tick()
+        self.assertEqual(self.transport.calls, [], 'debounced')
+        self.assertTrue(any('Holding alert email for 90s' in line for line in logs.output))
+        for _ in range(3):
+            self.clock.advance(30)
+            self.write_report('warning', warning)
+            pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1, 'sent once seen unchanged for 90 s')
+        self.assertIn('WARNING: replication', self.transport.calls[0]['subject'])
+        for _cycle in range(5):
+            self.clock.advance(60)
+            self.write_report('ok')
+            pusher.tick()
+            self.clock.advance(30)
+            self.write_report('ok')
+            pusher.tick()
+            self.clock.advance(30)
+            self.write_report('warning', warning)
+            pusher.tick()
+            self.clock.advance(30)
+            self.write_report('warning', warning)
+            pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1, 'five ok/warning flaps: no recovery, no re-alert')
+        self.assertIsNone(self.state()['pending'])
+        # A genuine recovery: ok held for 180 s counted from the first ok poll.
+        for step in range(7):
+            self.clock.advance(30)
+            self.write_report('ok')
+            pusher.tick()
+            self.assertEqual(len(self.transport.calls), 1 if step < 6 else 2)
+        self.assertIn('recovered (was warning)', self.transport.calls[-1]['subject'])
+        self.assertEqual(self.state()['delivered']['kind'], 'recovery')
+
+    def test_critical_is_not_debounced_but_warning_is(self):
+        self.write_report('critical', {'sql': ('critical', 'unreachable: OperationalError')})
+        pusher = self.defaults()
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1, 'critical goes out on the first poll')
+        self.clock.advance(3600)
+        self.write_report('ok')
+        for _ in range(7):
+            pusher.tick()
+            self.clock.advance(30)
+            self.write_report('ok')
+        self.assertEqual(len(self.transport.calls), 2)
+        self.assertIn('recovered', self.transport.calls[-1]['subject'])
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 2, 'warning waits for the debounce')
+        self.clock.advance(60)
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 2)
+        self.clock.advance(30)
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 3)
+
+    def test_single_poll_warning_blip_sends_nothing(self):
+        self.write_report('ok')
+        pusher = self.defaults()
+        pusher.tick()
+        self.clock.advance(30)
+        self.write_report('unknown', {'backup': ('unknown', 'pgbackrest info exited 124')})
+        pusher.tick()
+        self.clock.advance(30)
+        self.write_report('ok')
+        for _ in range(20):
+            pusher.tick()
+            self.clock.advance(30)
+            self.write_report('ok')
+        self.assertEqual(self.transport.calls, [])
+        self.assertIsNone(self.state()['pending'])
+
+    def test_escalation_during_debounce_restarts_the_window_at_the_new_level(self):
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        pusher = self.defaults()
+        pusher.tick()
+        self.clock.advance(30)
+        self.write_report('critical', {'disk': ('critical', '5.0% free')})
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1, 'critical picture queued at once')
+        self.assertIn('CRITICAL: disk', self.transport.calls[0]['subject'])
+
+    def test_degrading_again_withdraws_a_queued_recovery(self):
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        pusher = self.pusher(recovery_confirm_seconds=0)
+        pusher.tick()
+        self.transport.outcomes = [mod.DeliveryError('http_429', uncertain=False)]
+        self.clock.advance(60)
+        self.write_report('ok')
+        with self.assertLogs(mod.LOG, logging.INFO) as logs:
+            pusher.tick()  # recovery queued, delivery rejected, retry scheduled
+            self.assertEqual(self.state()['pending']['kind'], 'recovery')
+            self.clock.advance(30)
+            self.write_report('warning', {'disk': ('warning', '15.0% free')})
+            pusher.tick()
+        self.assertIsNone(self.state()['pending'], 'recovery withdrawn')
+        self.assertTrue(any('Withdrawing undelivered recovery email' in line for line in logs.output))
+        self.assertEqual(len(self.transport.calls), 2, 'no re-alert for the already delivered picture')
+        self.clock.advance(3600)
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 2)
+
+    def test_uncertain_send_still_wins_over_withdrawal(self):
+        self.write_report('critical', {'sql': ('critical', 'synthetic')})
+        self.transport.outcomes = [mod.DeliveryError('TimeoutError', uncertain=True)]
+        pusher = self.defaults()
+        pusher.tick()
+        key = self.transport.calls[0]['key']
+        self.write_report('ok')
+        self.clock.advance(30)
+        pusher.tick()
+        self.assertEqual(self.transport.calls[-1]['key'], key, 'original key retried, not withdrawn')
+        self.assertEqual(pusher.state.delivered['kind'], 'alert')
+
+    def test_startup_grace_holds_only_synthetic_report_problems(self):
+        pusher = self.defaults()  # no health.json at all
+        pusher.tick()
+        self.assertEqual(self.transport.calls, [], 'monitor may still be starting')
+        self.clock.advance(90)
+        pusher.tick()
+        self.assertEqual(self.transport.calls, [])
+        self.clock.advance(30)
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1, 'after the grace a missing report alerts at once')
+        self.assertIn('UNKNOWN: report', self.transport.calls[0]['subject'])
+
+    def test_startup_grace_does_not_hold_a_real_critical(self):
+        self.write_report('critical', {'sql': ('critical', 'unreachable: OperationalError')})
+        pusher = self.defaults()
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1)
+
+    def test_stale_report_after_grace_is_never_masked(self):
+        self.write_report('ok')
+        pusher = self.defaults()
+        pusher.tick()
+        self.clock.advance(200)  # grace over, report now stale (>180 s)
+        pusher.tick()
+        self.assertEqual(len(self.transport.calls), 1)
+        self.assertIn('health report stale', self.transport.calls[0]['text'])
+
+    def test_debounce_window_survives_restart(self):
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        first = self.defaults()
+        first.tick()
+        self.assertEqual(self.state()['observed']['since'], NOW.isoformat())
+        self.clock.advance(60)
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        second = self.defaults()
+        second.tick()
+        self.assertEqual(self.transport.calls, [])
+        self.clock.advance(30)
+        self.write_report('warning', {'disk': ('warning', '15.0% free')})
+        second.tick()
+        self.assertEqual(len(self.transport.calls), 1, '90 s counted across the restart')
+
+    def test_status_file_exposes_observed_since(self):
+        self.write_report('ok')
+        pusher = self.defaults()
+        pusher.tick()
+        self.assertEqual(self.status()['observed_since'], NOW.isoformat())
 
 
 class StaleReportTests(PusherTestCase):

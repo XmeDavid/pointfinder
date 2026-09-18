@@ -1,11 +1,17 @@
 # Email alert pusher (bounded, transition-only)
 
 Status: **deployed through both production database Dokploy Compose stacks**
-on September 10, 2026. Local image
-`pointfinder-patroni:16.15-4.1.5-production-alerting-r1`; 28 tests passed locally
-and in Linux. Recipient: `mail@davidsbatista.com`, using the existing Resend
+updated September 17, 2026. Local image
+`pointfinder-patroni:16.15-4.1.5-production-alerting-r2`; 41 tests passed locally
+and inside Linux on each host. Recipient: `mail@davidsbatista.com`, using the existing Resend
 credential and sender. The protected host file is `alert-email.json`, mounted
 as `/run/secrets/email.json`. No database/application configuration changed.
+
+**September 17 hardening (deployed on both DB hosts).** Debounce
+for warning/unknown pictures, confirmation before a recovery email, a startup
+grace for a not-yet-running monitor and immediate withdrawal of a queued
+message the picture no longer supports. No new environment value is required.
+The unrelated control-plane backup pusher was not redeployed in this repair.
 
 ## What it is
 
@@ -20,7 +26,7 @@ one secret file (`/run/secrets/email.json`).
 | --- | --- |
 | `alert_pusher.py` | The pusher plus `--healthcheck` and `--test-email`. |
 | `test_alert_pusher.py` | Unit tests with fake transport, clock, report and secret files. |
-| `Dockerfile` | Overlay on `pointfinder-patroni:16.15-4.1.5-production-monitor-r1`; adds the script and `/state`. |
+| `Dockerfile` | Overlay on `pointfinder-patroni:16.15-4.1.5-production-monitor-r2`; adds the script and `/state`. |
 | `alerting-sidecar.example.yml` | Compose shape: `/monitor-state` ro, `/state` rw, secret ro, read-only root, all caps dropped, 64 MiB. |
 
 Run the tests from the repository root:
@@ -39,13 +45,44 @@ critical archiver that stays critical is one email, not one per minute.
 | Situation | Email |
 | --- | --- |
 | Healthy monitor at first start | none (no "all good" mail, ever) |
-| `ok` → `warning` / `unknown` / `critical`, or a change between those levels | alert, immediately |
-| Report missing, unparseable, older than `STALE_SECONDS` (180) or future-dated | alert as `unknown` with a synthetic `report` check |
+| `ok` → `critical`, or any level change into `critical` | alert as soon as seen (`CRITICAL_DEBOUNCE_SECONDS` 0) |
+| `ok` → `warning` / `unknown`, or a level change ending in `warning` / `unknown` | alert once the picture has been seen unchanged for `ALERT_DEBOUNCE_SECONDS` (90) |
+| Report missing, unparseable, older than `STALE_SECONDS` (180) or future-dated | alert as `unknown` with a synthetic `report` check, at once; only held during the first `STARTUP_GRACE_SECONDS` (120) after the pusher starts |
 | Same level, different set of failing checks | alert, coalesced: not before `COALESCE_SECONDS` (600) after the last delivered email, carrying the latest picture |
-| Back to `ok` after a delivered alert | recovery |
+| Back to `ok` after a delivered alert and still `ok` after `RECOVERY_CONFIRM_SECONDS` (180) | recovery |
+| Back to `ok` and then degraded again to the delivered picture within the confirmation window | nothing: no recovery, no re-alert |
 | Monitor recovers after a definite delivery rejection | queued alert is withdrawn |
+| Monitor degrades again while a recovery is queued but undelivered | queued recovery is withdrawn |
 | Monitor recovers after an uncertain send (for example timeout) | retry the original message/key first, then send recovery after confirmation |
 | More than `MAX_EMAILS_PER_HOUR` (12) would be sent | held until the window moves on (logged once) |
+
+### How this combines with the monitor's own persistence
+
+The monitor (`../monitoring/README.md`) already holds ordinary degradations
+for 180 s (600 s for `wal`, 360 s for `backup`) and confirms improvements for
+180 s (300 s for replication), and reports prompt criticals at once. The
+pusher's windows are deliberately shorter than the monitor's so the two do
+not double the delay:
+
+| Event | Monitor | Pusher | Inbox after about |
+| --- | --- | --- | --- |
+| PostgreSQL down, disk/WAL critical, stale replica far behind | ≤ 60 s | ≤ 30 s poll, no debounce | 1–1.5 min |
+| Ordinary warning (standby absent, connection pressure) | 180 s | 90 s | roughly 5 min |
+| Sustained archiver failure (critical) | 180 s | no added debounce | roughly 3–4 min |
+| Stale Mac recovery copy (warning) | 360 s | 90 s | roughly 8 min from first observation |
+| `backup` unknown after two failed `info` polls | ≈ 360 s | 90 s | ≈ 8 min |
+| Recovery | 180 s (300 s replication) | 180 s | 6–8 min |
+| Monitor dead (report stale) | — | 180 s stale + 0 s | ≈ 3.5 min; ≈ 5 min if the pusher itself just restarted |
+
+A one-minute ok gap inside a longer problem never produces a recovery, and a
+one-tick warning from an older monitor image never produces an alert. The
+observed picture and since when it has been stable are persisted in
+`alert-state.json` (`observed`), so a short pusher restart does not restart a
+window that was already running. A gap longer than `HEALTHCHECK_MAX_AGE_SECONDS`
+(90 seconds) resets confirmation: unobserved downtime is not proof of recovery.
+A non-uncertain queued message is withdrawn if the new picture is still being
+confirmed. An uncertain delivery always retains its original key/body until
+resolved, preserving provider idempotency.
 
 Subjects look like `[PointFinder DB] production-hetzner CRITICAL: archiver, backup`
 and `[PointFinder DB] production-hetzner recovered (was critical)`. The body
@@ -92,7 +129,11 @@ All via `POINTFINDER_ALERT_*`: `NODE_NAME` (falls back to `PATRONI_NAME`),
 `POLL_SECONDS`, `STALE_SECONDS`, `COALESCE_SECONDS`, `MAX_EMAILS_PER_HOUR`,
 `RETRY_MIN_SECONDS`, `RETRY_MAX_SECONDS`, `HTTP_TIMEOUT_SECONDS`,
 `RESPONSE_MAX_BYTES`, `HEALTHCHECK_MAX_AGE_SECONDS`,
-`DELIVERY_FAILURE_GRACE_SECONDS`.
+`DELIVERY_FAILURE_GRACE_SECONDS`, `ALERT_DEBOUNCE_SECONDS` (90),
+`CRITICAL_DEBOUNCE_SECONDS` (0), `RECOVERY_CONFIRM_SECONDS` (180),
+`STARTUP_GRACE_SECONDS` (120). Setting the last four to `0` restores the
+previous immediate behaviour. `pusher-status.json` additionally reports
+`observed_since`.
 
 ## Limitations
 

@@ -1,6 +1,22 @@
 # PointFinder infrastructure operations
 
-Verified September 10, 2026, after the authorized maintenance window.
+Baseline verified September 10, 2026, after the authorized maintenance window.
+
+## September 17 replication and monitoring repair
+
+The standby's missing archive-retrieval setting was corrected in Patroni DCS.
+It caught up from S3 without a primary restart, reseed or promotion; Hetzner
+remains primary and Rainer is streaming on timeline 12 with zero lag observed.
+Both database stacks now use monitor/pusher `r2`, with 105 + 41 tests passing
+locally and inside Linux on each host. Expected-member checks, honest lag,
+failed-reconnect escalation, recovery confirmation, warning persistence and
+bounded transition journals are deployed. The control-plane backup pusher is
+unchanged. Details and rollback notes:
+[repair record](../../docs/monitoring-repair-2026-09-17.md).
+
+**External cron is no longer blocked:** September 17 read-back showed 2,074
+scheduled cycles, fresh heartbeats and all seven checks OK. The September 10
+provider-blocked acceptance section below is historical, not current status.
 
 ## Storage retirement and cleanup — September 10
 
