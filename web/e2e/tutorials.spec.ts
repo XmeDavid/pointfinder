@@ -262,7 +262,7 @@ test('the exploration tutorial walks from the library to the saved hidden base',
   await page.locator('[data-testid="visibility-hidden"]:visible').click()
   await expect(title).toHaveText('Save the base')
 
-  await page.locator('[data-testid="save-base-btn"]:visible').click()
+  // Autosave may finish and advance the tour before a manual Save click lands.
   await expect.poll(() => state.bases.find((b) => b.id === 'b1')?.hidden).toBe(true)
   await expect(title).toHaveText('Write the clue')
   await expect(page.getByTestId('tour-bubble')).toBeVisible()

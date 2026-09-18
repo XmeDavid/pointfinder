@@ -1,7 +1,9 @@
 # Platform Parity
 
 PointFinder should be consistent by concept, not pixel-perfect. This document
-maps shared concepts across web, iOS, and Android.
+maps shared concepts across web, iOS, and Android. Browser and Tauri share
+`web/`; SwiftUI/Compose mappings below describe the maintained legacy apps.
+New native features use platform adapters, not a second frontend.
 
 ## Source Of Truth
 
@@ -26,7 +28,7 @@ When platforms disagree:
 | Empty state | `EmptyState` | Shared empty state view | Shared empty state composable |
 | Inspector | Floating panel/drawer | Sheet/navigation detail | Bottom sheet/detail screen |
 | NFC scan prompt | Product component | `AnimatedScanView` plus scan CTA | Compose scan prompt plus NFC state |
-| Readiness | `ReadinessIndicator` | Desired shared checklist | Desired shared checklist |
+| Readiness | `ReadinessIndicator` | Shared readiness workspace | Shared readiness workspace |
 
 If a shared concept has no platform equivalent yet, new work should either add
 one or document why it is intentionally platform-specific.
@@ -133,7 +135,7 @@ Avoid:
 
 ## Preview And Harness Expectations
 
-Desired direction:
+Existing foundations (coverage is in the preview matrix):
 
 - Web: visual harness route/page with canonical components and states.
 - iOS: SwiftUI previews for reusable visual components.

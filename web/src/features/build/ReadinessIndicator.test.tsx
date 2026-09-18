@@ -48,6 +48,7 @@ function setupFullyReadyHandlers() {
   )
 }
 
+/** One NFC base without a tag and no team: two blockers, everything else passes. */
 function setupPartialHandlers() {
   server.use(
     http.get('/api/games/:gameId/bases', () =>
@@ -70,6 +71,12 @@ function setupPartialHandlers() {
   )
 }
 
+function renderIndicator(gameStatus?: string) {
+  return render(createElement(ReadinessIndicator, { gameId: 'game-1', gameStatus }), {
+    wrapper: createWrapper(),
+  })
+}
+
 beforeEach(() => {
   resetBaseCounter()
   resetChallengeCounter()
@@ -78,194 +85,70 @@ beforeEach(() => {
   useWorkspaceStore.getState().reset()
 })
 
-describe('ReadinessIndicator', () => {
-  it('renders the progress ring with correct count', async () => {
+describe('ReadinessIndicator when the game is ready', () => {
+  it('omits completed progress when only launching remains', async () => {
     setupFullyReadyHandlers()
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-count')).toHaveTextContent('10/10')
-    })
+    renderIndicator()
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
+    expect(screen.queryByTestId('readiness-ring')).not.toBeInTheDocument()
   })
 
-  it('shows "Ready to launch" when all checks pass', async () => {
+  it('offers Go live directly, with no checklist to open', async () => {
     setupFullyReadyHandlers()
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByText('Ready to launch')).toBeInTheDocument()
-    })
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
+    expect(screen.getByTestId('go-live-btn')).toBeInTheDocument()
+    expect(screen.queryByTestId('readiness-toggle')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('readiness-checklist')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('check-fail')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('check-pass')).not.toBeInTheDocument()
   })
 
-  it('shows remaining count when checks fail', async () => {
-    setupPartialHandlers()
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByText(/items remaining/)).toBeInTheDocument()
-    })
-  })
-
-  it('expands checklist on click', async () => {
+  it('goes live through the server and only then switches to command mode', async () => {
     const user = userEvent.setup()
-    setupFullyReadyHandlers()
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByTestId('readiness-toggle'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-checklist')).toBeInTheDocument()
-    })
-
-    expect(screen.getByText('At least one base')).toBeInTheDocument()
-    expect(screen.getByText('At least one challenge')).toBeInTheDocument()
-    expect(screen.getByText('At least one team')).toBeInTheDocument()
-    expect(screen.getByText('NFC bases linked (1/1)')).toBeInTheDocument()
-    expect(screen.getByText('All assignments valid')).toBeInTheDocument()
-    expect(screen.getByText('Variables complete')).toBeInTheDocument()
-  })
-
-  it('shows Go Live button when all checks pass', async () => {
-    const user = userEvent.setup()
-    setupFullyReadyHandlers()
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByTestId('readiness-toggle'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('go-live-btn')).toBeInTheDocument()
-    })
-  })
-
-  it('does not show Go Live button when checks fail', async () => {
-    const user = userEvent.setup()
-    setupPartialHandlers()
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByTestId('readiness-toggle'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-checklist')).toBeInTheDocument()
-    })
-
-    expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
-  })
-
-  it('calls updateGameStatus on Go Live click', async () => {
-    const user = userEvent.setup()
-    let statusCalled = false
     let statusBody: Record<string, unknown> = {}
-
     setupFullyReadyHandlers()
-
     server.use(
       http.patch('/api/games/:gameId/status', async ({ request }) => {
-        statusCalled = true
         statusBody = (await request.json()) as Record<string, unknown>
         return HttpResponse.json({ id: 'game-1', status: 'live' })
       }),
     )
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
+    await user.click(await screen.findByTestId('go-live-btn'))
 
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
+    await waitFor(() => expect(statusBody.status).toBe('live'))
+    await waitFor(() => expect(useWorkspaceStore.getState().mode).toBe('command'))
+  })
 
-    await user.click(screen.getByTestId('readiness-toggle'))
+  it('keeps the game in setup and shows what the server said when the launch fails, then lets the operator retry', async () => {
+    const user = userEvent.setup()
+    let launches = 0
+    setupFullyReadyHandlers()
+    server.use(
+      http.patch('/api/games/:gameId/status', () => {
+        launches += 1
+        if (launches === 1) {
+          return HttpResponse.json({ message: 'Game changed; check setup again' }, { status: 409 })
+        }
+        return HttpResponse.json({ id: 'game-1', status: 'live' })
+      }),
+    )
+    renderIndicator()
 
-    await waitFor(() => {
-      expect(screen.getByTestId('go-live-btn')).toBeInTheDocument()
-    })
+    await user.click(await screen.findByTestId('go-live-btn'))
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Game changed; check setup again')
+    expect(useWorkspaceStore.getState().mode).toBe('build')
 
     await user.click(screen.getByTestId('go-live-btn'))
-
-    await waitFor(() => {
-      expect(statusCalled).toBe(true)
-    })
-
-    expect(statusBody.status).toBe('live')
+    await waitFor(() => expect(useWorkspaceStore.getState().mode).toBe('command'))
+    expect(launches).toBe(2)
   })
 
-  it('marks failed checks with fail indicator', async () => {
-    const user = userEvent.setup()
-    setupPartialHandlers()
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByTestId('readiness-toggle'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-checklist')).toBeInTheDocument()
-    })
-
-    const failItems = screen.getAllByTestId('check-fail')
-    expect(failItems.length).toBeGreaterThan(0)
-  })
-
-  it('counts checks correctly with no data', async () => {
-    server.use(
-      http.get('/api/games/:gameId/bases', () => HttpResponse.json([])),
-      http.get('/api/games/:gameId/challenges', () => HttpResponse.json([])),
-      http.get('/api/games/:gameId/teams', () => HttpResponse.json([])),
-      http.get('/api/games/:gameId/assignments', () => HttpResponse.json([])),
-      http.get('/api/games/:gameId/team-variables/completeness', () =>
-        HttpResponse.json({ complete: true, errors: [] }),
-      ),
-    )
-
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      // 3 fail (no base, no challenge, no team), NFC check also fails when no bases
-      // but "All bases have NFC" passes when 0 visible non-hidden bases?
-      // Actually: baseList.length > 0 && ... so it fails
-      expect(screen.getByText(/items remaining/)).toBeInTheDocument()
-    })
-  })
-
-  it('passes NFC readiness vacuously when no base uses NFC', async () => {
-    const user = userEvent.setup()
+  it('still shows the legacy-apps note when a base is not NFC, without listing passed checks', async () => {
     server.use(
       http.get('/api/games/:gameId/bases', () =>
         HttpResponse.json([
@@ -283,18 +166,83 @@ describe('ReadinessIndicator', () => {
         HttpResponse.json({ complete: true, errors: [] }),
       ),
     )
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-count')).toHaveTextContent('10/10')
-    })
-
-    await user.click(screen.getByTestId('readiness-toggle'))
-    expect(await screen.findByText('NFC bases linked (0/0)')).toBeInTheDocument()
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
     expect(screen.getByTestId('readiness-legacy-note')).toHaveTextContent(
       'The legacy iOS and Android apps cannot complete QR or location bases.',
     )
+    expect(screen.queryByText('NFC bases linked (0/0)')).not.toBeInTheDocument()
+  })
+
+  it('hides the legacy-apps note when every base is NFC', async () => {
+    setupFullyReadyHandlers()
+    renderIndicator()
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
+    expect(screen.queryByTestId('readiness-legacy-note')).not.toBeInTheDocument()
+  })
+
+  it('is hidden once the game is live', async () => {
+    setupFullyReadyHandlers()
+    renderIndicator('live')
+    expect(screen.queryByTestId('readiness-indicator')).not.toBeInTheDocument()
+  })
+})
+
+describe('ReadinessIndicator with blockers', () => {
+  it('counts what remains and lists only the failing checks', async () => {
+    const user = userEvent.setup()
+    setupPartialHandlers()
+    renderIndicator()
+
+    expect(await screen.findByText('2 items remaining')).toBeInTheDocument()
+    expect(screen.getByTestId('readiness-count')).toHaveTextContent('8/10')
+    expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
+
+    await user.click(screen.getByTestId('readiness-toggle'))
+    expect(await screen.findByTestId('readiness-checklist')).toBeInTheDocument()
+    expect(screen.getAllByTestId('check-fail')).toHaveLength(2)
+    expect(screen.queryByTestId('check-pass')).not.toBeInTheDocument()
+    expect(screen.getByText('At least one team')).toBeInTheDocument()
+    expect(screen.getByText('NFC bases linked (0/1)')).toBeInTheDocument()
+    expect(screen.queryByText('At least one base')).not.toBeInTheDocument()
+    expect(screen.queryByText('All assignments valid')).not.toBeInTheDocument()
+    expect(screen.queryByText('Variables complete')).not.toBeInTheDocument()
+  })
+
+  it('opens the editor that fixes a blocker', async () => {
+    const user = userEvent.setup()
+    setupPartialHandlers()
+    useWorkspaceStore.getState().setMode('command')
+    useWorkspaceStore.getState().setSettingsPanelOpen(true)
+    renderIndicator()
+
+    await user.click(await screen.findByTestId('readiness-toggle'))
+    await user.click(await screen.findByText('At least one team'))
+
+    const state = useWorkspaceStore.getState()
+    expect(state.mode).toBe('build')
+    expect(state.drawerOpen).toBe(true)
+    expect(state.drawerTab).toBe('teams')
+    expect(state.settingsPanelOpen).toBe(false)
+
+    await user.click(screen.getByText('NFC bases linked (0/1)'))
+    expect(useWorkspaceStore.getState().drawerTab).toBe('nfc')
+  })
+
+  it('counts checks correctly with no data', async () => {
+    server.use(
+      http.get('/api/games/:gameId/bases', () => HttpResponse.json([])),
+      http.get('/api/games/:gameId/challenges', () => HttpResponse.json([])),
+      http.get('/api/games/:gameId/teams', () => HttpResponse.json([])),
+      http.get('/api/games/:gameId/assignments', () => HttpResponse.json([])),
+      http.get('/api/games/:gameId/team-variables/completeness', () =>
+        HttpResponse.json({ complete: true, errors: [] }),
+      ),
+    )
+    renderIndicator()
+    // No base, no challenge, no team; the per-base checks pass vacuously.
+    expect(await screen.findByText('3 items remaining')).toBeInTheDocument()
   })
 
   it('fails location bases sitting at 0,0 and flags overlapping rings', async () => {
@@ -319,17 +267,17 @@ describe('ReadinessIndicator', () => {
         HttpResponse.json({ complete: true, errors: [] }),
       ),
     )
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-    await user.click(screen.getByTestId('readiness-toggle'))
+    await user.click(await screen.findByTestId('readiness-toggle'))
 
     expect(await screen.findByText('Location bases have coordinates (2/3)')).toBeInTheDocument()
     expect(screen.getByText('Location rings do not overlap')).toBeInTheDocument()
     expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
+
+    // Both are fixed on the bases themselves.
+    await user.click(screen.getByText('Location rings do not overlap'))
+    expect(useWorkspaceStore.getState().drawerTab).toBe('bases')
   })
 
   it('fails a location-bound challenge nobody assigned, and passes it once pinned or assigned', async () => {
@@ -356,13 +304,9 @@ describe('ReadinessIndicator', () => {
         HttpResponse.json({ complete: true, errors: [] }),
       ),
     )
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-    await user.click(screen.getByTestId('readiness-toggle'))
+    await user.click(await screen.findByTestId('readiness-toggle'))
 
     // c1 is assigned, c2 is pinned to b2, c3 is neither: the server would
     // reject go-live, so the checklist must say so instead of showing green.
@@ -395,49 +339,57 @@ describe('ReadinessIndicator', () => {
         HttpResponse.json({ complete: true, errors: [] }),
       ),
     )
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-    await user.click(screen.getByTestId('readiness-toggle'))
-
+    await user.click(await screen.findByTestId('readiness-toggle'))
     expect(
       await screen.findByText('Location radii between 5 and 200 m (0/1)'),
     ).toBeInTheDocument()
   })
+})
 
-  it('hides the legacy-apps note when every base is NFC', async () => {
-    const user = userEvent.setup()
+describe('ReadinessIndicator while the checks cannot be trusted', () => {
+  it('shows a loading state and no Go live while the data is still arriving', async () => {
     setupFullyReadyHandlers()
+    server.use(
+      http.get('/api/games/:gameId/team-variables/completeness', () => new Promise(() => {})),
+    )
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), { wrapper: createWrapper() })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-toggle')).toBeInTheDocument()
-    })
-    await user.click(screen.getByTestId('readiness-toggle'))
-
-    await waitFor(() => {
-      expect(screen.getByTestId('readiness-checklist')).toBeInTheDocument()
-    })
-    expect(screen.queryByTestId('readiness-legacy-note')).not.toBeInTheDocument()
+    expect(await screen.findByTestId('readiness-loading')).toBeInTheDocument()
+    expect(screen.getByText('Checking readiness…')).toBeInTheDocument()
+    expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('readiness-toggle')).not.toBeInTheDocument()
+    expect(screen.queryByText('Ready to launch')).not.toBeInTheDocument()
   })
 
+  it('shows an error with a retry instead of a ready state when a check fails to load', async () => {
+    const user = userEvent.setup()
+    let available = false
+    setupFullyReadyHandlers()
+    server.use(
+      http.get('/api/games/:gameId/team-variables/completeness', () =>
+        available
+          ? HttpResponse.json({ complete: true, errors: [] })
+          : HttpResponse.json({ message: 'Variables unavailable' }, { status: 503 }),
+      ),
+    )
+    renderIndicator()
+
+    expect(await screen.findByTestId('readiness-error')).toBeInTheDocument()
+    expect(screen.queryByTestId('go-live-btn')).not.toBeInTheDocument()
+    expect(screen.queryByText('Ready to launch')).not.toBeInTheDocument()
+
+    available = true
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
+    expect(screen.queryByTestId('readiness-error')).not.toBeInTheDocument()
+  })
 })
 
 describe('ReadinessIndicator expansion lives in the workspace store', () => {
-  beforeEach(() => {
-    useWorkspaceStore.getState().reset()
-    resetBaseCounter()
-    resetChallengeCounter()
-    resetTeamCounter()
-    resetAssignmentCounter()
-  })
-
   it('renders the checklist when the store says expanded, without a click', async () => {
-    setupFullyReadyHandlers()
+    setupPartialHandlers()
     useWorkspaceStore.getState().setReadinessExpanded(true)
 
     render(<ReadinessIndicator gameId="game-1" gameStatus="setup" />, { wrapper: createWrapper() })
@@ -446,7 +398,7 @@ describe('ReadinessIndicator expansion lives in the workspace store', () => {
   })
 
   it('writes the expansion back to the store when the header is pressed', async () => {
-    setupFullyReadyHandlers()
+    setupPartialHandlers()
     const user = userEvent.setup()
 
     render(<ReadinessIndicator gameId="game-1" gameStatus="setup" />, { wrapper: createWrapper() })
@@ -488,31 +440,26 @@ describe('ReadinessIndicator location check-in entitlement', () => {
     )
   }
 
-  it('adds a failing plan check when the game excludes location check-in', async () => {
+  it('adds a failing plan check that opens the game settings', async () => {
     const user = userEvent.setup()
     setupLocationGameOnPlan(false)
+    useWorkspaceStore.getState().openDrawer('bases')
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByText(/items? remaining/)).toBeInTheDocument()
-    })
+    expect(await screen.findByText('1 item remaining')).toBeInTheDocument()
     await user.click(screen.getByTestId('readiness-toggle'))
-    expect(await screen.findByText('Location check-in included in your plan')).toBeInTheDocument()
+    await user.click(await screen.findByText('Location check-in included in your plan'))
+
+    const state = useWorkspaceStore.getState()
+    expect(state.settingsPanelOpen).toBe(true)
+    expect(state.drawerOpen).toBe(false)
   })
 
   it('shows no plan check when the game includes it', async () => {
     setupLocationGameOnPlan(true)
+    renderIndicator()
 
-    render(createElement(ReadinessIndicator, { gameId: 'game-1' }), {
-      wrapper: createWrapper(),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByText('Ready to launch')).toBeInTheDocument()
-    })
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
     expect(screen.queryByText('Location check-in included in your plan')).toBeNull()
   })
 })

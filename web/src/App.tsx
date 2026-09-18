@@ -1,6 +1,7 @@
 import { PlayerTour } from '@/features/player/components/PlayerTour';
 import { Home, playerRoutes } from '@/app/player/routes';
 import { TagIntake } from '@/app/player/TagIntake';
+import { ResumeRecorder } from '@/app/ResumeRecorder';
 import { PushIntake } from '@/features/player/PushIntake';
 import { useAccountSession, useAuth, ServicesProvider } from '@/app/player/services';
 import type { AppServices } from '@/app/player/client';
@@ -206,7 +207,7 @@ function DashboardGate({children, allowGuest = false}: {children: React.ReactNod
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
-const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><PushIntake /><TagIntake /><TourHost /><PlayerTour /></>, children: [
+const router = createBrowserRouter([{ errorElement: <AppErrorFallback />, element: <><ResumeRecorder /><PushIntake /><TagIntake /><TourHost /><PlayerTour /></>, children: [
   // Preserve earlier entry links while using the canonical dashboard and player routes.
   { path: '/play/session', element: <Navigate to='/' replace/> },
   { path: '/explore', element: <Navigate to='/home' replace/> },

@@ -35,10 +35,17 @@ elif operation == 'enable-archive':
         json.dump(before, stream)
     parameters = {'archive_mode': 'on', 'archive_timeout': '60s',
         'archive_command': 'pgbackrest --config=/run/pgbackrest/pgbackrest.conf --stanza=pointfinder-production archive-push "%p"'}
-    call('PATCH', '/config', {'postgresql': {'parameters': parameters}})
-    after = call('GET', '/config')['postgresql']['parameters']
-    assert all(after.get(k) == v for k,v in parameters.items())
-    print('Archive parameters saved; archive_mode still requires rolling restart.')
+    # Retained slots are bounded. A returning standby must also be able to
+    # retrieve WAL that the primary has already recycled (September 17 incident).
+    restore_command = ('pgbackrest --config=/run/pgbackrest/pgbackrest.conf '
+                       '--stanza=pointfinder-production --log-level-console=off '
+                       'archive-get "%f" "%p"')
+    call('PATCH', '/config', {'postgresql': {'parameters': parameters,
+        'recovery_conf': {'restore_command': restore_command}}})
+    after = call('GET', '/config')['postgresql']
+    assert all(after['parameters'].get(k) == v for k,v in parameters.items())
+    assert after['recovery_conf']['restore_command'] == restore_command
+    print('Archive push/retrieval parameters saved; changing archive_mode requires rolling restart.')
 elif operation == 'restart-standby':
     candidate = sys.argv[2]
     assert candidate in members and members[candidate]['role'] == 'replica'

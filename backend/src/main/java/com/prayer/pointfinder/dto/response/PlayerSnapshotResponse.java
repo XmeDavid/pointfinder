@@ -17,7 +17,7 @@ import java.util.UUID;
  * depends on this shape being structurally score-free — the test suite
  * verifies that the serialized JSON does not contain any of those keys.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * (P0 Track 2 Slice 1).
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

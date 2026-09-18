@@ -7,7 +7,7 @@ import { getApiErrorMessage } from "./errors";
  * ({@code GET /games/:gameId/audit-export}). All fields are optional
  * and forwarded to the backend as query parameters via
  * {@link monitoringApi.exportAuditLog}. See
- * `docs/api-reference.md` § "Audit Export" for the full contract.
+ * `docs/product/contracts.md` and AuditExportService for compatibility rules.
  *
  * - `format` — response body format; defaults to JSON backend-side.
  * - `from` / `to` — ISO-8601 timestamp bounds on `activity_events.timestamp`.

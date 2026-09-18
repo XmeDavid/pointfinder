@@ -133,8 +133,8 @@ Use:
 - `GlassPanel`
 - `SlideDrawer`
 - `FloatingBar`
-- future `InspectorPanel`
-- future `SurfacePanel`
+- `InspectorPanel`
+- `SurfacePanel`
 
 Avoid copying:
 
@@ -245,7 +245,7 @@ Map components:
 Shared status/product components:
 
 - `web/src/components/status/`
-- `web/src/components/patterns/`
+- Existing composed patterns alongside their canonical component family; extract a new folder only when needed.
 
 Feature-only components:
 

@@ -1,8 +1,23 @@
 # HA rollout assets
 
-See [the availability plan](../../docs/high-availability-plan.md) for architecture and rollout gates.
+See [current operations](OPERATIONS.md) and [application acceptance](application-acceptance.md) for the operating arrangement and rollout gates.
 
-## Latest verified state — September 10 (supersedes historical entries below)
+## Latest incident repair — September 17
+
+Rainer's standby recovered a recycled-WAL gap from the encrypted S3 archive
+and is streaming again, with zero lag observed on unchanged timeline 12.
+Patroni's shared `postgresql.recovery_conf.restore_command` now enables this
+fallback automatically. Both Dokploy DB stacks run monitor/pusher `r2`, with
+expected-peer and real-lag checks, sustained-recovery confirmation, bounded
+incident history and less transient email noise. PostgreSQL/backup containers
+were not restarted. The external monitor is now executing automatically with
+over 2,000 recorded cycles; the old provider-blocked note is superseded.
+
+See [the repair and verification record](../../docs/monitoring-repair-2026-09-17.md)
+and [the original monitoring review](../../docs/monitoring-review-2026-09-17.md).
+No application release, topology change, paid service or quorum bypass was made.
+
+## September 10 verified baseline (historical)
 
 ### Automatic production releases completed
 
@@ -169,10 +184,10 @@ Rainer reports its manifest ID instead of the classic image config ID.
 
 Still outstanding: CI immutable-release deployment, full storage serving-
 bucket failover/failback, full host/partition/reconnect tests, operational
-alerts/retention and the legacy upload-volume retirement gate. Historical
+alerts/retention. Upload-volume retirement was completed on September 10, as recorded at the top of OPERATIONS.md. Historical
 backup-pending statements below are superseded by this section.
 
-- Backend and frontend each run two healthy replicas, one on Hetzner and one on Arthur. The HA-only backend excludes pending billing migrations V66/V67; V68–V71 are applied. Billing remains unactivated. See `docs/ha-application-readiness.md` for focused test evidence.
+- Backend and frontend each run two healthy replicas, one on Hetzner and one on Arthur. The HA-only backend excludes pending billing migrations V66/V67; V68–V71 are applied. Billing remains unactivated. See `deploy/ha/OPERATIONS.md` for focused test evidence.
 - Both `.ch` and `.pt` production apex/API/www routes use the same Cloudflare Tunnel with two health-supervised connectors. Per-task HAProxy checks avoid sending requests to unhealthy app tasks. Sequential proxy-loss tests withdrew each connector in about 8–9 seconds, with the peer serving both domains, and all services were restored. This is not a full host/partition or authenticated WebSocket reconnect test.
 - GHCR holds immutable backend, preserved frontend and tunnel-supervisor images. Dokploy stores their pinned images and registry credentials; automatic deployment remains disabled until release gates and pending environment changes are reconciled. Do not activate saved billing environment through an ordinary deploy accidentally.
 - Database routing uses the private overlay aliases `patroni-hetzner` and `patroni-rainer`, avoiding failed Tailscale self-hairpin connections. Three managers are Ready; two database routers and three etcd voters are running.
@@ -218,7 +233,7 @@ Before this correction, tested the S3 SDK jars extracted from the preserved appl
 
 Extended ingress source and HAProxy host ACLs to both `.ch` and `.pt`. HAProxy config is now `pointfinder-ingress-haproxy-v2`. New `.pt` canary CNAME ID `a8a7dcb91d674dcefd11313f667becb4`; existing `.pt` BIC exception now includes its exact canary hostname. Both test hosts use the same tunnel and the same pair of host-specific proxies. Production apex/API DNS remains on the existing origin; neither domain's production traffic is using the tunnel yet. Website browser protection still applies to Python's default user agent, while the exact API/canary exceptions permit API clients.
 
-A read-only Claude Fable 5.1 audit identified remaining multi-replica blockers: chunk data is local despite S3 final-file storage; STOMP/native event delivery and operator presence are process-local; scheduled jobs lack distributed coordination; login/join/broadcast lockouts and realtime metrics are local; thumbnail generation assumes local media. These require application work before scaling. For event delivery use a durable outbox/replay design; NOTIFY alone is not durable. See the planned invariants in `docs/high-availability-plan.md`.
+A read-only Claude Fable 5.1 audit identified remaining multi-replica blockers: chunk data is local despite S3 final-file storage; STOMP/native event delivery and operator presence are process-local; scheduled jobs lack distributed coordination; login/join/broadcast lockouts and realtime metrics are local; thumbnail generation assumes local media. These require application work before scaling. For event delivery use a durable outbox/replay design; NOTIFY alone is not durable. See the planned invariants in `deploy/ha/OPERATIONS.md`.
 
 Security incident: an earlier tool response displayed the backend's existing database password, JWT signing secret and mail-provider key. Their values are deliberately not recorded here. The user was notified and asked to revoke/replace the mail key in Dokploy. Database/JWT rotation must be coordinated across live backend, Patroni credentials and saved Dokploy configuration; JWT rotation invalidates existing sessions. No exposed values have been repeated in subsequent output.
 

@@ -7,9 +7,9 @@ The frontend lives entirely in `../web`: shared player and operator routes, UI,
 translations and platform adapters. This directory has no React source or Vite
 configuration. Tauri starts `web` on port 1420 and embeds `web/dist-native`.
 
-See [frontend architecture and rollout](../docs/frontend-consolidation.md).
-See [native platform validation](../docs/native-platform-validation.md) for the
-implemented capabilities, device smoke test and remaining release checks.
+See [frontend architecture and rollout](../docs/product/repository-context.md).
+See [native platform validation](../docs/store-submission/release-checklist.md) for the
+remaining device and release checks; implemented scope is in the repository context.
 
 ## Layout
 

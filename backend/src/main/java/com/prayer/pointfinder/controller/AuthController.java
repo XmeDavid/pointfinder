@@ -8,6 +8,7 @@ import com.prayer.pointfinder.dto.response.MessageResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.RateLimitExceededException;
+import com.prayer.pointfinder.security.RefreshTokenCookies;
 import com.prayer.pointfinder.service.AuthService;
 import com.prayer.pointfinder.service.InviteService;
 import com.prayer.pointfinder.service.PlayerJoinRateLimiter;
@@ -19,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,38 +34,21 @@ public class AuthController {
     private final PlayerService playerService;
     private final PlayerJoinRateLimiter playerJoinRateLimiter;
     private final PlayerAccountService playerAccountService;
+    private final RefreshTokenCookies refreshTokenCookies;
 
     @Value("${app.frontend-url:https://pointfinder.pt}")
     private String frontendUrl;
 
-    @Value("${app.jwt.refresh-token-expiration-ms}")
-    private long refreshTokenExpirationMs;
-
-    private static final String REFRESH_TOKEN_COOKIE = "pf_refresh";
+    private static final String REFRESH_TOKEN_COOKIE = RefreshTokenCookies.COOKIE_NAME;
 
     // ---- Refresh-token cookie helpers (audit 12.1) ----
 
-    private ResponseCookie buildRefreshTokenCookie(String token) {
-        long maxAgeSeconds = refreshTokenExpirationMs / 1000;
-        boolean secure = frontendUrl.startsWith("https://");
-        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, token)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Strict")
-                .path("/api/auth")
-                .maxAge(maxAgeSeconds)
-                .build();
+    private String buildRefreshTokenCookie(String token) {
+        return refreshTokenCookies.build(token).toString();
     }
 
-    private ResponseCookie clearRefreshTokenCookie() {
-        boolean secure = frontendUrl.startsWith("https://");
-        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, "")
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Strict")
-                .path("/api/auth")
-                .maxAge(0)
-                .build();
+    private String clearRefreshTokenCookie() {
+        return refreshTokenCookies.clear().toString();
     }
 
     /**
@@ -144,7 +127,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()))
                 .body(response);
     }
 
@@ -158,7 +141,7 @@ public class AuthController {
                                                   @Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(token, request);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()))
                 .body(response);
     }
 
@@ -184,7 +167,7 @@ public class AuthController {
         }
         AuthResponse response = authService.refreshToken(refreshToken);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenCookie(response.refreshToken()))
                 .body(response);
     }
 
@@ -197,7 +180,7 @@ public class AuthController {
             authService.logout(refreshToken);
         }
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, clearRefreshTokenCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, clearRefreshTokenCookie())
                 .build();
     }
 

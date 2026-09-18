@@ -64,6 +64,8 @@ public enum ErrorCode {
     EMAIL_CHANGE_TOKEN_INVALID,
     /** The email-change verification token has expired. */
     EMAIL_CHANGE_TOKEN_EXPIRED,
+    /** An operator session was requested for an account that is a participant, not an operator or admin (OW-01). */
+    ORGANIZER_ROLE_REQUIRED,
 
     // ── Billing / account state ──────────────────────────────────────────
     /** The operator's account is frozen; they must update their payment method. */

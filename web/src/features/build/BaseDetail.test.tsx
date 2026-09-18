@@ -3,13 +3,25 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BaseDetail } from './BaseDetail'
+import { useDraftStore } from './drafts/draftStore'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockBase } from '@/test/factories/base'
 import { createMockGame } from '@/test/factories/game'
 
-const platform = vi.hoisted(() => ({ native: false }))
-vi.mock('@/platform', () => ({ isNative: () => platform.native }))
+const platform = vi.hoisted(() => ({ native: false, memory: new Map<string, string>() }))
+vi.mock('@/platform', () => ({
+  isNative: () => platform.native,
+  kv: {
+    get: async (key: string) => platform.memory.get(key) ?? null,
+    set: async (key: string, value: string) => {
+      platform.memory.set(key, value)
+    },
+    remove: async (key: string) => {
+      platform.memory.delete(key)
+    },
+  },
+}))
 
 // Mock workspace store
 const mockStore = {
@@ -50,6 +62,9 @@ const QR_BASE_ID = '0d2f1c9e-0000-4000-8000-000000000001'
 describe('BaseDetail', () => {
   beforeEach(() => {
     platform.native = false
+    platform.memory.clear()
+    // Drafts are module state scoped by account/game/entity; tests share the key.
+    useDraftStore.getState().resetAll()
     mockStore.selectChallenge.mockClear()
   })
 

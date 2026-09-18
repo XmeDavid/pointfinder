@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * written with ON CONFLICT DO NOTHING against the (cycle, kind, reference,
  * player) key, so replays, retries, repeated reviews and repeated resets are
  * no-ops without ever touching the caller's persistence context. See
- * docs/specs/2026-09-10-xp-and-profile.md for the formulas.
+ * docs/product/contracts.md for the formulas.
  */
 @Service
 @Slf4j

@@ -114,6 +114,14 @@ public class Challenge {
     @Builder.Default
     private Integer orderIndex = 0;
 
+    /**
+     * Optional client-generated key, unique per game (partial unique index
+     * {@code uq_challenges_game_idempotency_key}). A retried create carrying
+     * the same key returns this row instead of inserting a duplicate (OW-04).
+     */
+    @Column(name = "idempotency_key", updatable = false)
+    private UUID idempotencyKey;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

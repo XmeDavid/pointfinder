@@ -29,7 +29,7 @@ import java.util.UUID;
  * asserts via JSON path that {@code operatorNotes} never appears in the
  * response body.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * — P1 Operator Workflow and Content Model.
  */
 public record PlayerChallengeResponse(

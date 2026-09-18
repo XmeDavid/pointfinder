@@ -25,7 +25,7 @@ import java.util.UUID;
  * already knows the base + challenge metadata; the confirmation path
  * relies on the returned {@code baseId} plus local state.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * — P1 Operator Workflow and Content Model.
  */
 public record CheckInResponse(

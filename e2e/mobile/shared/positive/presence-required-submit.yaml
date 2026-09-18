@@ -1,0 +1,65 @@
+# @scenarios P11
+# Player submission with requirePresenceToSubmit - verifies that a challenge
+# requiring location presence blocks submission when the player is not
+# physically checked in at the assigned base (finding 9.7: E2E parity gap).
+#
+# Prerequisites:
+#   - A game in "live" state with a base and a challenge that has
+#     requirePresenceToSubmit=true assigned to that base.
+#   - JOIN_CODE env var set to the team join code.
+#   - PRESENCE_BASE_NAME env var set to the base name (default: "Presence Base").
+#   - PRESENCE_CHALLENGE_TITLE env var set to the challenge title
+#     (default: "Presence Challenge").
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+- tapOn: "Join Game"
+
+- assertVisible:
+    id: "player-join-code-input"
+
+- tapOn:
+    id: "player-join-code-input"
+- inputText: "${JOIN_CODE}"
+
+- tapOn:
+    id: "player-join-btn"
+
+# Enter display name on join screen
+- tapOn:
+    id: "player-name-field"
+- inputText: "Presence Tester"
+- hideKeyboard
+- tapOn: "Join Game"
+
+# Dismiss permission disclosure if shown
+- tapOn:
+    text: "Continue"
+    optional: true
+
+# Navigate to the base that has a presence-required challenge
+- assertVisible:
+    id: "player-base-list"
+- tapOn: "${PRESENCE_BASE_NAME:-Presence Base}"
+
+- assertVisible:
+    id: "player-challenge-list"
+- tapOn: "${PRESENCE_CHALLENGE_TITLE:-Presence Challenge}"
+
+# Attempt to submit without being physically present at the base.
+# The app should show a location/presence warning preventing submission.
+- tapOn:
+    id: "player-answer-input"
+- inputText: "test answer"
+
+- tapOn:
+    id: "player-submit-btn"
+
+# The submission should be blocked with a presence-required message.
+# The exact text varies by platform but contains "presence" or "location".
+- assertVisible:
+    text: ".*(?:presence|location|nearby|close).*"
+    regex: true
+    optional: false

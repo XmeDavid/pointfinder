@@ -8,6 +8,7 @@ import com.prayer.pointfinder.dto.response.UserResponse;
 import com.prayer.pointfinder.entity.*;
 import com.prayer.pointfinder.exception.BadRequestException;
 import com.prayer.pointfinder.exception.ErrorCode;
+import com.prayer.pointfinder.exception.ForbiddenException;
 import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.EmailChangeTokenRepository;
 import com.prayer.pointfinder.repository.OperatorInviteRepository;
@@ -249,6 +250,23 @@ public class AuthService {
         refreshTokenRepository.save(storedToken);
 
         return generateAuthResponse(storedToken.getUser());
+    }
+
+    /**
+     * OW-01: an operator or admin signed in as an account on the player app
+     * gets a second, independent session for the operator surface, so the app
+     * never copies the account's refresh token between its two stores. The
+     * caller's own refresh token stays valid. The role is re-read so a
+     * demotion since the access token was minted is honoured.
+     */
+    @Transactional(timeout = 10)
+    public AuthResponse exchangeForOrganizerSession(User authUser) {
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+        if (user.getRole() == UserRole.participant) {
+            throw new ForbiddenException("Organizer role required", ErrorCode.ORGANIZER_ROLE_REQUIRED);
+        }
+        return generateAuthResponse(user);
     }
 
     @Transactional(timeout = 10)

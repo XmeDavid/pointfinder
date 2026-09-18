@@ -1,5 +1,11 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { RuleSection } from './RuleSection'
+import { useAuthStore } from '@/lib/auth/store'
+import { getApiErrorMessage } from '@/lib/api/errors'
+import { SaveStatusIndicator } from '@/components/status'
+import { draftKey } from './drafts/draftStore'
+import { useEntityDraft } from './drafts/useEntityDraft'
+import { challengeDraftFields, challengeDraftIsValid, type ChallengeDraftFields } from './drafts/challengeDraft'
 import { Switch } from '@/components/ui/switch'
 import { Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -28,7 +34,7 @@ import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { ResourcePicker } from '@/components/editor/ResourcePicker'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
-import { VariableAwareChipInput } from '@/components/inputs/VariableAwareChipInput'
+import { VariableAwareChipInput, type VariableAwareChipInputHandle } from '@/components/inputs/VariableAwareChipInput'
 import {
   resolveTemplate,
   type VariableMap,
@@ -150,6 +156,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   // Refs for programmatic pill insertion after the create-variable dialog
   // resolves — one per editor so we can insert into the originating field.
   const contentInsertVariableRef = useRef<((key: string) => void) | null>(null)
+  const answerInputRef = useRef<VariableAwareChipInputHandle>(null)
   const completionInsertVariableRef = useRef<((key: string) => void) | null>(
     null,
   )
@@ -163,43 +170,104 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
 
   const challenge = challenges.find((c) => c.id === challengeId)
 
-  // Local form state
-  const [localTitle, setLocalTitle] = useState('')
-  const [localAnswerType, setLocalAnswerType] = useState<AnswerType>('text')
-  const [localAutoValidate, setLocalAutoValidate] = useState(false)
-  const [localDescription, setLocalDescription] = useState('')
-  const [localContent, setLocalContent] = useState('')
-  const [localCorrectAnswer, setLocalCorrectAnswer] = useState<string[]>([])
-  const [localPoints, setLocalPoints] = useState('0')
-  const [localOperatorNotes, setLocalOperatorNotes] = useState('')
-  const [localLocationBound, setLocalLocationBound] = useState(false)
-  const [localUnlocks, setLocalUnlocks] = useState<string[]>([])
-  const [localCompletionContent, setLocalCompletionContent] = useState('')
-
   // Preview-as-team state — toggles the editors from authoring to read-only
   // rendering with `{{key}}` references resolved for the selected team.
   const [previewMode, setPreviewMode] = useState(false)
   const [previewTeamId, setPreviewTeamId] = useState<string | null>(null)
 
-  // Sync local state when challenge data loads or challengeId changes
-  // Sync local state when challenge data loads or challengeId changes: derived during render
-  // (React's "adjusting state when a prop changes" pattern), so no effect sets state.
-  const [syncedId, setSyncedId] = useState<string | null>(null)
-  if (challenge && syncedId !== challengeId) {
-    setSyncedId(challengeId)
-
-    setLocalTitle(challenge.title)
-    setLocalAnswerType(challenge.answerType)
-    setLocalAutoValidate(challenge.autoValidate)
-    setLocalDescription(challenge.description)
-    setLocalContent(challenge.content)
-    setLocalCorrectAnswer(challenge.correctAnswer ?? [])
-    setLocalPoints(challenge.points.toString())
-    setLocalOperatorNotes(challenge.operatorNotes ?? '')
-    setLocalLocationBound(challenge.locationBound)
-    setLocalUnlocks(challenge.unlocksBaseIds ?? [])
-    setLocalCompletionContent(challenge.completionContent)
-  }
+  // Local form state lives in a persisted, account-scoped draft (see
+  // drafts/useEntityDraft): a refetch never overwrites what the operator
+  // typed, and the draft survives leaving the editor or a killed WebView.
+  const accountId = useAuthStore((s) => s.user?.id)
+  const correctAnswerKey = challenge?.correctAnswer?.join('\u0000')
+  const unlocksKey = challenge?.unlocksBaseIds?.join('\u0000')
+  const serverFields = useMemo(
+    () => (challenge ? challengeDraftFields(challenge) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      challenge?.id,
+      challenge?.title,
+      challenge?.answerType,
+      challenge?.autoValidate,
+      challenge?.description,
+      challenge?.content,
+      correctAnswerKey,
+      challenge?.points,
+      challenge?.operatorNotes,
+      challenge?.locationBound,
+      unlocksKey,
+      challenge?.completionContent,
+    ],
+  )
+  const saveFields = useCallback(
+    async (fields: ChallengeDraftFields) => {
+      const current = challenges.find((c) => c.id === challengeId)
+      if (!current) throw new Error(t('build.challengeNotFound'))
+      const updated = await updateChallenge.mutateAsync({
+        challengeId,
+        dto: {
+          title: fields.title,
+          answerType: fields.answerType,
+          autoValidate: fields.autoValidate,
+          description: fields.description,
+          content: fields.content,
+          correctAnswer: fields.correctAnswer.length > 0 ? fields.correctAnswer : undefined,
+          points: Number(fields.points) || 0,
+          operatorNotes: fields.operatorNotes || undefined,
+          locationBound: fields.locationBound,
+          completionContent: fields.completionContent,
+          // Unlock targets need a pinned, location-bound challenge; the server
+          // ignores them otherwise, so send exactly what the editor shows.
+          unlocksBaseIds: fields.locationBound && current.fixedBaseId ? fields.unlocks : [],
+          // The update replaces the whole row: fields this form does not edit
+          // are carried over, or the server would clear them.
+          tagIds: current.tagIds ?? [],
+          requirePresenceToSubmit: current.requirePresenceToSubmit ?? false,
+        },
+      })
+      return challengeDraftFields(updated)
+    },
+    [challenges, challengeId, updateChallenge, t],
+  )
+  const describeSaveError = useCallback(
+    (error: unknown) => getApiErrorMessage(error, t('common.unknownError')),
+    [t],
+  )
+  // Unknown {{variables}} are only a warning, but they are worth a look before
+  // the row goes out, so the background save waits until they are resolved.
+  const [autosaveAllowed, setAutosaveAllowed] = useState(true)
+  const draft = useEntityDraft<ChallengeDraftFields>({
+    key: draftKey(accountId, gameId, 'challenge', challengeId),
+    server: serverFields,
+    validate: challengeDraftIsValid,
+    save: saveFields,
+    autosave: autosaveAllowed,
+    describeError: describeSaveError,
+  })
+  const fields = draft.fields ?? serverFields
+  const localTitle = fields?.title ?? ''
+  const localAnswerType: AnswerType = fields?.answerType ?? 'text'
+  const localAutoValidate = fields?.autoValidate ?? false
+  const localDescription = fields?.description ?? ''
+  const localContent = fields?.content ?? ''
+  const localCorrectAnswer = useMemo(() => fields?.correctAnswer ?? [], [fields?.correctAnswer])
+  const localPoints = fields?.points ?? '0'
+  const localOperatorNotes = fields?.operatorNotes ?? ''
+  const localLocationBound = fields?.locationBound ?? false
+  const localUnlocks = useMemo(() => fields?.unlocks ?? [], [fields?.unlocks])
+  const localCompletionContent = fields?.completionContent ?? ''
+  const update = draft.update
+  const setLocalTitle = (title: string) => update({ title })
+  const setLocalAnswerType = (answerType: AnswerType) => update({ answerType })
+  const setLocalAutoValidate = (autoValidate: boolean) => update({ autoValidate })
+  const setLocalDescription = (description: string) => update({ description })
+  const setLocalContent = useCallback((content: string) => update({ content }), [update])
+  const setLocalCorrectAnswer = useCallback((correctAnswer: string[]) => update({ correctAnswer }), [update])
+  const setLocalPoints = (points: string) => update({ points })
+  const setLocalOperatorNotes = (operatorNotes: string) => update({ operatorNotes })
+  const setLocalLocationBound = (locationBound: boolean) => update({ locationBound })
+  const setLocalUnlocks = (unlocks: string[]) => update({ unlocks })
+  const setLocalCompletionContent = useCallback((completionContent: string) => update({ completionContent }), [update])
 
   // For delete cascade count
   // Hidden bases this challenge may reveal; never its own pinned base.
@@ -247,6 +315,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       showAnswerConfig,
     ],
   )
+  const wantAutosave = undefinedKeys.length === 0
+  if (wantAutosave !== autosaveAllowed) setAutosaveAllowed(wantAutosave)
 
   const handleSave = useCallback(() => {
     if (undefinedKeys.length > 0) {
@@ -259,51 +329,9 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       )
       if (!ok) return
     }
-    const correctAnswerArray =
-      localCorrectAnswer.length > 0 ? localCorrectAnswer : undefined
-
-    updateChallenge.mutate({
-      challengeId,
-      dto: {
-        title: localTitle,
-        answerType: localAnswerType,
-        autoValidate: localAutoValidate,
-        description: localDescription,
-        content: localContent,
-        correctAnswer: correctAnswerArray,
-        points: Number(localPoints) || 0,
-        operatorNotes: localOperatorNotes || undefined,
-        locationBound: localLocationBound,
-        completionContent: localCompletionContent,
-        // Unlock targets need a pinned, location-bound challenge; the server
-        // ignores them otherwise, so send exactly what the editor shows.
-        unlocksBaseIds:
-          localLocationBound && challenge?.fixedBaseId ? localUnlocks : [],
-        // The update replaces the whole row: fields this form does not edit
-        // are carried over, or the server would clear them.
-        tagIds: challenge?.tagIds ?? [],
-        requirePresenceToSubmit: challenge?.requirePresenceToSubmit ?? false,
-      },
-    })
-  }, [
-    challengeId,
-    localUnlocks,
-    challenge?.fixedBaseId,
-    challenge?.tagIds,
-    challenge?.requirePresenceToSubmit,
-    localTitle,
-    localAnswerType,
-    localAutoValidate,
-    localDescription,
-    localContent,
-    localCorrectAnswer,
-    localPoints,
-    localOperatorNotes,
-    localLocationBound,
-    localCompletionContent,
-    undefinedKeys,
-    updateChallenge,
-  ])
+    // The explicit button always sends the row, edited or not.
+    void draft.saveNow({ force: true })
+  }, [undefinedKeys, draft])
 
   // Preview-team resolution: merge game + challenge vars, challenge wins.
   const sortedTeams = useMemo(
@@ -389,6 +417,15 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       </div>
     )
   }
+  // The rich text editors take their initial content once, so the form waits
+  // for the draft (a recovered one included) before it mounts them.
+  if (!draft.fields) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground text-sm" data-testid="challenge-detail-loading">
+        {t('common.loading')}
+      </div>
+    )
+  }
 
   const deleteCascadeCount = challengeAssignments.length
   const deleteDescription =
@@ -417,6 +454,21 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               onChange={(e) => setLocalTitle(e.target.value)}
               data-testid="challenge-title-input"
               className="min-h-11 text-base"
+            />
+          </div>
+
+          {/* The short description is metadata: it sits with the title and
+              type, and players still see it as today. */}
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">
+              {t('build.editor.description')}
+            </label>
+            <Textarea
+              rows={3}
+              value={localDescription}
+              onChange={(e) => setLocalDescription(e.target.value)}
+              data-testid="challenge-description"
+              className="text-sm resize-none"
             />
           </div>
 
@@ -464,6 +516,58 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 onCheckedChange={setLocalAutoValidate}
                 data-testid="auto-validate-toggle"
               />
+            </div>
+          )}
+
+          {/* Accepted answers belong to the switch: they show while checking
+              is on and keep their values while it is off. */}
+          {showAnswerConfig && (
+            <div className="space-y-2" data-testid="answer-configuration">
+              <label className="block text-xs text-muted-foreground">
+                {t('build.editor.answerConfiguration')}
+              </label>
+              {previewMode ? (
+                <div
+                  data-testid="correct-answer-preview"
+                  className="flex flex-wrap gap-2 rounded-md border border-input bg-muted/30 px-2 py-1.5 min-h-[34px]"
+                >
+                  {localCorrectAnswer.length === 0 ? (
+                    <span className="text-xs text-muted-foreground italic">
+                      {t('build.editor.noAnswers')}
+                    </span>
+                  ) : (
+                    localCorrectAnswer.map((chip, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-sm"
+                      >
+                        {resolveTemplate(chip, previewVars)}
+                      </span>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <VariableAwareChipInput
+                  ref={answerInputRef}
+                  chips={localCorrectAnswer}
+                  onChange={setLocalCorrectAnswer}
+                  availableKeys={availableKeys}
+                  placeholder={t('build.correctAnswerPlaceholder')}
+                  data-testid="correct-answer-input"
+                />
+              )}
+              {undefinedKeys.length > 0 && (
+                <p
+                  className="text-[10px] text-destructive"
+                  data-testid="undefined-key-warning"
+                >
+                  {t('build.editor.unknownVariables')}{' '}
+                  {undefinedKeys.map((k) => `{{${k}}}`).join(', ')}
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground">
+                {t('build.editor.answerHint')}
+              </p>
             </div>
           )}
         </div>
@@ -536,18 +640,6 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           </div>
         </div>
         <div className="space-y-3">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">
-              {t('build.editor.description')}
-            </label>
-            <Textarea
-              rows={3}
-              value={localDescription}
-              onChange={(e) => setLocalDescription(e.target.value)}
-              data-testid="challenge-description"
-              className="text-sm resize-none"
-            />
-          </div>
           <div data-testid="challenge-content">
             <label className="block text-xs text-muted-foreground mb-1">
               {t('build.editor.content')}
@@ -563,6 +655,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               />
             ) : (
               <RichTextEditor
+                key={`content-${draft.generation}`}
                 content={localContent}
                 onChange={setLocalContent}
                 placeholder={t('build.challengeContentPlaceholder')}
@@ -579,63 +672,6 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           </div>
         </div>
       </section>
-
-      {/* Answer configuration (text types only) */}
-      {showAnswerConfig && (
-        <section className="border-t border-border pt-4 mt-4">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            {t('build.editor.answerConfiguration')}
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">
-                {t('build.editor.correctAnswers')}
-              </label>
-              {previewMode ? (
-                <div
-                  data-testid="correct-answer-preview"
-                  className="flex flex-wrap gap-2 rounded-md border border-input bg-muted/30 px-2 py-1.5 min-h-[34px]"
-                >
-                  {localCorrectAnswer.length === 0 ? (
-                    <span className="text-xs text-muted-foreground italic">
-                      {t('build.editor.noAnswers')}
-                    </span>
-                  ) : (
-                    localCorrectAnswer.map((chip, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center rounded bg-muted px-2 py-0.5 text-sm"
-                      >
-                        {resolveTemplate(chip, previewVars)}
-                      </span>
-                    ))
-                  )}
-                </div>
-              ) : (
-                <VariableAwareChipInput
-                  chips={localCorrectAnswer}
-                  onChange={setLocalCorrectAnswer}
-                  availableKeys={availableKeys}
-                  placeholder={t('build.correctAnswerPlaceholder')}
-                  data-testid="correct-answer-input"
-                />
-              )}
-            </div>
-            {undefinedKeys.length > 0 && (
-              <p
-                className="text-[10px] text-destructive"
-                data-testid="undefined-key-warning"
-              >
-                {t('build.editor.unknownVariables')}{' '}
-                {undefinedKeys.map((k) => `{{${k}}}`).join(', ')}
-              </p>
-            )}
-            <p className="text-[10px] text-muted-foreground">
-              {t('build.editor.answerHint')}
-            </p>
-          </div>
-        </section>
-      )}
 
       {/* Points stay visible as a single row. */}
       <section className="flex items-center justify-between gap-3 border-t border-border pt-3 mt-3">
@@ -841,6 +877,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               />
             ) : (
               <RichTextEditor
+                key={`completion-${draft.generation}`}
                 content={localCompletionContent}
                 onChange={setLocalCompletionContent}
                 placeholder={t('build.completionPlaceholder')}
@@ -885,17 +922,27 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
         onCreated={handleVariableCreated}
       />
 
-      {/* Save button */}
-      <div className="sticky bottom-0 z-10 border-t border-border bg-card py-3 mt-4 flex items-center gap-3">
+      {/* Save button: valid edits also save on their own after a pause. */}
+      <div className="sticky bottom-0 z-10 border-t border-border bg-card py-3 mt-4 flex flex-wrap items-center gap-3">
         <Button
           onClick={handleSave}
-          loading={updateChallenge.isPending}
+          loading={draft.status.state === 'saving'}
+          disabled={draft.conflict}
           data-testid="save-challenge"
           size="sm"
         >
           <Save className="h-4 w-4" />
           {t('common.save')}
         </Button>
+        <SaveStatusIndicator
+          state={draft.status.state}
+          error={draft.status.error}
+          onRetry={() => void draft.saveNow()}
+          onDiscard={() => { answerInputRef.current?.discardPending(); draft.discard() }}
+          onKeepMine={draft.keepMine}
+          onUseLatest={() => { answerInputRef.current?.discardPending(); draft.discard() }}
+          data-testid="challenge-save-status"
+        />
       </div>
 
       {/* Delete */}

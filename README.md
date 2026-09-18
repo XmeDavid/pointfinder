@@ -26,7 +26,7 @@ bun run --cwd mobile tauri android dev
 bun run --cwd mobile tauri ios dev   # macOS
 ```
 
-See [frontend ownership, builds and rollout](docs/frontend-consolidation.md) for
+See [frontend ownership, builds and rollout](docs/product/repository-context.md) for
 platform boundaries, offline behavior, validation and remaining device checks.
 
 ## Architecture
@@ -74,7 +74,7 @@ ios-app/          Legacy Swift app (maintenance during Tauri rollout)
 nginx/            Reverse-proxy config & Dockerfile
 e2e/              End-to-end tests (Playwright + Maestro)
 scripts/          Utility scripts (e.g. create-admin.sh)
-docs/             Design docs, store-submission guides
+docs/             Product direction, visual system, store submission
 docker-compose.yml          Production stack
 docker-compose.test.yml     CI / local test containers
 Makefile                    One-command test runners
@@ -177,7 +177,7 @@ See [`e2e/README.md`](e2e/README.md) for setup and the full command table.
 
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs backend, web (lint/unit, sharded Playwright E2E, Docker image), and Android checks in parallel on every push / PR to `master`. See [`docs/infrastructure.md`](docs/infrastructure.md#5-cicd-pipeline) for the job layout.
+GitHub Actions (`.github/workflows/ci.yml`) runs backend, web (lint/unit, sharded Playwright E2E, Docker image), and Android checks in parallel on every push / PR to `master`. See [the workflow](.github/workflows/ci.yml) for the current job layout.
 
 ## Configuration
 

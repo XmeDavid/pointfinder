@@ -26,6 +26,7 @@ import { IntroductionPrompt } from '@/features/player/components/IntroductionPro
 import { UnverifiedAccountNotice } from '@/features/player/components/UnverifiedAccountNotice'
 import { lightColorValues } from '@/generated/colorValues'
 import { CHECK_IN_RADIUS_FILL_LAYER_ID, CHECK_IN_RADIUS_LINE_LAYER_ID, CHECK_IN_RADIUS_SOURCE_ID, radiusCollection } from '@/features/player/mapShapes'
+import { useMapCamera } from '@/components/map/useMapCamera'
 
 
 const RADIUS_FILL = { id: CHECK_IN_RADIUS_FILL_LAYER_ID, type: 'fill' as const, paint: { 'fill-color': lightColorValues['status.checkedIn'], 'fill-opacity': 0.08 } }
@@ -40,7 +41,10 @@ export default function PlayerMap() {
   const tourActive = usePlayerTour(s=>s.index !== null)
   const game = usePlayerGame()
   const mapRef = useRef<MapRef | null>(null)
+  const camera = useMapCamera(mapRef, auth.kind === 'player' ? `player:${auth.playerId}:${auth.gameId}` : undefined)
   const fitted = useRef(false)
+  const playerGameKey = auth.kind === 'player' ? `${auth.playerId}:${auth.gameId}` : ''
+  useEffect(() => { fitted.current = false }, [playerGameKey])
   const [selected, setSelected] = useState<string | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
@@ -80,10 +84,10 @@ export default function PlayerMap() {
   }, [open])
 
   useEffect(() => {
-    if (fitted.current || open.length === 0 || !mapRef.current) return
+    if (!camera.ready || camera.hasCamera || fitted.current || open.length === 0 || !mapRef.current) return
     fitted.current = true
     fitToBases()
-  }, [open, fitToBases])
+  }, [open, fitToBases, camera.ready, camera.hasCamera])
 
   async function tapAnyTag() {
     setScanError(null)
@@ -126,12 +130,16 @@ export default function PlayerMap() {
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-[var(--pf-color-surface-map)] text-foreground">
       <Map
-        ref={(r) => { mapRef.current = r; if (r && !fitted.current && open.length) { fitted.current = true; fitToBases() } }}
+        key={playerGameKey}
+        ref={(r) => { mapRef.current = r; if (r && camera.ready && !camera.hasCamera && !fitted.current && open.length) { fitted.current = true; fitToBases() } }}
         initialViewState={{ longitude: open[0]?.view.lng ?? -8.87, latitude: open[0]?.view.lat ?? 40.09, zoom: 14 }}
         mapStyle={styleUrl}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
         onClick={() => setSelected(null)}
+        onMoveStart={camera.onMoveStart}
+        onMoveEnd={camera.onMoveEnd}
+        onLoad={camera.onLoad}
       >
         {radiusData.features.length > 0 && (
           <Source id={CHECK_IN_RADIUS_SOURCE_ID} type="geojson" data={radiusData}>

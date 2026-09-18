@@ -8,7 +8,7 @@ import Foundation
 // The snapshot endpoint (`GET /api/games/{gameId}/snapshot`) is the canonical
 // recovery call for any client that suspects its local cache is stale after a
 // missed event, reconnect, foreground, or network return. See
-// `docs/realtime-and-mobile.md` §7 "State Snapshot Contract" for the full
+// `docs/product/contracts.md` section "Realtime, audit and operations" for the full
 // product rationale.
 //
 // IMPORTANT: `PlayerSnapshotResponse` is structurally score-free — it has NO

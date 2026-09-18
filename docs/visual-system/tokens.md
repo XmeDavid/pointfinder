@@ -3,14 +3,11 @@
 Tokens are the shared visual language across platforms. Use semantic tokens in
 component code. Raw values belong only in theme/token files.
 
-The current code already has partial token sets:
-
-- Web: `web/src/index.css`
-- iOS: `ios-app/dbv-nfc-games/App/Theme/DesignTokens.swift`
-- Android: `android-app/app/src/main/java/com/prayer/pointfinder/ui/theme/`
-
-The desired end state is a source-of-truth token file that maps into each
-platform. Until then, treat this document as the canonical naming and meaning.
+The canonical DTCG source is `design-system/tokens.json`. Run
+`make design-system-generate` to update web and legacy native adapters; never
+edit generated files. Web semantic mappings live in `web/src/theme/theme.css`.
+The tables below explain roles rather than defining another literal token schema;
+use the current generated names/values. Brand artwork roles are in [brand.md](brand.md).
 For web implementation details, follow [Web Tailwind Contract](web-tailwind.md).
 
 ## Token Naming
@@ -203,7 +200,8 @@ value; pick the rung that matches the meaning.
 | 40 | `z-40` | Desktop icon rail |
 | 50 | `z-50` | Drawers, dialogs, the mobile tab bar |
 | 60 | `z-[60]` | Portalled menus that must escape a scrolling rail |
-| 70 | `z-[70]` | Tutorial layer: spotlight, coach bubble, collapsed pill |
+| 70 | `z-[70]` | Tutorial spotlight/scrim |
+| 71 | `z-[71]` | Coach bubble and collapsed pill, above the spotlight |
 | 100 | `z-[100]` | Toasts |
 
 The tutorial layer is above the drawer and portalled menus because it teaches

@@ -19,8 +19,11 @@ import com.prayer.pointfinder.repository.SubmissionRepository;
 import com.prayer.pointfinder.util.HtmlSanitizer;
 import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +39,10 @@ public class ChallengeService {
     private final GameEventBroadcaster eventBroadcaster;
     private final GameTagRepository gameTagRepository;
     private final ResourceEmbedService resourceEmbedService;
+    private final TransactionTemplate transactionTemplate;
+
+    /** Partial unique index from V84: one challenge per (game, idempotency key). */
+    static final String IDEMPOTENCY_CONSTRAINT = "uq_challenges_game_idempotency_key";
 
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallengesByGame(UUID gameId) {
@@ -55,9 +62,67 @@ public class ChallengeService {
         eventBroadcaster.broadcastGameConfig(gameId, "challenges", "reordered");
     }
 
+    /**
+     * Controller entry for creating a challenge. Runs {@link #createChallenge}
+     * in its own transaction and, when the request carries an idempotency key,
+     * absorbs the race two identical retries can produce: both miss the
+     * pre-lookup, both insert, the unique index rejects the loser at flush or
+     * commit, and the loser then answers with the winner's row instead of a
+     * 409 (OW-04). Deliberately not {@code @Transactional}: the constraint
+     * failure must have rolled back before the winner is re-read.
+     */
+    public ChallengeResponse createChallengeIdempotent(UUID gameId, CreateChallengeRequest request) {
+        UUID key = request.getIdempotencyKey();
+        try {
+            return transactionTemplate.execute(status -> createChallenge(gameId, request));
+        } catch (DataIntegrityViolationException ex) {
+            if (key == null || !isIdempotencyConflict(ex)) {
+                throw ex;
+            }
+            // Re-check access in the fresh read: a revocation that landed between
+            // the failed create and this reply must not hand the row back.
+            ChallengeResponse existing = transactionTemplate.execute(status -> {
+                gameAccessService.ensureCurrentUserCanAccessGame(gameId);
+                return challengeRepository.findByGameIdAndIdempotencyKey(gameId, key)
+                        .map(this::toResponse)
+                        .orElse(null);
+            });
+            if (existing == null) {
+                throw ex;
+            }
+            return existing;
+        }
+    }
+
+    private static boolean isIdempotencyConflict(DataIntegrityViolationException ex) {
+        for (Throwable t = ex; t != null; t = t.getCause()) {
+            if (t instanceof ConstraintViolationException cve
+                    && cve.getConstraintName() != null
+                    && cve.getConstraintName().contains(IDEMPOTENCY_CONSTRAINT)) {
+                return true;
+            }
+            if (t.getMessage() != null && t.getMessage().contains(IDEMPOTENCY_CONSTRAINT)) {
+                return true;
+            }
+            if (t.getCause() == t) {
+                break;
+            }
+        }
+        return false;
+    }
+
     @Transactional(timeout = 10)
     public ChallengeResponse createChallenge(UUID gameId, CreateChallengeRequest request) {
         Game game = gameAccessService.getAccessibleGame(gameId);
+
+        // A retried create with the same key answers with the row it already made.
+        if (request.getIdempotencyKey() != null) {
+            Optional<Challenge> replay = challengeRepository
+                    .findByGameIdAndIdempotencyKey(gameId, request.getIdempotencyKey());
+            if (replay.isPresent()) {
+                return toResponse(replay.get());
+            }
+        }
 
         long contentSize = (request.getContent() != null ? request.getContent().length() : 0)
                 + (request.getCompletionContent() != null ? request.getCompletionContent().length() : 0);
@@ -79,6 +144,7 @@ public class ChallengeService {
                 .locationBound(request.getLocationBound() != null ? request.getLocationBound() : false)
                 .requirePresenceToSubmit(request.getRequirePresenceToSubmit() != null ? request.getRequirePresenceToSubmit() : false)
                 .operatorNotes(normalizeOperatorNotes(request.getOperatorNotes()))
+                .idempotencyKey(request.getIdempotencyKey())
                 .build();
 
         // Enforce: answerType=none → requirePresenceToSubmit must be false

@@ -371,3 +371,34 @@ Extracted `computeReconnectBackoffSeconds()` as a testable top-level function. C
 - `assertAutoValidationStatus(answer, expected)`: Consolidates repeated assertion pattern
 
 6 auto-validation tests reduced from ~15 lines each to 2 lines each.
+
+---
+
+## Finding 9.4 -- Android Compose UI instrumentation tests (2026-09-17)
+
+**Decision:** Created instrumented Compose UI tests for CheckInScreen and SolveScreen composables using `createComposeRule()`. No Hilt test runner needed since both composables accept all dependencies as parameters.
+
+**Changes:**
+- `CheckInScreenTest.kt` (8 tests): button display/click, pending sync banner, failed sync warning, scan error, NFC state switching, zero-count hiding
+- `SolveScreenTest.kt` (6 tests): challenge title/description, submit button state, error display, answer input, back navigation
+
+**Alternatives considered:**
+- Full integration tests with HiltTestRunner and real ViewModel injection (rejected: requires custom test runner and in-memory database setup, which is infrastructure not yet in place)
+- Screenshot/golden-image tests (rejected: brittle across device configurations; functional assertions are more reliable)
+
+**Rationale:** Composable-level tests with `createComposeRule()` are the right granularity for the first instrumented tests. They verify actual rendered UI (unlike JVM-only tests) without requiring the full DI graph. Both CheckInScreen and SolveScreen are pure composable functions that accept all state as parameters, making them ideal for isolated UI testing. These complement the existing PlayerViewModelTest (JVM, 11 tests) and the Maestro E2E flows (33 specs).
+
+---
+
+## Finding 9.7 -- E2E parity gap: requirePresenceToSubmit on mobile (2026-09-17)
+
+**Decision:** Created a Maestro E2E flow testing the `requirePresenceToSubmit` scenario on mobile platforms.
+
+**Changes:**
+- `e2e/mobile/shared/positive/presence-required-submit.yaml`: Player joins, navigates to a presence-required challenge, submits without being at the base, and asserts that a presence/location warning blocks submission.
+
+**Alternatives considered:**
+- Test via API-only (already covered in backend tests; the gap was specifically mobile E2E)
+- Also add WebSocket broadcast E2E and concurrent multi-player E2E (deferred: these require multi-device orchestration that Maestro supports but needs dedicated infrastructure)
+
+**Rationale:** The `requirePresenceToSubmit` gap was the most straightforward to address with a single-device Maestro flow. WebSocket broadcast testing and concurrent multi-player testing require either parallel Maestro instances or a custom test harness, making them incremental improvements for future passes. The remaining parity gaps (WebSocket broadcasts, concurrent multi-player) are mitigated by the 44 backend API tests that cover these scenarios at the service layer.

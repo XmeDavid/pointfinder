@@ -73,7 +73,15 @@
       "deleteTeamMembers_one": "Dieses Team hat {{count}} Mitglied.",
       "deleteTeamMembers_other": "Dieses Team hat {{count}} Mitglieder."
     },
-    "close": "Schliessen"
+    "close": "Schliessen",
+    "chips": {
+      "placeholder": "Antwort eingeben, oder {{example}} für einen Teamwert",
+      "add": "Zulässige Antwort hinzufügen",
+      "edit": "{{value}} bearbeiten",
+      "editing": "{{value}} wird bearbeitet",
+      "remove": "{{value}} entfernen",
+      "suggestions": "Teamwerte"
+    }
   },
   "auth": {
     "signIn": "Anmelden",
@@ -295,7 +303,24 @@
       "stale": "Veraltet",
       "unknown": "Kein Signal"
     },
-    "locationSignalAria": "Standortsignal: {{label}}"
+    "locationSignalAria": "Standortsignal: {{label}}",
+    "save": {
+      "idle": "Keine ungespeicherten Änderungen",
+      "local": "Ungespeicherte Änderungen",
+      "storageError": "Entwurfsspeicher nicht verfügbar",
+      "storageErrorHint": "Lass diesen Editor geöffnet oder speichere online. Diese Änderungen konnten nicht auf diesem Gerät gespeichert werden.",
+      "saving": "Wird gespeichert…",
+      "saved": "Gespeichert",
+      "error": "Speichern fehlgeschlagen",
+      "conflict": "Anderswo geändert",
+      "conflictHint": "Dieses Element wurde während der Bearbeitung auf dem Server geändert. Behalte deine Version oder übernimm die neueste.",
+      "retry": "Erneut versuchen",
+      "discard": "Änderungen verwerfen",
+      "keepMine": "Meine Version behalten",
+      "useLatest": "Neueste übernehmen",
+      "restored": "Deine ungespeicherten Änderungen wurden wiederhergestellt."
+    },
+    "saveAria": "Speicherstatus: {{label}}"
   },
   "lifecycle": {
     "goLive": "Live schalten",
@@ -1015,6 +1040,7 @@
     "EMAIL_ALREADY_TAKEN": "Diese E-Mail-Adresse wird bereits verwendet.",
     "EMAIL_CHANGE_TOKEN_INVALID": "Dieser E-Mail-Bestätigungslink ist ungültig.",
     "EMAIL_CHANGE_TOKEN_EXPIRED": "Dieser E-Mail-Bestätigungslink ist abgelaufen. Fordere einen neuen an.",
+    "ORGANIZER_ROLE_REQUIRED": "Dieses Konto hat keinen Zugriff zum Organisieren.",
     "ACCOUNT_FROZEN": "Dein Konto ist eingefroren. Aktualisiere deine Zahlungsmethode, um fortzufahren.",
     "NFC_TOKEN_REQUIRED": "An dieser Station muss der NFC-Tag gescannt werden, um einzuchecken.",
     "CHECK_IN_METHOD_MISMATCH": "Der Check-in-Nachweis passt nicht dazu, wie an dieser Station eingecheckt wird.",
@@ -1449,7 +1475,7 @@
     "noChallengesYet": "Noch keine Challenges",
     "noTeamsYet": "Noch keine Teams",
     "baseDescription": "Beschreibung der Basis...",
-    "correctAnswerPlaceholder": "Zulässige Antworten, kommagetrennt",
+    "correctAnswerPlaceholder": "Antwort eingeben und Enter drücken",
     "operatorNotesPlaceholder": "Interne Notizen nur für Operatoren...",
     "completionPlaceholder": "Was Teams nach Abschluss dieser Challenge sehen...",
     "challengeContentPlaceholder": "Challenge-Inhalt...",
@@ -1603,7 +1629,10 @@
       "chooseExistingChallenge": "Vorhandene Aufgabe wählen",
       "appearsAt": "Wo diese Aufgabe erscheint",
       "single_choice": "Einfachauswahl",
-      "multiple_choice": "Mehrfachauswahl"
+      "multiple_choice": "Mehrfachauswahl",
+      "saveBaseFirst": "Die Basis konnte nicht gespeichert werden. Behebe das Problem oder versuche es erneut, bevor du die Aufgabe öffnest.",
+      "baseInvalid": "Korrigiere die Basisdaten, bevor du die Aufgabe öffnest.",
+      "resumingChallenge": "Die begonnene Aufgabe wird fertiggestellt…"
     }
   },
   "command2": {
@@ -2148,7 +2177,11 @@
     "legacyAppsNote": "Die alten iOS- und Android-Apps können QR- und Standort-Basen nicht abschließen.",
     "ready": "Startbereit",
     "remaining_one": "Noch {{count}} Punkt offen",
-    "remaining_other": "Noch {{count}} Punkte offen"
+    "remaining_other": "Noch {{count}} Punkte offen",
+    "checking": "Startbereitschaft wird geprüft…",
+    "unavailable": "Die Startbereitschaft konnte nicht geprüft werden.",
+    "retry": "Erneut prüfen",
+    "blockersTitle": "Vor dem Livegang"
   },
   "tutorials": {
     "menu": "Tutorials",
@@ -2234,7 +2267,7 @@
       },
       "orient": {
         "title": "Deine Startbereitschaft",
-        "body": "Die Karte ist deine Arbeitsfläche: Stationen liegen darauf, alles andere hängt an ihnen. Diese Anzeige zählt, was bis zum Start noch fehlt. Öffne sie jederzeit für die vollständige Liste.",
+        "body": "Die Karte ist deine Arbeitsfläche: Stationen liegen darauf, alles andere hängt an ihnen. Diese Anzeige listet, was den Start noch blockiert, und bietet Spiel starten an, sobald nichts mehr fehlt.",
         "aside": "Sie erscheint nur, solange das Spiel in der Einrichtung ist."
       },
       "place-base": {
@@ -2357,7 +2390,7 @@
         "body": "Alle Prüfungen sind grün. Der Start fixiert die Route, übergibt die Challenges an die Teams und öffnet die Check-ins. Zurück in die Einrichtung kommst du danach jederzeit.",
         "branch": {
           "nfcPending": "Einer NFC-Station fehlt noch das beschriebene Tag, und das ist das Einzige. Schreibe es im Reiter Tags und Codes, oder stelle die Station auf QR-Code oder GPS um.",
-          "notReady": "Einige Prüfungen sind noch rot. Öffne die Liste, um zu sehen welche – meist eine Station ohne Challenge, ein fehlendes Team oder ein noch nicht beschriebenes NFC-Tag."
+          "notReady": "Einige Prüfungen sind noch rot. Die Anzeige listet welche – meist eine Station ohne Challenge, ein fehlendes Team oder ein noch nicht beschriebenes NFC-Tag – und jede öffnet den passenden Editor."
         }
       },
       "modes": {
@@ -2416,7 +2449,7 @@
       },
       "readiness": {
         "title": "Vor dem Livegang",
-        "body": "Für die Route selbst gibt es hier keine Prüfung: jede Station wird automatisch nummeriert. Die Anzeige wacht weiter über Stationen, Challenges, Teams, Zuordnungen und Check-in-Methoden. Klapp sie jederzeit auf, um Offenes zu sehen."
+        "body": "Für die Route selbst gibt es hier keine Prüfung: jede Station wird automatisch nummeriert. Die Anzeige wacht weiter über Stationen, Challenges, Teams, Zuordnungen und Check-in-Methoden und listet nur, was fehlt."
       },
       "finish": {
         "title": "Route fertig",
@@ -2446,7 +2479,7 @@
       },
       "readiness": {
         "title": "Versteckte Stationen zählen mit",
-        "body": "Die Startbereitschaft behandelt eine versteckte Station wie jede andere: sie braucht eine funktionierende Check-in-Methode, bei NFC ein verknüpftes Tag. Klapp die Anzeige auf, um vor dem Livegang alles zu prüfen."
+        "body": "Die Startbereitschaft behandelt eine versteckte Station wie jede andere: sie braucht eine funktionierende Check-in-Methode, bei NFC ein verknüpftes Tag. Die Anzeige listet nur, was fehlt; Spiel starten erscheint, sobald alles erledigt ist."
       },
       "finish": {
         "title": "Versteckt und mit Hinweis",
@@ -2791,7 +2824,13 @@
     "backToDiscoveries": "Zurück zu den Entdeckungen",
     "discoveryOtherTeam": "Dieses Handy gehört in diesem Spiel bereits zu einem anderen Team. Öffne deine gespeicherte Teilnahme unter Spielen.",
     "admissionClosed": "Dieses Spiel nimmt hier keine neuen Spieler mehr auf. Frage den Veranstalter.",
-    "discoveryOffline": "Du bist offline. Verbinde dich, um Spiele zu finden oder teilzunehmen."
+    "discoveryOffline": "Du bist offline. Verbinde dich, um Spiele zu finden oder teilzunehmen.",
+    "organizerSessionLoading": "Dein Organisator-Arbeitsbereich wird geöffnet…",
+    "organizerSessionError": "Dein Organisator-Arbeitsbereich konnte nicht geöffnet werden.",
+    "organizerSessionDenied": "Dieses Konto kann keine Spiele organisieren.",
+    "continueOrganizing": "Organisation fortsetzen",
+    "continueOrganizingLoading": "Dein zuletzt organisiertes Spiel wird gesucht…",
+    "continueOrganizingError": "Dein zuletzt organisiertes Spiel konnte nicht geladen werden"
   },
   "publication": {
     "heading": "Öffentlich machen",

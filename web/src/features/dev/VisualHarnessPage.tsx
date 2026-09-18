@@ -12,6 +12,7 @@ import { BrandLockup, BrandMark, BrandTile } from '@/components/brand'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingState } from '@/components/feedback/LoadingState'
+import { ContinueOrganizingCard } from '@/features/dashboard/ContinueOrganizing'
 import {
   ActivityEventBadge,
   BaseProgressBadge,
@@ -19,6 +20,7 @@ import {
   LocationSignalBadge,
   NfcStatusBadge,
   OverrideBadge,
+  SaveStatusIndicator,
   StatusBadge,
   SubmissionStatusBadge,
   SyncStatusBadge,
@@ -26,6 +28,7 @@ import {
   type ActivityEventStatus,
   type LocationSignalStatus,
   type NfcStatus,
+  type SaveState,
   type SyncStatus,
 } from '@/components/status'
 import {
@@ -53,10 +56,13 @@ import { CHECK_IN_METHODS } from '@/types/checkIn'
 import type { CheckInVerification } from '@/types/checkIn'
 import { CoachBubble } from '@/components/tour/CoachBubble'
 import { TourPill } from '@/components/tour/TourPill'
+import { VariableAwareChipInput } from '@/components/inputs/VariableAwareChipInput'
+import { ReadinessPanel } from '@/features/build/ReadinessPanel'
 
 const DashboardPreview = lazy(() => import("@/features/dashboard/DashboardPage").then(m => ({ default: m.DashboardPage })))
 
 const gameStatuses: GameStatus[] = ['setup', 'live', 'ended']
+const saveStates: SaveState[] = ['idle', 'local', 'saving', 'saved', 'error', 'conflict', 'storage-error']
 const submissionStatuses: SubmissionStatus[] = [
   'pending',
   'approved',
@@ -121,6 +127,65 @@ function ListDetailPreview() {
       }>
         <div className="p-4 text-sm">{selected ? 'Selected checkpoint details use the full phone width. Back returns to the list.' : 'Select a checkpoint to view details.'}</div>
       </ListDetailLayout>
+    </div>
+  )
+}
+
+/** Accepted-answer chips with team-value suggestions, editable in place. */
+function AnswerChipsPreview() {
+  const [chips, setChips] = useState(['FOX', '{{secret}}-{{teamColor}}', '{{typo}}'])
+  return (
+    <div className="space-y-2" data-testid="harness-answer-chips">
+      <VariableAwareChipInput
+        chips={chips}
+        onChange={setChips}
+        availableKeys={['secret', 'teamColor', 'motto']}
+        data-testid="harness-answer-chips-input"
+      />
+      <p className="text-xs text-muted-foreground">
+        Press a chip to edit it; type <code>{'{{'}</code> for team values; Escape closes the list or cancels an edit.
+      </p>
+    </div>
+  )
+}
+
+const readinessBlockers = [
+  { label: 'At least one team', passed: false, target: 'teams' as const },
+  { label: 'NFC bases linked (2/3)', passed: false, target: 'nfc' as const },
+  { label: 'Location check-in included in your plan', passed: false, target: 'settings' as const },
+]
+
+/** Every state of the go-live pill, backend-free. */
+function ReadinessPreview() {
+  const [expanded, setExpanded] = useState(true)
+  const shared = {
+    total: 10,
+    onOpenCheck: () => {},
+    onRetry: () => {},
+    onGoLive: () => {},
+    onToggle: setExpanded,
+    expanded,
+    launching: false,
+  }
+  const variants = [
+    { name: 'loading', props: { status: 'loading' as const, blockers: readinessBlockers, legacyNote: false } },
+    { name: 'error', props: { status: 'error' as const, blockers: readinessBlockers, legacyNote: false } },
+    { name: 'blockers', props: { status: 'ready' as const, blockers: readinessBlockers, legacyNote: true } },
+    { name: 'ready', props: { status: 'ready' as const, blockers: [], legacyNote: true } },
+    { name: 'launching', props: { status: 'ready' as const, blockers: [], legacyNote: false, launching: true } },
+    {
+      name: 'launch-failed',
+      props: { status: 'ready' as const, blockers: [], legacyNote: false, launchError: 'Game changed; check setup again' },
+    },
+  ]
+  return (
+    <div className="grid gap-3 sm:grid-cols-2" data-testid="harness-readiness">
+      {variants.map(({ name, props }) => (
+        <div key={name} className="space-y-2" data-testid={`harness-readiness-${name}`}>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{name}</p>
+          <ReadinessPanel {...shared} {...props} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -353,6 +418,42 @@ export function VisualHarnessPage() {
             <div className="flex flex-wrap gap-2">
               {syncStatuses.map((status) => (
                 <SyncStatusBadge key={status} status={status} />
+              ))}
+            </div>
+          </HarnessSection>
+
+          <HarnessSection title="Accepted answers (chips, team values, in-place edit)">
+            <AnswerChipsPreview />
+          </HarnessSection>
+
+          <HarnessSection title="Continue organizing (setup, live, ended, long title)">
+            <div className="grid gap-3 md:grid-cols-3" data-testid="harness-continue-organizing">
+              {(['setup', 'live', 'ended'] as const).map(status => (
+                <ContinueOrganizingCard key={status} game={{ name: status === 'setup' ? 'The forest trail around the lake and the old observation tower' : 'Forest trail', status }} onContinue={() => {}} />
+              ))}
+            </div>
+          </HarnessSection>
+
+          <HarnessSection title="Go-live readiness pill (loading, error, blockers, ready, launch)">
+            <ReadinessPreview />
+          </HarnessSection>
+
+          <HarnessSection title="Editor Save Status (drafts, background save, conflict)">
+            <div className="grid gap-3 sm:grid-cols-2" data-testid="save-status-fixture">
+              {saveStates.map((state) => (
+                <div key={state} className="rounded-md border border-border bg-card p-3">
+                  <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">{state}</p>
+                  <SaveStatusIndicator
+                    state={state}
+                    hideIdle={false}
+                    error={state === 'error' ? 'The server did not accept the base: the name is required.' : undefined}
+                    onRetry={() => {}}
+                    onDiscard={() => {}}
+                    onKeepMine={() => {}}
+                    onUseLatest={() => {}}
+                    data-testid={`save-status-${state}`}
+                  />
+                </div>
               ))}
             </div>
           </HarnessSection>

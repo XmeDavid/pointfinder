@@ -41,4 +41,4 @@ The frontend registers for changes before its initial read, and also refreshes
 on resize/foreground. Do not add these values to CSS `env()`; they replace it.
 
 Build registration and generated permissions follow the other PointFinder native
-plugins. See [validation and device checks](../../docs/native-platform-validation.md).
+plugins. See [validation and device checks](../../docs/store-submission/release-checklist.md).

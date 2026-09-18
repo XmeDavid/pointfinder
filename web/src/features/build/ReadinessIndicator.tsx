@@ -1,11 +1,18 @@
-import { motion, AnimatePresence } from 'motion/react'
-import { CheckCircle, Info, Circle, ChevronRight } from 'lucide-react'
+import { useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { GlassPanel } from '@/components/layout/GlassPanel'
+import { getApiErrorMessage } from '@/lib/api/errors'
 import { useUpdateGameStatus } from '@/hooks/mutations/useGameMutations'
 import { useWorkspaceStore } from '@/stores/workspace'
-import { useReadinessChecks } from './useReadinessChecks'
+import { ReadinessPanel } from './ReadinessPanel'
+import { useReadinessChecks, type ReadinessCheck } from './useReadinessChecks'
 
+/**
+ * Wires the go-live pill to the workspace: the readiness queries, the
+ * expanded flag in the store, the editors a blocker opens, and the status
+ * mutation. The server stays the authority on going live; the workspace only
+ * switches to command mode once the mutation succeeded.
+ */
 export default function ReadinessIndicator({
   gameId,
   gameStatus,
@@ -14,163 +21,64 @@ export default function ReadinessIndicator({
   gameStatus?: string
 }) {
   const { t } = useTranslation()
-  const { checks, legacyNote, allPassed } = useReadinessChecks(gameId)
+  const queryClient = useQueryClient()
+  const { checks, legacyNote, status, retry } = useReadinessChecks(gameId)
   const expanded = useWorkspaceStore((s) => s.readinessExpanded)
   const setReadinessExpanded = useWorkspaceStore((s) => s.setReadinessExpanded)
-  const updateStatus = useUpdateGameStatus(gameId)
   const setMode = useWorkspaceStore((s) => s.setMode)
-  const openDrawer = useWorkspaceStore(s=>s.openDrawer)
+  const openDrawer = useWorkspaceStore((s) => s.openDrawer)
+  const closeDrawer = useWorkspaceStore((s) => s.closeDrawer)
+  const setSettingsPanelOpen = useWorkspaceStore((s) => s.setSettingsPanelOpen)
+  const updateStatus = useUpdateGameStatus(gameId)
+
+  const openCheck = useCallback(
+    (check: ReadinessCheck) => {
+      setMode('build')
+      if (check.target === 'settings') {
+        closeDrawer()
+        setSettingsPanelOpen(true)
+        return
+      }
+      setSettingsPanelOpen(false)
+      openDrawer(check.target ?? 'bases')
+    },
+    [setMode, closeDrawer, setSettingsPanelOpen, openDrawer],
+  )
+
+  const goLive = useCallback(() => {
+    updateStatus.mutate(
+      { status: 'live' },
+      {
+        onSuccess: () => setMode('command'),
+        // The server saw something this pill did not; refresh what it checks so
+        // the blocker shows up instead of a stale "ready".
+        onError: () => {
+          for (const key of ['game', 'bases', 'challenges', 'teams', 'assignments', 'variables']) {
+            void queryClient.invalidateQueries({ queryKey: [key, gameId] })
+          }
+        },
+      },
+    )
+  }, [updateStatus, setMode, queryClient, gameId])
 
   // Only show in setup mode -- hide when game is live or ended
   if (gameStatus && gameStatus !== 'setup') return null
 
-  const passed = checks.filter((c) => c.passed).length
-  const total = checks.length
-
-  // SVG ring calculations
-  const size = 44
-  const strokeWidth = 3
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const progress = total > 0 ? passed / total : 0
-  const dashOffset = circumference * (1 - progress)
-
   return (
-    <div
-      className="w-full min-w-0 md:w-auto md:max-w-sm"
-      data-testid="readiness-indicator"
-    >
-      <GlassPanel>
-        <motion.div
-          layout
-          className="w-full rounded-xl overflow-hidden md:w-72"
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
-        >
-          {/* Collapsed header -- always visible */}
-          <button
-            type="button"
-            aria-expanded={expanded}
-            className="flex w-full items-center gap-3 px-3 py-3 text-left"
-            onClick={() => setReadinessExpanded(!expanded)}
-            data-testid="readiness-toggle"
-          >
-            <svg
-              width={size}
-              height={size}
-              viewBox={`0 0 ${size} ${size}`}
-              className="shrink-0"
-              data-testid="readiness-ring"
-            >
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={strokeWidth}
-                className="text-muted"
-              />
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                fill="none"
-                stroke="var(--pf-color-status-completed)"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                style={{ transition: 'stroke-dashoffset 0.4s ease' }}
-              />
-              <text
-                x={size / 2}
-                y={size / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                className="text-sm font-semibold fill-foreground"
-                data-testid="readiness-count"
-              >
-                {passed}/{total}
-              </text>
-            </svg>
-            <span className="text-sm text-muted-foreground leading-tight">
-              {allPassed
-                ? t('readiness.ready')
-                : t('readiness.remaining', { count: total - passed })}
-            </span>
-          </button>
-
-          {/* Expanded checklist */}
-          <AnimatePresence initial={false}>
-            {expanded && (
-              <motion.div
-                key="checklist"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-                className="overflow-hidden"
-              >
-                <div
-                  className="px-3 pb-3 space-y-1.5"
-                  data-testid="readiness-checklist"
-                >
-                  {checks.map((check) => (
-                    <button type="button" onClick={()=>{setMode("build");openDrawer(check.target ?? "bases")}}
-                      key={check.label}
-                      className="flex w-full min-h-11 items-center gap-2 text-left rounded-md px-1 hover:bg-muted"
-                      data-testid={`check-${check.passed ? 'pass' : 'fail'}`}
-                    >
-                      {check.passed ? (
-                        <CheckCircle className="h-4 w-4 shrink-0 text-success" />
-                      ) : (
-                        <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
-                      )}
-                      <span
-                        className={`text-xs ${
-                          check.passed
-                            ? 'text-muted-foreground'
-                            : 'text-foreground font-medium'
-                        }`}
-                      >
-                        {check.label}
-                      </span><ChevronRight size={14} className="ml-auto shrink-0 text-muted-foreground"/>
-                    </button>
-                  ))}
-
-                  {legacyNote && (
-                    <div
-                      className="flex items-start gap-2 pt-1"
-                      data-testid="readiness-legacy-note"
-                    >
-                      <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                      <span className="text-xs text-muted-foreground">
-                        {t('readiness.legacyAppsNote')}
-                      </span>
-                    </div>
-                  )}
-
-                  {updateStatus.isError && <p role="alert" className="text-sm text-destructive">{t("build.compose.launchFailed")}</p>}
-                  {allPassed && (
-                    <button
-                      className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold w-full mt-2 cursor-pointer hover:bg-primary/90 transition-colors"
-                      data-testid="go-live-btn"
-                      disabled={updateStatus.isPending}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        updateStatus.mutate({ status: 'live' }, {onSuccess:()=>setMode('command')})
-                      }}
-                    >
-                      {t(updateStatus.isPending ? "build.compose.launching" : "build.compose.goLive")}
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </GlassPanel>
-    </div>
+    <ReadinessPanel
+      status={status}
+      blockers={checks.filter((check) => !check.passed)}
+      total={checks.length}
+      legacyNote={legacyNote}
+      expanded={expanded}
+      onToggle={setReadinessExpanded}
+      onOpenCheck={openCheck}
+      onRetry={retry}
+      onGoLive={goLive}
+      launching={updateStatus.isPending}
+      launchError={
+        updateStatus.isError ? getApiErrorMessage(updateStatus.error, t('build.compose.launchFailed')) : null
+      }
+    />
   )
 }

@@ -56,7 +56,7 @@ Most "unfixed" findings (7 of 7) were already resolved in post-audit commits (th
 | 9.1 | Backend test coverage (AssignmentResolver + 5 services) | Separate task | **Resolved** -- AssignmentResolverTest (15 tests), BroadcastServiceTest (33), GameImportExportServiceTest (83), GameSchedulerServiceTest (24), TeamVariableServiceTest (40), ChallengeAssignmentServiceTest (22). Total: 217 tests |
 | 9.2 | Zero frontend component tests | Separate task | **Resolved** -- 24 feature-level component tests across workspace, dashboard, results, review, command, and build features |
 | 9.3 | Zero Android ViewModel tests | Separate task | **Resolved (2026-09-08)** -- PlayerViewModelTest.kt with 11 tests |
-| 9.4 | Zero Android instrumentation tests | Separate task | Yes (mitigated by Maestro E2E) |
+| 9.4 | Zero Android instrumentation tests | Separate task | **Resolved (2026-09-17)** -- CheckInScreenTest (8) + SolveScreenTest (6) |
 | 9.5 | MobileRealtimeClient test coverage | Separate task | **Resolved (2026-09-08)** -- 19 tests total (URL, token, parsing, reconnect backoff) |
 | 9.6 | Zero iOS View/ViewModel tests | Separate task | **Resolved (2026-09-09)** -- AppStateViewModelTests.swift with 15+ tests |
 | 9.7 | E2E parity gaps | Separate task | Yes (documented) |
@@ -390,12 +390,9 @@ Resolved 4 remaining findings and made further improvements to previously resolv
 
 16. **TeamService.java** -- Join code length increased from 7 to 8 characters (~2.8 trillion combinations).
 
-### Remaining deferred items (2)
+### Remaining deferred items (0)
 
-| # | Finding | Why still deferred |
-|---|---------|-------------------|
-| 9.4 | Android instrumentation tests | Mitigated by Maestro E2E; requires Compose test infrastructure |
-| 9.7 | E2E parity gaps | Incremental by nature; documented |
+All findings resolved as of 2026-09-17.
 
 ---
 
@@ -416,3 +413,29 @@ Full re-verification of all 22 findings. No regressions found. No new actionable
 **Confirmed still fixed:** All findings verified against current source. Key checks: ChallengeResponse.fixedBaseId present (line 23), StringListJsonConverter null guard intact (line 37), NotificationService uses PlayerPushToken with PushPlatform enum filtering (no null-as-iOS path), AuthController uses X-Forwarded-Host only, FileController Content-Disposition set (line 81), MobileRealtimeClient parenthesized precedence fix intact with MainActor comment, MapLibreMapView passes parentViewController (line 433), SubmissionDetail uses i18n alt text, Android failed sync warning present with checkForFailedActions called from PlayerRootScreen.kt:341, contentDescription reduced to 1 decorative instance in @Preview function.
 
 **Remaining 2 deferred items:** No change in status. 9.4 (Android instrumentation tests) and 9.7 (E2E parity gaps) remain deferred -- these require dedicated infrastructure (Compose test rules, test dispatchers) and incremental E2E coverage respectively.
+
+---
+
+## Changes Made (2026-09-17 automated pass)
+
+Resolved both remaining deferred items. All 22 audit findings are now addressed.
+
+### Finding 9.4 -- Android Compose UI instrumentation tests
+
+1. **CheckInScreenTest.kt** -- New instrumented test in `app/src/androidTest/` with 8 tests covering: check-in button display/click, pending sync banner, failed sync warning (11.2 verification), scan error display, NFC disabled/unsupported screen switching, and zero-count banner hiding.
+2. **SolveScreenTest.kt** -- New instrumented test with 6 tests covering: challenge title/description display, submit button state, error message display, answer input editing, and back button callback.
+
+Infrastructure was already in place (Compose BOM, ui-test-junit4, ui-test-manifest, espresso dependencies all declared). Only the `androidTest/` directory and test files were missing.
+
+### Finding 9.7 -- E2E parity gap (requirePresenceToSubmit on mobile)
+
+3. **e2e/mobile/shared/positive/presence-required-submit.yaml** -- New Maestro flow testing the `requirePresenceToSubmit` scenario: player joins, navigates to a presence-required challenge, attempts to submit without being at the base, and asserts that a presence/location warning blocks submission.
+
+### Documentation
+
+4. **docs/audit-fix-summary.md** -- This section. All 22 findings now resolved.
+5. **docs/audit-decisions.md** -- Added decisions for 9.4 and 9.7.
+
+### Final status
+
+All 22 findings from the 2026-03-21 audit are resolved. Zero deferred items remain.

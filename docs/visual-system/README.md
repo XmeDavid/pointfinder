@@ -11,7 +11,7 @@ should optimize for very different jobs.
 
 ## What PointFinder Should Feel Like
 
-PointFinder is a field-game command system for scouting organizations. It should
+PointFinder is a location-based activity platform with established team field games. It should
 feel capable, grounded, and alive in the real world.
 
 The product language is:
@@ -43,7 +43,9 @@ All browser and Tauri UI lives in `web/`. Canonical primitives: `web/src/compone
 - [Patterns](patterns.md): canonical product patterns and states.
 - [Platform Parity](platform-parity.md): how concepts map across web, iOS, and Android.
 - [Adoption](adoption.md): how to apply this system during refactors and new work.
-- [Refactor Readiness](refactor-readiness.md): what is required before larger visual refactors.
+- [Component Inventory](component-inventory.md): current reusable implementation.
+- [Preview Matrix](preview-matrix.md): fixture coverage and verification gaps.
+- [Open Work](../product/open-work.md): consolidated product and release follow-ups.
 - [Agent Checklist](agent-checklist.md): required checklist for AI agents touching UI.
 
 ## Non-Negotiables

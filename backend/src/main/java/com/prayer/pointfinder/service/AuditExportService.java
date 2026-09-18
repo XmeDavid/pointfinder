@@ -625,9 +625,9 @@ public class AuditExportService {
     }
 
     /**
-     * CSV header order is fixed and documented in the API reference. Any
-     * change to the column list should bump the {@code audit-export} section
-     * of {@code docs/api-reference.md} at the same time, because external
+     * CSV header order is an external contract. Any change must update the
+     * export schema and its consumers together, preserving the compatibility
+     * rules in {@code docs/product/contracts.md}, because external
      * consumers parse by position. The three trailing columns
      * ({@code check_in_method}, {@code check_in_verification},
      * {@code check_in_proof}) were appended by the check-in methods wave and

@@ -354,7 +354,7 @@ class QuotaEnforcementTest extends IntegrationTestBase {
 
     @Test
     void theMemberLimitHoldsEvenWithEnforcementOffBecauseItIsASeatCount() {
-        // Documented in docs/business-logic.md: the member and storage limits
+        // Documented in docs/product/contracts.md: the member and storage limits
         // are what a club deal actually buys, so they do not answer to
         // app.quota.enforcement-enabled. This test pins the code on the
         // rejection; the always-on half is asserted by the property this class

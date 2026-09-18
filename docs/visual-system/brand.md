@@ -164,6 +164,8 @@ Open, with limits recorded honestly:
 - The public broadcast pages keep their live-signal icon beside the product
   name; that icon means “live”, which the brand mark must not imply.
 - Printable NFC signs, social previews and exports have not yet adopted the mark.
+- `docs/store-submission/feature-graphic.png` still uses the former compass mark;
+  replace it before submission (OW-13).
 
 Platform export requirements should be checked when implementing:
 [Apple app icons](https://developer.apple.com/design/human-interface-guidelines/app-icons)

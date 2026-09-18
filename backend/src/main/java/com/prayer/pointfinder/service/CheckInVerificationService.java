@@ -38,7 +38,7 @@ import java.util.UUID;
  * {@code packages/game-core} so the client pre-check and the server verdict
  * agree. Keeping them in one class means the mirror has exactly one source.
  *
- * <p>Spec: docs/specs/2026-09-05-check-in-methods-design.md
+ * <p>Spec: docs/product/contracts.md
  */
 @Service
 @RequiredArgsConstructor

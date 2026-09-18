@@ -6,6 +6,7 @@ import { API_URL } from "@/lib/api/config";
 
 import { isNative } from '@/platform/runtime';
 import { saveOperatorSession, clearOperatorSession, takeOperatorRefreshBody, loadOperatorSession } from '@/platform/operatorSession';
+import { clearResumeLocation } from '@/app/resume';
 
 interface AuthState {
   user: User | null;
@@ -15,6 +16,13 @@ interface AuthState {
   sessionVersion: number;
   login: (email: string, password: string) => Promise<void>;
   register: (token: string, name: string, email: string, password: string) => Promise<void>;
+  /**
+   * OW-01: an operator who signed in through the player entry holds an
+   * account session, not an operator one. The server exchanges that account
+   * bearer for a fresh operator token pair after checking the role, so no
+   * account or player token is ever copied into this store.
+   */
+  adoptOrganizerSession: (accountAccessToken: string, expectedAccountId?: string, isAccountCurrent?: () => boolean) => Promise<void>;
   logout: () => void;
   /** Called by the API client when tokens are refreshed successfully */
   setTokens: (accessToken: string, user: User) => void;
@@ -79,11 +87,33 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+      adoptOrganizerSession: async (accountAccessToken: string, expectedAccountId?: string, isAccountCurrent = () => true) => {
+        const version = get().sessionVersion + 1;
+        set({ sessionVersion: version });
+        const current = () => get().sessionVersion === version && isAccountCurrent();
+        const { data } = await axios.post(`${API_URL}/account/organizer-session`, {}, {
+          withCredentials: true,
+          headers: { Authorization: `Bearer ${accountAccessToken}` },
+        });
+        // The server refuses participants; never let a malformed reply promote one.
+        if (!data?.user || !['operator', 'admin'].includes(data.user.role) || !data.accessToken) throw new Error('Organizer role required');
+        if (!current() || (expectedAccountId && data.user.id !== expectedAccountId)) throw new Error('Operator session changed');
+        await saveOperatorSession(data, current);
+        if (!current() || (expectedAccountId && data.user.id !== expectedAccountId)) throw new Error('Operator session changed');
+        set({
+          user: data.user,
+          accessToken: data.accessToken,
+          isAuthenticated: true,
+        });
+      },
+
       logout: () => {
         // Fire-and-forget logout on the server; the HttpOnly cookie is sent automatically
         void takeOperatorRefreshBody().then((body) =>
           axios.post(`${API_URL}/auth/logout`, body, { withCredentials: true })
         ).catch(() => {});
+        // An explicit sign-out is never resumed into.
+        clearResumeLocation();
         set({
           sessionVersion: get().sessionVersion + 1,
           user: null,
@@ -104,6 +134,7 @@ export const useAuthStore = create<AuthState>()(
         // Only trigger if we think we're authenticated (avoid loops)
         if (get().isAuthenticated) {
           void clearOperatorSession();
+          clearResumeLocation();
           console.warn("[AUTH] handleAuthFailure called — wiping session", new Error().stack);
           // Disconnect WebSocket before clearing state to prevent the STOMP
           // client from entering a reconnect loop with no valid token.

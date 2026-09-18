@@ -38,7 +38,12 @@ export function saveOperatorSession(data: { accessToken: string; refreshToken?: 
     const refreshToken = data.refreshToken ?? (await readSession())?.refreshToken
     if (!refreshToken) throw new Error('Native operator response did not include a refresh token')
     const store = await secureStore()
-    if (isCurrent()) await store.set(KEY, JSON.stringify({ kind: 'operator', ...data, refreshToken }))
+    if (isCurrent()) {
+      await store.set(KEY, JSON.stringify({ kind: 'operator', ...data, refreshToken }))
+      // Account sign-out can invalidate an exchange while the native write is
+      // pending. Remove that session before allowing a later queued login.
+      if (!isCurrent()) await store.remove(KEY)
+    }
   })
 }
 export async function operatorRefreshBody(): Promise<{ refreshToken?: string }> {

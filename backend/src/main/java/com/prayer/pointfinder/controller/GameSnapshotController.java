@@ -24,8 +24,7 @@ import java.util.UUID;
  *
  * <p>This is the recovery contract clients reach for when realtime fails:
  * reconnect, foreground, missed event, or any time the cached state might be
- * wrong. See docs/business-logic.md "State Snapshot and Version Contract" and
- * docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * wrong. See docs/product/contracts.md, "Realtime, audit and operations".
  * (P0 Track 2 Slice 1).
  *
  * <p><strong>Security.</strong> The route is mounted under

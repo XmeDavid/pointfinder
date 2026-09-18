@@ -44,7 +44,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     ExploreController.class,
     AdminPublicationController.class
 })
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, com.prayer.pointfinder.security.FrozenAccountFilter.class,
+        com.prayer.pointfinder.security.RefreshTokenCookies.class})
 @TestPropertySource(properties = {
     "app.cors.allowed-origins=http://localhost:5173",
     "management.endpoints.web.exposure.include=health,info,metrics,prometheus"

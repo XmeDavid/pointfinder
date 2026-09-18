@@ -18,7 +18,7 @@ import java.util.UUID;
  * player) and in the case-insensitive substring check performed by
  * {@code PlayerControllerTest.getGameDataResponseStringDoesNotContainBaseNameKey}.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * — P1 Operator Workflow and Content Model.
  */
 public record BaseProgressResponse(

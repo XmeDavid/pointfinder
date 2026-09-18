@@ -129,7 +129,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
-        return jsonError(HttpStatus.FORBIDDEN, ex.getMessage());
+        return jsonError(HttpStatus.FORBIDDEN, ex.getMessage(), null, null,
+                ex.getErrorCode() != null ? ex.getErrorCode().name() : null, null);
     }
 
     @ExceptionHandler(FileStorageException.class)

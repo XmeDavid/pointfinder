@@ -1,4 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// jsdom has no IndexedDB: give the pending-creation record an in-memory kv.
+const platform = vi.hoisted(() => ({ memory: new Map<string, string>() }))
+vi.mock('@/platform', () => ({
+  isNative: () => false,
+  kv: {
+    get: async (key: string) => platform.memory.get(key) ?? null,
+    set: async (key: string, value: string) => {
+      platform.memory.set(key, value)
+    },
+    remove: async (key: string) => {
+      platform.memory.delete(key)
+    },
+  },
+}))
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -7,6 +22,7 @@ import { server } from '@/test/msw/server'
 import { createMockChallenge } from '@/test/factories/challenge'
 import { createMockTeam } from '@/test/factories/team'
 import { BaseAssignmentSection } from './BaseAssignmentSection'
+import { resetPendingCreations } from '../drafts/pendingCreation'
 import type { Assignment } from '@/types/v2'
 
 const challenges = [
@@ -56,6 +72,10 @@ function renderSection(assignments: Assignment[], onOpen = vi.fn()) {
 }
 
 describe('BaseAssignmentSection', () => {
+  beforeEach(() => {
+    platform.memory.clear()
+    resetPendingCreations()
+  })
   it('links a challenge for all teams', async () => {
     const user = userEvent.setup()
     renderSection([])

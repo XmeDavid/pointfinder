@@ -264,7 +264,7 @@ export interface ActivityEvent {
 //   backend/src/main/java/com/prayer/pointfinder/dto/response/OperatorSnapshotResponse.java
 //   backend/src/main/java/com/prayer/pointfinder/dto/response/PlayerSnapshotResponse.java
 // Any structural drift between these types and the backend DTOs is a bug.
-// See docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+// See docs/product/contracts.md section "Realtime, audit and operations".
 
 export interface SnapshotLeaderboardEntry {
   teamId: string;

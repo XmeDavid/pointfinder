@@ -108,7 +108,7 @@ export function connectWebSocket(
       // Fire the reconnect hook on every connect *after* the first. This is
       // the web equivalent of iOS `MobileRealtimeClient.onReconnect`
       // and Android's `ON_RESUME` wiring — the canonical recovery pattern
-      // from docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+      // from docs/product/contracts.md section "Realtime, audit and operations".
       if (hasConnectedOnce) {
         try {
           onReconnect?.();

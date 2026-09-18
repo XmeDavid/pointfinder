@@ -16,15 +16,33 @@ numbers and timestamps are deliberately excluded, so a critical archiver whose
 "last failure 3m ago" becomes "4m ago" is the same fingerprint.
 
 * Overall status leaves ``ok`` (``warning``, ``unknown`` or ``critical``) or
-  changes between those levels: alert, sent immediately.
+  changes between those levels: alert. A ``critical`` picture is queued at
+  once (``CRITICAL_DEBOUNCE_SECONDS``, default 0: the monitor already holds
+  every non-prompt critical); a ``warning``/``unknown`` picture must be seen
+  unchanged for ``ALERT_DEBOUNCE_SECONDS`` (default 90) first, which absorbs a
+  single-tick wobble from an older monitor image.
 * A missing, unparseable, stale (older than ``STALE_SECONDS``, default 180)
   or future-dated report counts as ``unknown`` with a synthetic ``report``
-  check, so a dead monitor alerts like a failing one.
+  check, so a dead monitor alerts like a failing one. It is never debounced;
+  only during the first ``STARTUP_GRACE_SECONDS`` (default 120) after the
+  pusher starts is it held, so a stack restart where the monitor comes up a
+  minute after the pusher does not email. After the grace it alerts at once.
 * Only the set of failing checks changes while the overall level stays the
   same: alert, but coalesced (not before ``COALESCE_SECONDS`` after the last
   delivered email) and carrying the latest picture at send time.
-* Everything back to ``ok`` after an alert was delivered: recovery email.
+* Everything back to ``ok`` after an alert was delivered and *staying* ``ok``
+  for ``RECOVERY_CONFIRM_SECONDS`` (default 180): recovery email. If the
+  picture degrades again to what was delivered before the recovery is
+  confirmed, nothing is sent at all: no recovery, no re-alert.
 * A healthy monitor at first start: nothing. The pusher never mails "all good".
+
+A queued message whose kind the picture no longer supports (a recovery while
+the monitor is degraded again, an alert while the monitor is ok) is withdrawn
+immediately; the replacement, if any, goes through the same confirmation.
+The monitor's own persistence (``deploy/ha/monitoring/monitor.py``) and these
+windows add up: a held warning reaches the inbox roughly 3 min (monitor) +
+1.5 min (pusher) after it first appeared; a prompt critical within about
+1.5 min; a recovery about 3 min (monitor) + 3 min (pusher) after the fact.
 
 A hard cap of ``MAX_EMAILS_PER_HOUR`` bounds storms regardless of the above.
 
@@ -116,10 +134,15 @@ class Settings:
         self.response_max_bytes = read('RESPONSE_MAX_BYTES', '65536', int)
         self.healthcheck_max_age = read('HEALTHCHECK_MAX_AGE_SECONDS', str(3 * self.poll_seconds), int)
         self.delivery_failure_grace = read('DELIVERY_FAILURE_GRACE_SECONDS', '1800', int)
+        self.alert_debounce = read('ALERT_DEBOUNCE_SECONDS', '90', int)
+        self.critical_debounce = read('CRITICAL_DEBOUNCE_SECONDS', '0', int)
+        self.recovery_confirm = read('RECOVERY_CONFIRM_SECONDS', '180', int)
+        self.startup_grace = read('STARTUP_GRACE_SECONDS', '120', int)
         if min(self.poll_seconds, self.stale_seconds, self.http_timeout, self.healthcheck_max_age,
                self.max_emails_per_hour, self.response_max_bytes) <= 0:
             raise ValueError('Invalid interval or limit settings')
-        if self.coalesce_seconds < 0 or self.delivery_failure_grace < 0:
+        if min(self.coalesce_seconds, self.delivery_failure_grace, self.alert_debounce, self.critical_debounce,
+               self.recovery_confirm, self.startup_grace) < 0:
             raise ValueError('Invalid interval settings')
         if not 0 < self.retry_min_seconds <= self.retry_max_seconds:
             raise ValueError('Invalid retry settings')
@@ -351,13 +374,16 @@ def atomic_write(path, payload):
 class State:
     """``delivered`` changes only after a successful send. ``pending`` is the
     single undelivered message with its idempotency key and retry schedule.
-    ``recent_sends`` backs the hourly cap."""
+    ``recent_sends`` backs the hourly cap. ``observed`` is the fingerprint the
+    pusher is currently watching and since when, so a restart does not reset
+    a debounce or recovery-confirmation window that was already running."""
 
     def __init__(self, path):
         self.path = pathlib.Path(path)
         self.delivered = None
         self.pending = None
         self.recent_sends = []
+        self.observed = None
 
     def load(self):
         try:
@@ -365,20 +391,21 @@ class State:
             if not isinstance(data, dict):
                 raise ValueError('not an object')
             delivered, pending, recent = data.get('delivered'), data.get('pending'), data.get('recent_sends', [])
+            observed = data.get('observed')
             if not (isinstance(delivered, (dict, type(None))) and isinstance(pending, (dict, type(None)))
-                    and isinstance(recent, list)):
+                    and isinstance(recent, list) and isinstance(observed, (dict, type(None)))):
                 raise ValueError('bad shape')
         except OSError:
             return self
         except (ValueError, TypeError):
             LOG.warning('Alert state unreadable; starting from an empty state')
             return self
-        self.delivered, self.pending, self.recent_sends = delivered, pending, recent
+        self.delivered, self.pending, self.recent_sends, self.observed = delivered, pending, recent, observed
         return self
 
     def save(self):
         atomic_write(self.path, {'schema': 1, 'delivered': self.delivered, 'pending': self.pending,
-                                 'recent_sends': self.recent_sends})
+                                 'recent_sends': self.recent_sends, 'observed': self.observed})
 
 
 def _iso(when):
@@ -388,6 +415,13 @@ def _iso(when):
 def _parse(text):
     when = datetime.datetime.fromisoformat(text)
     return when if when.tzinfo else when.replace(tzinfo=UTC)
+
+
+def _parse_opt(text):
+    try:
+        return _parse(text)
+    except (ValueError, TypeError):
+        return None
 
 
 # --------------------------------------------------------------------------- #
@@ -416,11 +450,38 @@ class Pusher:
         self.stop = threading.Event()
         self._sleep = sleep or self.stop.wait
         self.state = State(settings.state_path).load()
+        self.started_at = self.clock()
         self.last_fingerprint = None
         self.last_source = None
         self.rate_limited_logged = False
+        self.holding_logged = None
 
     # -- decision ------------------------------------------------------------ #
+
+    def track(self, fingerprint, now):
+        """Remember since when the current picture has been seen unchanged."""
+        observed = self.state.observed
+        last_seen = _parse_opt(observed.get('last_seen')) if observed else None
+        if (observed is None or observed.get('fingerprint') != fingerprint
+                or _parse_opt(observed.get('since')) is None or last_seen is None
+                or (now - last_seen).total_seconds() > self.settings.healthcheck_max_age):
+            self.state.observed = {'fingerprint': fingerprint, 'since': _iso(now)}
+        self.state.observed['last_seen'] = _iso(now)
+        self.state.save()
+        return (now - _parse(self.state.observed['since'])).total_seconds()
+
+    def confirmation_wait(self, observation, kind, stable_for, now):
+        """Seconds the current picture must still hold before it may be queued."""
+        if kind == RECOVERY:
+            need = self.settings.recovery_confirm
+        elif observation.source != 'report':
+            # Dead, stale or unreadable monitor: only the startup grace holds it.
+            return max(0.0, (self.started_at - now).total_seconds() + self.settings.startup_grace)
+        elif observation.status == CRITICAL:
+            need = self.settings.critical_debounce
+        else:
+            need = self.settings.alert_debounce
+        return max(0.0, need - stable_for)
 
     def earliest_send(self, now, kind, observation):
         delivered = self.state.delivered
@@ -450,6 +511,8 @@ class Pusher:
         return min(recent) + datetime.timedelta(hours=1)
 
     def plan(self, observation, now):
+        fingerprint = observation.fingerprint()
+        stable_for = self.track(fingerprint, now)
         kind = desired_kind(self.state.delivered, observation)
         pending = self.state.pending
         # Resolve an uncertain send with its original idempotency key/body
@@ -463,7 +526,13 @@ class Pusher:
                 self.state.pending = None
                 self.state.save()
             return
-        fingerprint = observation.fingerprint()
+        if pending is not None and pending['kind'] != kind:
+            # A queued recovery while the monitor is degraded again, or a queued
+            # alert while it is ok: neither may go out. Whatever replaces it must
+            # pass its own confirmation window first.
+            LOG.info('Withdrawing undelivered %s email: picture now calls for %s', pending['kind'], kind)
+            self.state.pending = pending = None
+            self.state.save()
         delivered = self.state.delivered
         if (kind == ALERT and delivered is not None and delivered['kind'] == ALERT
                 and delivered.get('status') == fingerprint['status']
@@ -474,8 +543,21 @@ class Pusher:
                 self.state.pending = None
                 self.state.save()
             return
+        wait = self.confirmation_wait(observation, kind, stable_for, now)
+        if wait > 0:
+            # Do not deliver an outdated non-uncertain message while the new
+            # picture is still being confirmed, including after a blind gap.
+            if pending is not None:
+                self.state.pending = None
+                self.state.save()
+            if self.holding_logged != (kind, json.dumps(fingerprint, sort_keys=True)):
+                LOG.info('Holding %s email for %ds (%s: %s)', kind, wait, observation.status,
+                         ', '.join(sorted(fingerprint['checks'])) or '-')
+                self.holding_logged = (kind, json.dumps(fingerprint, sort_keys=True))
+            return
         if pending is not None and pending['kind'] == kind and pending['fingerprint'] == fingerprint:
             return
+        self.holding_logged = None
         queued_since = _iso(now)
         if pending is not None:
             LOG.info('Replacing undelivered %s email with a newer picture', pending['kind'])
@@ -556,9 +638,11 @@ class Pusher:
     def write_status(self, observation, now):
         pending = self.state.pending
         delivered = self.state.delivered
+        observed = self.state.observed
         atomic_write(self.settings.status_path, {
             'schema': 1, 'tick_at': _iso(now), 'observed_status': observation.status,
             'observed_source': observation.source,
+            'observed_since': observed['since'] if observed else None,
             'pending': None if pending is None else {
                 'kind': pending['kind'], 'created_at': pending['created_at'],
                 'queued_since': pending.get('queued_since', pending['created_at']), 'attempts': pending['attempts'],

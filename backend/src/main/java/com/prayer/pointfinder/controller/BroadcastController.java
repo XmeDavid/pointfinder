@@ -18,8 +18,10 @@ import java.util.List;
  * impractical. Additionally, nginx enforces a {@code broadcast_limit}
  * rate-limit zone (10 requests/minute per IP, burst=5) on
  * {@code /api/broadcast/} to further mitigate enumeration attempts.
- * The combination of code entropy and rate limiting provides adequate
- * protection for the broadcast data (which includes team locations).
+ * Broadcast data includes team locations; preserve code and access boundaries.
+ *
+ * Nginx edge limits apply only on that ingress path; HAProxy routes rely on
+ * application controls unless separately configured (docs/product/open-work.md OW-27).
  */
 @RestController
 @RequestMapping("/api/broadcast")

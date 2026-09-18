@@ -13,6 +13,7 @@ import { LoadingState } from './components/feedback/LoadingState'
 import { ErrorState } from './components/feedback/ErrorState'
 import { initializeSafeArea } from './platform/safeArea'
 import { recoverFromStaleBundle } from './app/staleBundle'
+import { preloadResumeTarget } from './app/resume'
 
 const dark = window.matchMedia('(prefers-color-scheme: dark)')
 const applyTheme = () => {
@@ -39,6 +40,8 @@ async function start() {
       const language = await kv.get('language')
       if (language) await i18n.changeLanguage(resolveLanguage(language))
       await restoreNativeOperator()
+      // The last authorized screen is known before the router decides where `/` goes.
+      await preloadResumeTarget()
     }
     document.documentElement.lang = i18n.resolvedLanguage ?? 'en'
     i18n.on('languageChanged', (language) => {

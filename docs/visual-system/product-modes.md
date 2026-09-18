@@ -23,7 +23,7 @@ Rules:
 
 Primary messages:
 
-- Build NFC field games.
+- Build location-based field games.
 - Place bases on a map.
 - Let teams scan and solve.
 - Run the game live.
@@ -50,7 +50,7 @@ Rules:
 
 ## Player Field Mode
 
-Purpose: help players explore, scan NFC tags, solve challenges, and trust sync.
+Purpose: help players explore, check in by the configured method, solve challenges, and trust sync.
 
 Visual direction:
 
@@ -63,7 +63,7 @@ Rules:
 
 - Large touch targets and readable text are mandatory.
 - Offline, pending sync, failed sync, and game-not-live states must be visible.
-- NFC scanning must feel central and trustworthy.
+- The configured NFC, QR or location check-in must feel central and trustworthy.
 - Players should not see operator-only data: other-team scores, full leaderboards, operator notes, hidden admin tags, or review internals.
 - Use challenge titles and player-facing content, not operator-oriented base names, when solving.
 

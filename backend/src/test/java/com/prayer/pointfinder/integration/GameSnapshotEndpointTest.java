@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Full end-to-end coverage of {@code GET /api/games/{gameId}/snapshot}.
  *
- * <p>Source spec: docs/specs/2026-04-08-post-pilot-reliability-and-operator-workflow.md
+ * <p>Source spec: docs/product/contracts.md
  * (P0 Track 2 Slice 1).
  *
  * <p><strong>NO SCORES IN PLAYER SHAPE.</strong> The player-role tests below

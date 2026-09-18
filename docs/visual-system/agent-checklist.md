@@ -116,7 +116,7 @@ For web UI:
 
 - Run typecheck and lint for changed code.
 - Run affected tests.
-- When the visual harness exists, add or update the harness state.
+- Add or update the existing visual harness/Storybook state.
 - For significant visual changes, capture desktop and mobile screenshots.
 
 For iOS:

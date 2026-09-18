@@ -185,7 +185,7 @@ export const gamesApi = {
    * player JWTs get `PlayerSnapshotResponse`. The web admin only ever calls
    * this as an operator, so the return type is narrowed accordingly.
    *
-   * See docs/realtime-and-mobile.md §7 "State Snapshot Contract".
+   * See docs/product/contracts.md section "Realtime, audit and operations".
    */
   getSnapshot: async (id: string): Promise<OperatorSnapshotResponse> => {
     const { data } = await apiClient.get(`/games/${id}/snapshot`);

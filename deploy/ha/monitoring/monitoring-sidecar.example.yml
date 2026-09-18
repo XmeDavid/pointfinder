@@ -9,13 +9,24 @@
 # pgBackRest configuration copy (read-only). Nothing else is mounted.
 services:
   monitor:
-    image: pointfinder-patroni:16.15-4.1.5-production-monitor-r1
+    image: pointfinder-patroni:16.15-4.1.5-production-monitor-r2
     entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-monitor"]
     user: "999:999"
     environment:
       PATRONI_NAME: production-hetzner      # reported as "node" in health.json
       POINTFINDER_MONITOR_STANZA: pointfinder-production
       POINTFINDER_MONITOR_BACKUP_MAX_AGE_HOURS: "36"
+      # Same value on both hosts; the monitor drops its own PATRONI_NAME, so
+      # the primary expects the other member in pg_stat_replication.
+      POINTFINDER_MONITOR_EXPECTED_STANDBYS: "production-hetzner,production-rainer"
+      # Persistence / escalation defaults (seconds); listed for visibility only.
+      # POINTFINDER_MONITOR_PERSIST_SECONDS: "180"
+      # POINTFINDER_MONITOR_WAL_PERSIST_SECONDS: "600"
+      # POINTFINDER_MONITOR_SLOW_PERSIST_SECONDS: "360"
+      # POINTFINDER_MONITOR_RECOVERY_CONFIRM_SECONDS: "180"
+      # POINTFINDER_MONITOR_REPLICATION_RECOVERY_SECONDS: "300"
+      # POINTFINDER_MONITOR_STANDBY_ABSENT_CRITICAL_SECONDS: "900"
+      # POINTFINDER_MONITOR_REPLAY_STALL_CRITICAL_SECONDS: "900"
       # Optional. Only on a host where the Mac recovery state directories are
       # mounted below (label=path pairs). Leave unset elsewhere.
       # POINTFINDER_MONITOR_MAC_RECOVERY_FILES: "uploads=/mac/uploads/last-success.json,backups=/mac/backups/last-success.json"
@@ -23,7 +34,7 @@ services:
     volumes:
       - /mnt/HC_Volume_105155434/pgdata:/var/lib/postgresql/data:ro
       - pg-socket:/var/run/postgresql
-      - monitor-state:/state
+      - monitor-state:/state          # health.json, monitor-state.json, transitions.log; must persist
       # uid-999-owned 0400 copy already mounted into the Patroni service; the
       # monitor only ever runs `pgbackrest info` against it.
       - /etc/dokploy/pointfinder/ha-secrets/pgbackrest-postgres.conf:/run/pgbackrest/pgbackrest.conf:ro

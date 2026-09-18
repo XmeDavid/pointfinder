@@ -329,4 +329,4 @@ uses the canonical dialog focus trap in a body portal, keeps the code black on
 white in both themes, and saves a PNG through the platform share/download adapter.
 NFC writing stays in the selected base editor on capable native clients; browser
 clients explain the capability limit inline instead of sending the operator to
-search another page. Route and Assignments share a wrapping action row.
+search another page. Route and Link challenges share a wrapping action row. Auto-link stays with challenge linking.

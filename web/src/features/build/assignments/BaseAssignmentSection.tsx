@@ -3,6 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useCreateChallenge } from '@/hooks/mutations/useChallengeMutations'
 import { useCreateAssignment } from '@/hooks/mutations/useAssignmentMutations'
 import { assignmentsApi } from '@/lib/api/assignments'
+import { useAuthStore } from '@/lib/auth/store'
+import {
+  clearPendingCreation,
+  loadPendingCreation,
+  newPendingCreation,
+  pendingCreationKey,
+  savePendingCreation,
+} from '../drafts/pendingCreation'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
@@ -29,6 +37,7 @@ export function BaseAssignmentSection({
   assignments,
   challenges,
   teams,
+  beforeOpenChallenge,
   onOpenChallenge,
 }: {
   gameId: string
@@ -36,26 +45,44 @@ export function BaseAssignmentSection({
   assignments: Assignment[]
   challenges: Challenge[]
   teams: Team[]
+  /**
+   * Runs before a challenge is created, linked or opened; resolving false
+   * keeps the operator here (typically: the base could not be saved yet).
+   */
+  beforeOpenChallenge?: () => Promise<boolean>
   onOpenChallenge: (challengeId: string) => void
 }) {
   const { t } = useTranslation()
   const setAssignments = useSetAssignments(gameId)
   const createChallenge = useCreateChallenge(gameId)
   const createAssignment = useCreateAssignment(gameId)
+  const accountId = useAuthStore((s) => s.user?.id)
   const [creating, setCreating] = useState(false)
   const [choosingExisting, setChoosingExisting] = useState(false)
-  const savedChallenge = useRef<{ baseId: string; id: string } | null>(null)
   const busy = useRef(false)
+
+  async function openChallenge(id: string) {
+    if (beforeOpenChallenge && !(await beforeOpenChallenge())) return
+    onOpenChallenge(id)
+  }
+
+  /**
+   * Create and link are two requests. A durable record with a stable
+   * idempotency key is written first, so an uncertain outcome (offline,
+   * killed WebView, failed link) is finished on the next attempt instead of
+   * leaving a second empty challenge behind.
+   */
   async function createEmptyChallenge() {
     if (busy.current) return
     busy.current = true
     setCreating(true)
     setError(null)
     try {
-      let id =
-        savedChallenge.current?.baseId === baseId
-          ? savedChallenge.current.id
-          : undefined
+      if (beforeOpenChallenge && !(await beforeOpenChallenge())) return
+      const pendingKey = pendingCreationKey(accountId, gameId, baseId)
+      const pending = (await loadPendingCreation(pendingKey)) ?? newPendingCreation()
+      await savePendingCreation(pendingKey, pending)
+      let id = pending.challengeId
       if (!id) {
         const challenge = await createChallenge.mutateAsync({
           title: t('build.editor.newChallenge'),
@@ -66,9 +93,10 @@ export function BaseAssignmentSection({
           autoValidate: false,
           points: 0,
           locationBound: false,
+          idempotencyKey: pending.idempotencyKey,
         })
         id = challenge.id
-        savedChallenge.current = { baseId, id }
+        await savePendingCreation(pendingKey, { ...pending, challengeId: id })
       }
       const current = await assignmentsApi.listByGame(gameId)
       if (
@@ -77,8 +105,15 @@ export function BaseAssignmentSection({
             row.baseId === baseId && row.challengeId === id && !row.teamId,
         )
       ) {
-        await createAssignment.mutateAsync({ baseId, challengeId: id })
+        try {
+          await createAssignment.mutateAsync({ baseId, challengeId: id })
+        } catch (err) {
+          // The challenge is gone (deleted elsewhere): start over next time.
+          if ((err as { response?: { status?: number } })?.response?.status === 404) await clearPendingCreation(pendingKey)
+          throw err
+        }
       }
+      await clearPendingCreation(pendingKey)
       onOpenChallenge(id)
     } catch (err) {
       setError(getApiErrorMessage(err, t('common.unknownError')))
@@ -263,7 +298,7 @@ export function BaseAssignmentSection({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => onOpenChallenge(allChallengeId)}
+                onClick={() => void openChallenge(allChallengeId)}
                 data-testid="open-linked-challenge-btn"
                 className="h-9 shrink-0"
               >
@@ -308,7 +343,7 @@ export function BaseAssignmentSection({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => onOpenChallenge(current)}
+                    onClick={() => void openChallenge(current)}
                     className="h-9 shrink-0 text-xs"
                   >
                     {t('common.edit')}

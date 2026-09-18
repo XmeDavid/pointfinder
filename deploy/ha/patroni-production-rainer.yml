@@ -30,11 +30,12 @@ services:
     mem_limit: 384m
     cpus: 0.5
   monitor:
-    image: pointfinder-patroni:16.15-4.1.5-production-monitor-r1
+    image: pointfinder-patroni:16.15-4.1.5-production-monitor-r2
     entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-monitor"]
     user: "999:999"
     environment:
       PATRONI_NAME: production-rainer
+      POINTFINDER_MONITOR_EXPECTED_STANDBYS: "production-hetzner,production-rainer"
       POINTFINDER_MONITOR_MAC_RECOVERY_FILES: "uploads=/mac/uploads/last-success.json,backups=/mac/backups/last-success.json"
     volumes:
       - production-data:/var/lib/postgresql/data:ro
@@ -58,7 +59,7 @@ services:
     mem_limit: 128m
     cpus: 0.25
   alert-pusher:
-    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r1
+    image: pointfinder-patroni:16.15-4.1.5-production-alerting-r2
     entrypoint: ["/opt/patroni/bin/python", "/usr/local/bin/pointfinder-alert-pusher"]
     user: "999:999"
     environment:

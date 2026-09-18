@@ -413,7 +413,7 @@ data class GameDataResponse(
 //
 // See backend/src/main/java/com/prayer/pointfinder/dto/response/
 // {Player,Operator}SnapshotResponse.java for the source contract and
-// docs/realtime-and-mobile.md §7 for the product contract.
+// docs/product/contracts.md for the snapshot contract.
 //
 // IMPORTANT: `PlayerSnapshotResponse` is structurally score-free. It has NO
 // score, points, leaderboard, or rank fields at any nesting depth. Players

@@ -11,6 +11,26 @@ import { clearOperatorSession, loadOperatorSession, operatorRefreshBody, saveOpe
 const user = { id: 'u', name: 'Operator', email: 'op@example.test', role: 'operator' as const, createdAt: '' }
 beforeEach(() => { native.enabled = false; values.clear() })
 describe('operator session platform boundary', () => {
+  it('removes an exchange invalidated during its native write without clearing a newer login', async () => {
+    native.enabled = true
+    const store = await import('tauri-plugin-pointfinder-secure-store-api')
+    let release!: () => void
+    let current = true
+    vi.mocked(store.set).mockImplementationOnce(async (key, value) => {
+      await new Promise<void>((resolve) => { release = resolve })
+      values.set(key, value)
+    })
+    const exchange = saveOperatorSession({ accessToken: 'old', refreshToken: 'old-refresh', user }, () => current)
+    await vi.waitFor(() => expect(release).toBeDefined())
+    current = false
+    const afterExchange = loadOperatorSession()
+    const login = saveOperatorSession({ accessToken: 'new', refreshToken: 'new-refresh', user: { ...user, id: 'next' } })
+    release()
+    await exchange
+    expect(await afterExchange).toBeNull()
+    await login
+    expect(await loadOperatorSession()).toMatchObject({ accessToken: 'new', user: { id: 'next' } })
+  })
   it('clears a finishing native save before persisting the next account', async () => {
     native.enabled = true
     const store = await import('tauri-plugin-pointfinder-secure-store-api')

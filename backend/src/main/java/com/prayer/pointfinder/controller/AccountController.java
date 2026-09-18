@@ -3,9 +3,11 @@ package com.prayer.pointfinder.controller;
 import com.prayer.pointfinder.dto.request.AccountJoinRequest;
 import com.prayer.pointfinder.dto.request.AccountRecoverRequest;
 import com.prayer.pointfinder.dto.response.AccountMeResponse;
+import com.prayer.pointfinder.dto.response.AuthResponse;
 import com.prayer.pointfinder.dto.response.MessageResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
 import com.prayer.pointfinder.exception.RateLimitExceededException;
+import com.prayer.pointfinder.security.RefreshTokenCookies;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.AccountService;
 import com.prayer.pointfinder.service.AuthService;
@@ -15,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +45,7 @@ public class AccountController {
     private final AuthService authService;
     private final PlayerJoinRateLimiter playerJoinRateLimiter;
     private final com.prayer.pointfinder.xp.XpService xpService;
+    private final RefreshTokenCookies refreshTokenCookies;
 
     @GetMapping("/me")
     public ResponseEntity<AccountMeResponse> me() {
@@ -66,6 +70,20 @@ public class AccountController {
     public ResponseEntity<PlayerAuthResponse> recover(@PathVariable UUID gameId, @Valid @RequestBody AccountRecoverRequest request, HttpServletRequest httpRequest) {
         limit(httpRequest, request.getDeviceId(), "accountRecover");
         return ResponseEntity.ok(playerAccountService.recoverForAccount(SecurityUtils.getCurrentUser(), gameId, request.getDeviceId()));
+    }
+
+    /**
+     * OW-01: mints a separate operator session for an operator or admin account
+     * signed in on the player app. Same response shape and cookie as
+     * {@code POST /api/auth/login}; a participant gets 403
+     * {@code ORGANIZER_ROLE_REQUIRED}. The account's own refresh token is untouched.
+     */
+    @PostMapping("/organizer-session")
+    public ResponseEntity<AuthResponse> organizerSession() {
+        AuthResponse response = authService.exchangeForOrganizerSession(SecurityUtils.getCurrentUser());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookies.build(response.refreshToken()).toString())
+                .body(response);
     }
 
     @PostMapping("/resend-verification")
