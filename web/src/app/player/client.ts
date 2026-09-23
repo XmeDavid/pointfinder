@@ -82,7 +82,7 @@ export async function createServices(platform?: PlatformServices): Promise<AppSe
           a.media = media
         } })
         requireSession()
-        return client.api.player.submit(a.gameId, { baseId: a.baseId, challengeId: a.challengeId, answer: a.answer, fileUrls: fileUrls.length ? fileUrls : undefined, idempotencyKey: a.id })
+        return client.api.player.submit(a.gameId, { baseId: a.baseId, challengeId: a.challengeId, answer: a.answer, selectedOptionIds: a.selectedOptionIds?.length ? a.selectedOptionIds : undefined, fileUrls: fileUrls.length ? fileUrls : undefined, idempotencyKey: a.id })
       },
     },
     onRemoved: async (action) => {

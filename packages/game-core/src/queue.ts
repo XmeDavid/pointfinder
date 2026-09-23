@@ -43,6 +43,8 @@ export interface PendingSubmission extends PendingActionBase {
   type: 'submission'
   challengeId: EntityId
   answer: string
+  /** Chosen option ids on a choice challenge; the server grades them when the action replays. */
+  selectedOptionIds?: string[] | null
   fileUrls?: string[] | null
   media?: PendingMedia[]
 }
@@ -158,6 +160,7 @@ export class OfflineQueue {
     baseId: EntityId
     challengeId: EntityId
     answer: string
+    selectedOptionIds?: string[] | null
     fileUrls?: string[] | null
     media?: PendingMedia[]
   }): Promise<PendingSubmission> {

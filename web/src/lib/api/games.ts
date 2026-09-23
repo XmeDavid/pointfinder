@@ -1,6 +1,7 @@
 import type {
   AnswerType,
   CheckInMethod,
+  ChoiceOption,
   Game,
   GameStatus,
   OperatorSnapshotResponse,
@@ -22,6 +23,11 @@ export interface CreateGameDto {
   unlockTrigger?: string;
   defaultCheckInMethod?: CheckInMethod;
   defaultCheckInRadiusM?: number;
+  /**
+   * OW-33: ISO 639-1 code of the language the game's content is written in.
+   * Omit to keep the current value; an empty string clears it to unknown.
+   */
+  contentLanguage?: string;
   /** `first-game` while that tutorial runs: the server marks the game as a practice game. */
   tutorialScenario?: string;
   /**
@@ -42,6 +48,8 @@ export interface GameImportData {
 export interface GameMetadataExportDto {
   name: string;
   description: string;
+  /** ISO 639-1 code of the content's language; absent when unknown. */
+  contentLanguage?: string | null;
   enforceBaseOrder?: boolean;
   uniformAssignment?: boolean;
   tileSource?: string;
@@ -76,6 +84,8 @@ export interface ChallengeExportDto {
   answerType: AnswerType;
   autoValidate?: boolean;
   correctAnswer?: string[];
+  /** Options of a choice challenge with their stable ids and answer key. */
+  choiceOptions?: ChoiceOption[] | null;
   points: number;
   locationBound?: boolean;
   requirePresenceToSubmit?: boolean;
@@ -123,6 +133,8 @@ export interface StageExportDto {
   transitionType: string;
   scheduledAt?: string | null;
   triggerBaseTempId?: string | null;
+  /** The stage's bases are visited in route order. */
+  enforceBaseOrder?: boolean;
 }
 
 export interface GameExportDto {

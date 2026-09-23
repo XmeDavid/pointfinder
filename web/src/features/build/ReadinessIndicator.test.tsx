@@ -182,6 +182,20 @@ describe('ReadinessIndicator when the game is ready', () => {
     expect(screen.queryByTestId('readiness-legacy-note')).not.toBeInTheDocument()
   })
 
+  it('notes that the legacy apps cannot answer a linked choice question', async () => {
+    setupFullyReadyHandlers()
+    server.use(
+      http.get('/api/games/:gameId/challenges', () =>
+        HttpResponse.json([createMockChallenge({ id: 'c1', answerType: 'single_choice', autoValidate: true,
+          choiceOptions: [{ id: 'a', text: 'Oak', correct: true }, { id: 'b', text: 'Pine', correct: false }] })]),
+      ),
+    )
+    renderIndicator()
+    expect(await screen.findByTestId('go-live-btn')).toBeInTheDocument()
+    expect(screen.getByTestId('readiness-legacy-choice-note')).toHaveTextContent('cannot answer single- or multiple-choice questions')
+    expect(screen.queryByTestId('readiness-legacy-note')).not.toBeInTheDocument()
+  })
+
   it('is hidden once the game is live', async () => {
     setupFullyReadyHandlers()
     renderIndicator('live')

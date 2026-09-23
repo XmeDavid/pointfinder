@@ -320,7 +320,12 @@
       "useLatest": "Use latest",
       "restored": "Recovered your unsaved changes."
     },
-    "saveAria": "Save status: {{label}}"
+    "saveAria": "Save status: {{label}}",
+    "nfc": {
+      "linked": "NFC linked",
+      "missing": "NFC missing"
+    },
+    "nfcAria": "NFC status: {{label}}"
   },
   "lifecycle": {
     "goLive": "Go Live",
@@ -728,7 +733,13 @@
     "viewFullscreen": "View fullscreen",
     "openReview": "Review submission: {{team}} — {{challenge}}",
     "expectedRaw": "Expected (raw)",
-    "expectedAnswer": "Expected answer"
+    "expectedAnswer": "Expected answer",
+    "textAnswer": "Text answer",
+    "choiceAnswer": "Chosen options",
+    "chosen": "Chosen",
+    "correctOption": "Correct",
+    "choiceGraded": "Graded automatically: all or nothing, one attempt per team.",
+    "optionRemoved": "An option chosen here was removed after this answer."
   },
   "teamDetail": {
     "backToLeaderboard": "Back to Leaderboard",
@@ -1633,6 +1644,49 @@
       "saveBaseFirst": "The base could not be saved. Fix it or retry before opening its challenge.",
       "baseInvalid": "Fix the base details before opening its challenge.",
       "resumingChallenge": "Finishing the challenge you started…"
+    },
+    "choice": {
+      "options": "Options",
+      "hintSingle": "Mark the one correct option.",
+      "hintMultiple": "Mark every correct option. A team is correct only when it chooses exactly these.",
+      "optionLabel": "Option {{number}}",
+      "correct": "Correct",
+      "markCorrect": "Correct answer: {{option}}",
+      "remove": "Remove {{option}}",
+      "add": "Add option",
+      "maxReached": "Up to {{max}} options.",
+      "gradedNote": "Checked automatically. Each team gets one attempt at this question.",
+      "problems": {
+        "tooFew": "Add at least {{min}} options.",
+        "tooMany": "Use at most {{max}} options.",
+        "emptyText": "Every option needs text. Fill it in or remove it.",
+        "textTooLong": "Keep each option under {{max}} characters.",
+        "duplicateText": "Two options have the same text.",
+        "singleNeedsOneCorrect": "Mark exactly one option as correct.",
+        "multipleNeedsCorrect": "Mark at least one option as correct."
+      }
+    },
+    "stageEditor": {
+      "identity": "Stage",
+      "transition": "When this stage opens",
+      "transitionType": {
+        "scheduled": "Scheduled",
+        "trigger": "After a base",
+        "manual": "Manual"
+      },
+      "scheduledAt": "Opens at",
+      "triggerBase": "Trigger base (from previous stages)",
+      "noPreviousBases": "No bases available from previous stages",
+      "manualHint": "Activated by operator",
+      "bases": "Bases in this stage ({{count}})",
+      "noBases": "No bases in this stage yet",
+      "addExisting": "Add existing base",
+      "save": "Save changes",
+      "saveError": "Could not save the stage. Your changes are still here; try again.",
+      "delete": "Delete stage",
+      "order": "Base order",
+      "enforceOrder": "Visit this stage's bases in order",
+      "enforceOrderHint": "Teams check in at this stage's bases from 1 onwards. Other stages keep their own setting."
     }
   },
   "command2": {
@@ -1995,7 +2049,9 @@
       "queuedMsg": "Your answer is saved on this phone and will be sent when you're back online.",
       "feedback": "Feedback: {{feedback}}",
       "unlockedInformation": "Unlocked Information",
-      "backToMap": "Back to Map"
+      "backToMap": "Back to Map",
+      "incorrect": "Not correct",
+      "incorrectFinalMsg": "This question allowed one attempt, so it is now closed for your team."
     },
     "solve": {
       "submitPhoto": "Submit Your Media",
@@ -2108,6 +2164,13 @@
         "title": "Your place in this game",
         "body": "See your team and game details, adjust your preferences or save guest progress to your account. Your account profile lives outside the game."
       }
+    },
+    "choice": {
+      "legend": "Answer options",
+      "instructionsSingle": "Choose one answer.",
+      "instructionsMultiple": "Choose every answer that applies.",
+      "oneAttempt": "Your team gets one attempt. Check your choice before sending.",
+      "noOptions": "This question has no options yet. Ask the organizer."
     }
   },
   "baseOrder": {
@@ -2123,7 +2186,15 @@
     "drag": "Drag {{name}} to reorder",
     "routeChanged": "The route changed while you were editing. Cancel and reopen to use the latest route.",
     "baseNumber": "Base {{number}}",
-    "route": "Route"
+    "route": "Route",
+    "noStageRoute": "Bases without a stage",
+    "stageRoutesDescription": "Each ordered stage is its own route, numbered from 1, for all teams. Drag bases or use the arrows, then save.",
+    "anyOrderRoutes": "Any order: {{routes}}",
+    "inOrder": "In order",
+    "anyOrder": "Any order",
+    "enforceUnstaged": "Enforce order for bases without a stage",
+    "stagesHaveOwnOrder": "Each stage sets its own order in the stage editor.",
+    "orderedStages": "Stages in order: {{stages}}"
   },
   "checkIn": {
     "group": "Check-in",
@@ -2181,7 +2252,8 @@
     "checking": "Checking readiness…",
     "unavailable": "Readiness could not be checked.",
     "retry": "Retry",
-    "blockersTitle": "Before going live"
+    "blockersTitle": "Before going live",
+    "legacyChoiceNote": "The legacy iOS and Android apps cannot answer single- or multiple-choice questions."
   },
   "tutorials": {
     "menu": "Tutorials",
@@ -2830,7 +2902,9 @@
     "organizerSessionDenied": "This account cannot organize games.",
     "continueOrganizing": "Continue organizing",
     "continueOrganizingLoading": "Finding your last organized game…",
-    "continueOrganizingError": "Could not load your last organized game"
+    "continueOrganizingError": "Could not load your last organized game",
+    "contentLanguageLabel": "Content language: {{language}}",
+    "contentLanguageUnknown": "Content language not specified"
   },
   "publication": {
     "heading": "Make it public",
@@ -2866,5 +2940,61 @@
     "unpublish": "Remove from Explore",
     "saveError": "The change could not be completed. Your text is still here. Try again.",
     "offline": "You’re offline. Reconnect to load or save your listing."
+  },
+  "gameSettings": {
+    "title": "Game Settings",
+    "details": "Game Details",
+    "name": "Name",
+    "description": "Description",
+    "noDescription": "No description",
+    "contentLanguage": "Content language",
+    "contentLanguageHint": "The language your bases and challenges are written in. Players see it before joining; nothing is translated.",
+    "contentLanguageUnknown": "Not specified",
+    "contentLanguageError": "Could not save the content language. Try again.",
+    "map": "Map Settings",
+    "tileSource": "Tile Source",
+    "progression": "Progression",
+    "unlockTrigger": "Unlock Trigger",
+    "unlockTriggers": {
+      "CHECK_IN": {
+        "label": "Check-in",
+        "description": "Base unlocks when team checks in"
+      },
+      "SUBMISSION": {
+        "label": "Submission",
+        "description": "Base unlocks when team submits an answer"
+      },
+      "COMPLETED": {
+        "label": "Completed",
+        "description": "Base unlocks when challenge is completed/approved"
+      }
+    },
+    "assignmentMode": "Assignment Mode",
+    "uniformAssignment": "Uniform Assignment",
+    "uniformAssignmentHint": "When enabled, all teams get the same challenge at each base",
+    "broadcast": "Broadcast",
+    "broadcastEnabled": "Broadcast Enabled",
+    "broadcastCode": "Broadcast Code",
+    "broadcastHint": "Share this code for spectators to watch live",
+    "operators": "Operators",
+    "owner": "Owner",
+    "remove": "Remove",
+    "pendingInvitations": "Pending Invitations",
+    "revoke": "Revoke",
+    "inviteEmail": "Operator email",
+    "inviteFailed": "Failed to send invitation.",
+    "sending": "Sending...",
+    "invite": "Invite",
+    "export": "Export",
+    "exportGame": "Export Game",
+    "exporting": "Exporting...",
+    "exportHint": "Download a JSON file with all game configuration that can be imported into a new game.",
+    "dangerZone": "Danger Zone",
+    "deleteGame": "Delete Game",
+    "deleteHint": "Permanently delete this game and all its data.",
+    "deleteConfirm": "Are you sure?",
+    "deleteConfirmBody": "This will permanently delete the game, all bases, challenges, teams, and submissions. This cannot be undone.",
+    "deleting": "Deleting…",
+    "deleteForever": "Delete Forever"
   }
 }

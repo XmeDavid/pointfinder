@@ -53,3 +53,6 @@ export type {
   CheckInMethodIconProps,
   CheckInVerificationBadgeProps,
 } from './CheckInMethodBadge'
+
+export { AnswerTypeBadge } from './AnswerTypeBadge'
+export type { AnswerTypeBadgeProps } from './AnswerTypeBadge'

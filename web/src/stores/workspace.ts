@@ -22,6 +22,8 @@ interface WorkspaceState {
   readinessExpanded: boolean
   teamLocationsVisible: boolean
   impersonatedTeamId: string | null
+  /** A one-shot request for the Bases tab to open its route editor; never persisted. */
+  routeEditorRequested: boolean
 }
 
 interface WorkspaceActions {
@@ -45,6 +47,9 @@ interface WorkspaceActions {
   setReadinessExpanded: (open: boolean) => void
   toggleTeamLocations: () => void
   impersonateTeam: (id: string | null) => void
+  /** Opens the Bases tab on its route editor (from settings or a stage). */
+  openRouteEditor: () => void
+  clearRouteEditorRequest: () => void
   reset: () => void
 }
 
@@ -67,6 +72,7 @@ const initialState: WorkspaceState = {
   readinessExpanded: false,
   teamLocationsVisible: false,
   impersonatedTeamId: null,
+  routeEditorRequested: false,
 }
 
 export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((set) => ({
@@ -135,5 +141,16 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
   setReadinessExpanded: (open) => set({ readinessExpanded: open }),
   toggleTeamLocations: () => set((s) => ({ teamLocationsVisible: !s.teamLocationsVisible })),
   impersonateTeam: (id) => set({ impersonatedTeamId: id }),
+  openRouteEditor: () => set({
+    routeEditorRequested: true,
+    drawerOpen: true,
+    drawerTab: 'bases',
+    selectedBaseId: null,
+    selectedChallengeId: null,
+    selectedTeamId: null,
+    challengeOriginBaseId: null,
+    settingsPanelOpen: false,
+  }),
+  clearRouteEditorRequest: () => set({ routeEditorRequested: false }),
   reset: () => set(initialState),
 }))

@@ -320,7 +320,12 @@
       "useLatest": "Usar a mais recente",
       "restored": "Recuperámos as suas alterações por guardar."
     },
-    "saveAria": "Estado de gravação: {{label}}"
+    "saveAria": "Estado de gravação: {{label}}",
+    "nfc": {
+      "linked": "NFC associado",
+      "missing": "NFC em falta"
+    },
+    "nfcAria": "Estado NFC: {{label}}"
   },
   "lifecycle": {
     "goLive": "Iniciar Jogo",
@@ -728,7 +733,13 @@
     "viewFullscreen": "Ver em ecrã inteiro",
     "openReview": "Rever submissão: {{team}} — {{challenge}}",
     "expectedRaw": "Esperado (original)",
-    "expectedAnswer": "Resposta esperada"
+    "expectedAnswer": "Resposta esperada",
+    "textAnswer": "Resposta em texto",
+    "choiceAnswer": "Opções escolhidas",
+    "chosen": "Escolhida",
+    "correctOption": "Correta",
+    "choiceGraded": "Avaliado automaticamente: tudo ou nada, uma tentativa por equipa.",
+    "optionRemoved": "Uma opção escolhida aqui foi removida depois desta resposta."
   },
   "teamDetail": {
     "backToLeaderboard": "Voltar à Classificação",
@@ -1633,6 +1644,49 @@
       "saveBaseFirst": "Não foi possível guardar a base. Corrija ou tente novamente antes de abrir o desafio.",
       "baseInvalid": "Corrija os dados da base antes de abrir o desafio.",
       "resumingChallenge": "A concluir o desafio que começou…"
+    },
+    "choice": {
+      "options": "Opções",
+      "hintSingle": "Marca a única opção correta.",
+      "hintMultiple": "Marca todas as opções corretas. Uma equipa só acerta se escolher exatamente estas.",
+      "optionLabel": "Opção {{number}}",
+      "correct": "Correta",
+      "markCorrect": "Resposta correta: {{option}}",
+      "remove": "Remover {{option}}",
+      "add": "Adicionar opção",
+      "maxReached": "Até {{max}} opções.",
+      "gradedNote": "Verificado automaticamente. Cada equipa tem uma tentativa nesta pergunta.",
+      "problems": {
+        "tooFew": "Adiciona pelo menos {{min}} opções.",
+        "tooMany": "Usa no máximo {{max}} opções.",
+        "emptyText": "Todas as opções precisam de texto. Preenche-a ou remove-a.",
+        "textTooLong": "Cada opção pode ter no máximo {{max}} caracteres.",
+        "duplicateText": "Há duas opções com o mesmo texto.",
+        "singleNeedsOneCorrect": "Marca exatamente uma opção como correta.",
+        "multipleNeedsCorrect": "Marca pelo menos uma opção como correta."
+      }
+    },
+    "stageEditor": {
+      "identity": "Etapa",
+      "transition": "Quando esta etapa abre",
+      "transitionType": {
+        "scheduled": "Agendada",
+        "trigger": "Após uma base",
+        "manual": "Manual"
+      },
+      "scheduledAt": "Abre às",
+      "triggerBase": "Base de ativação (de etapas anteriores)",
+      "noPreviousBases": "Não há bases de etapas anteriores",
+      "manualHint": "Ativada pelo organizador",
+      "bases": "Bases nesta etapa ({{count}})",
+      "noBases": "Ainda não há bases nesta etapa",
+      "addExisting": "Adicionar base existente",
+      "save": "Guardar alterações",
+      "saveError": "Não foi possível guardar a etapa. As alterações continuam aqui; tenta novamente.",
+      "delete": "Eliminar etapa",
+      "order": "Ordem das bases",
+      "enforceOrder": "Visitar as bases desta etapa por ordem",
+      "enforceOrderHint": "As equipas fazem entrada nas bases desta etapa a partir da 1. As outras etapas mantêm a sua definição."
     }
   },
   "command2": {
@@ -1995,7 +2049,9 @@
       "queuedMsg": "A tua resposta está guardada neste telemóvel e será enviada quando voltares a ter ligação.",
       "feedback": "Feedback: {{feedback}}",
       "unlockedInformation": "Informação Desbloqueada",
-      "backToMap": "Voltar ao Mapa"
+      "backToMap": "Voltar ao Mapa",
+      "incorrect": "Incorreto",
+      "incorrectFinalMsg": "Esta pergunta só permitia uma tentativa, por isso ficou fechada para a tua equipa."
     },
     "solve": {
       "submitPhoto": "Submeter a tua Média",
@@ -2108,6 +2164,13 @@
         "title": "O teu lugar neste jogo",
         "body": "Vê os detalhes da equipa e do jogo, ajusta as preferências ou guarda o progresso de convidado na tua conta. O perfil da conta fica fora do jogo."
       }
+    },
+    "choice": {
+      "legend": "Opções de resposta",
+      "instructionsSingle": "Escolhe uma resposta.",
+      "instructionsMultiple": "Escolhe todas as respostas que se aplicam.",
+      "oneAttempt": "A tua equipa tem uma tentativa. Confirma a escolha antes de enviar.",
+      "noOptions": "Esta pergunta ainda não tem opções. Fala com a organização."
     }
   },
   "baseOrder": {
@@ -2123,7 +2186,15 @@
     "drag": "Arrastar {{name}} para reordenar",
     "routeChanged": "O percurso foi alterado enquanto o editavas. Cancela e volta a abrir para usar o percurso mais recente.",
     "baseNumber": "Base {{number}}",
-    "route": "Percurso"
+    "route": "Percurso",
+    "noStageRoute": "Bases sem etapa",
+    "stageRoutesDescription": "Cada etapa ordenada é uma rota própria, numerada a partir de 1, para todas as equipas. Arrasta as bases ou usa as setas e depois guarda.",
+    "anyOrderRoutes": "Qualquer ordem: {{routes}}",
+    "inOrder": "Por ordem",
+    "anyOrder": "Qualquer ordem",
+    "enforceUnstaged": "Impor ordem às bases sem etapa",
+    "stagesHaveOwnOrder": "Cada etapa define a sua ordem no editor de etapas.",
+    "orderedStages": "Etapas por ordem: {{stages}}"
   },
   "checkIn": {
     "group": "Check-in",
@@ -2181,7 +2252,8 @@
     "checking": "A verificar a prontidão…",
     "unavailable": "Não foi possível verificar a prontidão.",
     "retry": "Repetir",
-    "blockersTitle": "Antes de arrancar"
+    "blockersTitle": "Antes de arrancar",
+    "legacyChoiceNote": "As apps antigas de iOS e Android não conseguem responder a perguntas de escolha única ou múltipla."
   },
   "tutorials": {
     "menu": "Tutoriais",
@@ -2830,7 +2902,9 @@
     "organizerSessionDenied": "Esta conta não pode organizar jogos.",
     "continueOrganizing": "Continuar a organizar",
     "continueOrganizingLoading": "A procurar o último jogo que organizaste…",
-    "continueOrganizingError": "Não foi possível carregar o último jogo que organizaste"
+    "continueOrganizingError": "Não foi possível carregar o último jogo que organizaste",
+    "contentLanguageLabel": "Idioma do conteúdo: {{language}}",
+    "contentLanguageUnknown": "Idioma do conteúdo não indicado"
   },
   "publication": {
     "heading": "Tornar público",
@@ -2866,5 +2940,61 @@
     "unpublish": "Remover de Explorar",
     "saveError": "Não foi possível concluir a alteração. O teu texto continua aqui. Tenta novamente.",
     "offline": "Estás offline. Liga-te para carregar ou guardar a publicação."
+  },
+  "gameSettings": {
+    "title": "Definições do jogo",
+    "details": "Detalhes do jogo",
+    "name": "Nome",
+    "description": "Descrição",
+    "noDescription": "Sem descrição",
+    "contentLanguage": "Idioma do conteúdo",
+    "contentLanguageHint": "O idioma em que as bases e os desafios estão escritos. Os jogadores veem-no antes de entrar; nada é traduzido.",
+    "contentLanguageUnknown": "Não indicado",
+    "contentLanguageError": "Não foi possível guardar o idioma do conteúdo. Tenta novamente.",
+    "map": "Definições do mapa",
+    "tileSource": "Fonte do mapa",
+    "progression": "Progressão",
+    "unlockTrigger": "Desbloqueio",
+    "unlockTriggers": {
+      "CHECK_IN": {
+        "label": "Entrada",
+        "description": "A base desbloqueia quando a equipa faz entrada"
+      },
+      "SUBMISSION": {
+        "label": "Submissão",
+        "description": "A base desbloqueia quando a equipa submete uma resposta"
+      },
+      "COMPLETED": {
+        "label": "Concluído",
+        "description": "A base desbloqueia quando o desafio é concluído/aprovado"
+      }
+    },
+    "assignmentMode": "Modo de atribuição",
+    "uniformAssignment": "Atribuição uniforme",
+    "uniformAssignmentHint": "Quando ativo, todas as equipas recebem o mesmo desafio em cada base",
+    "broadcast": "Transmissão",
+    "broadcastEnabled": "Transmissão ativa",
+    "broadcastCode": "Código de transmissão",
+    "broadcastHint": "Partilha este código para que os espectadores acompanhem em direto",
+    "operators": "Organizadores",
+    "owner": "Proprietário",
+    "remove": "Remover",
+    "pendingInvitations": "Convites pendentes",
+    "revoke": "Revogar",
+    "inviteEmail": "Email do organizador",
+    "inviteFailed": "Não foi possível enviar o convite.",
+    "sending": "A enviar...",
+    "invite": "Convidar",
+    "export": "Exportar",
+    "exportGame": "Exportar jogo",
+    "exporting": "A exportar...",
+    "exportHint": "Descarrega um ficheiro JSON com toda a configuração do jogo, que pode ser importado para um novo jogo.",
+    "dangerZone": "Zona de perigo",
+    "deleteGame": "Eliminar jogo",
+    "deleteHint": "Elimina permanentemente este jogo e todos os seus dados.",
+    "deleteConfirm": "Tens a certeza?",
+    "deleteConfirmBody": "Isto elimina permanentemente o jogo, todas as bases, desafios, equipas e submissões. Não é possível desfazer.",
+    "deleting": "A eliminar…",
+    "deleteForever": "Eliminar para sempre"
   }
 }

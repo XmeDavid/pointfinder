@@ -22,7 +22,7 @@ export default function ReadinessIndicator({
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const { checks, legacyNote, status, retry } = useReadinessChecks(gameId)
+  const { checks, legacyNote, legacyChoiceNote, status, retry } = useReadinessChecks(gameId)
   const expanded = useWorkspaceStore((s) => s.readinessExpanded)
   const setReadinessExpanded = useWorkspaceStore((s) => s.setReadinessExpanded)
   const setMode = useWorkspaceStore((s) => s.setMode)
@@ -70,6 +70,7 @@ export default function ReadinessIndicator({
       blockers={checks.filter((check) => !check.passed)}
       total={checks.length}
       legacyNote={legacyNote}
+      legacyChoiceNote={legacyChoiceNote}
       expanded={expanded}
       onToggle={setReadinessExpanded}
       onOpenCheck={openCheck}

@@ -13,6 +13,7 @@ import {
   resolveCheckInMethod,
   resolveCheckInRadiusM,
 } from '@/types/checkIn'
+import { isChoiceAnswerType } from '@/types'
 
 /** Where a failing check is fixed: a content drawer tab, or the game settings panel. */
 export type ReadinessTarget = 'bases' | 'challenges' | 'teams' | 'nfc' | 'settings'
@@ -34,6 +35,8 @@ export interface ReadinessSummary {
   checks: ReadinessCheck[]
   /** True when any base uses a method the legacy Swift/Compose apps cannot play. */
   legacyNote: boolean
+  /** True when a linked challenge is a choice question, which the legacy apps cannot answer. */
+  legacyChoiceNote: boolean
   /** Every check passes on complete data — the go-live gate. */
   allPassed: boolean
   status: ReadinessStatus
@@ -164,6 +167,8 @@ export function useReadinessChecks(gameId: string): ReadinessSummary {
     return {
       checks,
       legacyNote: baseList.some((b) => resolveCheckInMethod(b.checkInMethod) !== 'NFC'),
+      legacyChoiceNote: (challenges ?? []).some((c) => isChoiceAnswerType(c.answerType)
+        && ((assignments ?? []).some((a) => a.challengeId === c.id) || baseList.some((b) => b.fixedChallengeId === c.id))),
       allPassed: status === 'ready' && checks.every((check) => check.passed),
       status,
       retry,

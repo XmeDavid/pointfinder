@@ -1,5 +1,5 @@
 import { ListDetailLayout } from '@/components/layout/ListDetailLayout'
-import { useState, useMemo, type ReactNode } from 'react'
+import { useEffect, useState, useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -18,6 +18,7 @@ import { Spinner } from '@/components/feedback/Spinner'
 import { BaseDetail } from './BaseDetail'
 import type { Base, Assignment } from '@/types'
 import { BaseStatusDot } from './BaseStatusDot'
+import { anyRouteEnforced, baseRouteGroups } from './baseRoutes'
 
 interface BasesTabProps {
   autoLinkAction?: ReactNode
@@ -99,28 +100,39 @@ export function BasesTab({
 
   const { data: game } = useGame(gameId)
   const [arranging, setArranging] = useState(false)
+  const routeEditorRequested = useWorkspaceStore((s) => s.routeEditorRequested)
+  const clearRouteEditorRequest = useWorkspaceStore((s) => s.clearRouteEditorRequest)
   const [gridOpen, setGridOpen] = useState(false)
   const { data: bases = [], isLoading, isError, refetch } = useBases(gameId)
   const { data: assignments = [] } = useAssignments(gameId)
 
   const [search, setSearch] = useState('')
-  const { data: stages = [] } = useStages(gameId)
+  const { data: stagesData } = useStages(gameId)
+  const stages = useMemo(() => stagesData ?? [], [stagesData])
   const { data: tags = [] } = useTags(gameId)
   // Quick filters: one stage (or "no stage") and any of the chosen tags.
   const [stageFilter, setStageFilter] = useState<string[]>([])
   const [tagFilter, setTagFilter] = useState<string[]>([])
 
-  const orderedBases = useMemo(
-    () =>
-      game?.enforceBaseOrder
-        ? [...bases].sort(
-            (a, b) =>
-              (a.sequenceNumber ?? Number.MAX_SAFE_INTEGER) -
-              (b.sequenceNumber ?? Number.MAX_SAFE_INTEGER),
-          )
-        : bases,
-    [bases, game?.enforceBaseOrder],
+  // OW-40: each stage is its own route with its own order setting; the bases
+  // without a stage follow the game's setting.
+  const routeEnforced = anyRouteEnforced(game, stagesData)
+  const routes = useMemo(
+    () => baseRouteGroups(bases, stages, Boolean(game?.enforceBaseOrder)),
+    [bases, stages, game?.enforceBaseOrder],
   )
+  const orderedBases = useMemo(
+    () => (routeEnforced ? routes.flatMap((r) => r.bases) : bases),
+    [routeEnforced, routes, bases],
+  )
+  // Settings and the stage editor ask for the route editor directly; the
+  // request stands until the editor closes or this tab goes away.
+  const canArrange = routeEnforced && game?.status === 'setup' && !isLoading && !isError && bases.length >= 2
+  useEffect(() => () => clearRouteEditorRequest?.(), [clearRouteEditorRequest])
+  const closeRouteEditor = () => {
+    setArranging(false)
+    clearRouteEditorRequest()
+  }
 
   // Stage membership comes from the stage's own base list: the server derives
   // it from Base.stageId, and the stages query is the one a stage change
@@ -175,15 +187,18 @@ export function BasesTab({
     })
   }, [orderedBases, search, activeStage, stageOf, activeTags])
 
-  const routeEditorOpen = arranging && !!game?.enforceBaseOrder
+  const routeEditorOpen = routeEnforced && (arranging || (routeEditorRequested && canArrange))
+  // Route headings help once more than one route shows in the list at a time.
+  const grouped = routeEnforced && routes.length > 1 && activeStage.length === 0
 
   if (routeEditorOpen) {
     return (
       <BaseRouteEditor
         gameId={gameId}
         bases={orderedBases}
+        routes={routes}
         editable={game?.status === 'setup'}
-        onClose={() => setArranging(false)}
+        onClose={closeRouteEditor}
       />
     )
   }
@@ -205,18 +220,13 @@ export function BasesTab({
       list={
         <>
           <div className="flex flex-wrap gap-2 border-b border-border p-2">
-            {game?.enforceBaseOrder && (
+            {routeEnforced && (
               <Button
                 variant="outline"
                 size="sm"
                 className="min-h-9 flex-1"
                 data-testid="arrange-route-btn"
-                disabled={
-                  game.status !== 'setup' ||
-                  isLoading ||
-                  isError ||
-                  bases.length < 2
-                }
+                disabled={!canArrange}
                 onClick={() => {
                   selectBase(null)
                   setArranging(true)
@@ -239,7 +249,7 @@ export function BasesTab({
               {t('build.assignments.open')}
             </Button>
             {autoLinkAction}
-            {game?.enforceBaseOrder && game.status !== 'setup' && (
+            {routeEnforced && game?.status !== 'setup' && (
               <p className="w-full text-xs text-muted-foreground">
                 {t('baseOrder.setupOnly')}
               </p>
@@ -296,6 +306,7 @@ export function BasesTab({
             )}
             {!isLoading &&
               !isError &&
+              !grouped &&
               filteredBases.map((base) => (
                 <BaseListItem
                   key={base.id}
@@ -303,9 +314,36 @@ export function BasesTab({
                   isSelected={selectedBaseId === base.id}
                   onSelect={() => selectBase(base.id)}
                   subtitle={getBaseSubtitle(base, assignments, t)}
-                  numbered={!!game?.enforceBaseOrder}
+                  numbered={routeEnforced}
                 />
               ))}
+            {!isLoading &&
+              !isError &&
+              grouped &&
+              routes.map((route) => {
+                const visible = route.bases.filter((b) => filteredBases.includes(b))
+                if (visible.length === 0) return null
+                return (
+                  <section key={route.key} aria-labelledby={`base-route-${route.key}`} data-testid={`base-route-group-${route.key}`}>
+                    <h4 id={`base-route-${route.key}`} className="flex items-center justify-between gap-2 px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="min-w-0 truncate">{route.name ?? t('baseOrder.noStageRoute')}</span>
+                      <span className="shrink-0 font-normal normal-case tracking-normal">
+                        {t(route.enforced ? 'baseOrder.inOrder' : 'baseOrder.anyOrder')}
+                      </span>
+                    </h4>
+                    {visible.map((base) => (
+                      <BaseListItem
+                        key={base.id}
+                        base={base}
+                        isSelected={selectedBaseId === base.id}
+                        onSelect={() => selectBase(base.id)}
+                        subtitle={getBaseSubtitle(base, assignments, t)}
+                        numbered={route.enforced}
+                      />
+                    ))}
+                  </section>
+                )
+              })}
             {!isLoading && !isError && filteredBases.length === 0 && (
               <div className="px-3 py-6 text-xs text-muted-foreground text-center">
                 {bases.length === 0

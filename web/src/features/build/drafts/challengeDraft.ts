@@ -1,5 +1,6 @@
 import type { Challenge } from '@/types'
-import type { AnswerType } from '@/types/v2'
+import type { AnswerType, ChoiceOption } from '@/types/v2'
+import { choiceOptionsProblem } from '@/lib/choiceOptions'
 
 /** The editable part of a challenge, as the operator types it. */
 export interface ChallengeDraftFields {
@@ -9,6 +10,11 @@ export interface ChallengeDraftFields {
   description: string
   content: string
   correctAnswer: string[]
+  /**
+   * Options of a choice challenge. Absent (not empty) when the challenge has
+   * none, so drafts saved before choice challenges existed still match.
+   */
+  choiceOptions?: ChoiceOption[]
   points: string
   operatorNotes: string
   locationBound: boolean
@@ -24,6 +30,9 @@ export function challengeDraftFields(challenge: Challenge): ChallengeDraftFields
     description: challenge.description,
     content: challenge.content,
     correctAnswer: challenge.correctAnswer ?? [],
+    choiceOptions: challenge.choiceOptions?.length
+      ? challenge.choiceOptions.map((o) => ({ id: o.id, text: o.text, correct: o.correct }))
+      : undefined,
     points: challenge.points.toString(),
     operatorNotes: challenge.operatorNotes ?? '',
     locationBound: challenge.locationBound,
@@ -34,5 +43,8 @@ export function challengeDraftFields(challenge: Challenge): ChallengeDraftFields
 
 export function challengeDraftIsValid(fields: ChallengeDraftFields): boolean {
   const points = Number(fields.points)
-  return fields.title.trim().length > 0 && Number.isInteger(points) && points >= 0 && points <= 100000 && fields.operatorNotes.length <= 5000
+  return fields.title.trim().length > 0
+    && Number.isInteger(points) && points >= 0 && points <= 100000
+    && fields.operatorNotes.length <= 5000
+    && choiceOptionsProblem(fields.answerType, fields.choiceOptions) === null
 }

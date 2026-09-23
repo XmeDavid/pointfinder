@@ -1,4 +1,4 @@
-import type { Challenge } from "@/types";
+import type { AnswerType, Challenge, ChoiceOption } from "@/types";
 import apiClient from "./client";
 
 export interface CreateChallengeDto {
@@ -6,9 +6,15 @@ export interface CreateChallengeDto {
   description: string;
   content: string;
   completionContent: string;
-  answerType: "text" | "file" | "none";
+  answerType: AnswerType;
   autoValidate: boolean;
   correctAnswer?: string[];
+  /**
+   * Required for single_choice and multiple_choice; ignored on other types.
+   * The update replaces the options, so every call for a choice challenge
+   * must carry them, ids included for the options that already exist.
+   */
+  choiceOptions?: ChoiceOption[] | null;
   points: number;
   locationBound: boolean;
   fixedBaseId?: string;

@@ -422,3 +422,80 @@ describe('BaseScreen check-in methods', () => {
     expect(bodies[0]).toEqual({ method: 'qr', token: 'linked' })
   })
 })
+
+describe('BaseScreen choice questions', () => {
+  const CHECKED_IN = { ...NOT_VISITED, status: 'checked_in', checkedInAt: '2026-09-05T10:00:00Z' }
+
+  function choiceOverride(answerType: 'single_choice' | 'multiple_choice', progress: Array<Record<string, unknown>>, submissions: Array<Record<string, unknown>> = []) {
+    const bodies: Array<Record<string, unknown>> = []
+    server.use(
+      http.get('/api/player/games/:gameId/data', () => HttpResponse.json({
+        gameStatus: 'live', unlockTrigger: 'CHECK_IN',
+        bases: [{ id: 'b1', gameId: 'g1', lat: 40.09, lng: -8.87, nfcLinked: true, checkInMethod: 'NFC', checkInRadiusM: 15, hidden: false, fixedChallengeId: null }],
+        // Players get ids and texts only: no answer key on the wire.
+        challenges: [{ id: 'c1', gameId: 'g1', title: 'The old mill', description: '', content: '<p>Which trees grow by the mill?</p>', answerType, points: 10,
+          options: [{ id: 'o-oak', text: 'Oak' }, { id: 'o-pine', text: 'Pine' }, { id: 'o-fir', text: 'Fir' }] }],
+        assignments: [{ id: 'a1', gameId: 'g1', baseId: 'b1', challengeId: 'c1', teamId: null }],
+        progress,
+      })),
+      http.get('/api/games/:gameId/snapshot', () => HttpResponse.json({
+        stateVersion: 1, serverTime: '2026-09-05T10:30:00Z', game: { id: 'g1', name: 'Serra da Estrela', status: 'live' }, team: { id: 'team1', name: 'Falcons', memberCount: 4 }, progress, submissions, uploadSessions: [],
+      })),
+      http.post('/api/player/games/:gameId/submissions', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>
+        bodies.push(body)
+        const correct = JSON.stringify(body.selectedOptionIds) === JSON.stringify(answerType === 'single_choice' ? ['o-oak'] : ['o-oak', 'o-pine'])
+        return HttpResponse.json({ id: 's-choice', teamId: 'team1', challengeId: 'c1', baseId: 'b1', answer: '', status: correct ? 'correct' : 'rejected', submittedAt: '2026-09-05T10:50:00Z' })
+      }),
+    )
+    return bodies
+  }
+
+  it('sends the one chosen option of a single-choice question and never a typed answer', async () => {
+    const bodies = choiceOverride('single_choice', [CHECKED_IN])
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+    expect(await screen.findByText('Choose one answer.')).toBeInTheDocument()
+    expect(screen.getByTestId('player-choice-one-attempt')).toHaveTextContent('Your team gets one attempt')
+    expect(screen.queryByLabelText('Your answer')).not.toBeInTheDocument()
+    const send = screen.getByTestId('player-choice-submit-btn')
+    expect(send).toBeDisabled()
+    await userEvent.click(screen.getByRole('radio', { name: 'Pine' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Oak' }))
+    expect(screen.getByRole('radio', { name: 'Pine' })).not.toBeChecked()
+    await userEvent.click(send)
+    expect(await screen.findByTestId('player-submission-status')).toHaveTextContent('Correct!')
+    expect(bodies).toEqual([expect.objectContaining({ baseId: 'b1', challengeId: 'c1', selectedOptionIds: ['o-oak'] })])
+  })
+
+  it('closes a multiple-choice question after a wrong answer instead of inviting a retry', async () => {
+    const bodies = choiceOverride('multiple_choice', [CHECKED_IN])
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+    expect(await screen.findByText('Choose every answer that applies.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Fir' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Oak' }))
+    await userEvent.click(screen.getByTestId('player-choice-submit-btn'))
+    expect(await screen.findByTestId('player-submission-status')).toHaveTextContent('Not correct')
+    expect(screen.getByText(/closed for your team/)).toBeInTheDocument()
+    // Sent in the organizer's option order, whatever order they were tapped in.
+    expect(bodies[0]).toMatchObject({ selectedOptionIds: ['o-oak', 'o-fir'] })
+    expect(screen.queryByTestId('player-choice-answer')).not.toBeInTheDocument()
+  })
+
+  it('shows an already answered question as closed when the team comes back', async () => {
+    choiceOverride('single_choice', [{ ...CHECKED_IN, status: 'rejected' }], [{ id: 's-old', baseId: 'b1', challengeId: 'c1', status: 'rejected', submittedAt: '2026-09-05T10:40:00Z' }])
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+    expect(await screen.findByTestId('player-submission-status')).toHaveTextContent('Not correct')
+    expect(screen.queryByTestId('player-choice-answer')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Your answer')).not.toBeInTheDocument()
+  })
+
+  it('queues a choice answer offline with its selection', async () => {
+    choiceOverride('single_choice', [CHECKED_IN])
+    server.use(http.post('/api/player/games/:gameId/submissions', () => HttpResponse.error()))
+    const { services } = await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+    await userEvent.click(await screen.findByRole('radio', { name: 'Pine' }))
+    await userEvent.click(screen.getByTestId('player-choice-submit-btn'))
+    expect(await screen.findByTestId('player-submission-status')).toHaveTextContent('Saved offline')
+    await waitFor(async () => expect(await services.queue.list()).toEqual([expect.objectContaining({ type: 'submission', selectedOptionIds: ['o-pine'] })]))
+  })
+})

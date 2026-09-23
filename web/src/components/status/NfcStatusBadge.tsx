@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { StatusBadge } from './StatusBadge'
 import type { StatusBadgeTone } from './StatusBadge'
 
@@ -8,23 +9,20 @@ const nfcStatusTone: Record<NfcStatus, StatusBadgeTone> = {
   missing: 'warning',
 }
 
-const nfcStatusLabel: Record<NfcStatus, string> = {
-  linked: 'NFC linked',
-  missing: 'NFC missing',
-}
-
 export interface NfcStatusBadgeProps {
   status: NfcStatus
   className?: string
 }
 
 export function NfcStatusBadge({ status, className }: NfcStatusBadgeProps) {
+  const { t } = useTranslation()
+  const label = t(`status.nfc.${status}`)
   return (
     <StatusBadge
       tone={nfcStatusTone[status]}
-      label={nfcStatusLabel[status]}
+      label={label}
       className={className}
-      aria-label={`NFC status: ${nfcStatusLabel[status]}`}
+      aria-label={t('status.nfcAria', { label })}
     />
   )
 }

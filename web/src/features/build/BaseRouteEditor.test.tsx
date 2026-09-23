@@ -90,3 +90,36 @@ describe('BaseRouteEditor', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled()
   })
 })
+
+describe('BaseRouteEditor with stage routes (OW-40)', () => {
+  const free = createMockBase({ id: 'f', name: 'Car park' })
+  const m = createMockBase({ id: 'm', name: 'Meadow', stageId: 'explore' })
+  const g = createMockBase({ id: 'g', name: 'Gate', stageId: 'trail', sequenceNumber: 1 })
+  const s = createMockBase({ id: 's', name: 'Summit', stageId: 'trail', sequenceNumber: 2 })
+  const routes = [
+    { key: 'default', stageId: null, name: null, enforced: true, bases: [free] },
+    { key: 'explore', stageId: 'explore', name: 'Explore', enforced: false, bases: [m] },
+    { key: 'trail', stageId: 'trail', name: 'Final trail', enforced: true, bases: [g, s] },
+  ]
+
+  it('moves bases only within their route and saves every base once, routes in order', async () => {
+    const user = userEvent.setup()
+    const requests: unknown[] = []
+    server.use(http.patch('/api/games/game-1/bases/reorder', async ({ request }) => {
+      requests.push(await request.json())
+      return new HttpResponse(null, { status: 204 })
+    }))
+    const onClose = vi.fn()
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><BaseRouteEditor gameId="game-1" bases={[free, m, g, s]} routes={routes} editable onClose={onClose} /></QueryClientProvider>)
+    expect(screen.getByRole('heading', { name: 'Bases without a stage' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Final trail' })).toBeInTheDocument()
+    // The only base of its route cannot move anywhere.
+    expect(screen.getByRole('button', { name: 'Move Car park down' })).toBeDisabled()
+    expect(screen.getByTestId('route-unordered-note')).toHaveTextContent('Any order: Explore')
+    await user.click(screen.getByRole('button', { name: 'Move Summit up' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
+    expect(requests).toEqual([{ ids: ['f', 'm', 's', 'g'] }])
+  })
+})

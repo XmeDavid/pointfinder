@@ -17,6 +17,8 @@ const mockStore = {
   selectChallenge: vi.fn(),
   drawerOpen: true,
   drawerTab: 'bases' as const,
+  routeEditorRequested: false,
+  clearRouteEditorRequest: vi.fn(() => { mockStore.routeEditorRequested = false }),
 }
 
 vi.mock('@/stores/workspace', () => ({
@@ -275,5 +277,64 @@ describe('BasesTab quick filters', () => {
     renderBasesTab()
     await waitFor(() => expect(screen.getByText('Base Alpha')).toBeInTheDocument())
     expect(screen.queryByTestId('quick-filters')).not.toBeInTheDocument()
+  })
+})
+
+describe('BasesTab stage routes (OW-40)', () => {
+  beforeEach(() => {
+    mockStore.selectedBaseId = null
+    mockStore.routeEditorRequested = false
+    mockStore.clearRouteEditorRequest.mockClear()
+  })
+
+  function stagedGame() {
+    server.use(
+      http.get('/api/games/:id', () => HttpResponse.json(createMockGame({ id: 'game-1', status: 'setup', enforceBaseOrder: false }))),
+      http.get('/api/games/:gameId/stages', () => HttpResponse.json([
+        createMockStage({ id: 'explore', name: 'Explore', orderIndex: 0, enforceBaseOrder: false, baseIds: ['x1'] }),
+        createMockStage({ id: 'trail', name: 'Final trail', orderIndex: 1, enforceBaseOrder: true, baseIds: ['t1', 't2'] }),
+      ])),
+      http.get('/api/games/:gameId/bases', () => HttpResponse.json([
+        createMockBase({ id: 't2', name: 'Summit', stageId: 'trail', sequenceNumber: 2 }),
+        createMockBase({ id: 'x1', name: 'Meadow', stageId: 'explore' }),
+        createMockBase({ id: 't1', name: 'Gate', stageId: 'trail', sequenceNumber: 1 }),
+      ])),
+    )
+  }
+
+  it('groups the list by route and numbers only the ordered stage', async () => {
+    stagedGame()
+    renderBasesTab()
+    const trail = await screen.findByTestId('base-route-group-trail')
+    expect(trail).toHaveTextContent('Final trail')
+    expect(trail).toHaveTextContent('In order')
+    expect(screen.getByTestId('base-route-group-explore')).toHaveTextContent('Any order')
+    const names = [...trail.querySelectorAll('[data-testid^="base-item-"]')].map((el) => el.textContent)
+    expect(names[0]).toContain('Gate')
+    expect(names[1]).toContain('Summit')
+  })
+
+  it('offers the route editor when only a stage is ordered, arranging within that stage', async () => {
+    const user = userEvent.setup()
+    stagedGame()
+    renderBasesTab()
+    const arrange = await screen.findByTestId('arrange-route-btn')
+    await waitFor(() => expect(arrange).toBeEnabled())
+    await user.click(arrange)
+    const editor = await screen.findByTestId('base-route-editor')
+    expect(editor).toHaveTextContent('Each ordered stage is its own route')
+    expect(screen.getByTestId('route-group-trail')).toHaveTextContent('Final trail')
+    expect(screen.queryByTestId('route-group-explore')).not.toBeInTheDocument()
+    expect(screen.getByTestId('route-unordered-note')).toHaveTextContent('Any order: Explore')
+  })
+
+  it('opens the route editor when settings or a stage asks for it, and settles the request on close', async () => {
+    const user = userEvent.setup()
+    stagedGame()
+    mockStore.routeEditorRequested = true
+    renderBasesTab()
+    expect(await screen.findByTestId('base-route-editor')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(mockStore.clearRouteEditorRequest).toHaveBeenCalled()
   })
 })

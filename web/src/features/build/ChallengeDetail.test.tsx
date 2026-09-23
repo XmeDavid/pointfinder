@@ -784,3 +784,96 @@ describe('ChallengeDetail keeps answers that are still being typed', () => {
     await waitFor(() => expect(puts[puts.length - 1].correctAnswer).toEqual(['FOXES', 'WOLF']), { timeout: 4000 })
   }, 20000)
 })
+
+describe('ChallengeDetail choice questions', () => {
+  beforeEach(() => {
+    useDraftStore.getState().resetAll()
+    resetChallengeCounter()
+    useWorkspaceStore.getState().reset()
+  })
+
+  /** Keeps what is PUT, minting ids for new options like the server does. */
+  function setupChoiceChallenge(initial: Partial<Parameters<typeof createMockChallenge>[0]>) {
+    const puts: Array<Record<string, unknown>> = []
+    let minted = 0
+    let current = createMockChallenge({ id: 'ch-choice', title: 'Trees', ...initial })
+    server.use(
+      http.get('/api/games/:gameId/challenges', () => HttpResponse.json([current])),
+      http.put('/api/games/:gameId/challenges/:challengeId', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>
+        puts.push(body)
+        const options = (body.choiceOptions as Array<{ id?: string; text: string; correct: boolean }> | undefined)
+          ?.map((o) => ({ ...o, id: o.id ?? `minted-${++minted}` }))
+        current = { ...current, ...body, choiceOptions: options ?? null } as typeof current
+        return HttpResponse.json(current)
+      }),
+    )
+    return puts
+  }
+
+  it('turns a text challenge into a single-choice question with two options and one correct answer', async () => {
+    const user = userEvent.setup()
+    const puts = setupChoiceChallenge({ answerType: 'text', autoValidate: false })
+    render(<ChallengeDetail gameId="game-1" challengeId="ch-choice" />, { wrapper: createWrapper() })
+    await user.click(await screen.findByTestId('answer-type-single_choice'))
+
+    expect(screen.getByTestId('choice-options-editor')).toBeInTheDocument()
+    expect(screen.queryByTestId('auto-validate-toggle')).not.toBeInTheDocument()
+    expect(screen.getByTestId('choice-option-correct-0')).toBeChecked()
+    await user.type(screen.getByTestId('choice-option-text-0'), 'Oak')
+    await user.type(screen.getByTestId('choice-option-text-1'), 'Pine')
+    await user.click(screen.getByRole('radio', { name: 'Correct answer: Pine' }))
+    expect(screen.getByTestId('choice-option-correct-0')).not.toBeChecked()
+    await user.click(screen.getByTestId('save-challenge'))
+
+    await waitFor(() => expect(puts.length).toBeGreaterThan(0))
+    expect(puts[puts.length - 1]).toMatchObject({
+      answerType: 'single_choice',
+      choiceOptions: [{ text: 'Oak', correct: false }, { text: 'Pine', correct: true }],
+    })
+    expect((puts[puts.length - 1].choiceOptions as Array<Record<string, unknown>>)[0]).not.toHaveProperty('id')
+  })
+
+  it('keeps the ids of kept options when one is removed and another added', async () => {
+    const user = userEvent.setup()
+    const puts = setupChoiceChallenge({
+      answerType: 'multiple_choice',
+      autoValidate: true,
+      choiceOptions: [
+        { id: 'a', text: 'Oak', correct: true },
+        { id: 'b', text: 'Pine', correct: false },
+        { id: 'c', text: 'Birch', correct: true },
+      ],
+    })
+    render(<ChallengeDetail gameId="game-1" challengeId="ch-choice" />, { wrapper: createWrapper() })
+    await user.click(await screen.findByRole('button', { name: 'Remove Pine' }))
+    await user.click(screen.getByTestId('choice-option-add'))
+    await user.type(screen.getByTestId('choice-option-text-2'), 'Larch')
+    await user.click(screen.getByTestId('save-challenge'))
+
+    await waitFor(() => expect(puts.length).toBeGreaterThan(0))
+    expect(puts[puts.length - 1].choiceOptions).toEqual([
+      { id: 'a', text: 'Oak', correct: true },
+      { id: 'c', text: 'Birch', correct: true },
+      { text: 'Larch', correct: false },
+    ])
+  })
+
+  it('keeps options the server would refuse on this device and says why', async () => {
+    const user = userEvent.setup()
+    const puts = setupChoiceChallenge({
+      answerType: 'single_choice',
+      autoValidate: true,
+      choiceOptions: [{ id: 'a', text: 'Oak', correct: true }, { id: 'b', text: 'Pine', correct: false }],
+    })
+    render(<ChallengeDetail gameId="game-1" challengeId="ch-choice" />, { wrapper: createWrapper() })
+    const second = await screen.findByTestId('choice-option-text-1')
+    await user.clear(second)
+    await user.type(second, 'oak ')
+    expect(screen.getByTestId('choice-options-problem')).toHaveTextContent('Two options have the same text.')
+    await user.click(screen.getByTestId('save-challenge'))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(puts).toHaveLength(0)
+    expect(screen.getByTestId('choice-option-text-1')).toHaveValue('oak ')
+  })
+})

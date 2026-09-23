@@ -3,19 +3,12 @@ import { useSubmissions } from '@/hooks/queries/useSubmissions'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
-import type { AnswerType } from '@/types'
-import { StatusBadge, type StatusBadgeTone } from '@/components/status'
+import { AnswerTypeBadge } from '@/components/status'
 import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
 import { EmptyState } from '@/components/feedback/EmptyState'
 
 interface Props {
   gameId: string
-}
-
-const typeBadgeTones: Record<AnswerType, StatusBadgeTone> = {
-  text: 'info',
-  file: 'override',
-  none: 'muted',
 }
 
 export default function GameStatistics({ gameId }: Props) {
@@ -118,11 +111,7 @@ export default function GameStatistics({ gameId }: Props) {
                   {challenge.title}
                 </span>
                 <span className="w-20">
-                  <StatusBadge
-                    size="sm"
-                    tone={typeBadgeTones[challenge.answerType] ?? 'muted'}
-                    label={challenge.answerType}
-                  />
+                  <AnswerTypeBadge answerType={challenge.answerType} />
                 </span>
                 <span className="w-28 text-right text-sm text-muted-foreground">
                   {completionRate}%

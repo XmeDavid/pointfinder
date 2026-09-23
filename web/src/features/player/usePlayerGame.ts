@@ -179,9 +179,10 @@ export function usePlayerGame() {
     return r.state === 'synced' ? { state: 'synced', response: r.response as CheckInResponse | undefined } : r
   }, [gameId, queue, sync, route.enabled, snapshot, data.data])
 
-  const submit = useCallback(async (baseId: string, challengeId: string, answer: string, fileUrls?: string[]): Promise<ActionResult> => {
+  /** A text, check-in-only or choice answer; a choice answer carries the chosen option ids. */
+  const submit = useCallback(async (baseId: string, challengeId: string, answer: string, selectedOptionIds?: string[]): Promise<ActionResult> => {
     if (!gameId) return { state: 'auth' }
-    const action = await queue.enqueueSubmission({ id: crypto.randomUUID(), gameId, baseId, challengeId, answer, fileUrls: fileUrls ?? null })
+    const action = await queue.enqueueSubmission({ id: crypto.randomUUID(), gameId, baseId, challengeId, answer, selectedOptionIds: selectedOptionIds?.length ? selectedOptionIds : null, fileUrls: null })
     const report = await sync()
     const r = fromOutcome(report.outcomes.find((o) => o.id === action.id))
     return r.state === 'synced' ? { state: 'synced', response: r.response as SubmissionResponse | undefined } : r

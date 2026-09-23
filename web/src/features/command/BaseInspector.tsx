@@ -5,8 +5,8 @@ import { EmptyState } from '@/components/feedback/EmptyState'
 import { InspectorPanel } from '@/components/layout/InspectorPanel'
 import {
   BaseProgressBadge,
+  AnswerTypeBadge,
   NfcStatusBadge,
-  StatusBadge,
 } from '@/components/status'
 import { Button } from '@/components/ui/button'
 import { useAssignments } from '@/hooks/queries/useAssignments'
@@ -25,17 +25,6 @@ const statusSortOrder: Record<BaseStatus, number> = {
   rejected: 2,
   completed: 3,
   not_visited: 4,
-}
-
-function answerTypeLabel(answerType: 'text' | 'file' | 'none') {
-  if (answerType === 'none') return 'None'
-  return answerType.charAt(0).toUpperCase() + answerType.slice(1)
-}
-
-function answerTypeTone(answerType: 'text' | 'file' | 'none') {
-  if (answerType === 'text') return 'info'
-  if (answerType === 'file') return 'warning'
-  return 'muted'
 }
 
 export function BaseInspector({ gameId }: { gameId: string }) {
@@ -163,11 +152,7 @@ export function BaseInspector({ gameId }: { gameId: string }) {
                       >
                         {challenge.title}
                       </button>
-                      <StatusBadge
-                        tone={answerTypeTone(challenge.answerType)}
-                        label={answerTypeLabel(challenge.answerType)}
-                        size="sm"
-                      />
+                      <AnswerTypeBadge answerType={challenge.answerType} />
                       <span className="shrink-0 text-[10px] font-medium text-muted-foreground">
                         {challenge.points}pts
                       </span>

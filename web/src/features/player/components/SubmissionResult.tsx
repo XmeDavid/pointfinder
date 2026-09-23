@@ -12,6 +12,8 @@ export interface SubmissionResultProps {
   /** Shown only for correct/approved outcomes, like the old app's "Unlocked information". */
   completionContent?: string | null
   unlockedCount?: number
+  /** A choice question: a wrong answer closes it instead of inviting another try. */
+  finalAttempt?: boolean
 }
 
 const TONE: Record<SubmissionOutcome, { variant: 'info' | 'warning' | 'destructive'; className?: string; icon: typeof CheckCircle2 }> = {
@@ -26,18 +28,19 @@ const TITLE: Record<SubmissionOutcome, string> = { correct: 'result.correct', ap
 const MESSAGE: Record<SubmissionOutcome, string> = { correct: 'result.correctMsg', approved: 'result.approvedMsg', pending: 'result.submittedMsg', rejected: 'result.rejectedMsg', queued: 'result.queuedMsg' }
 
 /** What happened to the answer, in the words the old app used, plus the way back to the map. */
-export function SubmissionResult({ outcome, feedback, completionContent, unlockedCount = 0 }: SubmissionResultProps) {
+export function SubmissionResult({ outcome, feedback, completionContent, unlockedCount = 0, finalAttempt = false }: SubmissionResultProps) {
   const { t } = useTranslation(undefined, { keyPrefix: 'playerApp' })
   const tone = TONE[outcome]
   const Icon = tone.icon
   const showUnlocked = (outcome === 'correct' || outcome === 'approved') && !!completionContent?.trim()
+  const closed = finalAttempt && outcome === 'rejected'
   return (
     <section className="flex flex-col gap-3" role="status" aria-live="polite" data-testid="player-submission-result">
       <Alert variant={tone.variant} className={cn('flex items-start gap-3', tone.className)}>
         <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
         <div className="flex flex-col gap-1">
-          <p className="font-semibold" data-testid="player-submission-status">{t(TITLE[outcome])}</p>
-          <p className="text-sm">{t(MESSAGE[outcome])}</p>
+          <p className="font-semibold" data-testid="player-submission-status">{t(closed ? 'result.incorrect' : TITLE[outcome])}</p>
+          <p className="text-sm">{t(closed ? 'result.incorrectFinalMsg' : MESSAGE[outcome])}</p>
           {feedback && <p className="text-sm">{t('result.feedback', { feedback })}</p>}
         </div>
       </Alert>

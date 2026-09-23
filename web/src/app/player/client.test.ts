@@ -26,3 +26,24 @@ it('migrates the existing player’s unowned native queue and cached snapshots b
   expect(cache.get('snapshot:p:g')).toMatchObject({ stateVersion: 5, snapshot: { team: 'own-team' } })
   expect(cache.has('snapshot:g')).toBe(false)
 })
+
+it('replays a queued choice answer with the options the team chose', async () => {
+  const auth: StoredAuth = { kind: 'player', token: 'token', playerId: 'p', teamId: 't', gameId: 'g', displayName: 'Scout', teamName: 'Team', teamColor: '', gameName: 'Game', gameStatus: 'live' }
+  const bodies: unknown[] = []
+  const fetch: typeof globalThis.fetch = async (input, init) => {
+    if (String(input).endsWith('/submissions')) bodies.push(JSON.parse(String(init?.body)))
+    return new Response(JSON.stringify({ id: 's', status: 'correct' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  }
+  const platform: PlatformServices = {
+    media: { put: async () => {}, read: async () => new Uint8Array(), remove: async () => {} },
+    queue: new MemoryQueueStore(), fetch,
+    tokens: { load: async () => auth, save: async () => {}, clear: async () => {} },
+    cache: { load: async () => null, save: async () => {}, clear: async () => {} },
+    settings: { get: async () => null, set: async () => {}, remove: async () => {} },
+    socketFactory: async () => { throw new Error('offline') },
+  }
+  const services = await createServices(platform)
+  await services.queue.enqueueSubmission({ id: 'answer-1', gameId: 'g', baseId: 'b', challengeId: 'c', answer: '', selectedOptionIds: ['opt-2', 'opt-3'] })
+  await services.queue.sync()
+  expect(bodies).toEqual([expect.objectContaining({ challengeId: 'c', selectedOptionIds: ['opt-2', 'opt-3'], idempotencyKey: 'answer-1' })])
+})

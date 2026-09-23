@@ -4,6 +4,7 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useGame } from '@/hooks/queries/useGames'
 import { useStages } from '@/hooks/queries/useStages'
+import { anyRouteEnforced } from '@/features/build/baseRoutes'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
@@ -53,7 +54,8 @@ export function GameWorkspace() {
     isFetchedAfterMount: gameFetched,
     error: gameError,
   } = useGame(gameId)
-  const { data: stages = [] } = useStages(gameId)
+  const { data: stagesData } = useStages(gameId)
+  const stages = useMemo(() => stagesData ?? [], [stagesData])
   const { data: bases = [], isLoading: basesLoading } = useBases(gameId)
   const { data: teams = [] } = useTeams(gameId)
   const [placing, setPlacing] = useState(false)
@@ -217,7 +219,8 @@ export function GameWorkspace() {
     if (
       mode === 'build' &&
       (game.status === 'setup' ||
-        (game.status === 'live' && !game.enforceBaseOrder))
+        // Any enforced route (the game's or a stage's) freezes base structure once live.
+        (game.status === 'live' && !anyRouteEnforced(game, stagesData)))
     ) {
       if (placing) {
         void placeBase({ lat: event.lngLat.lat, lng: event.lngLat.lng })

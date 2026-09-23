@@ -11,16 +11,11 @@ import { SearchInput } from '@/components/data/SearchInput'
 import { QuickFilters } from '@/components/data/QuickFilters'
 import { useTags } from '@/hooks/queries/useTags'
 import { Spinner } from '@/components/feedback/Spinner'
-import { Badge } from '@/components/ui/badge'
+import { AnswerTypeBadge } from '@/components/status'
 import { ChallengeDetail } from './ChallengeDetail'
 import { cn } from '@/lib/utils'
-import type { Challenge, Assignment, Base, Team, AnswerType } from '@/types/v2'
+import type { Challenge, Assignment, Base, Team } from '@/types/v2'
 
-const ANSWER_TYPE_STYLES: Record<AnswerType, { label: string; variant: 'default' | 'secondary' | 'info' | 'warning' }> = {
-  text: { label: 'Text', variant: 'info' },
-  file: { label: 'File', variant: 'warning' },
-  none: { label: 'None', variant: 'secondary' },
-}
 
 interface ChallengeListItemProps {
   challenge: Challenge
@@ -53,8 +48,6 @@ function ChallengeListItem({
   const baseIds = new Set(challengeAssignments.map((a) => a.baseId))
   const assignedBase = bases.find((b) => baseIds.has(b.id))
 
-  const badge = ANSWER_TYPE_STYLES[challenge.answerType]
-
   return (
     <button
       onClick={onSelect}
@@ -72,9 +65,7 @@ function ChallengeListItem({
         <span className="text-sm font-medium text-foreground truncate">
           {challenge.title}
         </span>
-        <Badge variant={badge.variant} className="shrink-0 text-[10px] px-1.5 py-0">
-          {badge.label}
-        </Badge>
+        <AnswerTypeBadge answerType={challenge.answerType} />
       </div>
 
       {/* Points */}

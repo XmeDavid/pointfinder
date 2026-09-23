@@ -62,6 +62,12 @@ export interface Game {
   tileSource: string;
   unlockTrigger: string;
   enforceBaseOrder?: boolean;
+  /**
+   * OW-40: whether any route is enforced, the game's default route or any
+   * stage. Route structure is setup-only while this holds. Null when the
+   * server did not resolve it (list responses, older servers).
+   */
+  routeOrderEnforced?: boolean | null;
   /** ISO 639-1 code of the content's language; null when the organizer did not say. */
   contentLanguage?: string | null;
   /**
@@ -113,7 +119,9 @@ export interface Base {
   checkInRadiusM?: number | null;
 }
 
-export type AnswerType = "text" | "file" | "none";
+export type { AnswerType, ChoiceOption } from "./challenge";
+export { CHOICE_ANSWER_TYPES, isChoiceAnswerType } from "./challenge";
+import type { AnswerType, ChoiceOption } from "./challenge";
 
 export interface Challenge {
   id: string;
@@ -125,6 +133,8 @@ export interface Challenge {
   answerType: AnswerType;
   autoValidate: boolean;
   correctAnswer?: string[];
+  /** Operator-only options of a choice challenge, answer key included; absent on other types. */
+  choiceOptions?: ChoiceOption[] | null;
   points: number;
   locationBound: boolean;
   unlocksBaseIds?: string[];
@@ -184,6 +194,8 @@ export interface Submission {
   challengeId: string;
   baseId: string;
   answer: string;
+  /** Chosen option ids on a choice challenge; `answer` then holds their texts as the team saw them. */
+  selectedOptionIds?: string[] | null;
   fileUrl?: string;
   fileUrls?: string[];
   status: SubmissionStatus;

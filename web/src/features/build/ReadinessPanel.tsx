@@ -13,6 +13,8 @@ export interface ReadinessPanelProps {
   total: number
   /** A non-blocking note: some base uses a method the legacy apps cannot play. */
   legacyNote: boolean
+  /** A non-blocking note: a linked challenge is a choice question the legacy apps cannot answer. */
+  legacyChoiceNote?: boolean
   expanded: boolean
   onToggle: (expanded: boolean) => void
   onOpenCheck: (check: ReadinessCheck) => void
@@ -86,6 +88,7 @@ export function ReadinessPanel({
   blockers,
   total,
   legacyNote,
+  legacyChoiceNote = false,
   expanded,
   onToggle,
   onOpenCheck,
@@ -100,11 +103,21 @@ export function ReadinessPanel({
   const passed = Math.max(0, total - blockers.length)
   const transition = reduced ? { duration: 0 } : { duration: 0.25, ease: 'easeInOut' as const }
 
-  const note = legacyNote ? (
-    <div className="flex items-start gap-2 pt-1" data-testid="readiness-legacy-note">
-      <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <span className="text-xs text-muted-foreground">{t('readiness.legacyAppsNote')}</span>
-    </div>
+  const note = legacyNote || legacyChoiceNote ? (
+    <>
+      {legacyNote && (
+        <div className="flex items-start gap-2 pt-1" data-testid="readiness-legacy-note">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="text-xs text-muted-foreground">{t('readiness.legacyAppsNote')}</span>
+        </div>
+      )}
+      {legacyChoiceNote && (
+        <div className="flex items-start gap-2 pt-1" data-testid="readiness-legacy-choice-note">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="text-xs text-muted-foreground">{t('readiness.legacyChoiceNote')}</span>
+        </div>
+      )}
+    </>
   ) : null
 
   return (

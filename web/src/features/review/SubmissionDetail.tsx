@@ -13,6 +13,8 @@ import { resolveTemplate, type VariableMap } from '@/lib/variables/resolveTempla
 import { scanReferences } from '@/lib/variables/scanReferences'
 import apiClient from '@/lib/api/client'
 import { Spinner } from '@/components/feedback/Spinner'
+import { isChoiceAnswerType } from '@/types'
+import { ChoiceReview } from './ChoiceReview'
 
 // ---------------------------------------------------------------------------
 // AuthMedia — fetches a file through the authenticated API client and renders
@@ -442,10 +444,12 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
 
         {/* Submission content */}
         <div className="space-y-3">
-          {submission.answer && (
+          {challenge && isChoiceAnswerType(challenge.answerType) && challenge.choiceOptions?.length ? (
+            <ChoiceReview options={challenge.choiceOptions} selectedOptionIds={submission.selectedOptionIds ?? []} answer={submission.answer} />
+          ) : submission.answer && (
             <div>
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
-                Text answer
+                {t('submissions.textAnswer')}
               </span>
               <div className="px-3 py-2 border border-border rounded-lg text-sm text-foreground bg-muted/30">
                 {submission.answer}

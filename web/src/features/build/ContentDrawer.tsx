@@ -10,6 +10,8 @@ import { useCreateTeam } from '@/hooks/mutations/useTeamMutations'
 import { useCreateStage } from '@/hooks/mutations/useStageMutations'
 import { useSetAssignments } from '@/hooks/mutations/useAssignmentMutations'
 import { useGame } from '@/hooks/queries/useGames'
+import { useStages } from '@/hooks/queries/useStages'
+import { anyRouteEnforced } from './baseRoutes'
 import { useBases } from '@/hooks/queries/useBases'
 import { useChallenges } from '@/hooks/queries/useChallenges'
 import { useAssignments } from '@/hooks/queries/useAssignments'
@@ -55,7 +57,9 @@ export function ContentDrawer({ gameId, onCreateBase }: ContentDrawerProps) {
     useIsMutating({ mutationKey: ['assignments', 'set'] }) > 0
 
   const { data: game } = useGame(gameId)
-  const baseRouteLocked = !!game?.enforceBaseOrder && game.status !== 'setup'
+  const { data: stagesData } = useStages(gameId)
+  // Any enforced route, the game's or a stage's, freezes base structure after setup.
+  const baseRouteLocked = anyRouteEnforced(game, stagesData) && game?.status !== 'setup'
   const { data: bases = [] } = useBases(gameId)
   const { data: challenges = [] } = useChallenges(gameId)
   // Keep the query alive so child tabs share the cache

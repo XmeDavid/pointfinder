@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockGame } from '@/test/factories/game'
+import { createMockStage } from '@/test/factories/stage'
 import { useWorkspaceStore } from '@/stores/workspace'
 import GameSettingsPanel from './GameSettingsPanel'
 
@@ -350,6 +351,11 @@ describe('GameSettingsPanel', () => {
 
 
 describe('enforced base order settings', () => {
+  // A game without stages: the switch is the game's one route.
+  beforeEach(() => {
+    server.use(http.get('/api/games/:gameId/stages', () => HttpResponse.json([])))
+  })
+
   it('saves the setting independently of per-team challenge assignment and opens the Bases tab', async () => {
     const user = userEvent.setup()
     useWorkspaceStore.getState().toggleSettingsPanel()
@@ -371,7 +377,7 @@ describe('enforced base order settings', () => {
     await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'))
     expect(requests[0]).toMatchObject({ enforceBaseOrder: true, uniformAssignment: false })
     await user.click(screen.getByRole('button', { name: 'Arrange route' }))
-    expect(useWorkspaceStore.getState()).toMatchObject({ drawerOpen: true, drawerTab: 'bases', settingsPanelOpen: false, selectedBaseId: null })
+    expect(useWorkspaceStore.getState()).toMatchObject({ drawerOpen: true, drawerTab: 'bases', settingsPanelOpen: false, selectedBaseId: null, routeEditorRequested: true })
   })
 
   it('keeps the previous setting and shows an error if saving fails', async () => {
@@ -538,5 +544,67 @@ describe('enforced base order settings', () => {
     expect(await screen.findByTestId('end-game-pending')).toHaveTextContent('3 submissions are still waiting for review.')
     await userEvent.click(screen.getByTestId('end-game-confirm-btn'))
     await waitFor(() => expect(patched).toEqual({ status: 'ended', resetProgress: false }))
+  })
+})
+
+describe('base order with stages (OW-40)', () => {
+  it('says the game switch governs only bases without a stage and names the ordered stages', async () => {
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    server.use(
+      http.get('/api/games/game-1', () => HttpResponse.json(createMockGame({ id: 'game-1', enforceBaseOrder: false }))),
+      http.get('/api/games/:gameId/stages', () => HttpResponse.json([
+        createMockStage({ id: 's1', name: 'Explore', enforceBaseOrder: false }),
+        createMockStage({ id: 's2', name: 'Final trail', enforceBaseOrder: true }),
+      ])),
+    )
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    expect(await screen.findByRole('switch', { name: 'Enforce order for bases without a stage' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByTestId('base-order-stages-note')).toHaveTextContent('Stages in order: Final trail')
+    // A stage route is enforced, so its route can be arranged from here.
+    expect(screen.getByRole('button', { name: 'Arrange route' })).toBeInTheDocument()
+  })
+})
+
+describe('content language (OW-33)', () => {
+  it('saves the chosen language and clears it back to unknown', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    let game = createMockGame({ id: 'game-1', contentLanguage: null })
+    const requests: Record<string, unknown>[] = []
+    server.use(
+      http.get('/api/games/game-1', () => HttpResponse.json(game)),
+      http.put('/api/games/game-1', async ({ request }) => {
+        const body = await request.json() as Record<string, unknown>
+        requests.push(body)
+        game = { ...game, contentLanguage: (body.contentLanguage as string) || null }
+        return HttpResponse.json(game)
+      }),
+    )
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    const select = await screen.findByRole('combobox', { name: 'Content language' })
+    expect(select).toHaveValue('')
+    expect(screen.getByRole('option', { name: 'Not specified' })).toBeInTheDocument()
+    await user.selectOptions(select, 'pt')
+    await waitFor(() => expect(requests).toHaveLength(1))
+    expect(requests[0]).toMatchObject({ contentLanguage: 'pt', name: game.name })
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Content language' })).toHaveValue('pt'))
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Content language' }), '')
+    await waitFor(() => expect(requests).toHaveLength(2))
+    expect(requests[1]).toMatchObject({ contentLanguage: '' })
+  })
+
+  it('keeps the stored language and says so when saving fails', async () => {
+    const user = userEvent.setup()
+    useWorkspaceStore.getState().toggleSettingsPanel()
+    server.use(
+      http.get('/api/games/game-1', () => HttpResponse.json(createMockGame({ id: 'game-1', contentLanguage: 'de' }))),
+      http.put('/api/games/game-1', () => HttpResponse.json({ message: 'Unavailable' }, { status: 503 })),
+    )
+    render(createElement(GameSettingsPanel, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    const select = await screen.findByRole('combobox', { name: 'Content language' })
+    expect(select).toHaveValue('de')
+    await user.selectOptions(select, 'fr')
+    expect(await screen.findByText('Could not save the content language. Try again.')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Content language' })).toHaveValue('de')
   })
 })

@@ -320,7 +320,12 @@
       "useLatest": "Neueste übernehmen",
       "restored": "Deine ungespeicherten Änderungen wurden wiederhergestellt."
     },
-    "saveAria": "Speicherstatus: {{label}}"
+    "saveAria": "Speicherstatus: {{label}}",
+    "nfc": {
+      "linked": "NFC verknüpft",
+      "missing": "NFC fehlt"
+    },
+    "nfcAria": "NFC-Status: {{label}}"
   },
   "lifecycle": {
     "goLive": "Live schalten",
@@ -728,7 +733,13 @@
     "viewFullscreen": "Vollbild anzeigen",
     "openReview": "Einreichung prüfen: {{team}} — {{challenge}}",
     "expectedRaw": "Erwartet (roh)",
-    "expectedAnswer": "Erwartete Antwort"
+    "expectedAnswer": "Erwartete Antwort",
+    "textAnswer": "Textantwort",
+    "choiceAnswer": "Gewählte Optionen",
+    "chosen": "Gewählt",
+    "correctOption": "Richtig",
+    "choiceGraded": "Automatisch bewertet: alles oder nichts, ein Versuch pro Team.",
+    "optionRemoved": "Eine hier gewählte Option wurde nach dieser Antwort entfernt."
   },
   "teamDetail": {
     "backToLeaderboard": "Zurück zur Rangliste",
@@ -1633,6 +1644,49 @@
       "saveBaseFirst": "Die Basis konnte nicht gespeichert werden. Behebe das Problem oder versuche es erneut, bevor du die Aufgabe öffnest.",
       "baseInvalid": "Korrigiere die Basisdaten, bevor du die Aufgabe öffnest.",
       "resumingChallenge": "Die begonnene Aufgabe wird fertiggestellt…"
+    },
+    "choice": {
+      "options": "Optionen",
+      "hintSingle": "Markiere die eine richtige Option.",
+      "hintMultiple": "Markiere alle richtigen Optionen. Ein Team liegt nur richtig, wenn es genau diese wählt.",
+      "optionLabel": "Option {{number}}",
+      "correct": "Richtig",
+      "markCorrect": "Richtige Antwort: {{option}}",
+      "remove": "{{option}} entfernen",
+      "add": "Option hinzufügen",
+      "maxReached": "Bis zu {{max}} Optionen.",
+      "gradedNote": "Wird automatisch geprüft. Jedes Team hat einen Versuch für diese Frage.",
+      "problems": {
+        "tooFew": "Füge mindestens {{min}} Optionen hinzu.",
+        "tooMany": "Verwende höchstens {{max}} Optionen.",
+        "emptyText": "Jede Option braucht einen Text. Fülle sie aus oder entferne sie.",
+        "textTooLong": "Jede Option darf höchstens {{max}} Zeichen haben.",
+        "duplicateText": "Zwei Optionen haben denselben Text.",
+        "singleNeedsOneCorrect": "Markiere genau eine Option als richtig.",
+        "multipleNeedsCorrect": "Markiere mindestens eine Option als richtig."
+      }
+    },
+    "stageEditor": {
+      "identity": "Etappe",
+      "transition": "Wann diese Etappe öffnet",
+      "transitionType": {
+        "scheduled": "Geplant",
+        "trigger": "Nach einer Basis",
+        "manual": "Manuell"
+      },
+      "scheduledAt": "Öffnet um",
+      "triggerBase": "Auslösende Basis (aus vorherigen Etappen)",
+      "noPreviousBases": "Keine Basen aus vorherigen Etappen verfügbar",
+      "manualHint": "Wird vom Operator aktiviert",
+      "bases": "Basen in dieser Etappe ({{count}})",
+      "noBases": "Noch keine Basen in dieser Etappe",
+      "addExisting": "Vorhandene Basis hinzufügen",
+      "save": "Änderungen speichern",
+      "saveError": "Die Etappe konnte nicht gespeichert werden. Deine Änderungen sind noch da; versuche es erneut.",
+      "delete": "Etappe löschen",
+      "order": "Reihenfolge der Basen",
+      "enforceOrder": "Basen dieser Etappe der Reihe nach besuchen",
+      "enforceOrderHint": "Teams checken an den Basen dieser Etappe ab 1 ein. Andere Etappen behalten ihre eigene Einstellung."
     }
   },
   "command2": {
@@ -1995,7 +2049,9 @@
       "queuedMsg": "Deine Antwort ist auf diesem Telefon gespeichert und wird gesendet, sobald du wieder online bist.",
       "feedback": "Feedback: {{feedback}}",
       "unlockedInformation": "Freigeschaltete Information",
-      "backToMap": "Zurück zur Karte"
+      "backToMap": "Zurück zur Karte",
+      "incorrect": "Nicht richtig",
+      "incorrectFinalMsg": "Diese Frage erlaubte nur einen Versuch und ist für dein Team jetzt abgeschlossen."
     },
     "solve": {
       "submitPhoto": "Medien einreichen",
@@ -2108,6 +2164,13 @@
         "title": "Dein Platz im Spiel",
         "body": "Hier findest du Team und Spieldetails, Einstellungen und die Möglichkeit, Gastfortschritt in deinem Konto zu speichern. Dein Kontoprofil liegt außerhalb des Spiels."
       }
+    },
+    "choice": {
+      "legend": "Antwortmöglichkeiten",
+      "instructionsSingle": "Wähle eine Antwort.",
+      "instructionsMultiple": "Wähle alle zutreffenden Antworten.",
+      "oneAttempt": "Dein Team hat einen Versuch. Prüfe deine Auswahl vor dem Senden.",
+      "noOptions": "Diese Frage hat noch keine Optionen. Frag die Organisation."
     }
   },
   "baseOrder": {
@@ -2123,7 +2186,15 @@
     "drag": "{{name}} zum Anordnen ziehen",
     "routeChanged": "Die Route wurde während deiner Bearbeitung geändert. Brich ab und öffne sie erneut, um die aktuelle Route zu verwenden.",
     "baseNumber": "Basis {{number}}",
-    "route": "Route"
+    "route": "Route",
+    "noStageRoute": "Basen ohne Etappe",
+    "stageRoutesDescription": "Jede geordnete Etappe ist eine eigene Route, ab 1 nummeriert, für alle Teams. Ziehe Basen oder nutze die Pfeile und speichere dann.",
+    "anyOrderRoutes": "Beliebige Reihenfolge: {{routes}}",
+    "inOrder": "Der Reihe nach",
+    "anyOrder": "Beliebige Reihenfolge",
+    "enforceUnstaged": "Reihenfolge für Basen ohne Etappe erzwingen",
+    "stagesHaveOwnOrder": "Jede Etappe legt ihre eigene Reihenfolge im Etappen-Editor fest.",
+    "orderedStages": "Geordnete Etappen: {{stages}}"
   },
   "checkIn": {
     "group": "Check-in",
@@ -2181,7 +2252,8 @@
     "checking": "Startbereitschaft wird geprüft…",
     "unavailable": "Die Startbereitschaft konnte nicht geprüft werden.",
     "retry": "Erneut prüfen",
-    "blockersTitle": "Vor dem Livegang"
+    "blockersTitle": "Vor dem Livegang",
+    "legacyChoiceNote": "Die alten iOS- und Android-Apps können keine Einfach- oder Mehrfachauswahlfragen beantworten."
   },
   "tutorials": {
     "menu": "Tutorials",
@@ -2830,7 +2902,9 @@
     "organizerSessionDenied": "Dieses Konto kann keine Spiele organisieren.",
     "continueOrganizing": "Organisation fortsetzen",
     "continueOrganizingLoading": "Dein zuletzt organisiertes Spiel wird gesucht…",
-    "continueOrganizingError": "Dein zuletzt organisiertes Spiel konnte nicht geladen werden"
+    "continueOrganizingError": "Dein zuletzt organisiertes Spiel konnte nicht geladen werden",
+    "contentLanguageLabel": "Sprache der Inhalte: {{language}}",
+    "contentLanguageUnknown": "Sprache der Inhalte nicht angegeben"
   },
   "publication": {
     "heading": "Öffentlich machen",
@@ -2866,5 +2940,61 @@
     "unpublish": "Aus Entdecken entfernen",
     "saveError": "Die Änderung konnte nicht abgeschlossen werden. Dein Text ist noch da. Versuche es erneut.",
     "offline": "Du bist offline. Verbinde dich, um deinen Eintrag zu laden oder zu speichern."
+  },
+  "gameSettings": {
+    "title": "Spieleinstellungen",
+    "details": "Spieldetails",
+    "name": "Name",
+    "description": "Beschreibung",
+    "noDescription": "Keine Beschreibung",
+    "contentLanguage": "Sprache der Inhalte",
+    "contentLanguageHint": "Die Sprache, in der deine Basen und Aufgaben geschrieben sind. Spieler sehen sie vor dem Beitritt; nichts wird übersetzt.",
+    "contentLanguageUnknown": "Nicht angegeben",
+    "contentLanguageError": "Die Sprache der Inhalte konnte nicht gespeichert werden. Versuche es erneut.",
+    "map": "Karteneinstellungen",
+    "tileSource": "Kartenquelle",
+    "progression": "Fortschritt",
+    "unlockTrigger": "Freischaltung",
+    "unlockTriggers": {
+      "CHECK_IN": {
+        "label": "Check-in",
+        "description": "Die Basis wird beim Check-in des Teams freigeschaltet"
+      },
+      "SUBMISSION": {
+        "label": "Einreichung",
+        "description": "Die Basis wird freigeschaltet, wenn das Team eine Antwort einreicht"
+      },
+      "COMPLETED": {
+        "label": "Abgeschlossen",
+        "description": "Die Basis wird freigeschaltet, wenn die Aufgabe abgeschlossen/freigegeben ist"
+      }
+    },
+    "assignmentMode": "Zuweisungsmodus",
+    "uniformAssignment": "Einheitliche Zuweisung",
+    "uniformAssignmentHint": "Wenn aktiv, erhalten alle Teams an jeder Basis dieselbe Aufgabe",
+    "broadcast": "Übertragung",
+    "broadcastEnabled": "Übertragung aktiv",
+    "broadcastCode": "Übertragungscode",
+    "broadcastHint": "Teile diesen Code, damit Zuschauer live zusehen können",
+    "operators": "Operatoren",
+    "owner": "Eigentümer",
+    "remove": "Entfernen",
+    "pendingInvitations": "Offene Einladungen",
+    "revoke": "Widerrufen",
+    "inviteEmail": "E-Mail des Operators",
+    "inviteFailed": "Die Einladung konnte nicht gesendet werden.",
+    "sending": "Wird gesendet...",
+    "invite": "Einladen",
+    "export": "Export",
+    "exportGame": "Spiel exportieren",
+    "exporting": "Wird exportiert...",
+    "exportHint": "Lade eine JSON-Datei mit der gesamten Spielkonfiguration herunter, die in ein neues Spiel importiert werden kann.",
+    "dangerZone": "Gefahrenbereich",
+    "deleteGame": "Spiel löschen",
+    "deleteHint": "Dieses Spiel und alle seine Daten dauerhaft löschen.",
+    "deleteConfirm": "Bist du sicher?",
+    "deleteConfirmBody": "Dadurch werden das Spiel sowie alle Basen, Aufgaben, Teams und Einreichungen dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "deleting": "Wird gelöscht…",
+    "deleteForever": "Endgültig löschen"
   }
 }

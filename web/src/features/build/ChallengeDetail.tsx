@@ -6,6 +6,8 @@ import { SaveStatusIndicator } from '@/components/status'
 import { draftKey } from './drafts/draftStore'
 import { useEntityDraft } from './drafts/useEntityDraft'
 import { challengeDraftFields, challengeDraftIsValid, type ChallengeDraftFields } from './drafts/challengeDraft'
+import { choiceOptionsForType, choiceOptionsPayload } from '@/lib/choiceOptions'
+import { ChoiceOptionsEditor } from '@/components/inputs/ChoiceOptionsEditor'
 import { Switch } from '@/components/ui/switch'
 import { Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -41,7 +43,7 @@ import {
 } from '@/lib/variables/resolveTemplate'
 import { findUndefinedReferences } from '@/lib/variables/scanReferences'
 import { cn } from '@/lib/utils'
-import type { AnswerType } from '@/types/v2'
+import { isChoiceAnswerType, type AnswerType, type ChoiceOption } from '@/types/v2'
 
 // Allowlist mirrored from RichTextEditor#sanitize; the resolved preview is
 // rendered via dangerouslySetInnerHTML after variable substitution, and a
@@ -87,11 +89,7 @@ const PREVIEW_SANITIZE_CONFIG = {
   ],
 }
 
-const ANSWER_TYPES: { value: AnswerType; label: string }[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'file', label: 'File' },
-  { value: 'none', label: 'None' },
-]
+const ANSWER_TYPES: AnswerType[] = ['text', 'file', 'none', 'single_choice', 'multiple_choice']
 
 interface ChallengeDetailProps {
   challengeId: string
@@ -181,6 +179,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const accountId = useAuthStore((s) => s.user?.id)
   const correctAnswerKey = challenge?.correctAnswer?.join('\u0000')
   const unlocksKey = challenge?.unlocksBaseIds?.join('\u0000')
+  const choiceOptionsKey = challenge?.choiceOptions?.map((o) => `${o.id}:${o.correct}:${o.text}`).join('\u0000')
   const serverFields = useMemo(
     () => (challenge ? challengeDraftFields(challenge) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -192,6 +191,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       challenge?.description,
       challenge?.content,
       correctAnswerKey,
+      choiceOptionsKey,
       challenge?.points,
       challenge?.operatorNotes,
       challenge?.locationBound,
@@ -212,6 +212,8 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           description: fields.description,
           content: fields.content,
           correctAnswer: fields.correctAnswer.length > 0 ? fields.correctAnswer : undefined,
+          // The server replaces the options on every update of a choice challenge.
+          choiceOptions: isChoiceAnswerType(fields.answerType) ? choiceOptionsPayload(fields.choiceOptions) : undefined,
           points: Number(fields.points) || 0,
           operatorNotes: fields.operatorNotes || undefined,
           locationBound: fields.locationBound,
@@ -251,6 +253,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const localDescription = fields?.description ?? ''
   const localContent = fields?.content ?? ''
   const localCorrectAnswer = useMemo(() => fields?.correctAnswer ?? [], [fields?.correctAnswer])
+  const localChoiceOptions = useMemo(() => fields?.choiceOptions ?? [], [fields?.choiceOptions])
   const localPoints = fields?.points ?? '0'
   const localOperatorNotes = fields?.operatorNotes ?? ''
   const localLocationBound = fields?.locationBound ?? false
@@ -258,7 +261,10 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   const localCompletionContent = fields?.completionContent ?? ''
   const update = draft.update
   const setLocalTitle = (title: string) => update({ title })
-  const setLocalAnswerType = (answerType: AnswerType) => update({ answerType })
+  // Becoming a choice challenge starts from its earlier options, or two empty ones.
+  const setLocalAnswerType = (answerType: AnswerType) =>
+    update((current) => ({ ...current, answerType, choiceOptions: choiceOptionsForType(answerType, current.choiceOptions) }))
+  const setLocalChoiceOptions = (choiceOptions: ChoiceOption[]) => update({ choiceOptions })
   const setLocalAutoValidate = (autoValidate: boolean) => update({ autoValidate })
   const setLocalDescription = (description: string) => update({ description })
   const setLocalContent = useCallback((content: string) => update({ content }), [update])
@@ -294,6 +300,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
   )
 
   const showAnswerConfig = localAnswerType === 'text' && localAutoValidate
+  const showChoiceOptions = isChoiceAnswerType(localAnswerType)
 
   // Undefined-key guard: collect every `{{key}}` referenced in authoring
   // fields and flag any that aren't defined as game/challenge variables.
@@ -304,6 +311,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
           localContent,
           localCompletionContent,
           ...(showAnswerConfig ? localCorrectAnswer : []),
+          ...(showChoiceOptions ? localChoiceOptions.map((o) => o.text) : []),
         ],
         new Set(availableKeys),
       ),
@@ -311,8 +319,10 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
       localContent,
       localCompletionContent,
       localCorrectAnswer,
+      localChoiceOptions,
       availableKeys,
       showAnswerConfig,
+      showChoiceOptions,
     ],
   )
   const wantAutosave = undefinedKeys.length === 0
@@ -481,21 +491,21 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
               className="flex flex-wrap gap-1.5"
               data-testid="answer-type-group"
             >
-              {ANSWER_TYPES.map((at) => (
+              {ANSWER_TYPES.map((type) => (
                 <button
-                  key={at.value}
+                  key={type}
                   type="button"
-                  onClick={() => setLocalAnswerType(at.value)}
-                  aria-pressed={localAnswerType === at.value}
-                  data-testid={`answer-type-${at.value}`}
+                  onClick={() => setLocalAnswerType(type)}
+                  aria-pressed={localAnswerType === type}
+                  data-testid={`answer-type-${type}`}
                   className={cn(
                     'min-h-11 px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer border',
-                    localAnswerType === at.value
+                    localAnswerType === type
                       ? 'bg-primary/10 text-primary border-primary/30'
                       : 'bg-background text-muted-foreground border-border hover:text-foreground',
                   )}
                 >
-                  {t(`build.editor.${at.value}`)}
+                  {t(`build.editor.${type}`)}
                 </button>
               ))}
             </div>
@@ -517,6 +527,32 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 data-testid="auto-validate-toggle"
               />
             </div>
+          )}
+
+          {/* A choice challenge is its options and their answer key; the
+              server grades it, so there is no automatic-checking switch. */}
+          {showChoiceOptions && (
+            previewMode ? (
+              <ul className="space-y-1.5" data-testid="choice-options-preview" aria-label={t('build.choice.options')}>
+                {localChoiceOptions.map((option, index) => (
+                  <li key={option.id ?? `new-${index}`} className="flex items-start gap-2 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1 break-words">{resolveTemplate(option.text, previewVars)}</span>
+                    {option.correct && <span className="shrink-0 text-xs font-medium text-success">{t('build.choice.correct')}</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ChoiceOptionsEditor
+                answerType={localAnswerType as 'single_choice' | 'multiple_choice'}
+                options={localChoiceOptions}
+                onChange={setLocalChoiceOptions}
+              />
+            )
+          )}
+          {showChoiceOptions && undefinedKeys.length > 0 && (
+            <p className="text-[10px] text-destructive" data-testid="undefined-key-warning">
+              {t('build.editor.unknownVariables')} {undefinedKeys.map((k) => `{{${k}}}`).join(', ')}
+            </p>
           )}
 
           {/* Accepted answers belong to the switch: they show while checking
@@ -834,6 +870,7 @@ export function ChallengeDetail({ challengeId, gameId }: ChallengeDetailProps) {
                 answerType: challenge.answerType,
                 autoValidate: challenge.autoValidate,
                 correctAnswer: challenge.correctAnswer,
+                choiceOptions: challenge.choiceOptions,
                 points: challenge.points,
                 locationBound: challenge.locationBound,
                 operatorNotes: challenge.operatorNotes,

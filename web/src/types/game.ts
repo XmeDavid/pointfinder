@@ -20,6 +20,8 @@ export interface Game {
   createdBy: string
   operatorIds: string[]
   enforceBaseOrder?: boolean
+  /** OW-40: whether any route is enforced (the default route or any stage); null when unresolved. */
+  routeOrderEnforced?: boolean | null
   uniformAssignment: boolean
   broadcastEnabled: boolean
   broadcastCode: string | null

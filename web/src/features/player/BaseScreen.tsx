@@ -17,6 +17,7 @@ import { BaseStatusBadge } from '@/features/player/components/BaseStatusBadge'
 import { RichContent } from '@/features/player/components/RichContent'
 import { SubmissionResult, type SubmissionOutcome } from '@/features/player/components/SubmissionResult'
 import { MediaAnswer } from '@/features/player/components/MediaAnswer'
+import { ChoiceAnswer } from '@/features/player/components/ChoiceAnswer'
 import { SyncBanner } from '@/features/player/components/SyncBanner'
 import { LocationCheckInPanel } from '@/features/player/components/LocationCheckInPanel'
 import { QrScannerOverlay } from '@/features/player/components/QrScannerOverlay'
@@ -68,6 +69,8 @@ function BaseContent() {
   const gameStatus = game.snapshot?.game.status ?? 'live'
   const gameLive = gameStatus === 'live'
   const needsPresence = Boolean(challenge?.requirePresenceToSubmit) && isNative()
+  // One attempt per team: a wrong choice answer closes the question.
+  const isChoice = challenge?.answerType === 'single_choice' || challenge?.answerType === 'multiple_choice'
   const pendingSubmission = game.pending.find((a) => a.type === 'submission' && a.baseId === baseId)
   const latestSubmission = game.snapshot?.submissions.filter((s) => s.baseId === baseId).sort((a, b) => (b.submittedAt ?? '').localeCompare(a.submittedAt ?? ''))[0]
   const serverSubmission = !lastSubmission || latestSubmission?.id === lastSubmission.id || (latestSubmission?.submittedAt && latestSubmission.submittedAt >= lastSubmission.submittedAt)
@@ -241,6 +244,20 @@ function BaseContent() {
     }
   }
 
+  async function sendChoice(selectedOptionIds: string[]) {
+    if (!challenge || !gameLive || busy) return
+    setNotice(null)
+    setBusy(true)
+    try {
+      if (!(await confirmPresence())) return
+      report(await game.submit(baseId, challenge.id, '', selectedOptionIds), 'submit')
+    } catch (err) {
+      setNotice({ tone: 'destructive', text: describeError(err, t) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function sendMedia(files: File[], note: string) {
     if (!challenge || !gameLive || busy) return
     setBusy(true)
@@ -335,10 +352,10 @@ function BaseContent() {
           )}
 
           {displayedOutcome && (
-            <SubmissionResult outcome={displayedOutcome} feedback={!serverSubmission || serverSubmission.status === lastSubmission?.status ? lastSubmission?.feedback : undefined} completionContent={lastSubmission?.completionContent ?? challenge?.completionContent} unlockedCount={unlockedCount} />
+            <SubmissionResult outcome={displayedOutcome} feedback={!serverSubmission || serverSubmission.status === lastSubmission?.status ? lastSubmission?.feedback : undefined} completionContent={lastSubmission?.completionContent ?? challenge?.completionContent} unlockedCount={unlockedCount} finalAttempt={isChoice} />
           )}
 
-          {!needsCheckIn && challenge && (!displayedOutcome || displayedOutcome === 'rejected') && (
+          {!needsCheckIn && challenge && (!displayedOutcome || (displayedOutcome === 'rejected' && !isChoice)) && (
             <Card>
               <CardHeader>
                 <CardTitle>{challenge.title}</CardTitle>
@@ -367,6 +384,15 @@ function BaseContent() {
                 )}
                 {gameLive && (status === 'checked_in' || status === 'rejected') && challenge.answerType === 'file' && (
                   <MediaAnswer busy={busy} onSubmit={(files, note) => void sendMedia(files, note)} />
+                )}
+                {gameLive && status === 'checked_in' && isChoice && (
+                  <ChoiceAnswer
+                    options={challenge.options ?? []}
+                    multiple={challenge.answerType === 'multiple_choice'}
+                    busy={busy}
+                    needsPresence={needsPresence}
+                    onSubmit={(ids) => void sendChoice(ids)}
+                  />
                 )}
                 {status === 'submitted' && !view.pendingSync && <Alert variant="info">{t('challenge.pending')}</Alert>}
                 {status === 'completed' && (

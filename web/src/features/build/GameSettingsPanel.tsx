@@ -28,6 +28,9 @@ import {
   parseCheckInRadiusInput,
 } from '@/types/checkIn'
 import { isLocationCheckInAllowed, type CheckInMethod } from '@/types/checkIn'
+import { Select } from '@/components/ui/select'
+import { useStages } from '@/hooks/queries/useStages'
+import { contentLanguageOptions, normalizeContentLanguage } from '@/lib/contentLanguage'
 
 const tileSources: Array<{ value: TileSource; label: string }> = [
   { value: 'osm', label: 'OpenStreetMap' },
@@ -37,36 +40,18 @@ const tileSources: Array<{ value: TileSource; label: string }> = [
   { value: 'swisstopo-sat', label: 'Swisstopo Satellite' },
 ]
 
-const unlockTriggers: Array<{
-  value: UnlockTrigger
-  label: string
-  description: string
-}> = [
-  {
-    value: 'CHECK_IN',
-    label: 'Check-in',
-    description: 'Base unlocks when team checks in',
-  },
-  {
-    value: 'SUBMISSION',
-    label: 'Submission',
-    description: 'Base unlocks when team submits an answer',
-  },
-  {
-    value: 'COMPLETED',
-    label: 'Completed',
-    description: 'Base unlocks when challenge is completed/approved',
-  },
-]
+const unlockTriggers: UnlockTrigger[] = ['CHECK_IN', 'SUBMISSION', 'COMPLETED']
 
 function Toggle({
   checked,
   onToggle,
   testId,
+  labelledBy,
 }: {
   checked: boolean
   onToggle: () => void
   testId?: string
+  labelledBy?: string
 }) {
   return (
     <button
@@ -76,6 +61,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-labelledby={labelledBy}
     >
       <div
         className={`w-9 h-5 rounded-full transition-colors flex items-center ${
@@ -93,15 +79,21 @@ export default function GameSettingsPanel({
 }: {
   gameId: string
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [baseOrderError, setBaseOrderError] = useState(false)
-  const openDrawer = useWorkspaceStore((s) => s.openDrawer)
+  const [languageError, setLanguageError] = useState(false)
+  const openRouteEditor = useWorkspaceStore((s) => s.openRouteEditor)
   const selectBase = useWorkspaceStore((s) => s.selectBase)
   const settingsPanelOpen = useWorkspaceStore((s) => s.settingsPanelOpen)
   const toggleSettingsPanel = useWorkspaceStore((s) => s.toggleSettingsPanel)
   const navigate = useNavigate()
   const { data: game } = useGame(gameId)
+  const { data: stages } = useStages(gameId)
   const updateGame = useUpdateGame(gameId)
+  const languageOptions = useMemo(
+    () => contentLanguageOptions(i18n.language, game?.contentLanguage),
+    [i18n.language, game?.contentLanguage],
+  )
   const updateStatus = useUpdateGameStatus(gameId)
   const deleteGame = useDeleteGame()
 
@@ -158,12 +150,18 @@ export default function GameSettingsPanel({
 
   if (!game) return null
 
+  // OW-40: with stages, each stage is its own route; the game's switch only
+  // governs the bases without a stage.
+  const hasStages = (stages?.length ?? 0) > 0
+  const orderedStages = (stages ?? []).filter((s) => s.enforceBaseOrder).map((s) => s.name)
+  const routeEnforced = Boolean(game.enforceBaseOrder) || orderedStages.length > 0
+
   return (
     <SlideDrawer
       open={settingsPanelOpen}
       onClose={toggleSettingsPanel}
       width="md:w-[400px]"
-      title="Game Settings"
+      title={t('gameSettings.title')}
     >
       <div
         className="flex-1 overflow-y-auto px-4 py-4 space-y-6"
@@ -173,15 +171,16 @@ export default function GameSettingsPanel({
         {/* Game Details */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Game Details
+            {t('gameSettings.details')}
           </h3>
 
           {/* Name */}
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Name</label>
+            <label className="text-sm text-muted-foreground" htmlFor="game-name">{t('gameSettings.name')}</label>
             {editingName ? (
               <div className="flex gap-2">
                 <input
+                  id="game-name"
                   autoFocus
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
@@ -206,7 +205,7 @@ export default function GameSettingsPanel({
                   }}
                   className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors"
                 >
-                  Save
+                  {t('common.save')}
                 </button>
               </div>
             ) : (
@@ -225,10 +224,11 @@ export default function GameSettingsPanel({
 
           {/* Description */}
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Description</label>
+            <label className="text-sm text-muted-foreground" htmlFor="game-description">{t('gameSettings.description')}</label>
             {editingDesc ? (
               <div className="space-y-2">
                 <textarea
+                  id="game-description"
                   autoFocus
                   value={draftDesc}
                   onChange={(e) => setDraftDesc(e.target.value)}
@@ -244,7 +244,7 @@ export default function GameSettingsPanel({
                     onClick={() => setEditingDesc(false)}
                     className="px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground cursor-pointer hover:bg-muted transition-colors"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={() => {
@@ -254,7 +254,7 @@ export default function GameSettingsPanel({
                     }}
                     className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors"
                   >
-                    Save
+                    {t('common.save')}
                   </button>
                 </div>
               </div>
@@ -269,10 +269,41 @@ export default function GameSettingsPanel({
               >
                 {game.description || (
                   <span className="text-muted-foreground italic">
-                    No description
+                    {t('gameSettings.noDescription')}
                   </span>
                 )}
               </button>
+            )}
+          </div>
+
+          {/* OW-33: the language of the game's own content, shown to players before they join. */}
+          <div className="space-y-1" data-testid="game-content-language">
+            <label className="text-sm text-muted-foreground" htmlFor="game-content-language">
+              {t('gameSettings.contentLanguage')}
+            </label>
+            <Select
+              id="game-content-language"
+              value={normalizeContentLanguage(game.contentLanguage) ?? ''}
+              disabled={updateGame.isPending}
+              aria-describedby="game-content-language-hint"
+              onChange={(e) => {
+                setLanguageError(false)
+                // An empty string clears the language back to unknown.
+                updateGame.mutate({ contentLanguage: e.target.value }, { onError: () => setLanguageError(true) })
+              }}
+              data-testid="game-content-language-select"
+              className="min-h-11 text-base sm:text-sm"
+            >
+              <option value="">{t('gameSettings.contentLanguageUnknown')}</option>
+              {languageOptions.map((option) => (
+                <option key={option.code} value={option.code}>{option.name}</option>
+              ))}
+            </Select>
+            <p id="game-content-language-hint" className="text-xs text-muted-foreground">
+              {t('gameSettings.contentLanguageHint')}
+            </p>
+            {languageError && (
+              <ErrorState className="h-auto p-2" title={t('gameSettings.contentLanguageError')} />
             )}
           </div>
         </section>
@@ -280,12 +311,12 @@ export default function GameSettingsPanel({
         {/* Map Settings */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Map Settings
+            {t('gameSettings.map')}
           </h3>
           <div className="space-y-1.5">
-            <label className="text-sm text-muted-foreground">
-              Tile Source
-            </label>
+            <p className="text-sm text-muted-foreground">
+              {t('gameSettings.tileSource')}
+            </p>
             <div className="space-y-1.5">
               {tileSources.map((ts) => (
                 <button
@@ -293,6 +324,7 @@ export default function GameSettingsPanel({
                   onClick={() =>
                     updateGame.mutate({ tileSource: ts.value })
                   }
+                  aria-pressed={currentTileSource === ts.value}
                   data-testid={`tile-source-${ts.value}`}
                   className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
                     currentTileSource === ts.value
@@ -310,12 +342,12 @@ export default function GameSettingsPanel({
         {/* Progression */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Progression
+            {t('gameSettings.progression')}
           </h3>
           <div className="space-y-2" data-testid="base-order-setting">
             <div className="flex items-center justify-between gap-3">
               <label htmlFor="enforce-base-order" className="text-sm font-medium text-foreground">
-                {t('baseOrder.enforce', { defaultValue: 'Enforce base order' })}
+                {t(hasStages ? 'baseOrder.enforceUnstaged' : 'baseOrder.enforce')}
               </label>
               <Switch id="enforce-base-order" data-testid="enforce-base-order-switch" checked={game.enforceBaseOrder ?? false}
                 disabled={game.status !== 'setup' || updateGame.isPending}
@@ -325,47 +357,54 @@ export default function GameSettingsPanel({
                 }} />
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('baseOrder.description', { defaultValue: 'Teams must check in at bases in the configured order.' })}
+              {t('baseOrder.description')}
             </p>
+            {hasStages && (
+              <p className="text-xs text-muted-foreground" data-testid="base-order-stages-note">
+                {t('baseOrder.stagesHaveOwnOrder')}
+                {orderedStages.length > 0 && <> {t('baseOrder.orderedStages', { stages: orderedStages.join(', ') })}</>}
+              </p>
+            )}
             {game.status !== 'setup' && <p className="text-xs text-muted-foreground">
-              {t('baseOrder.setupOnly', { defaultValue: 'Base order can only be changed during setup.' })}
+              {t('baseOrder.setupOnly')}
             </p>}
             {baseOrderError && <ErrorState className="h-auto p-2"
-              title={t('baseOrder.settingsError', { defaultValue: 'Could not update base order. Try again.' })} />}
-            {game.enforceBaseOrder && <Button variant="outline" size="sm" className="h-auto min-h-9 whitespace-normal"
-              onClick={() => { toggleSettingsPanel(); selectBase(null); openDrawer('bases') }}>
-              {t('baseOrder.arrange', { defaultValue: 'Arrange route' })}
+              title={t('baseOrder.settingsError')} />}
+            {routeEnforced && <Button variant="outline" size="sm" className="h-auto min-h-11 whitespace-normal"
+              onClick={() => { selectBase(null); openRouteEditor() }}>
+              {t('baseOrder.arrange')}
             </Button>}
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm text-muted-foreground">
-              Unlock Trigger
-            </label>
+            <p className="text-sm text-muted-foreground">
+              {t('gameSettings.unlockTrigger')}
+            </p>
             <div className="space-y-1.5">
-              {unlockTriggers.map((ut) => (
+              {unlockTriggers.map((trigger) => (
                 <button
-                  key={ut.value}
+                  key={trigger}
                   onClick={() =>
-                    updateGame.mutate({ unlockTrigger: ut.value })
+                    updateGame.mutate({ unlockTrigger: trigger })
                   }
-                  data-testid={`unlock-trigger-${ut.value}`}
+                  aria-pressed={currentUnlockTrigger === trigger}
+                  data-testid={`unlock-trigger-${trigger}`}
                   className={`w-full text-left px-3 py-2 rounded-lg border transition-colors cursor-pointer ${
-                    currentUnlockTrigger === ut.value
+                    currentUnlockTrigger === trigger
                       ? 'bg-primary/10 border-primary/30'
                       : 'border-border hover:bg-muted'
                   }`}
                 >
                   <span
                     className={`text-sm font-medium ${
-                      currentUnlockTrigger === ut.value
+                      currentUnlockTrigger === trigger
                         ? 'text-foreground'
                         : 'text-muted-foreground'
                     }`}
                   >
-                    {ut.label}
+                    {t(`gameSettings.unlockTriggers.${trigger}.label`)}
                   </span>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {ut.description}
+                    {t(`gameSettings.unlockTriggers.${trigger}.description`)}
                   </p>
                 </button>
               ))}
@@ -494,12 +533,12 @@ export default function GameSettingsPanel({
         {/* Assignment Mode */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Assignment Mode
+            {t('gameSettings.assignmentMode')}
           </h3>
           <div className="space-y-2">
             <div className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border">
-              <span className="text-sm text-muted-foreground">
-                Uniform Assignment
+              <span className="text-sm text-muted-foreground" id="uniform-assignment-label">
+                {t('gameSettings.uniformAssignment')}
               </span>
               <Toggle
                 checked={uniformValue}
@@ -512,10 +551,11 @@ export default function GameSettingsPanel({
                   )
                 }}
                 testId="toggle-uniform-assignment"
+                labelledBy="uniform-assignment-label"
               />
             </div>
             <p className="text-xs text-muted-foreground px-1">
-              When enabled, all teams get the same challenge at each base
+              {t('gameSettings.uniformAssignmentHint')}
             </p>
           </div>
         </section>
@@ -523,12 +563,12 @@ export default function GameSettingsPanel({
         {/* Broadcast */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Broadcast
+            {t('gameSettings.broadcast')}
           </h3>
           <div className="space-y-2">
             <div className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border">
-              <span className="text-sm text-muted-foreground">
-                Broadcast Enabled
+              <span className="text-sm text-muted-foreground" id="broadcast-enabled-label">
+                {t('gameSettings.broadcastEnabled')}
               </span>
               <Toggle
                 checked={broadcastValue}
@@ -541,14 +581,16 @@ export default function GameSettingsPanel({
                   )
                 }}
                 testId="toggle-broadcast"
+                labelledBy="broadcast-enabled-label"
               />
             </div>
             {broadcastValue && (
               <div className="space-y-1.5">
-                <label className="text-sm text-muted-foreground">
-                  Broadcast Code
+                <label className="text-sm text-muted-foreground" htmlFor="broadcast-code">
+                  {t('gameSettings.broadcastCode')}
                 </label>
                 <input
+                  id="broadcast-code"
                   type="text"
                   maxLength={10}
                   value={game.broadcastCode ?? ''}
@@ -571,7 +613,7 @@ export default function GameSettingsPanel({
               </div>
             )}
             <p className="text-xs text-muted-foreground px-1">
-              Share this code for spectators to watch live
+              {t('gameSettings.broadcastHint')}
             </p>
           </div>
         </section>
@@ -579,7 +621,7 @@ export default function GameSettingsPanel({
         {/* Operators */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Operators
+            {t('gameSettings.operators')}
           </h3>
 
           {/* Current operators */}
@@ -598,7 +640,7 @@ export default function GameSettingsPanel({
                 </div>
                 {op.id === game.createdBy ? (
                   <span className="text-xs text-muted-foreground px-2 py-0.5 rounded-full bg-muted shrink-0">
-                    Owner
+                    {t('gameSettings.owner')}
                   </span>
                 ) : op.id !== currentUser?.id ? (
                   <button
@@ -606,7 +648,7 @@ export default function GameSettingsPanel({
                     data-testid={`remove-operator-${op.id}`}
                     className="text-xs text-destructive hover:text-destructive/80 shrink-0 cursor-pointer"
                   >
-                    Remove
+                    {t('gameSettings.remove')}
                   </button>
                 ) : null}
               </div>
@@ -617,7 +659,7 @@ export default function GameSettingsPanel({
           {invites && invites.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground px-1">
-                Pending Invitations
+                {t('gameSettings.pendingInvitations')}
               </p>
               {invites.map((inv) => (
                 <div
@@ -635,7 +677,7 @@ export default function GameSettingsPanel({
                     data-testid={`revoke-invite-${inv.id}`}
                     className="text-xs text-destructive hover:text-destructive/80 shrink-0 cursor-pointer"
                   >
-                    Revoke
+                    {t('gameSettings.revoke')}
                   </button>
                 </div>
               ))}
@@ -652,6 +694,7 @@ export default function GameSettingsPanel({
                 setInviteError(null)
               }}
               placeholder="operator@example.com"
+              aria-label={t('gameSettings.inviteEmail')}
               data-testid="invite-email-input"
               className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-border bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring"
             />
@@ -662,7 +705,7 @@ export default function GameSettingsPanel({
                 inviteOperator.mutate(inviteEmail.trim(), {
                   onSuccess: () => setInviteEmail(''),
                   onError: () =>
-                    setInviteError('Failed to send invitation.'),
+                    setInviteError(t('gameSettings.inviteFailed')),
                 })
               }}
               disabled={!inviteEmail.trim() || inviteOperator.isPending}
@@ -673,18 +716,18 @@ export default function GameSettingsPanel({
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
               }`}
             >
-              {inviteOperator.isPending ? 'Sending...' : 'Invite'}
+              {inviteOperator.isPending ? t('gameSettings.sending') : t('gameSettings.invite')}
             </button>
           </div>
           {inviteError && (
-            <p className="text-xs text-destructive px-1">{inviteError}</p>
+            <p className="text-xs text-destructive px-1" role="alert">{inviteError}</p>
           )}
         </section>
 
         {/* Export */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Export
+            {t('gameSettings.export')}
           </h3>
           <div>
             <button
@@ -703,11 +746,10 @@ export default function GameSettingsPanel({
               data-testid="export-game-btn"
               className="w-full px-3 py-2 rounded-lg border border-border text-sm text-foreground font-medium cursor-pointer hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? 'Exporting...' : 'Export Game'}
+              {exporting ? t('gameSettings.exporting') : t('gameSettings.exportGame')}
             </button>
             <p className="text-xs text-muted-foreground mt-1.5 px-1">
-              Download a JSON file with all game configuration that can be
-              imported into a new game.
+              {t('gameSettings.exportHint')}
             </p>
           </div>
         </section>
@@ -930,7 +972,7 @@ export default function GameSettingsPanel({
         {/* Danger Zone */}
         <section className="space-y-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Danger Zone
+            {t('gameSettings.dangerZone')}
           </h3>
           <div className="rounded-lg border border-destructive/30 p-3 space-y-3">
             {!showDeleteConfirm ? (
@@ -940,28 +982,26 @@ export default function GameSettingsPanel({
                   data-testid="delete-game-btn"
                   className="w-full px-3 py-2 rounded-lg bg-destructive text-sm text-destructive-foreground font-medium cursor-pointer hover:bg-destructive/90 transition-colors"
                 >
-                  Delete Game
+                  {t('gameSettings.deleteGame')}
                 </button>
                 <p className="text-xs text-muted-foreground mt-1.5 px-1">
-                  Permanently delete this game and all its data.
+                  {t('gameSettings.deleteHint')}
                 </p>
               </div>
             ) : (
               <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 space-y-3">
                 <p className="text-sm font-medium text-destructive">
-                  Are you sure?
+                  {t('gameSettings.deleteConfirm')}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  This will permanently delete the game, all bases,
-                  challenges, teams, and submissions. This cannot be
-                  undone.
+                  {t('gameSettings.deleteConfirmBody')}
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
                     className="flex-1 px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground font-medium cursor-pointer hover:bg-muted transition-colors"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={() =>
@@ -974,8 +1014,8 @@ export default function GameSettingsPanel({
                     className="flex-1 px-3 py-2 rounded-lg bg-destructive text-sm text-destructive-foreground font-medium cursor-pointer hover:bg-destructive/90 transition-colors"
                   >
                     {deleteGame.isPending
-                      ? 'Deleting…'
-                      : 'Delete Forever'}
+                      ? t('gameSettings.deleting')
+                      : t('gameSettings.deleteForever')}
                   </button>
                 </div>
               </div>
