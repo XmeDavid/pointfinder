@@ -18,6 +18,11 @@ describe('describeError', () => {
     expect(describeError(apiError('TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT'), t)).toBe('This practice game already has its one player.')
   })
 
+  it('explains choice refusals in the player’s language (OW-34)', () => {
+    expect(describeError(apiError('CHOICE_ALREADY_ANSWERED'), t)).toBe('Your team already answered this one.')
+    expect(describeError(apiError('CHOICE_SELECTION_INVALID'), t)).toBe('Choose a valid option for this question.')
+  })
+
   it('explains an invalid token', () => {
     expect(describeError(apiError('CHECK_IN_TOKEN_INVALID'), t)).toBe("That code doesn't belong to this base.")
   })

@@ -19,3 +19,14 @@ export const Offline: Story = { args: { fromCache: true } };
 export const Queued: Story = { args: { pending: [pending({ id: "a1" }), pending({ id: "a2", type: "submission" } as never)] } };
 export const Failed: Story = { args: { pending: [pending({ id: "a3", state: "failed", lastError: "No challenge assigned to this base" })] } };
 export const SessionExpired: Story = { args: { needsAuth: true } };
+export const Uploading: Story = {
+  args: {
+    pending: [pending({
+      id: "s1", type: "submission", challengeId: "c", answer: "",
+      media: [
+        { id: "m1", name: "team-photo.jpg", contentType: "image/jpeg", size: 2_400_000, uploadedBytes: 1_200_000 },
+        { id: "m2", name: "summit-video-with-a-long-file-name.mp4", contentType: "video/mp4", size: 18_000_000, uploadedBytes: 0 },
+      ],
+    } as never)],
+  },
+};

@@ -11,6 +11,9 @@ const CHECK_IN_CODES = new Set([
   'CHECK_IN_CLAIM_NOT_DWELLED',
 ])
 
+/** Answer refusals the player can understand without the server's English wording. */
+const ANSWER_CODES = new Set(['CHOICE_ALREADY_ANSWERED', 'CHOICE_SELECTION_INVALID'])
+
 function rounded(value: string | undefined): string {
   const n = Number(value)
   return Number.isFinite(n) ? String(Math.round(n)) : '?'
@@ -25,6 +28,7 @@ export function describeError(err: unknown, t: TFunction): string {
         allowed: rounded(err.fieldErrors.allowedM),
       })
     }
+    if (err.code && ANSWER_CODES.has(err.code)) return t(`errors.${err.code}`)
     switch (err.code) {
       case 'INVALID_JOIN_CODE':
       case 'TEAM_NOT_FOUND':
@@ -61,5 +65,6 @@ export function describeFailedAction(
   if (code && CHECK_IN_CODES.has(code)) {
     return t(`errors.${code}`, { distance: rounded(details?.distanceM), allowed: rounded(details?.allowedM) })
   }
+  if (code && ANSWER_CODES.has(code)) return t(`errors.${code}`)
   return fallback || t('common.unknownError')
 }

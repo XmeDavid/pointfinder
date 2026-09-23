@@ -1860,7 +1860,9 @@
       "CHECK_IN_FIX_TOO_COARSE": "Dein GPS-Signal ist zu schwach. Geh ins Freie und versuch es erneut.",
       "CHECK_IN_FIX_STALE": "Diese Position ist zu alt. Warte auf eine frische GPS-Messung.",
       "CHECK_IN_OUT_OF_RANGE": "Du bist etwa {{distance}} m entfernt. Komm auf {{allowed}} m an die Station heran.",
-      "CHECK_IN_CLAIM_NOT_DWELLED": "Bleib noch etwas länger in der Nähe der Station und versuch es dann erneut."
+      "CHECK_IN_CLAIM_NOT_DWELLED": "Bleib noch etwas länger in der Nähe der Station und versuch es dann erneut.",
+      "CHOICE_ALREADY_ANSWERED": "Dein Team hat diese Frage schon beantwortet.",
+      "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Frage."
     },
     "sync": {
       "pending_one": "{{count}} Aktion wartet auf Synchronisierung",
@@ -1873,7 +1875,11 @@
       "syncFailed": "Einige Aktionen konnten nicht gesendet werden. Tippen zum Anzeigen.",
       "retry": "Erneut versuchen",
       "discard": "Verwerfen",
-      "needsLogin": "Deine Sitzung ist abgelaufen. Tritt erneut bei, um zu synchronisieren."
+      "needsLogin": "Deine Sitzung ist abgelaufen. Tritt erneut bei, um zu synchronisieren.",
+      "uploads": "Uploads",
+      "uploadProgress": "{{name}}: {{percent}} % gesendet",
+      "uploadWaiting": "Wartet auf Senden",
+      "uploadDone": "Gesendet"
     },
     "status": {
       "not_visited": "Nicht besucht",

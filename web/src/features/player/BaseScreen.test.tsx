@@ -489,6 +489,17 @@ describe('BaseScreen choice questions', () => {
     expect(screen.queryByLabelText('Your answer')).not.toBeInTheDocument()
   })
 
+  it('explains in the player’s language that a teammate already answered', async () => {
+    choiceOverride('single_choice', [CHECKED_IN])
+    server.use(http.post('/api/player/games/:gameId/submissions', () => HttpResponse.json(
+      { status: 400, message: 'This team already answered this challenge', code: 'CHOICE_ALREADY_ANSWERED' }, { status: 400 })))
+    await renderPlayer(<BaseScreen />, { route: '/base/b1', path: '/base/:baseId' })
+    await userEvent.click(await screen.findByRole('radio', { name: 'Oak' }))
+    await userEvent.click(screen.getByTestId('player-choice-submit-btn'))
+    await waitFor(() => expect(screen.getAllByText('Your team already answered this one.').length).toBeGreaterThan(0))
+    expect(screen.queryByText('This team already answered this challenge')).not.toBeInTheDocument()
+  })
+
   it('queues a choice answer offline with its selection', async () => {
     choiceOverride('single_choice', [CHECKED_IN])
     server.use(http.post('/api/player/games/:gameId/submissions', () => HttpResponse.error()))

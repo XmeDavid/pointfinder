@@ -1860,7 +1860,9 @@
       "CHECK_IN_FIX_TOO_COARSE": "Your GPS signal is too weak. Move into the open and try again.",
       "CHECK_IN_FIX_STALE": "That position is too old. Wait for a fresh GPS reading.",
       "CHECK_IN_OUT_OF_RANGE": "You're about {{distance}} m away. Get within {{allowed}} m of the base.",
-      "CHECK_IN_CLAIM_NOT_DWELLED": "Stay near the base a little longer, then try again."
+      "CHECK_IN_CLAIM_NOT_DWELLED": "Stay near the base a little longer, then try again.",
+      "CHOICE_ALREADY_ANSWERED": "Your team already answered this one.",
+      "CHOICE_SELECTION_INVALID": "Choose a valid option for this question."
     },
     "sync": {
       "pending_one": "{{count}} action waiting to sync",
@@ -1873,7 +1875,11 @@
       "syncFailed": "Some actions couldn't be sent. Tap to see.",
       "retry": "Retry",
       "discard": "Discard",
-      "needsLogin": "Your session expired. Join again to sync."
+      "needsLogin": "Your session expired. Join again to sync.",
+      "uploads": "Uploads",
+      "uploadProgress": "{{name}}: {{percent}}% sent",
+      "uploadWaiting": "Waiting to send",
+      "uploadDone": "Sent"
     },
     "status": {
       "not_visited": "Not visited",
