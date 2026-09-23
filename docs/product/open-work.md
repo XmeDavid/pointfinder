@@ -18,21 +18,21 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 - [x] Move challenge description into the metadata section. [OW-31](#ow-31)
 - [x] Put accepted answers next to the automatic-checking toggle. [OW-02](#ow-02)
 - [x] Add variable suggestions, editable answer chips and translated labels. [OW-02](#ow-02)
-- [ ] Open documents in a full-screen mobile viewer, with an Edit action. [OW-08](#ow-08)
-- [ ] Use a full-screen mobile document editor and large desktop modals. [OW-08](#ow-08)
+- [x] Open documents in a full-screen mobile viewer, with an Edit action. [OW-08](#ow-08)
+- [x] Use a full-screen mobile document editor and large desktop modals. [OW-08](#ow-08)
 - [x] Show only failed readiness checks; show just Go live when ready. [OW-39](#ow-39)
-- [ ] Use Build / Monitor / Review as the main operator modes. [OW-32](#ow-32)
-- [ ] Put leaderboard/results access inside Monitor, keeping exports accessible. [OW-32](#ow-32)
-- [ ] Add Build shortcuts that open the correct content-panel section. [OW-36](#ow-36)
-- [ ] Replace mobile content tabs with one section chooser; keep tabs on wide screens. [OW-36](#ow-36)
+- [x] Use Build / Monitor / Review as the main operator modes. [OW-32](#ow-32)
+- [x] Put leaderboard/results access inside Monitor, keeping exports accessible. [OW-32](#ow-32)
+- [x] Add Build shortcuts that open the correct content-panel section. [OW-36](#ow-36)
+- [x] Replace mobile content tabs with one section chooser; keep tabs on wide screens. [OW-36](#ow-36)
 - [ ] Verify location check-in is restricted to the owning Pro/paid Club plan. [OW-37](#ow-37)
 
 ### Extend challenges and stages
 
-- [ ] Add game content language and show it when discovering or joining games. [OW-33](#ow-33)
-- [ ] Make base order configurable per stage, preserving existing games. [OW-40](#ow-40)
+- [x] Add game content language and show it when discovering or joining games. [OW-33](#ow-33)
+- [x] Make base order configurable per stage, preserving existing games. [OW-40](#ow-40)
 - [x] Make trigger-based stages actually activate from gameplay. [OW-21](#ow-21)
-- [ ] Define multiple-choice grading, retries and feedback; add the challenge type. [OW-34](#ow-34)
+- [x] Define multiple-choice grading, retries and feedback; add the challenge type. [OW-34](#ow-34)
 - [ ] Define quiz attempts, team answers, passing thresholds and rewards. [OW-35](#ow-35)
 - [ ] Build quizzes with multiple rich questions and per-question points. [OW-35](#ow-35)
 - [ ] Allow a quiz to be the challenge at a base. [OW-35](#ow-35)
@@ -40,15 +40,17 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 
 ### Joining, discovery and shared documents
 
-- [ ] Add team-size limits. [OW-05](#ow-05)
+- [x] Add team-size limits. [OW-05](#ow-05)
 - [ ] Define lobby membership and safe rules for moving players between teams. [OW-05](#ow-05)
 - [ ] Add a shared lobby with operator, automatic and player-choice team placement. [OW-05](#ow-05)
-- [ ] Add admin controls for featuring games. [OW-06](#ow-06)
-- [ ] Add public-game reporting/removal and uploaded listing artwork. [OW-06](#ow-06)
+- [x] Add admin controls for featuring games. [OW-06](#ow-06)
+- [x] Add public-game reporting and admin removal. [OW-06](#ow-06)
+- [ ] Decide whether admin removal should hold a listing until an admin allows it again. [OW-06](#ow-06)
+- [ ] Add uploaded listing artwork. [OW-06](#ow-06)
 - [ ] Decide how to represent game areas for nearby discovery; implement that model. [OW-07](#ow-07)
 - [ ] Scale discovery queries and refresh listings when publication changes. [OW-07](#ow-07)
 - [ ] Make organization resources available to eligible game participants. [OW-08](#ow-08)
-- [ ] Refresh shared documents when organizers change them. [OW-08](#ow-08)
+- [x] Refresh shared documents when organizers change them. [OW-08](#ow-08)
 - [ ] Decide whether players can save files for offline use. [OW-08](#ow-08)
 - [ ] Define resource audiences and completion-based unlocks; apply access rules consistently. [OW-09](#ow-09)
 
@@ -56,7 +58,7 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 
 - [ ] Add browser QR scanning and define browser presence rechecks. [OW-03](#ow-03)
 - [ ] Define camera-only challenges and supported media formats, including HEIC. [OW-10](#ow-10)
-- [ ] Show upload progress for each file. [OW-10](#ow-10)
+- [x] Show upload progress for each file. [OW-10](#ow-10)
 - [ ] Decide whether to support arrival detection while the app is in the background. [OW-11](#ow-11)
 - [ ] Complete missing visual previews and review remaining styling inconsistencies. [OW-12](#ow-12)
 - [ ] Refresh the store graphic, printed signs, social previews and exports with the current brand. [OW-13](#ow-13)
@@ -72,7 +74,7 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 - [ ] Decide when old single-request uploads can be retired safely. [OW-18](#ow-18)
 - [ ] Fill meaningful native/E2E test gaps. [OW-19](#ow-19)
 - [ ] Rehearse failure recovery and decide remaining infrastructure resilience work. [OW-20](#ow-20)
-- [ ] Use generated thumbnails in the UI or stop generating unused ones. [OW-22](#ow-22)
+- [x] Use generated thumbnails in the UI or stop generating unused ones. [OW-22](#ow-22)
 - [ ] Provide a supported way to inspect and recover failed realtime events. [OW-23](#ow-23)
 - [ ] Make realtime health figures cover all servers, or clearly label their scope. [OW-24](#ow-24)
 - [ ] Decide whether unchanged snapshots should skip sending the full response. [OW-25](#ow-25)
@@ -109,6 +111,8 @@ The owner's mobile feedback leads the next product work. Preserve the other audi
 4. **Extend game authoring:** content language (OW-33); stage-specific ordering together with working stage triggers (OW-40/21); multiple-choice question support (OW-34). Resolve each feature's backend contract before its dependent UI.
 5. **Build on those foundations:** base-bound quizzes, then game-wide quizzes and completion unlocks (OW-35, PF-12). Lobby/capacity and broader resource audiences remain their own parallel product tracks.
 
+Progress 2026-09-23: steps 3 and 4 have shipped, as have the document viewer and failing-only readiness from step 2. Still open from steps 1 and 2: the installed-iPhone resume check (OW-38) and verifying the paid location gate in the target environment (OW-37). Step 5 is next; team-size limits shipped on the lobby track.
+
 For implementation, Codex owns UX/UI iteration; scoped backend contracts can go to Fable while frontend work proceeds. This consolidation itself does not dispatch implementation or request a UI handoff.
 
 ## Product and UX loose ends
@@ -141,15 +145,19 @@ Status: Implemented; focused persistence/editor tests, backend concurrency tests
 
 ### OW-05
 
-**Team capacity and lobby admission (PF-07).** No capacities/shared lobby/operator placement/automatic placement/player team choice yet. Sequence capacity → lobby → placement modes; preserve current team codes/QR and keep publication independent. Decide awaiting representation (player without team vs separate admission; avoid a fake lobby team), guest recovery, all-teams-full behavior, team deletion, who edits admission, and mid-game moves. Moves require explicit XP/roster rules and stale offline-action attribution; resolve current team server-side, refresh tokens through authenticated APIs, never send JWTs over realtime. Solo is a separate PF-04 decision.
+**Team capacity and lobby admission (PF-07).** Per-team capacities exist (below); no shared lobby, operator placement, automatic placement or player team choice yet. Sequence capacity → lobby → placement modes; preserve current team codes/QR and keep publication independent. Decide awaiting representation (player without team vs separate admission; avoid a fake lobby team), guest recovery, all-teams-full behavior, team deletion, who edits admission, and mid-game moves. Moves require explicit XP/roster rules and stale offline-action attribution; resolve current team server-side, refresh tokens through authenticated APIs, never send JWTs over realtime. Solo is a separate PF-04 decision.
 
-Status: Decision / Missing.
+Shipped 2026-09-23: optional per-team player limit (1 to 500, V85) set in the team editor. A full team refuses new players with `TEAM_FULL` (including Explore joins), counted under the game lock; existing members, device recovery and a lowered limit never remove anyone. Limits travel with export/import. Players see the refusal in their language.
+
+Status: Team-size limits implemented (integration, component and error-mapping tests). Lobby, placement modes and moves remain Decision / Missing.
 
 ### OW-06
 
-**Operable public discovery (PF-07/08).** Admin list/feature/unfeature APIs exist, but no curation UI; reporting/removal moderation and uploaded listing artwork remain absent. `service/GamePublicationService.java`, `ExploreService.java`, `web/src/features/user-home/DiscoverySection.tsx`. Public profiles/achievements and XP-multiplier administration are separate optional work, not implied by discovery featuring.
+**Operable public discovery (PF-07/08).** Platform admins curate Explore from the admin panel's Publications tab (feature, unfeature, remove) and review reports in its Reports tab. Uploaded listing artwork remains absent. `service/GamePublicationService.java`, `ExploreService.java`, `web/src/features/user-home/DiscoverySection.tsx`. Public profiles/achievements and XP-multiplier administration are separate optional work, not implied by discovery featuring.
 
-Status: Partial.
+Shipped 2026-09-23: signed-in accounts report a listed game from its Explore dialog with a reason and optional details (V86, one open report per account and game). Admins see open reports grouped by game with reporters, then dismiss them or remove the listing (the ordinary audited unpublish). Publishers never see reports. Removal is not a hold: the publisher can list the game again, so a moderation hold, admin notification of new reports and blocking abusive accounts remain decisions.
+
+Status: Curation and reporting implemented (integration, security-rule, component and browser/native-artifact smoke tests). Artwork and a moderation hold remain.
 
 ### OW-07
 
@@ -159,9 +167,11 @@ Status: Decision / Partial.
 
 ### OW-08
 
-**Documents: read first, then edit.** Owner: tapping an organizer document opens a full-screen viewer on mobile, a large modal on desktop, with an explicit Edit action; editing uses the same generous surface and returns to reading on save. Reuse ResourceBrowser, rich renderer/editor and canonical modal/focus handling; retain permission, upload/sharing controls and draft recovery. `ResourceBrowser.tsx` currently expands editing inline in the list. Related audit gaps remain: organization-scoped player resources, realtime sharing refresh, and an explicit offline-file policy. Cached document bodies already work; file bytes are not stored offline. PF-10.
+**Documents: read first, then edit.** Owner: tapping an organizer document opens a full-screen viewer on mobile, a large modal on desktop, with an explicit Edit action; editing uses the same generous surface and returns to reading on save. Reuse ResourceBrowser, rich renderer/editor and canonical modal/focus handling; retain permission, upload/sharing controls and draft recovery. Related audit gaps remain: organization-scoped player resources and an explicit offline-file policy. Cached document bodies already work; file bytes are not stored offline. PF-10.
 
-Status: Partial / Decision.
+Shipped 2026-09-23: resources open in `ResourceViewer`, read first (full screen on phones, a large dialog on wider screens) with an explicit Edit that uses the same surface and returns to reading on save. Edits are an OW-04 draft kept through closing, navigation and failed saves. Game resource changes send a content-free `game_config` refresh signal after commit; player document lists refetch on it and poll as a fallback.
+
+Status: Viewer/editor and live refresh implemented (component, backend and browser/native-artifact smoke tests). Organization resources for players and the offline-file policy remain Decision.
 
 ### OW-09
 
@@ -171,9 +181,11 @@ Status: Decision.
 
 ### OW-10
 
-**Media capture and upload feedback.** `web/src/platform/media.ts` offers camera/library with no per-challenge camera-only policy or HEIC conversion. `packages/game-core/src/queue.ts` persists uploaded bytes, but `SyncBanner.tsx` exposes aggregate queue/failed actions, not per-file progress. Choose supported media/capture policy and finish useful transfer feedback.
+**Media capture and upload feedback.** `web/src/platform/media.ts` offers camera/library with no per-challenge camera-only policy or HEIC conversion. `packages/game-core/src/queue.ts` persists uploaded bytes. Choose supported media/capture policy.
 
-Status: Partial / Decision.
+Shipped 2026-09-23: the player sync banner lists each pending upload with its own labelled progress (waiting, percent sent, sent), and failed queued actions explain the refusal in the player's language.
+
+Status: Per-file progress implemented (component tests). Camera-only policy and HEIC remain Decision.
 
 ### OW-11
 
@@ -217,23 +229,25 @@ Status: Implemented; editor and responsive browser/native-artifact smoke coverag
 
 **Three operator modes: Build, Monitor, Review.** Combine activity and leaderboard/results navigation: leaderboard is a reachable control within the monitoring/activity surface. Preserve detailed results, exports and ended-game access; moving navigation must not remove those capabilities. The workspace currently has `build`, `command`, `review`, `results` modes. Reuse existing surfaces and update route/test/tutorial consumers if internal identifiers change; copy need not rename domain modes.
 
-Status: Partial.
+Shipped 2026-09-23: navigation shows Build, Monitor and Review. Results open from the Monitor stats bar and return to Monitor, keeping standings, breakdown, CSV and detailed exports and the audit log. Internal mode ids and routes are unchanged.
+
+Status: Implemented (component, tutorial and browser/native-artifact smoke tests).
 
 ### OW-33
 
 **Game content language.** Add organizer-declared language for user-generated game/challenge content and show it where players choose/join a game, including discovery. This is separate from the app's EN/PT/DE interface preference; it does not promise automatic translation. No game-language field was found in `entity/Game.java`. Support an honest unknown value for existing games; decide multilingual content before claiming multiple translated versions. Include import/export and public metadata.
 
-Shipped 2026-09-16: `games.content_language` (V81, ISO 639-1, blank = unknown) on game, explore, publication, join and snapshot responses plus import/export. The organizer field and the discovery/join display are still open.
+Shipped 2026-09-16: `games.content_language` (V81, ISO 639-1, blank = unknown) on game, explore, publication, join and snapshot responses plus import/export. Shipped 2026-09-23: organizers set it when creating a game and in game settings; discovery cards and the listing dialog, the publication summary and player settings show it by name in the interface language, with an honest "not specified".
 
-Status: Backend implemented; UI missing.
+Status: Implemented (component tests).
 
 ### OW-34
 
 **Multiple-choice challenges.** Existing `AnswerType` supports only text/file/none. Reuse rich question content/media and answer rendering/validation across standalone challenges and future quiz questions. Proposed first slice: one correct choice; single versus multiple correct selections, manual grading, retry and feedback policy still need definition. Use stable option identities, server grading and protected answer keys; preserve submission review, offline replay, game scoring and shared team credit.
 
-Shipped 2026-09-16: `single_choice` and `multiple_choice` (V83) with stable option ids, server all-or-nothing grading, the answer key never sent to players, and one attempt per team and base (`CHOICE_ALREADY_ANSWERED`). Retries, partial credit and feedback stay with quizzes (OW-35). The option editor and player picker are still open.
+Shipped 2026-09-16: `single_choice` and `multiple_choice` (V83) with stable option ids, server all-or-nothing grading, the answer key never sent to players, and one attempt per team and base (`CHOICE_ALREADY_ANSWERED`). Retries, partial credit and feedback stay with quizzes (OW-35). Shipped 2026-09-23: the challenge editor edits options and the correct answer(s) with the server's rules shown locally; players pick from large rows, the selection queues offline, and one wrong answer closes the question with an explanation. Review shows chosen and correct options. Legacy native apps cannot answer choice questions; readiness notes this.
 
-Status: Backend implemented; UI missing.
+Status: Implemented (backend, component and browser/native-artifact smoke tests).
 
 ### OW-35
 
@@ -243,9 +257,11 @@ Status: Missing / Decision.
 
 ### OW-36
 
-**Direct entry to a calmer content panel.** In Build, expose shortcuts for bases, challenges, teams, stages, tags/codes and documents that open the existing drawer at that section. Use recognizable icons with labels/accessibility, not an unexplained icon strip. On mobile replace the drawer's crowded tab strip with the active section icon/name and one section chooser; at sufficient width retain visible tabs. Preserve list/detail back paths, selection, drafts and tutorial anchors. `web/src/features/build/ContentDrawer.tsx`, `web/src/stores/workspace.ts` already support `openDrawer(tab)`.
+**Direct entry to a calmer content panel.** In Build, expose shortcuts for bases, challenges, teams, stages, tags/codes and documents that open the existing drawer at that section. Use recognizable icons with labels/accessibility, not an unexplained icon strip. On mobile replace the drawer's crowded tab strip with the active section icon/name and one section chooser; at sufficient width retain visible tabs. Preserve list/detail back paths, selection, drafts and tutorial anchors.
 
-Status: Partial.
+Shipped 2026-09-23: Build shows labelled shortcuts into each section; phones get one section chooser, wider screens keep tabs with the same catalog icons. Test ids and tutorial anchors are preserved.
+
+Status: Implemented (component and browser/native-artifact smoke tests).
 
 ### OW-37
 
@@ -269,9 +285,9 @@ Status: Implemented; focused readiness tests and browser/native-artifact smoke c
 
 **Stage-scoped base order.** Owner wants an exploratory stage followed by a linear stage, so enforce order at stage scope rather than across the entire game. Current `Game.enforceBaseOrder` and BaseOrderService apply globally. Define routes within each stage, un-staged/no-stage games, overlapping active stages, hidden prerequisites and transitions (OW-21); stage activation is distinct from visiting a route. Preserve existing ordered games through explicit migration/default behavior, plus import/export, snapshot hints, offline prerequisite ordering and setup-only structural changes. Suggested compatibility: retain a default route for games without stages and map existing ordering into stage settings when stages are introduced. Exact migration semantics require a focused contract.
 
-Shipped 2026-09-16 (owner chose stage scope): `stages.enforce_base_order` (V82, backfilled from the game flag). A stage is one route numbered from 1; bases without a stage keep the game flag as the default route. Flag and structural route changes are setup-only once any route is enforced. Player data carries `stageId` and `routes[]`; the legacy pair is sent only for a single enforced route. The stage toggle in the editor is still open.
+Shipped 2026-09-16 (owner chose stage scope): `stages.enforce_base_order` (V82, backfilled from the game flag). A stage is one route numbered from 1; bases without a stage keep the game flag as the default route. Flag and structural route changes are setup-only once any route is enforced. Player data carries `stageId` and `routes[]`; the legacy pair is sent only for a single enforced route. Shipped 2026-09-23: each stage has its own order switch; the base list groups bases by route and the route editor arranges each ordered route; settings only govern bases without a stage when stages exist.
 
-Status: Backend implemented; UI missing.
+Status: Implemented (component tests for the stage switch and grouped routes; browser/native-artifact smoke covers the default-route editor).
 
 
 ## Longer-term planned capabilities
@@ -308,7 +324,7 @@ All 54 visible docs files plus 12 ignored plan files and five ignored agent-stat
 - Variable-authoring spec/plan → OW-02; most editor/preview/readiness work exists. The old register map-walk animation was superseded by the illustrated landing/auth direction; do not resurrect it as unfinished required UX.
 - Native handoff, validation, phone review, media rollout, frontend consolidation, realtime/mobile and pre-release checklist → OW-03/10/11/15/17, platform ownership and release checks. Old machine-specific tooling failures and version-specific pass counts are not ongoing defects.
 - Landing cache review → OW-16. Visual docs → current guidance, OW-12/13; removed the historical visual audit and “no harness/token source” readiness document. Store graphic retained but flagged as stale, not submission-ready.
-- Backend/API/business/infrastructure and historical audit material → contracts, operations references and the backend follow-ups below. Historical compile failures fixed by the later test repair are not current failures. Applied migrations retain their historical spec comments unchanged to preserve Flyway checksums; those names refer to Git history, not current guidance. The root `TODO` remains a separate older note; its player-limit and all-games-for-admin claims are already contradicted by `PlayerJoinService` quota enforcement and `GameService.getAllGames` workspace filtering. Reproduce its navigation/billing complaints before carrying them into the owner's list.
+- Backend/API/business/infrastructure and historical audit material → contracts, operations references and the backend follow-ups below. Historical compile failures fixed by the later test repair are not current failures. Applied migrations retain their historical spec comments unchanged to preserve Flyway checksums; those names refer to Git history, not current guidance. The root `TODO` remains a separate older note; its player-limit and all-games-for-admin claims are already contradicted by `PlayerJoinService` quota enforcement and `GameService.getAllGames` workspace filtering. The admin panel now links back to the organizer's games; reproduce its remaining navigation/billing complaints before carrying them into the owner's list.
 
 ## Backend and maintenance follow-ups
 
@@ -342,7 +358,9 @@ Status: Implemented.
 
 **Use generated thumbnails.** `service/ThumbnailService.java` produces `_thumb.jpg` objects, but no current frontend/API consumer was found. Serve authorized thumbnails in media/review lists or stop generating unused assets; preserve original files.
 
-Status: Partial.
+Shipped 2026-09-23: `GET /api/games/{id}/files/{name}/thumbnail` is authorized on the original file and serves the thumbnail when it exists, else the original. Review's inline photo previews use it; opening a photo shows the original. The JDK decoders cover JPEG and PNG only, so HEIC and WebP photos get no thumbnail and preview from the original (browsers other than Safari cannot show HEIC); that belongs to the OW-10 media-format decision.
+
+Status: Implemented for operator review (controller and component tests). The player app does not load submitted photos from the server, so no player thumbnail route was added.
 
 ### OW-23
 

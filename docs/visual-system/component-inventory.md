@@ -126,7 +126,7 @@ Status: canonical
 Location: `web/src/components/status/SyncStatusBadge.tsx`\
 Modes: Operator Command, Player Field  
 States: online, offline, sync pending, sync failed  
-Notes: Shared player SyncBanner and legacy native banners exist; see the preview matrix for coverage and open work for per-file upload feedback.
+Notes: Shared player SyncBanner and legacy native banners exist; the SyncBanner lists each pending upload with its own progress (see below).
 
 Component: NfcStatusBadge  
 Status: canonical  
@@ -905,8 +905,16 @@ Make it public, the game name as title, and an area label instead of coordinates
 
 The game content drawer exposes Documents through the existing ResourceBrowser
 with gameId and showShareToggle. Game scope uses a narrow toolbar, optional folder
-selector, visible touch actions, and canonical sharing switches. Written content
-stays in the editor on failure; sharing reflects server acknowledgement.
+selector, visible touch actions, and canonical sharing switches. Resources open in
+ResourceViewer (below) to be read first; deletes confirm through the canonical
+dialog; file kinds use ResourceTypeIcon; sharing reflects server acknowledgement.
+
+Component: ResourceViewer / ResourceTypeIcon
+Status: canonical
+Location: `web/src/features/org/ResourceViewer.tsx`, `web/src/features/org/ResourceTypeIcon.tsx`
+Modes: Operator Setup (game Documents), Organization resources
+States: document read (rich content), empty document, editing with title and rich editor, unsaved/saving/failed/conflict save status, discard confirmation inline, file with image preview or open action, offline (edit and open disabled with explanation), sharing switch, long names. Full screen below `md`, a large dialog (`md:max-w-3xl`, 85vh) above, through the canonical Dialog focus trap.
+Notes: OW-08. Edits are an OW-04 draft (`document` entity, autosave off): closing or a failed save keeps them and reopening goes straight into editing; Save returns to reading. Files open through a freshly signed link. Test ids: `resource-viewer`, `resource-viewer-edit`, `resource-viewer-save`, `resource-viewer-cancel`, `resource-viewer-discard(-confirm)`, `resource-viewer-open-file`, `resource-viewer-save-status`, `resource-open-<id>`.
 
 Component: SaveStatusIndicator
 Status: canonical
@@ -933,3 +941,79 @@ Status: canonical
 Location: `web/src/features/dashboard/ContinueOrganizing.tsx`
 Modes: Account Home / Operator Setup
 States: setup/live/ended and long game title; canonical SurfacePanel, GameStatusBadge and Button. `ContinueOrganizing` handles account/workspace-scoped history, fresh authorization, loading/error/retry and account-entry session exchange. Active play takes priority. Preview: `/dev/visual-system`, `harness-continue-organizing`; browser/native-artifact Home smoke tests.
+
+Component: ChoiceOptionsEditor
+Status: canonical
+Location: `web/src/components/inputs/ChoiceOptionsEditor.tsx` (rules in `web/src/lib/choiceOptions.ts`)
+Modes: Operator Setup (challenge editor; intended for OW-35 quiz questions)
+States: single choice (radio semantics, always one correct), multiple choice (checkboxes), fresh two empty options, too few/too many, empty/long/duplicate text, missing correct answer, 12-option limit, long localized copy. Test ids: `choice-options-editor`, `choice-option-text-<i>`, `choice-option-correct-<i>`, `choice-option-remove-<i>`, `choice-option-add`, `choice-options-problem`.
+Notes: OW-34. Mirrors the server's ChoiceGrading rules so refused options stay a local draft with the reason shown. Kept options send their ids; new ones omit them. Preview: `/dev/visual-system`, `harness-choice`.
+
+Component: ChoiceAnswer / ChoiceReview
+Status: canonical
+Location: `web/src/features/player/components/ChoiceAnswer.tsx`, `web/src/features/review/ChoiceReview.tsx`
+Modes: Player Field (picker), Review (operator reading)
+States: single and multiple choice, nothing chosen (send disabled), sending, presence confirmation, no options; review marks chosen and correct options in option order and notes options removed after the answer. `SubmissionResult` with `finalAttempt` says a wrong answer closed the question.
+Notes: Players never receive the answer key; the selection queues offline and the server grades it once. Test ids: `player-choice-answer`, `player-choice-option-<id>`, `player-choice-submit-btn`, `player-choice-one-attempt`, `choice-review`.
+
+Component: AnswerTypeBadge
+Status: canonical
+Location: `web/src/components/status/AnswerTypeBadge.tsx`
+Modes: Operator Setup, Operator Command, Results
+States: text, file, none, single choice, multiple choice; localized labels. Replaces three local label maps.
+
+Component: ContentLanguageTag
+Status: canonical
+Location: `web/src/components/data/ContentLanguageTag.tsx` (names from `web/src/lib/contentLanguage.ts`)
+Modes: Account Home discovery, Operator Setup publication, Player settings
+States: named language in the interface language, uncommon code (falls back to the code), not specified (only where `showUnknown`). Screen readers hear "Content language: …".
+Notes: OW-33. Metadata about user-written content; it never implies translation.
+
+Component: BuildShortcuts / SectionChooser
+Status: canonical
+Location: `web/src/features/build/BuildShortcuts.tsx`, `web/src/features/build/SectionChooser.tsx` (sections in `contentSections.ts`)
+Modes: Operator Setup
+States: every content section with icon and label (scrolls sideways on a phone); chooser closed with the active section, open list with the active entry pressed. Test ids: `build-shortcuts`, `build-shortcut-<section>`, `drawer-section-chooser`; list entries keep `tab-<section>` and the wrapper keeps `drawer-tabs`.
+Notes: OW-36. Phones replace the drawer's tab strip with the chooser; wider screens keep tabs, now with the same icons. Icons are registered in `design-system/icons.json` (challenge, stage, codes, document).
+
+Component: Operator mode navigation
+Status: canonical
+Location: `web/src/components/layout/workspaceModes.ts`, `IconRail.tsx`, `features/workspace/TopBar.tsx`
+Modes: Operator Setup, Operator Command, Review, Results
+States: Build, Monitor, Review; Monitor stays marked while Results show. Results open from the Monitor stats bar (`mode-results`) and return with `results-back-to-monitor`. Internal mode ids (`build`, `command`, `review`, `results`) are unchanged.
+Notes: OW-32. Icons follow the semantic catalog (setup, command, review, results).
+
+Component: SyncBanner upload rows
+Status: canonical
+Location: `web/src/features/player/components/SyncBanner.tsx`
+Modes: Player Field
+States: queued actions only, each upload with its own named progress bar (waiting, percent sent, sent), failed action with a localized reason (check-in and choice refusals never show the server's English), offline, retry. Test ids: `sync-uploads`, `upload-<id>`.
+Notes: OW-10. Progress comes from the game-core queue's upload sessions; the bar is a `progressbar` with the file name as its label. Story: `SyncBanner` / `Uploading`.
+
+Component: Team player limit
+Status: canonical
+Location: `web/src/features/build/TeamDetail.tsx`
+Modes: Operator Setup, Operator Command
+States: no limit (empty), limit set, invalid entry (save disabled), more members than the new limit (warning, nobody is removed), full team badge. Test ids: `team-max-players`, `team-max-players-input`, `team-over-limit`, `team-full-badge`.
+Notes: OW-05. Players joining a full team are told so in their language (`TEAM_FULL`); existing members and rejoining devices are unaffected.
+
+Component: AdminPublications
+Status: canonical
+Location: `web/src/features/admin/AdminPublications.tsx`
+Modes: Admin / Organization / Billing
+States: loading, error with retry, empty, listed-only filter, featured first, feature/unfeature, remove from Explore with the canonical confirm dialog, action error, long titles. Test ids: `admin-publications`, `admin-publication-<gameId>`, `admin-feature-<gameId>`, `admin-remove-<gameId>`; panel tab `admin-tab-publications` and `admin-back-to-games`.
+Notes: OW-06. Removal is the ordinary unpublish: the game, its players and the organizer's summary stay.
+
+Component: ReportListingForm
+Status: canonical
+Location: `web/src/features/user-home/ReportListingForm.tsx`
+Modes: Account Home discovery
+States: no reason chosen (send disabled), reason and optional details with remaining characters, sending, thanks (an already open report counts as received), listing gone (404), other failure with the choice kept, offline (send disabled with explanation). Test ids: `discovery-report` (entry in the listing dialog), `report-listing-form`, `report-reason-<reason>`, `report-details`, `report-send`, `report-listing-sent`.
+Notes: OW-06. Opens inside the listing dialog instead of a second modal. Says the organizer never learns who reported.
+
+Component: AdminReports
+Status: canonical
+Location: `web/src/features/admin/AdminReports.tsx`
+Modes: Admin / Organization / Billing
+States: loading, error with retry, empty, reports grouped by game (count, reason, details, reporter and time), no longer listed (dismiss only), dismiss, remove behind the canonical confirm dialog, action error. Test ids: `admin-reports`, `admin-report-group-<gameId>`, `admin-report-dismiss-<gameId>`, `admin-report-remove-<gameId>`; tab `admin-tab-reports` with `admin-reports-count`.
+Notes: OW-06. Remove is the ordinary unpublish; the publisher can list the game again.
