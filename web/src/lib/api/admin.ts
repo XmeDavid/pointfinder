@@ -12,8 +12,19 @@ import type {
 import type { Organization } from '@/types/organization'
 import type { OrgInvoice } from '@/types/billing'
 import type { Game } from '../../types'
+import type { GamePublicationResponse } from '@pointfinder/api'
 
 export const adminApi = {
+  // PF-07/OW-06: curation of Explore listings. Removal is the ordinary unpublish, which admins may use.
+  listPublications: () =>
+    apiClient.get<GamePublicationResponse[]>('/admin/publications').then(r => r.data),
+
+  setFeatured: (gameId: string, featured: boolean) =>
+    apiClient.post<GamePublicationResponse>(`/admin/publications/${gameId}/${featured ? 'feature' : 'unfeature'}`).then(r => r.data),
+
+  removeFromExplore: (gameId: string) =>
+    apiClient.post<GamePublicationResponse>(`/games/${gameId}/publication/unpublish`).then(r => r.data),
+
   listUsers: (params?: { search?: string; page?: number; size?: number }) =>
     apiClient.get<{ content: AdminUser[]; totalElements: number }>('/admin/users', { params }).then(r => r.data),
 

@@ -230,6 +230,24 @@
       "termMonthsHint": "O que o pagamento desta fatura compra.",
       "confirm": "Envia {{amount}}, com vencimento em {{days}} dias, comprando {{months}} meses de período.",
       "sendAction": "Emitir e enviar"
+    },
+    "backToGames": "Voltar aos jogos",
+    "publications": {
+      "tab": "Publicações",
+      "intro": "Os jogos listados aparecem no Explorar. Destaca os que queres realçar, ou remove uma listagem que não deva ser pública; a organização mantém o jogo e o rascunho do resumo.",
+      "empty": "Ainda não há publicações",
+      "loadError": "Não foi possível carregar as publicações.",
+      "listed": "Listado",
+      "draft": "Rascunho",
+      "featured": "Em destaque",
+      "feature": "Destacar",
+      "unfeature": "Deixar de destacar",
+      "remove": "Remover do Explorar",
+      "removeTitle": "Remover {{title}} do Explorar?",
+      "removeDescription": "A listagem desaparece do Explorar e perde o destaque. O jogo, os jogadores e o rascunho da organização mantêm-se; a organização pode voltar a publicar.",
+      "actionError": "A alteração não foi aplicada. Tenta novamente.",
+      "meta": "{{organizer}} · publicado a {{date}}",
+      "filterListed": "Só listados"
     }
   },
   "game": {

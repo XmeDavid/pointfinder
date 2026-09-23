@@ -230,6 +230,24 @@
       "termMonthsHint": "What paying this invoice buys.",
       "confirm": "Sends {{amount}}, due in {{days}} days, buying {{months}} months of term.",
       "sendAction": "Issue and send"
+    },
+    "backToGames": "Back to games",
+    "publications": {
+      "tab": "Publications",
+      "intro": "Listed games appear in Explore. Feature the ones to highlight, or remove a listing that should not be public; the organizer keeps the game and its draft summary.",
+      "empty": "No publications yet",
+      "loadError": "Could not load publications.",
+      "listed": "Listed",
+      "draft": "Draft",
+      "featured": "Featured",
+      "feature": "Feature",
+      "unfeature": "Stop featuring",
+      "remove": "Remove from Explore",
+      "removeTitle": "Remove {{title}} from Explore?",
+      "removeDescription": "The listing disappears from Explore and loses its featured place. The game, its players and the organizer's draft summary stay; the organizer can publish again.",
+      "actionError": "The change did not go through. Try again.",
+      "meta": "{{organizer}} · published {{date}}",
+      "filterListed": "Listed only"
     }
   },
   "game": {

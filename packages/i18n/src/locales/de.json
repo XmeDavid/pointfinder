@@ -230,6 +230,24 @@
       "termMonthsHint": "Was die Zahlung dieser Rechnung kauft.",
       "confirm": "Sendet {{amount}}, fällig in {{days}} Tagen, kauft {{months}} Monate Laufzeit.",
       "sendAction": "Stellen und senden"
+    },
+    "backToGames": "Zurück zu den Spielen",
+    "publications": {
+      "tab": "Veröffentlichungen",
+      "intro": "Gelistete Spiele erscheinen in Entdecken. Hebe Spiele hervor oder entferne eine Listung, die nicht öffentlich sein soll; die Organisation behält das Spiel und den Entwurf der Zusammenfassung.",
+      "empty": "Noch keine Veröffentlichungen",
+      "loadError": "Veröffentlichungen konnten nicht geladen werden.",
+      "listed": "Gelistet",
+      "draft": "Entwurf",
+      "featured": "Hervorgehoben",
+      "feature": "Hervorheben",
+      "unfeature": "Nicht mehr hervorheben",
+      "remove": "Aus Entdecken entfernen",
+      "removeTitle": "{{title}} aus Entdecken entfernen?",
+      "removeDescription": "Die Listung verschwindet aus Entdecken und verliert die Hervorhebung. Das Spiel, seine Spieler und der Entwurf der Organisation bleiben; die Organisation kann erneut veröffentlichen.",
+      "actionError": "Die Änderung wurde nicht übernommen. Versuche es erneut.",
+      "meta": "{{organizer}} · veröffentlicht am {{date}}",
+      "filterListed": "Nur gelistete"
     }
   },
   "game": {

@@ -14,8 +14,11 @@ import { Button } from '@/components/ui/button'
 import { LoadingState } from '@/components/feedback/LoadingState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { formatClubDate } from '@/lib/clubBilling'
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+import { AdminPublications } from './AdminPublications'
 
-type Tab = 'users' | 'orgs'
+type Tab = 'users' | 'orgs' | 'publications'
 type Detail = { type: 'user'; id: string } | { type: 'org'; id: string } | null
 
 const PAGE_SIZE = 50
@@ -113,7 +116,16 @@ export function AdminPanel() {
   const handleBack = useCallback(() => setDetail(null), [])
 
   return (
-    <div className="h-screen bg-background p-8 overflow-auto">
+    <div className="h-screen bg-background p-4 md:p-8 overflow-auto">
+      {/* The admin panel is reached from the organizer rail; this is the way back. */}
+      <Link
+        to="/dashboard?view=organize"
+        className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        data-testid="admin-back-to-games"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        {t('admin.backToGames')}
+      </Link>
       <h1 className="text-2xl font-bold text-foreground mb-6">
         {t('admin.title', 'Admin Panel')}
       </h1>
@@ -132,6 +144,7 @@ export function AdminPanel() {
               <TabsList>
                 <TabsTrigger value="users">{t('admin.users', 'Users')}</TabsTrigger>
                 <TabsTrigger value="orgs">{t('admin.organizations', 'Organizations')}</TabsTrigger>
+                <TabsTrigger value="publications" data-testid="admin-tab-publications">{t('admin.publications.tab')}</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -181,6 +194,8 @@ export function AdminPanel() {
                 )}
               </div>
             )}
+
+            {tab === 'publications' && <AdminPublications />}
 
             {/* Orgs tab */}
             {tab === 'orgs' && (
