@@ -776,7 +776,15 @@
     "challengesOfTotal": "{{completed}} von {{total}} Challenges",
     "exportExcel": "Excel exportieren",
     "totalPoints": "Gesamtpunkte",
-    "maxPoints": "Maximale Punkte"
+    "maxPoints": "Maximale Punkte",
+    "tabs": {
+      "standings": "Rangliste",
+      "breakdown": "Aufschlüsselung",
+      "statistics": "Statistiken"
+    },
+    "exportCsv": "CSV exportieren",
+    "exportDetailed": "Details exportieren",
+    "auditLog": "Prüfprotokoll"
   },
   "settings": {
     "title": "Einstellungen",
@@ -872,8 +880,8 @@
       "title": "Draußen im Gelände. Immer im Bild.",
       "body": "Setze Posten, verknüpfe Aufgaben und verfolge deine Teams aus einem Arbeitsbereich.",
       "guideAlt": "Das PointFinder-Maskottchen mit Rucksack und cremefarbenem T-Shirt zeigt auf den Arbeitsbereich.",
-      "screenshotAlt": "Der PointFinder-Command-Arbeitsbereich: eine Live-Karte von Costa de Lavos mit vier nummerierten Posten, Team-Statistiken, einem Live-Aktivitätsfeed und einer Rangliste.",
-      "caption": "Der Live-Command-Arbeitsbereich mit einem fiktiven Spiel in Costa de Lavos, Portugal.",
+      "screenshotAlt": "Der PointFinder-Modus Überwachen: eine Live-Karte von Costa de Lavos mit vier nummerierten Posten, Team-Statistiken, einem Live-Aktivitätsfeed und einer Rangliste.",
+      "caption": "Der Live-Modus Überwachen mit einem fiktiven Spiel in Costa de Lavos, Portugal.",
       "attribution": "Kartendaten © {{osm}}-Mitwirkende, © {{carto}}",
       "imageUnavailable": "Screenshot nicht verfügbar"
     },
@@ -1178,7 +1186,22 @@
   "workspace": {
     "personal": "Persönlich",
     "createOrg": "Organisation erstellen",
-    "orgName": "Name der Organisation"
+    "orgName": "Name der Organisation",
+    "modes": {
+      "build": "Bauen",
+      "monitor": "Überwachen",
+      "review": "Prüfen",
+      "label": "Spielmodi"
+    },
+    "results": "Ergebnisse",
+    "resultsHint": "Rangliste, Aufschlüsselung und Exporte",
+    "backToMonitor": "Zurück zu Überwachen",
+    "sections": "Inhaltsbereiche",
+    "chooseSection": "Bereich: {{section}}. Anderen Bereich wählen",
+    "settings": "Einstellungen",
+    "themeLight": "Zum hellen Modus wechseln",
+    "themeDark": "Zum dunklen Modus wechseln",
+    "connectionIssue": "Verbindungsproblem: {{error}}"
   },
   "org": {
     "members": "Mitglieder",
@@ -1409,6 +1432,17 @@
       "lastSeenNow": "Zuletzt gesehen: gerade eben",
       "lastSeen_one": "Zuletzt gesehen vor 1 Min.",
       "lastSeen_other": "Zuletzt gesehen vor {{count}} Min."
+    },
+    "stats": {
+      "teams": "Teams",
+      "pending": "Offen",
+      "progress": "Fortschritt",
+      "elapsed": "Verstrichen",
+      "players": "Spieler",
+      "notify": "Benachrichtigen",
+      "activity": "Aktivität",
+      "results": "Ergebnisse",
+      "label": "Live-Spielübersicht"
     }
   },
   "review": {
@@ -2436,7 +2470,7 @@
       },
       "challenge-points": {
         "title": "Punkte",
-        "body": "Das Gewicht dieser Challenge in der Wertung. Spieler sehen weder Punkte noch eine Rangliste – die Wertung gehört dir allein, im Modus Ergebnisse."
+        "body": "Das Gewicht dieser Challenge in der Wertung. Spieler sehen weder Punkte noch eine Rangliste – die Wertung gehört dir allein, unter Ergebnisse im Modus Überwachen."
       },
       "challenge-completion": {
         "title": "Nach dem Abschluss",
@@ -2479,8 +2513,8 @@
         }
       },
       "modes": {
-        "title": "Die vier Modi",
-        "body": "Bauen kennst du jetzt. Kommando verfolgt die Teams live auf der Karte, Prüfen bearbeitet wartende Einreichungen, und Ergebnisse hält Wertung und Export bereit."
+        "title": "Die drei Modi",
+        "body": "Bauen kennst du jetzt. Überwachen verfolgt die Teams live auf der Karte und öffnet Ergebnisse mit Wertung und Export. Prüfen bearbeitet wartende Einreichungen."
       },
       "revert": {
         "title": "Zurück zur Einrichtung",

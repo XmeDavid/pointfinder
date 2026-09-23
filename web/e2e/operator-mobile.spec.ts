@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseSection } from './drawerSections'
 
 /**
  * Phone-width audit of the shared app in the native shell: operator dashboard and
@@ -115,10 +116,11 @@ test('setup controls, settings, account navigation and the drawer fit a phone', 
   await page.screenshot({ path: 'test-results/phone-profile-languages.png' })
   await page.getByRole('button', { name: 'English', exact: true }).click()
   await page.getByTestId('open-content-panel').click()
-  await expect(page.getByTestId('tab-nfc')).toBeVisible()
-  await page.getByTestId('tab-nfc').click()
+  // A phone's drawer offers one section chooser instead of a tab strip (OW-36).
+  await expect(page.getByTestId('drawer-section-chooser')).toBeVisible()
+  await chooseSection(page, 'nfc')
   await expect(page.getByTestId('nfc-tags-page')).toBeVisible()
-  await page.getByTestId('tab-bases').click()
+  await chooseSection(page, 'bases')
   await expectSafeControls(page, '[data-testid="slide-drawer"] button', safeProfiles[0])
   await expect(page.getByText('No bases yet', { exact: true })).toBeVisible()
   await expect(page.getByText('Select a base to view details', { exact: true })).not.toBeVisible()
@@ -214,7 +216,7 @@ test('operator dashboard, workspace and NFC page fit a phone', async ({ page }, 
     expect(canvas!.height).toBe(profile.height)
     const nav = page.getByTestId(profile.width < 768 ? 'icon-rail-mobile' : 'icon-rail-desktop')
     if (profile.width < 768) {
-      await nav.getByRole('button', { name: 'Command', exact: true }).click()
+      await nav.getByRole('button', { name: 'Monitor', exact: true }).click()
       const leaderboard = await page.getByTestId('leaderboard').boundingBox()
       const statsBar = page.getByTestId('stats-bar')
       const stats = await statsBar.boundingBox()

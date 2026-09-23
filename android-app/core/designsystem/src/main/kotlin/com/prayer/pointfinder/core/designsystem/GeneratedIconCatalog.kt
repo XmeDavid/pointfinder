@@ -14,5 +14,9 @@ enum class PFSemanticIcon(val materialName: String) {
     RESULTS("EmojiEvents"),
     SETUP("Build"),
     COMMAND("CellTower"),
-    SETTINGS("Settings")
+    SETTINGS("Settings"),
+    CHALLENGE("Extension"),
+    STAGE("Layers"),
+    CODES("QrCode2"),
+    DOCUMENT("Description")
 }

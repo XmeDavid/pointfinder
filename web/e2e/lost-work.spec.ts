@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseSection } from './drawerSections'
 
 const user = { id: 'u', name: 'Organizer', email: 'organizer@example.test', role: 'operator', createdAt: '2026-01-01' }
 const token = `header.${Buffer.from(JSON.stringify({ sub: 'u', exp: 4102444800 })).toString('base64url')}.signature`
@@ -84,7 +85,7 @@ async function openBase(page: Page) {
   await expect(page.locator('[data-testid="open-content-panel"]:visible, [data-testid="drawer-tabs"]:visible').first()).toBeVisible()
   if (!await page.getByTestId('base-name-input').isVisible()) {
     if (await page.getByTestId('open-content-panel').isVisible()) await page.getByTestId('open-content-panel').click()
-    await page.getByTestId('tab-bases').click()
+    await chooseSection(page, 'bases')
     if (!await page.getByTestId('base-name-input').isVisible()) await page.getByTestId('base-item-b1').click()
   }
   await expect(page.getByTestId('base-name-input')).toBeVisible()

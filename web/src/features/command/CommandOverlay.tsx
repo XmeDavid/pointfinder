@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStream } from '@/hooks/subscriptions/useGameStream'
 import { useIsMobile } from '@/hooks/ui/useMediaQuery'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
@@ -11,6 +12,7 @@ import { BaseInspector } from './BaseInspector'
 import { NotificationSender } from './NotificationSender'
 
 export function CommandOverlay({ gameId }: { gameId: string }) {
+  const { t } = useTranslation()
   const connectionError = useGameStream(gameId)
   const inspectedTeamId = useWorkspaceStore((s) => s.inspectedTeamId)
   const inspectedBaseId = useWorkspaceStore((s) => s.inspectedBaseId)
@@ -26,7 +28,7 @@ export function CommandOverlay({ gameId }: { gameId: string }) {
           padding="none"
           className="absolute left-1/2 top-14 z-30 -translate-x-1/2 border-destructive/30 bg-destructive/90 px-3 py-1.5 text-xs text-destructive-foreground"
         >
-          Connection issue: {connectionError}
+          {t('workspace.connectionIssue', { error: connectionError })}
         </OverlayPanel>
       )}
       <ActivityFeed

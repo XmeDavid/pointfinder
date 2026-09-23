@@ -1,4 +1,7 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ArrowLeft } from 'lucide-react'
+import { useWorkspaceStore } from '@/stores/workspace'
 import { exportFile } from '@/lib/exportFile'
 import { useLeaderboard, useResultsExport } from '@/hooks/queries/useMonitoring'
 import { monitoringApi } from '@/lib/api/monitoring'
@@ -11,11 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type ResultsTab = 'standings' | 'breakdown' | 'statistics'
 
-const tabs: Array<{ key: ResultsTab; label: string }> = [
-  { key: 'standings', label: 'Standings' },
-  { key: 'breakdown', label: 'Breakdown' },
-  { key: 'statistics', label: 'Statistics' },
-]
+const tabs: ResultsTab[] = ['standings', 'breakdown', 'statistics']
 
 interface Props {
   gameId: string
@@ -26,6 +25,8 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export default function ResultsOverlay({ gameId }: Props) {
+  const { t } = useTranslation()
+  const setMode = useWorkspaceStore((s) => s.setMode)
   const [activeTab, setActiveTab] = useState<ResultsTab>('standings')
   const { data: leaderboard } = useLeaderboard(gameId)
   const { data: resultsExport } = useResultsExport(gameId)
@@ -91,10 +92,21 @@ export default function ResultsOverlay({ gameId }: Props) {
     >
       {/* Tab bar */}
       <div className="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 md:py-3 border-b border-border/50">
+        {/* Results belong to Monitor (OW-32): the way back sits first. */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="min-h-11"
+          onClick={() => setMode('command')}
+          data-testid="results-back-to-monitor"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          {t('workspace.backToMonitor')}
+        </Button>
         {/* Tab pills */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ResultsTab)}>
           <TabsList>
-            {tabs.map(({ key, label }) => <TabsTrigger key={key} value={key} data-testid={`tab-${key}`}>{label}</TabsTrigger>)}
+            {tabs.map((key) => <TabsTrigger key={key} value={key} data-testid={`tab-${key}`}>{t(`results.tabs.${key}`)}</TabsTrigger>)}
           </TabsList>
         </Tabs>
 
@@ -108,7 +120,7 @@ export default function ResultsOverlay({ gameId }: Props) {
             variant="secondary"
             size="sm"
           >
-            Export CSV
+            {t('results.exportCsv')}
           </Button>
           <Button
             onClick={exportDetailed}
@@ -116,14 +128,14 @@ export default function ResultsOverlay({ gameId }: Props) {
             variant="secondary"
             size="sm"
           >
-            Export Detailed
+            {t('results.exportDetailed')}
           </Button>
           <Button
             onClick={exportAuditLog}
             data-testid="export-audit"
             size="sm"
           >
-            Audit Log
+            {t('results.auditLog')}
           </Button>
         </div>
       </div>

@@ -58,6 +58,7 @@ import { CoachBubble } from '@/components/tour/CoachBubble'
 import { TourPill } from '@/components/tour/TourPill'
 import { VariableAwareChipInput } from '@/components/inputs/VariableAwareChipInput'
 import { ReadinessPanel } from '@/features/build/ReadinessPanel'
+import { ChoiceFixtures, ContentLanguageFixtures, ContentSectionFixtures } from './HarnessFeatureFixtures'
 
 const DashboardPreview = lazy(() => import("@/features/dashboard/DashboardPage").then(m => ({ default: m.DashboardPage })))
 
@@ -424,6 +425,18 @@ export function VisualHarnessPage() {
 
           <HarnessSection title="Accepted answers (chips, team values, in-place edit)">
             <AnswerChipsPreview />
+          </HarnessSection>
+
+          <HarnessSection title="Choice questions (options, player picker, closed result, review)">
+            <ChoiceFixtures />
+          </HarnessSection>
+
+          <HarnessSection title="Game content language (known, uncommon, not specified, discovery)">
+            <ContentLanguageFixtures />
+          </HarnessSection>
+
+          <HarnessSection title="Content sections (Build shortcuts, phone section chooser)">
+            <ContentSectionFixtures />
           </HarnessSection>
 
           <HarnessSection title="Continue organizing (setup, live, ended, long title)">

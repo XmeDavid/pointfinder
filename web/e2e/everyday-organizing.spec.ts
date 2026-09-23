@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseSection, expectSection } from './drawerSections'
 
 const user = { id: 'u', name: 'Organizer', email: 'organizer@example.test', role: 'operator', createdAt: '2026-01-01' }
 const token = `header.${Buffer.from(JSON.stringify({ sub: 'u', exp: 4102444800 })).toString('base64url')}.signature`
@@ -75,7 +76,7 @@ async function openWorkspace(page: Page, id = 'g') {
 async function openChallenge(page: Page) {
   await openWorkspace(page)
   if (await page.getByTestId('open-content-panel').isVisible()) await page.getByTestId('open-content-panel').click()
-  await page.getByTestId('tab-bases').click()
+  await chooseSection(page, 'bases')
   await page.getByTestId('base-item-b1').click()
   await page.getByTestId('open-linked-challenge-btn').click()
   await expect(page.getByTestId('challenge-title-input')).toHaveValue(challenge.title)
@@ -120,7 +121,7 @@ test('readiness lists only blockers and opens the affected editor', async ({ pag
   await expect(page.getByTestId('check-fail')).toHaveCount(1)
   await expect(page.getByTestId('go-live-btn')).toHaveCount(0)
   await page.getByTestId('check-fail').click()
-  await expect(page.getByTestId('tab-teams')).toBeVisible()
+  await expectSection(page, 'Teams', 'teams')
 })
 
 test('accepted answers support variable suggestions, chip editing and pointer selection', async ({ page }) => {

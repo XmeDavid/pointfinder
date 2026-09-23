@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { useGame } from '@/hooks/queries/useGames'
 import { useStages } from '@/hooks/queries/useStages'
 import { anyRouteEnforced } from '@/features/build/baseRoutes'
+import { BuildShortcuts } from '@/features/build/BuildShortcuts'
 import { useBases } from '@/hooks/queries/useBases'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamLocations } from '@/hooks/queries/useTeamLocations'
@@ -354,13 +355,17 @@ export function GameWorkspace() {
               <div className="absolute bottom-20 md:bottom-4 left-3 right-16 z-20 flex max-h-[calc(100%-5rem)] flex-col items-start gap-2 overflow-y-auto md:flex-row md:items-end md:justify-between">
                 <ReadinessIndicator gameId={gameId!} gameStatus={game.status} />
                 {!drawerOpen && (
-                  <button
-                    onClick={() => openDrawer()}
-                    data-testid="open-content-panel"
-                    className="w-full shrink-0 md:ml-auto md:w-auto px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
-                  >
-                    {t('build.openContent')}
-                  </button>
+                  <div className="flex w-full min-w-0 flex-col gap-2 md:ml-auto md:w-auto md:max-w-[min(100%,44rem)] md:items-end">
+                    {/* OW-36: straight to a section, or back to the last one. */}
+                    <BuildShortcuts />
+                    <button
+                      onClick={() => openDrawer()}
+                      data-testid="open-content-panel"
+                      className="w-full shrink-0 md:w-auto px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
+                    >
+                      {t('build.openContent')}
+                    </button>
+                  </div>
                 )}
               </div>
             </motion.div>

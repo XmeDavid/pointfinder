@@ -64,6 +64,26 @@ export const semanticIconCatalog = {
     "lucide": "Settings",
     "sfSymbol": "gearshape",
     "material": "Settings"
+  },
+  "challenge": {
+    "lucide": "Puzzle",
+    "sfSymbol": "puzzlepiece",
+    "material": "Extension"
+  },
+  "stage": {
+    "lucide": "Layers",
+    "sfSymbol": "square.3.layers.3d",
+    "material": "Layers"
+  },
+  "codes": {
+    "lucide": "QrCode",
+    "sfSymbol": "qrcode",
+    "material": "QrCode2"
+  },
+  "document": {
+    "lucide": "FileText",
+    "sfSymbol": "doc.text",
+    "material": "Description"
   }
 } as const
-export type SemanticIcon = "scan" | "base" | "team" | "review" | "rescue" | "sync" | "location" | "map" | "notifications" | "results" | "setup" | "command" | "settings"
+export type SemanticIcon = "scan" | "base" | "team" | "review" | "rescue" | "sync" | "location" | "map" | "notifications" | "results" | "setup" | "command" | "settings" | "challenge" | "stage" | "codes" | "document"

@@ -2,21 +2,16 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Hammer,
-  Zap,
-  ClipboardList,
-  Trophy,
   Settings,
   Sun,
   Moon,
   FolderOpen,
   Shield,
   Users,
+  type LucideIcon,
 } from "lucide-react";
-import {
-  useWorkspaceStore,
-  type GameMode,
-} from "@/stores/workspace";
+import { useWorkspaceStore } from "@/stores/workspace";
+import { NAV_MODES, navModeOf } from "./workspaceModes";
 import { cn } from "@/lib/utils";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useWorkspaceContext } from "@/stores/workspaceContext";
@@ -49,17 +44,6 @@ function useThemeToggle() {
   return { isDark, toggle };
 }
 
-const modeIcons: Array<{
-  mode: GameMode;
-  Icon: typeof Hammer;
-  label: string;
-}> = [
-  { mode: "build", Icon: Hammer, label: "Build" },
-  { mode: "command", Icon: Zap, label: "Command" },
-  { mode: "review", Icon: ClipboardList, label: "Review" },
-  { mode: "results", Icon: Trophy, label: "Results" },
-];
-
 function ModeButton({
   Icon,
   label,
@@ -68,7 +52,7 @@ function ModeButton({
   sizeClass,
   testId,
 }: {
-  Icon: typeof Hammer;
+  Icon: LucideIcon;
   label: string;
   isActive: boolean;
   onClick: () => void;
@@ -90,7 +74,7 @@ function ModeButton({
           : "hover:bg-accent text-muted-foreground hover:text-foreground",
       )}
     >
-      <Icon size={18} className={isActive ? "text-primary" : ""} />
+      <Icon size={18} className={isActive ? "text-primary" : ""} aria-hidden />
     </button>
   );
 }
@@ -109,6 +93,8 @@ export function IconRail({ showModes }: IconRailProps) {
   const user = useAuthStore(s => s.user);
   const isSettingsActive = store.settingsPanelOpen;
   const isOrgWorkspace = active.type === 'org';
+  // Results are reached from Monitor, so Monitor stays marked while they show.
+  const activeNavMode = navModeOf(store.mode);
 
   return (
     <>
@@ -128,19 +114,19 @@ export function IconRail({ showModes }: IconRailProps) {
 
         {/* Mode icons -- only when showModes is true */}
         {showModes && (
-          <div className="flex flex-col items-center gap-1 flex-1">
-            {modeIcons.map(({ mode, Icon, label }) => (
+          <nav className="flex flex-col items-center gap-1 flex-1" aria-label={t("workspace.modes.label")}>
+            {NAV_MODES.map(({ mode, Icon, labelKey }) => (
               <ModeButton
                 key={mode}
                 Icon={Icon}
-                label={label}
-                isActive={store.mode === mode}
+                label={t(labelKey)}
+                isActive={activeNavMode === mode}
                 onClick={() => store.setMode(mode)}
                 sizeClass="w-8 h-8"
                 testId={`mode-${mode}`}
               />
             ))}
-          </div>
+          </nav>
         )}
 
         {/* Org nav links -- only when in org workspace and not in game mode */}
@@ -185,8 +171,8 @@ export function IconRail({ showModes }: IconRailProps) {
         {/* Dark/light mode toggle */}
         <button
           onClick={toggleTheme}
-          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          title={t(isDark ? "workspace.themeLight" : "workspace.themeDark")}
+          aria-label={t(isDark ? "workspace.themeLight" : "workspace.themeDark")}
           data-testid="theme-toggle-btn"
           className="w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent"
         >
@@ -200,8 +186,9 @@ export function IconRail({ showModes }: IconRailProps) {
         {showModes && (
           <button
             onClick={() => store.toggleSettingsPanel()}
-            title="Settings"
-            aria-label="Settings"
+            title={t("workspace.settings")}
+            aria-label={t("workspace.settings")}
+            aria-pressed={isSettingsActive}
             data-testid="settings-btn"
             className={cn(
               "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
@@ -226,12 +213,12 @@ export function IconRail({ showModes }: IconRailProps) {
         {/* Mode icons -- only when showModes is true */}
         {showModes && (
           <>
-            {modeIcons.map(({ mode, Icon, label }) => (
+            {NAV_MODES.map(({ mode, Icon, labelKey }) => (
               <ModeButton
                 key={mode}
                 Icon={Icon}
-                label={label}
-                isActive={store.mode === mode}
+                label={t(labelKey)}
+                isActive={activeNavMode === mode}
                 onClick={() => store.setMode(mode)}
                 sizeClass="w-full h-11"
                 testId={`mode-${mode}`}
@@ -251,7 +238,8 @@ export function IconRail({ showModes }: IconRailProps) {
                 ? "bg-primary/10 border border-primary/30"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent",
             )}
-            aria-label={t("common.settings", "Settings")}
+            aria-label={t("workspace.settings")}
+            aria-pressed={isSettingsActive}
             data-testid="settings-btn"
           >
             <Settings size={20} className={isSettingsActive ? "text-primary" : ""} />

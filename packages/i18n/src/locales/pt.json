@@ -776,7 +776,15 @@
     "challengesOfTotal": "{{completed}} de {{total}} desafios",
     "exportExcel": "Exportar Excel",
     "totalPoints": "Pontos Totais",
-    "maxPoints": "Pontos Máximos"
+    "maxPoints": "Pontos Máximos",
+    "tabs": {
+      "standings": "Classificação",
+      "breakdown": "Detalhe",
+      "statistics": "Estatísticas"
+    },
+    "exportCsv": "Exportar CSV",
+    "exportDetailed": "Exportar detalhe",
+    "auditLog": "Registo de auditoria"
   },
   "settings": {
     "title": "Definições",
@@ -872,8 +880,8 @@
       "title": "No terreno. Sempre a par.",
       "body": "Coloca bases, liga desafios e acompanha as tuas equipas a partir de um único espaço de trabalho.",
       "guideAlt": "A mascote guia do PointFinder de mochila e T-shirt creme a apontar para o espaço de trabalho.",
-      "screenshotAlt": "O espaço de trabalho Command do PointFinder: um mapa em direto da Costa de Lavos com quatro bases numeradas, estatísticas das equipas, um feed de atividade em direto e uma classificação.",
-      "caption": "O espaço de trabalho Command em direto, com um jogo fictício na Costa de Lavos, Portugal.",
+      "screenshotAlt": "O modo Acompanhar do PointFinder: um mapa em direto da Costa de Lavos com quatro bases numeradas, estatísticas das equipas, um feed de atividade em direto e uma classificação.",
+      "caption": "O modo Acompanhar em direto, com um jogo fictício na Costa de Lavos, Portugal.",
       "attribution": "Dados do mapa © colaboradores do {{osm}}, © {{carto}}",
       "imageUnavailable": "Captura de ecrã indisponível"
     },
@@ -1178,7 +1186,22 @@
   "workspace": {
     "personal": "Pessoal",
     "createOrg": "Criar organização",
-    "orgName": "Nome da organização"
+    "orgName": "Nome da organização",
+    "modes": {
+      "build": "Construir",
+      "monitor": "Acompanhar",
+      "review": "Revisão",
+      "label": "Modos do jogo"
+    },
+    "results": "Resultados",
+    "resultsHint": "Classificação, detalhe e exportações",
+    "backToMonitor": "Voltar a Acompanhar",
+    "sections": "Secções de conteúdo",
+    "chooseSection": "Secção: {{section}}. Escolher outra secção",
+    "settings": "Definições",
+    "themeLight": "Mudar para modo claro",
+    "themeDark": "Mudar para modo escuro",
+    "connectionIssue": "Problema de ligação: {{error}}"
   },
   "org": {
     "members": "Membros",
@@ -1409,6 +1432,17 @@
       "lastSeenNow": "Visto agora mesmo",
       "lastSeen_one": "Visto há 1 min",
       "lastSeen_other": "Visto há {{count}} min"
+    },
+    "stats": {
+      "teams": "Equipas",
+      "pending": "Pendentes",
+      "progress": "Progresso",
+      "elapsed": "Decorrido",
+      "players": "Jogadores",
+      "notify": "Notificar",
+      "activity": "Atividade",
+      "results": "Resultados",
+      "label": "Resumo do jogo em direto"
     }
   },
   "review": {
@@ -2436,7 +2470,7 @@
       },
       "challenge-points": {
         "title": "Pontos",
-        "body": "O peso deste desafio na pontuação. Os jogadores nunca veem pontos nem classificação — a pontuação é só tua, no modo Resultados."
+        "body": "O peso deste desafio na pontuação. Os jogadores nunca veem pontos nem classificação — a pontuação é só tua, em Resultados, no modo Acompanhar."
       },
       "challenge-completion": {
         "title": "Depois de terminarem",
@@ -2479,8 +2513,8 @@
         }
       },
       "modes": {
-        "title": "Os quatro modos",
-        "body": "Construir é onde estiveste. Comando acompanha as equipas no mapa em tempo real, Revisão trata das submissões à tua espera, e Resultados guarda a pontuação e a exportação."
+        "title": "Os três modos",
+        "body": "Construir é onde estiveste. Acompanhar segue as equipas no mapa em tempo real e abre Resultados, com a pontuação e a exportação. Revisão trata das submissões à tua espera."
       },
       "revert": {
         "title": "Voltar à configuração",

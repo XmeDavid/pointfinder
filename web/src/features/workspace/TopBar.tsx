@@ -6,18 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { isPracticeGame, practiceHoursLeft } from '@/features/tutorials/practiceGame'
 import { GameStatusBadge } from '@/components/status'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
-import { useWorkspaceStore, type GameMode } from '@/stores/workspace'
+import { useWorkspaceStore } from '@/stores/workspace'
+import { NAV_MODES, navModeOf } from '@/components/layout/workspaceModes'
 import { useCreateStage } from '@/hooks/mutations/useStageMutations'
 import { cn } from '@/lib/utils'
 import type { Game, Stage } from '@/types/v2'
 import { StageStrip } from './StageStrip'
-
-const modeLabels: Array<{ mode: GameMode; label: string }> = [
-  { mode: 'build', label: 'Build' },
-  { mode: 'command', label: 'Command' },
-  { mode: 'review', label: 'Review' },
-  { mode: 'results', label: 'Results' },
-]
 
 export interface TopBarProps {
   game: Game
@@ -89,13 +83,15 @@ export function TopBar({ game, stages }: TopBarProps) {
         {/* Spacer */}
         <div className="flex-1 min-w-0" />
 
-        {/* Mode tabs — xl only */}
-        <div className="hidden xl:flex items-center gap-1 shrink-0">
-          {modeLabels.map(({ mode: m, label }) => {
-            const isActive = mode === m
+        {/* Mode tabs — xl only; results are part of Monitor */}
+        <div className="hidden xl:flex items-center gap-1 shrink-0" role="group" aria-label={t('workspace.modes.label')}>
+          {NAV_MODES.map(({ mode: m, labelKey }) => {
+            const isActive = navModeOf(mode) === m
             return (
               <button
                 key={m}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => setMode(m)}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                   isActive
@@ -103,7 +99,7 @@ export function TopBar({ game, stages }: TopBarProps) {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {label}
+                {t(labelKey)}
               </button>
             )
           })}

@@ -72,7 +72,9 @@ describe('first-game scenario definition', () => {
   it('resolves the native and browser NFC anchors', () => {
     const step = firstGame.steps.find((s) => s.id === 'base-nfc')!
     expect(resolveAnchor(step, state({ isNative: true, selectedBaseId: 'b7' }))).toBe('nfc-write-b7')
-    expect(resolveAnchor(step, state({ isNative: false, selectedBaseId: 'b7' }))).toBe('tab-nfc')
+    expect(resolveAnchor(step, state({ isNative: false, selectedBaseId: 'b7', fields: { 'tab-nfc': { present: true } } }))).toBe('tab-nfc')
+    // A phone browser shows the section chooser instead of tabs.
+    expect(resolveAnchor(step, state({ isNative: false, selectedBaseId: 'b7' }))).toBe('drawer-section-chooser')
   })
 
   it('falls back from the go-live button to the readiness pill until every check passes', () => {

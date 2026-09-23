@@ -34,6 +34,8 @@ export async function navigateToGameWorkspace(
  * laid-out one is visible, so pick that.
  */
 export async function switchWorkspaceMode(page: Page, mode: WorkspaceMode) {
+  // Results are opened from Monitor (the `command` mode), not the mode navigation.
+  if (mode === 'results') await switchWorkspaceMode(page, 'command');
   const modeBtn = page.locator(`[data-testid="mode-${mode}"]:visible`).first();
   await expect(modeBtn).toBeVisible({ timeout: 5_000 });
   await modeBtn.click();
@@ -52,8 +54,11 @@ export async function openDrawerTab(page: Page, tab: DrawerTab) {
   }
   // Wait for drawer to be visible
   await expect(page.getByTestId('drawer-tabs')).toBeVisible({ timeout: 5_000 });
+  // Phones show one section chooser whose list carries the tab ids.
+  const chooser = page.locator('[data-testid="drawer-section-chooser"]:visible');
+  if (await chooser.count()) await chooser.first().click();
   // Click the desired tab
-  await page.getByTestId(`tab-${tab}`).click();
+  await page.locator(`[data-testid="tab-${tab}"]:visible`).first().click();
   await page.waitForTimeout(200);
 }
 

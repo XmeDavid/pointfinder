@@ -54,13 +54,13 @@ describe("IconRail", () => {
     });
   });
 
-  it('uses six native phone items with settings and a combined home/account entry', () => {
+  it('uses five native phone items: three modes, settings and a combined home/account entry', () => {
     platform.native = true;
     renderWithRouter(<IconRail showModes={true} />);
     const nav = within(screen.getByTestId('icon-rail-mobile'));
     expect(nav.queryByTestId('nfc-tags-btn')).not.toBeInTheDocument();
     expect(nav.getByTestId('settings-btn')).toBeInTheDocument();
-    expect(nav.getAllByRole('button')).toHaveLength(6);
+    expect(nav.getAllByRole('button')).toHaveLength(5);
     expect(nav.queryByTestId('language-picker-btn')).not.toBeInTheDocument();
   });
 
@@ -71,18 +71,25 @@ describe("IconRail", () => {
     expect(nav.getByTestId('user-avatar-btn')).toBeInTheDocument();
   });
 
-  it("shows mode icons when showModes is true", () => {
+  it("shows the three operator modes when showModes is true", () => {
     renderWithRouter(<IconRail showModes={true} />);
     expect(screen.getAllByLabelText("Build").length).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText("Command").length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("Monitor").length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText("Review").length).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText("Results").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Results")).toBeNull();
+  });
+
+  it("keeps Monitor marked while its results are open (OW-32)", () => {
+    useWorkspaceStore.getState().setMode("results");
+    renderWithRouter(<IconRail showModes={true} />);
+    for (const button of screen.getAllByTestId("mode-command")) expect(button).toHaveAttribute("aria-pressed", "true");
+    useWorkspaceStore.getState().reset();
   });
 
   it("hides mode icons when showModes is false", () => {
     renderWithRouter(<IconRail showModes={false} />);
     expect(screen.queryByLabelText("Build")).toBeNull();
-    expect(screen.queryByLabelText("Command")).toBeNull();
+    expect(screen.queryByLabelText("Monitor")).toBeNull();
     expect(screen.queryByLabelText("Review")).toBeNull();
     expect(screen.queryByLabelText("Results")).toBeNull();
   });

@@ -98,3 +98,15 @@ describe('StatsBar', () => {
     })
   })
 })
+
+describe('StatsBar results entry (OW-32)', () => {
+  beforeEach(() => useWorkspaceStore.getState().reset())
+
+  it('opens results from Monitor with a labelled control', async () => {
+    useWorkspaceStore.getState().setMode('command')
+    render(<StatsBar gameId="game-1" />, { wrapper: createWrapper() })
+    await userEvent.click(screen.getByTestId('mode-results'))
+    expect(useWorkspaceStore.getState().mode).toBe('results')
+    expect(screen.getByTestId('mode-results')).toHaveTextContent('Results')
+  })
+})

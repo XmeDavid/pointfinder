@@ -88,3 +88,16 @@ describe('ResultsOverlay', () => {
     expect(breakdownTab).toHaveAttribute('aria-selected', 'false')
   })
 })
+
+describe('ResultsOverlay inside Monitor (OW-32)', () => {
+  it('returns to Monitor and keeps every export', async () => {
+    const { useWorkspaceStore } = await import('@/stores/workspace')
+    useWorkspaceStore.getState().setMode('results')
+    render(createElement(ResultsOverlay, { gameId: 'game-1' }), { wrapper: createWrapper() })
+    expect(screen.getByTestId('export-csv')).toHaveTextContent('Export CSV')
+    expect(screen.getByTestId('export-audit')).toHaveTextContent('Audit Log')
+    await userEvent.click(screen.getByRole('button', { name: 'Back to Monitor' }))
+    expect(useWorkspaceStore.getState().mode).toBe('command')
+    useWorkspaceStore.getState().reset()
+  })
+})

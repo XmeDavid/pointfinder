@@ -22,15 +22,10 @@ import { TeamsTab } from './TeamsTab'
 import StagesTab from './StagesTab'
 import { NfcTagsManager } from './NfcTagsPage'
 import { ResourceBrowser } from '@/features/org/ResourceBrowser'
+import { useIsMobile } from '@/hooks/ui/useMediaQuery'
+import { CONTENT_SECTIONS } from './contentSections'
+import { SectionChooser } from './SectionChooser'
 
-const tabs: Array<{ key: DrawerTab; label: string; newLabel: string }> = [
-  { key: 'bases', label: 'bases', newLabel: 'newBase' },
-  { key: 'challenges', label: 'challenges', newLabel: 'newChallenge' },
-  { key: 'teams', label: 'teams', newLabel: 'newTeam' },
-  { key: 'stages', label: 'stages', newLabel: 'newStage' },
-  { key: 'nfc', label: 'nfcTags', newLabel: '' },
-  { key: 'documents', label: 'documents', newLabel: '' },
-]
 
 interface ContentDrawerProps {
   gameId: string
@@ -65,10 +60,12 @@ export function ContentDrawer({ gameId, onCreateBase }: ContentDrawerProps) {
   // Keep the query alive so child tabs share the cache
   const { data: assignments = [] } = useAssignments(gameId)
 
-  const currentTabMeta = tabs.find((t) => t.key === drawerTab)
+  const currentTabMeta = CONTENT_SECTIONS.find((s) => s.key === drawerTab)
   // Tags & codes is no longer phone-only: QR codes are generated and printed
   // in the browser. The NFC write control inside the tab stays native-gated.
-  const visibleTabs = tabs
+  const visibleTabs = CONTENT_SECTIONS
+  // OW-36: a phone gets one section chooser instead of a crowded tab strip.
+  const isMobile = useIsMobile()
 
   const handleNew = () => {
     switch (drawerTab) {
@@ -149,52 +146,59 @@ export function ContentDrawer({ gameId, onCreateBase }: ContentDrawerProps) {
     <SlideDrawer open={drawerOpen} onClose={closeDrawer} width="md:w-[70vw]">
       {/* Header with tabs */}
       <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-3 border-b border-border shrink-0">
-        {/* Tab group */}
-        <div
-          className={`flex min-w-0 flex-wrap items-center gap-1 bg-muted rounded-lg p-1 md:flex-nowrap md:overflow-x-auto ${currentTabMeta?.newLabel ? 'order-2 w-full md:order-none md:w-auto' : 'flex-1'}`}
-          ref={tabStrip}
-          data-testid="drawer-tabs"
-        >
-          {visibleTabs.map(({ key, label }) => {
-            const isActive = drawerTab === key
-            return (
-              <button
-                key={key}
-                aria-pressed={drawerTab === key}
-                onClick={() => setDrawerTab(key)}
-                data-testid={`tab-${key}`}
-                className={`min-h-11 flex-1 shrink-0 whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {t(`build.drawer.${label}`)}
-              </button>
-            )
-          })}
-        </div>
+        {isMobile ? (
+          <SectionChooser active={drawerTab} onSelect={setDrawerTab} />
+        ) : (
+          <>
+            {/* Tab group */}
+            <div
+              className={`flex min-w-0 flex-wrap items-center gap-1 bg-muted rounded-lg p-1 md:flex-nowrap md:overflow-x-auto ${currentTabMeta?.newLabelKey ? 'order-2 w-full md:order-none md:w-auto' : 'flex-1'}`}
+              ref={tabStrip}
+              role="group"
+              aria-label={t('workspace.sections')}
+              data-testid="drawer-tabs"
+            >
+              {visibleTabs.map(({ key, labelKey, Icon }) => {
+                const isActive = drawerTab === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={drawerTab === key}
+                    onClick={() => setDrawerTab(key)}
+                    data-testid={`tab-${key}`}
+                    className={`inline-flex min-h-11 flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      isActive
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {t(labelKey)}
+                  </button>
+                )
+              })}
+            </div>
 
-        {currentTabMeta?.newLabel && <div className="flex-1" />}
+            {currentTabMeta?.newLabelKey && <div className="flex-1" />}
+          </>
+        )}
 
         {/* "+ New" button */}
-        {currentTabMeta?.newLabel && (
+        {currentTabMeta?.newLabelKey && (
           <button
             onClick={handleNew}
             data-testid="new-entity-btn"
             disabled={drawerTab === 'bases' && baseRouteLocked}
             title={
               drawerTab === 'bases' && baseRouteLocked
-                ? t('baseOrder.setupOnly', {
-                    defaultValue:
-                      'Base order can only be changed during setup.',
-                  })
+                ? t('baseOrder.setupOnly')
                 : undefined
             }
             className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
-            {t(`build.drawer.${currentTabMeta.newLabel}`)}
+            {t(currentTabMeta.newLabelKey)}
           </button>
         )}
 

@@ -776,7 +776,15 @@
     "challengesOfTotal": "{{completed}} of {{total}} challenges",
     "exportExcel": "Export Excel",
     "totalPoints": "Total Points",
-    "maxPoints": "Max Points"
+    "maxPoints": "Max Points",
+    "tabs": {
+      "standings": "Standings",
+      "breakdown": "Breakdown",
+      "statistics": "Statistics"
+    },
+    "exportCsv": "Export CSV",
+    "exportDetailed": "Export Detailed",
+    "auditLog": "Audit Log"
   },
   "settings": {
     "title": "Settings",
@@ -872,8 +880,8 @@
       "title": "Out in the field. Always in the loop.",
       "body": "Place bases, connect challenges and follow your teams from one workspace.",
       "guideAlt": "The PointFinder mascot guide with a backpack and cream T-shirt pointing at the workspace.",
-      "screenshotAlt": "The PointFinder Command workspace: a live map of Costa de Lavos with four numbered bases, team stats, a live activity feed and a leaderboard.",
-      "caption": "The live Command workspace with a fictional game in Costa de Lavos, Portugal.",
+      "screenshotAlt": "The PointFinder Monitor workspace: a live map of Costa de Lavos with four numbered bases, team stats, a live activity feed and a leaderboard.",
+      "caption": "The live Monitor workspace with a fictional game in Costa de Lavos, Portugal.",
       "attribution": "Map data © {{osm}} contributors, © {{carto}}",
       "imageUnavailable": "Screenshot unavailable"
     },
@@ -1178,7 +1186,22 @@
   "workspace": {
     "personal": "Personal",
     "createOrg": "Create organization",
-    "orgName": "Organization name"
+    "orgName": "Organization name",
+    "modes": {
+      "build": "Build",
+      "monitor": "Monitor",
+      "review": "Review",
+      "label": "Game modes"
+    },
+    "results": "Results",
+    "resultsHint": "Standings, breakdown and exports",
+    "backToMonitor": "Back to Monitor",
+    "sections": "Content sections",
+    "chooseSection": "Section: {{section}}. Choose another section",
+    "settings": "Settings",
+    "themeLight": "Switch to light mode",
+    "themeDark": "Switch to dark mode",
+    "connectionIssue": "Connection issue: {{error}}"
   },
   "org": {
     "members": "Members",
@@ -1409,6 +1432,17 @@
       "lastSeenNow": "Last seen just now",
       "lastSeen_one": "Last seen 1 min ago",
       "lastSeen_other": "Last seen {{count}} min ago"
+    },
+    "stats": {
+      "teams": "Teams",
+      "pending": "Pending",
+      "progress": "Progress",
+      "elapsed": "Elapsed",
+      "players": "Players",
+      "notify": "Notify",
+      "activity": "Activity",
+      "results": "Results",
+      "label": "Live game summary"
     }
   },
   "review": {
@@ -2436,7 +2470,7 @@
       },
       "challenge-points": {
         "title": "Points",
-        "body": "The scoring weight of this challenge. Players never see points or a leaderboard — scoring is yours alone, in Results mode."
+        "body": "The scoring weight of this challenge. Players never see points or a leaderboard — scoring is yours alone, under Results in Monitor."
       },
       "challenge-completion": {
         "title": "After they finish",
@@ -2479,8 +2513,8 @@
         }
       },
       "modes": {
-        "title": "The four modes",
-        "body": "Build is where you have been. Command watches teams live on the map, Review handles submissions waiting for you, and Results holds scoring and the export."
+        "title": "The three modes",
+        "body": "Build is where you have been. Monitor watches teams live on the map and opens Results for scoring and the export. Review handles submissions waiting for you."
       },
       "revert": {
         "title": "Back to setup",

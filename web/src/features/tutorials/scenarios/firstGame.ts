@@ -188,7 +188,8 @@ const steps: Step[] = [
   {
     id: 'base-nfc',
     route: 'workspace',
-    anchor: (s) => (s.isNative ? `nfc-write-${s.selectedBaseId ?? ''}` : 'tab-nfc'),
+    // A phone's drawer shows one section chooser instead of tabs (OW-36).
+    anchor: (s) => (s.isNative ? `nfc-write-${s.selectedBaseId ?? ''}` : s.field('tab-nfc').present ? 'tab-nfc' : 'drawer-section-chooser'),
     when: (s) => {
       const base = selectedBase(s)
       return base?.checkInMethod === 'NFC' && !base.nfcLinked

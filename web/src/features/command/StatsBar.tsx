@@ -1,4 +1,5 @@
-import { Activity, Bell, MapPin } from 'lucide-react'
+import { Activity, Bell, MapPin, Trophy } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { OverlayPanel } from '@/components/layout/OverlayPanel'
 import { useDashboardStats } from '@/hooks/queries/useMonitoring'
 import { useElapsedTimer } from '@/hooks/ui/useElapsedTimer'
@@ -11,7 +12,9 @@ export function StatsBar({
   gameId: string
   onOpenActivity?: () => void
 }) {
+  const { t } = useTranslation()
   const { data: stats } = useDashboardStats(gameId)
+  const setMode = useWorkspaceStore((s) => s.setMode)
   const toggleNotificationSender = useWorkspaceStore((s) => s.toggleNotificationSender)
   const toggleTeamLocations = useWorkspaceStore((s) => s.toggleTeamLocations)
   const teamLocationsVisible = useWorkspaceStore((s) => s.teamLocationsVisible)
@@ -29,6 +32,8 @@ export function StatsBar({
 
   return (
     <div
+      role="group"
+      aria-label={t('command.stats.label')}
       data-testid="stats-bar"
       className="absolute bottom-16 left-2 right-2 z-20 grid grid-cols-4 gap-1.5 [&>*]:min-w-0 md:bottom-3 md:left-3 md:right-auto md:flex md:max-w-none md:gap-2"
     >
@@ -37,7 +42,7 @@ export function StatsBar({
         <div data-testid="stat-teams" className="text-sm md:text-lg font-bold text-primary">
           {totalTeams}
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Teams</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.teams')}</div>
       </OverlayPanel>
 
       {/* Pending */}
@@ -50,7 +55,7 @@ export function StatsBar({
         >
           {pendingCount}
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Pending</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.pending')}</div>
       </OverlayPanel>
 
       {/* Progress */}
@@ -58,7 +63,7 @@ export function StatsBar({
         <div data-testid="stat-progress" className="text-sm md:text-lg font-bold">
           {progressPct}%
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Progress</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.progress')}</div>
       </OverlayPanel>
 
       {/* Elapsed */}
@@ -66,7 +71,7 @@ export function StatsBar({
         <div data-testid="stat-elapsed" className="text-xs font-bold font-mono md:text-lg">
           {elapsed}
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Elapsed</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.elapsed')}</div>
       </OverlayPanel>
 
       {/* Team locations toggle */}
@@ -82,9 +87,9 @@ export function StatsBar({
         }`}
       >
         <div className="flex items-center justify-center">
-          <MapPin size={18} className={`md:w-5 md:h-5 ${teamLocationsVisible ? 'text-info' : 'text-muted-foreground'}`} />
+          <MapPin size={18} aria-hidden className={`md:w-5 md:h-5 ${teamLocationsVisible ? 'text-info' : 'text-muted-foreground'}`} />
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Players</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.players')}</div>
       </OverlayPanel>
 
       {/* Notify */}
@@ -96,9 +101,24 @@ export function StatsBar({
         className="shrink-0 cursor-pointer border-primary/30 bg-primary/10 px-2 py-1.5 transition-colors hover:bg-primary/20 md:px-3 md:py-2"
       >
         <div className="flex items-center justify-center">
-          <Bell size={18} className="text-primary md:w-5 md:h-5" />
+          <Bell size={18} aria-hidden className="text-primary md:w-5 md:h-5" />
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground">Notify</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.notify')}</div>
+      </OverlayPanel>
+
+      {/* Results live inside Monitor (OW-32): standings, breakdown and exports. */}
+      <OverlayPanel
+        as="button"
+        data-testid="mode-results"
+        onClick={() => setMode('results')}
+        padding="none"
+        title={t('workspace.resultsHint')}
+        className="shrink-0 cursor-pointer px-2 py-1.5 transition-colors hover:bg-muted md:px-3 md:py-2"
+      >
+        <div className="flex items-center justify-center">
+          <Trophy size={18} aria-hidden className="text-muted-foreground md:w-5 md:h-5" />
+        </div>
+        <div className="text-[10px] md:text-xs text-muted-foreground">{t('command.stats.results')}</div>
       </OverlayPanel>
 
       {onOpenActivity && (
@@ -110,9 +130,9 @@ export function StatsBar({
           className="min-w-0 cursor-pointer px-2 py-1.5 transition-colors hover:bg-muted"
         >
           <div className="flex items-center justify-center">
-            <Activity size={18} className="text-primary" />
+            <Activity size={18} aria-hidden className="text-primary" />
           </div>
-          <div className="truncate text-[10px] text-muted-foreground">Activity</div>
+          <div className="truncate text-[10px] text-muted-foreground">{t('command.stats.activity')}</div>
         </OverlayPanel>
       )}
     </div>

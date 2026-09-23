@@ -13,6 +13,10 @@ enum PFSemanticIcon: String, CaseIterable {
     case setup
     case command
     case settings
+    case challenge
+    case stage
+    case codes
+    case document
 
     var systemName: String {
         switch self {
@@ -29,6 +33,10 @@ enum PFSemanticIcon: String, CaseIterable {
         case .setup: "hammer"
         case .command: "dot.radiowaves.left.and.right"
         case .settings: "gearshape"
+        case .challenge: "puzzlepiece"
+        case .stage: "square.3.layers.3d"
+        case .codes: "qrcode"
+        case .document: "doc.text"
         }
     }
 }

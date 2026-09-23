@@ -28,6 +28,7 @@ export const KNOWN_ANCHORS: readonly string[] = [
   'tab-teams',
   'tab-stages',
   'tab-nfc',
+  'drawer-section-chooser',
   'new-entity-btn',
   'auto-assign-btn',
   'assignment-grid-btn',

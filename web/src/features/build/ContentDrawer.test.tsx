@@ -9,6 +9,11 @@ import { createMockChallenge } from '@/test/factories/challenge'
 import { ContentDrawer } from './ContentDrawer'
 
 const platform = vi.hoisted(() => ({ native: false }))
+const layout = vi.hoisted(() => ({ mobile: false }))
+vi.mock('@/hooks/ui/useMediaQuery', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/ui/useMediaQuery')>()),
+  useIsMobile: () => layout.mobile,
+}))
 vi.mock('@/platform/runtime', () => ({
   isNative: () => platform.native,
   isNativeEntry: () => platform.native,
@@ -71,6 +76,7 @@ function renderDrawer() {
 describe('ContentDrawer', () => {
   beforeEach(() => {
     platform.native = false
+    layout.mobile = false
     mockStore.drawerOpen = true
     mockStore.drawerTab = 'bases'
     mockStore.setDrawerTab.mockClear()
@@ -212,5 +218,25 @@ describe('ContentDrawer', () => {
     expect(
       container.querySelector('[data-testid="slide-drawer"]'),
     ).not.toBeInTheDocument()
+  })
+})
+
+describe('ContentDrawer on a phone (OW-36)', () => {
+  beforeEach(() => {
+    layout.mobile = true
+    mockStore.drawerOpen = true
+    mockStore.drawerTab = 'bases'
+    mockStore.setDrawerTab.mockClear()
+  })
+
+  it('replaces the tab strip with one section chooser and keeps the New action', async () => {
+    renderDrawer()
+    const chooser = screen.getByTestId('drawer-section-chooser')
+    expect(chooser).toHaveTextContent('Bases')
+    expect(screen.queryByTestId('tab-challenges')).not.toBeInTheDocument()
+    expect(screen.getByTestId('new-entity-btn')).toHaveTextContent('New Base')
+    await userEvent.click(chooser)
+    await userEvent.click(screen.getByTestId('tab-stages'))
+    expect(mockStore.setDrawerTab).toHaveBeenCalledWith('stages')
   })
 })

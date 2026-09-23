@@ -21,10 +21,12 @@ describe('IconRail tutorial anchors', () => {
 
   it('labels every mode button on both the desktop rail and the mobile bar', () => {
     renderRail()
-    for (const mode of ['build', 'command', 'review', 'results']) {
+    for (const mode of ['build', 'command', 'review']) {
       // one in the desktop rail, one in the mobile tab bar
       expect(screen.getAllByTestId(`mode-${mode}`)).toHaveLength(2)
     }
+    // OW-32: results are reached from Monitor, not from the mode navigation.
+    expect(screen.queryByTestId('mode-results')).not.toBeInTheDocument()
     expect(screen.getAllByTestId('mode-build')[0]).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getAllByTestId('mode-command')[0]).toHaveAttribute('aria-pressed', 'false')
   })

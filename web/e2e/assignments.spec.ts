@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseSection } from './drawerSections'
 
 const user = { id: 'u', name: 'Operator', email: 'operator@example.test', role: 'operator', createdAt: '2026-01-01' }
 const token = `header.${Buffer.from(JSON.stringify({ exp: 4102444800 })).toString('base64url')}.signature`
@@ -93,7 +94,7 @@ test('two teams walk the same bases with the challenges in reverse order', async
   await page.goto('/game/g')
   await page.locator('[data-testid="open-content-panel"]:visible').click()
   await expect(page.getByTestId('drawer-tabs')).toBeVisible()
-  await page.locator('[data-testid="tab-bases"]:visible').click()
+  await chooseSection(page, 'bases')
   await page.locator('[data-testid="assignment-grid-btn"]:visible').click()
   await expect(page.getByTestId('assignment-grid')).toBeVisible()
 
@@ -129,7 +130,7 @@ test('an all-teams pick over per-team rows asks first, and a refused write shows
   await login(page)
   await page.goto('/game/g')
   await page.locator('[data-testid="open-content-panel"]:visible').click()
-  await page.locator('[data-testid="tab-bases"]:visible').click()
+  await chooseSection(page, 'bases')
   await page.locator('[data-testid="assignment-grid-btn"]:visible').click()
 
   await pickCellOpen(page, 'b1', 'all')
