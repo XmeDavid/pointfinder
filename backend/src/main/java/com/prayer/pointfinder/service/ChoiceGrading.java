@@ -119,10 +119,14 @@ public final class ChoiceGrading {
     /**
      * An editor that round-trips texts but not ids would orphan every stored
      * selection; missing ids are taken from the existing option in the same
-     * position before new ones are minted.
+     * position before new ones are minted. An editor that sends ids already
+     * says which options it kept, so its new options get fresh ids: taking a
+     * positional id would duplicate a kept one or re-point earlier answers.
      */
     public static List<ChoiceOptionRequest> reconcileIds(List<ChoiceOption> existing, List<ChoiceOptionRequest> raw) {
         if (raw == null || existing == null) return raw;
+        boolean sendsIds = raw.stream().anyMatch(o -> o != null && o.getId() != null && !o.getId().isBlank());
+        if (sendsIds) return raw;
         for (int i = 0; i < raw.size() && i < existing.size(); i++) {
             ChoiceOptionRequest option = raw.get(i);
             if (option != null && (option.getId() == null || option.getId().isBlank())) option.setId(existing.get(i).getId());

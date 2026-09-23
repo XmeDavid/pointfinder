@@ -58,6 +58,19 @@ class ChoiceGradingTest {
     }
 
     @Test
+    void anEditorThatSendsIdsCanRemoveOneOptionAndAddAnother() {
+        List<ChoiceOption> existing = List.of(new ChoiceOption("a", "Oak", true), new ChoiceOption("b", "Pine", false),
+                new ChoiceOption("c", "Fir", false), new ChoiceOption("d", "Birch", false));
+        // Pine was removed and Larch added: kept options carry their ids, the new one has none.
+        List<ChoiceOptionRequest> edited = ChoiceGrading.reconcileIds(existing, List.of(
+                option("a", "Oak", true), option("c", "Fir", false), option("d", "Birch", false), option(null, "Larch", false)));
+        List<ChoiceOption> saved = ChoiceGrading.normalizeOptions(AnswerType.single_choice, edited);
+        assertEquals(List.of("a", "c", "d"), saved.subList(0, 3).stream().map(ChoiceOption::getId).toList());
+        assertFalse(List.of("a", "b", "c", "d").contains(saved.get(3).getId()),
+                "a new option never takes an id still in use, nor the removed option's id that earlier answers point at");
+    }
+
+    @Test
     void singleChoiceTakesExactlyOneKnownOption() {
         Challenge c = choice(AnswerType.single_choice, new ChoiceOption("a", "Oak", true), new ChoiceOption("b", "Pine", false));
         assertEquals(List.of("a"), ChoiceGrading.normalizeSelection(c, List.of("a")));
