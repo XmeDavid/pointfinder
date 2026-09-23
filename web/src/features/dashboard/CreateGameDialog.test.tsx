@@ -199,3 +199,41 @@ describe('CreateGameDialog', () => {
     expect(submitBtn).toBeDisabled()
   })
 })
+
+describe('CreateGameDialog content language (OW-33)', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear()
+    useWorkspaceContext.getState().setActive({ type: 'personal' })
+  })
+
+  it('sends the chosen content language and nothing when left unspecified', async () => {
+    const user = userEvent.setup()
+    const bodies: Record<string, unknown>[] = []
+    server.use(http.post('/api/games', async ({ request }) => {
+      const body = (await request.json()) as Record<string, unknown>
+      bodies.push(body)
+      return HttpResponse.json(createMockGame({ id: `g${bodies.length}`, name: body.name as string }))
+    }))
+    renderDialog()
+    expect(screen.getByRole('combobox', { name: 'Content language' })).toHaveValue('')
+    await user.type(screen.getByTestId('game-name-input'), 'Unknown language')
+    await user.click(screen.getByTestId('game-save-btn'))
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).not.toHaveProperty('contentLanguage')
+  })
+
+  it('names the picked language in the request', async () => {
+    const user = userEvent.setup()
+    const bodies: Record<string, unknown>[] = []
+    server.use(http.post('/api/games', async ({ request }) => {
+      bodies.push((await request.json()) as Record<string, unknown>)
+      return HttpResponse.json(createMockGame({ id: 'g-de' }))
+    }))
+    renderDialog()
+    await user.type(screen.getByTestId('game-name-input'), 'Bergtour')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Content language' }), 'de')
+    await user.click(screen.getByTestId('game-save-btn'))
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).toMatchObject({ name: 'Bergtour', contentLanguage: 'de' })
+  })
+})

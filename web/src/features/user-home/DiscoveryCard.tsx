@@ -5,6 +5,7 @@ import type {
   PublicationCategory,
 } from "@pointfinder/api";
 import { cn } from "@/lib/utils";
+import { ContentLanguageTag } from "@/components/data/ContentLanguageTag";
 
 const categoryArt: Record<PublicationCategory, string> = {
   coast: "/experience/coastal-trail.webp",
@@ -51,6 +52,7 @@ export function DiscoveryCard({
       </span>
       <span className="flex flex-wrap items-center gap-3 mt-5 text-xs text-muted-foreground">
         <span>{t(`category.${game.category}`)}</span>
+        <ContentLanguageTag code={game.contentLanguage} />
         <span>
           {t(
             game.gameStatus === "setup"

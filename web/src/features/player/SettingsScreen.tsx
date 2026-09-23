@@ -15,6 +15,7 @@ import { onPushPermissionChange, pushPermission, requestPushPermission, type Pus
 import { usePlayerGame } from '@/features/player/usePlayerGame'
 import { Screen } from '@/features/player/components/Screen'
 import { usePlayerTour } from '@/features/player/components/PlayerTour'
+import { contentLanguageName } from '@/lib/contentLanguage'
 
 const LANGUAGE_LABELS: Record<Language, string> = { en: 'English', pt: 'Português', de: 'Deutsch' }
 
@@ -126,6 +127,14 @@ export default function SettingsScreen() {
 
       <Section title={t('settings.currentGame')}>
         <Row label={t('settings.game')} value={game.snapshot?.game.name ?? auth.gameName} />
+        {/* OW-33: what the organizer wrote the challenges in; separate from the app language above. */}
+        {game.snapshot && (
+          <Row
+            label={t('settings.contentLanguage')}
+            value={contentLanguageName(game.snapshot.game.contentLanguage, i18n.language) ?? t('settings.contentLanguageUnknown')}
+            testId="settings-content-language"
+          />
+        )}
         <Row label={t('settings.status')} value={<GameStatusBadge status={status} />} />
         <Row label={t('settings.team')} value={<span className="inline-flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-full border border-border" style={{ background: auth.teamColor }} aria-hidden />{auth.teamName}</span>} />
         <Row label={t('settings.name')} value={auth.displayName} />

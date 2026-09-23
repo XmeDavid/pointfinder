@@ -19,6 +19,7 @@ import { Select } from "@/components/ui/select";
 import { LoadingState } from "@/components/feedback/LoadingState";
 import { Switch } from "@/components/ui/switch";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { contentLanguageName } from "@/lib/contentLanguage";
 
 export function PublicationSection({ game }: { game: Game }) {
   const { t } = useTranslation(undefined, { keyPrefix: "publication" });
@@ -98,7 +99,7 @@ function PublicationEditor({
   saved: GamePublicationResponse | null;
   userId: string;
 }) {
-  const { t } = useTranslation(undefined, { keyPrefix: "publication" });
+  const { t, i18n } = useTranslation(undefined, { keyPrefix: "publication" });
   const { t: experience } = useTranslation(undefined, {
     keyPrefix: "experience",
   });
@@ -188,6 +189,12 @@ function PublicationEditor({
               />
             </label>
             <p className="text-xs text-muted-foreground">{t("summaryHint")}</p>
+            {/* OW-33: the listing shows the game's content language, set once in Game Details. */}
+            <p className="text-xs text-muted-foreground" data-testid="publication-content-language">
+              {contentLanguageName(game.contentLanguage, i18n.language)
+                ? t("contentLanguage", { language: contentLanguageName(game.contentLanguage, i18n.language) })
+                : t("contentLanguageUnknown")}
+            </p>
             <label className="block space-y-1 text-sm">
               {t("place")}
               <Input

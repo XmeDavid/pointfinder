@@ -27,7 +27,7 @@ export interface DraftRecord<T = unknown> {
   updatedAt: number
 }
 
-export type DraftEntity = 'base' | 'challenge'
+export type DraftEntity = 'base' | 'challenge' | 'document'
 
 export function draftKey(accountId: string | null | undefined, gameId: string, entity: DraftEntity, entityId: string): string {
   return `draft:${accountId || 'anonymous'}:${gameId}:${entity}:${entityId}`

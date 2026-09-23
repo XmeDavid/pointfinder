@@ -77,8 +77,16 @@ export function useGameStream(gameId: string | undefined): string | null {
           // Entity-level config change — invalidate by entity type if known
           {
             const entity = (payload.data as Record<string, unknown>)?.entity
-            if (entity && typeof entity === 'string') {
+            if (entity === 'resources') {
+              // Game documents live under their own key (OW-08).
+              queryClient.invalidateQueries({ queryKey: ['game-resources', gid] })
+            } else if (entity && typeof entity === 'string') {
               queryClient.invalidateQueries({ queryKey: [entity, gid] })
+              if (entity === 'stages') {
+                // A stage is a route (OW-40): its changes renumber bases and move the route lock.
+                queryClient.invalidateQueries({ queryKey: ['bases', gid] })
+                queryClient.invalidateQueries({ queryKey: ['game', gid] })
+              }
             } else {
               queryClient.invalidateQueries({ queryKey: ['game', gid] })
             }

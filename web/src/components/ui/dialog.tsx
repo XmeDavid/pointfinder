@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // ---- Context for sharing the title ID between DialogContent and DialogTitle ----
 const DialogContext = React.createContext<{
@@ -75,6 +76,7 @@ const DialogContent = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }
 >(({ className, children, onClose, ...props }, ref) => {
   const { titleId } = React.useContext(DialogContext);
+  const { t } = useTranslation();
   const internalRef = React.useRef<HTMLDivElement>(null);
 
   // Merge forwarded ref and internal ref
@@ -150,7 +152,7 @@ const DialogContent = React.forwardRef<
       {onClose && (
         <button
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
         >
           <X className="h-4 w-4" aria-hidden="true" />

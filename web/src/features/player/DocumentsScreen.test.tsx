@@ -94,3 +94,30 @@ describe('DocumentScreen', () => {
     expect(await screen.findByTestId('document-missing')).toHaveTextContent('This document is no longer available.')
   })
 })
+
+describe('DocumentsScreen follows organizer changes (OW-08)', () => {
+  it('refetches the list when the game signals a document change', async () => {
+    const { services } = await renderPlayer(<DocumentsScreen />)
+    expect(await screen.findByTestId('document-r2')).toHaveTextContent('Camp rules')
+    server.use(http.get('/api/player/games/:gameId/files', () => HttpResponse.json([
+      ...playerFixtures.files,
+      { id: 'r9', gameId: 'g1', type: 'document', name: 'Lunch moved', contentType: 'application/vnd.pointfinder.doc', content: '<p>13:00</p>', sizeBytes: 12, sharedWithPlayers: true, downloadUrl: null, createdAt: '2026-09-05T11:00:00Z' },
+    ])))
+    // The realtime client is the app's; the test hands it the refresh signal the server sends.
+    const listeners = (services.client.realtime as unknown as { eventListeners: Set<(e: unknown) => void> }).eventListeners
+    listeners.forEach((listener) => listener({ version: 1, type: 'game_config', gameId: 'g1', data: { entity: 'resources', action: 'updated' } }))
+    expect(await screen.findByTestId('document-r9')).toHaveTextContent('Lunch moved')
+  })
+
+  it('ignores configuration signals about other parts of the game', async () => {
+    let fetches = 0
+    server.use(http.get('/api/player/games/:gameId/files', () => { fetches++; return HttpResponse.json(playerFixtures.files) }))
+    const { services } = await renderPlayer(<DocumentsScreen />)
+    await screen.findByTestId('document-r2')
+    const before = fetches
+    const listeners = (services.client.realtime as unknown as { eventListeners: Set<(e: unknown) => void> }).eventListeners
+    listeners.forEach((listener) => listener({ version: 1, type: 'game_config', gameId: 'g1', data: { entity: 'bases', action: 'updated' } }))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(fetches).toBe(before)
+  })
+})

@@ -22,6 +22,7 @@ import { GameStatusBadge } from "@/components/status";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { DiscoveryCard } from "./DiscoveryCard";
 import { useNearbyGames } from "./useNearbyGames";
+import { ContentLanguageTag } from "@/components/data/ContentLanguageTag";
 
 const ExperienceMap = lazy(() =>
   import("./ExperienceMap").then((m) => ({ default: m.ExperienceMap })),
@@ -321,6 +322,12 @@ export function DiscoverySection() {
               <p className="text-sm text-muted-foreground mt-3">
                 {selected.organizer}
               </p>
+              {/* Players judge whether they can follow the challenges before joining. */}
+              <ContentLanguageTag
+                code={selected.contentLanguage}
+                showUnknown
+                className="mt-2 text-sm text-muted-foreground"
+              />
               <p className="text-sm mt-5">
                 {t(
                   selected.joined

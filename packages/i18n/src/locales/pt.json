@@ -1249,7 +1249,18 @@
     "offline": "Ligue-se à internet para adicionar ou alterar documentos.",
     "loadError": "Não foi possível carregar os documentos.",
     "documentContent": "Conteúdo do documento…",
-    "documentTitle": "Título do documento"
+    "documentTitle": "Título do documento",
+    "emptyDocument": "Este documento está vazio. Escolhe Editar para o escrever.",
+    "openFile": "Abrir ficheiro",
+    "openFailed": "Não foi possível abrir o ficheiro. Verifica a ligação e tenta novamente.",
+    "discardQuestion": "Descartar as alterações não guardadas deste documento?",
+    "keepEditing": "Continuar a editar",
+    "folderName": "Nome da pasta",
+    "renameItem": "Renomear {{name}}",
+    "deleteItem": "Eliminar {{name}}",
+    "deleteFolder": "Eliminar pasta {{name}}",
+    "deleteTitle": "Eliminar {{name}}?",
+    "deleteFolderTitle": "Eliminar a pasta {{name}}?"
   },
   "billing": {
     "title": "Faturação & Plano",
@@ -1952,7 +1963,9 @@
       "saveProgressHint": "Cria uma conta ou inicia sessão para recuperar este jogo noutro telemóvel.",
       "savedTo": "Guardado em",
       "emailUnverified": "Email ainda não confirmado. Vê a tua caixa de entrada.",
-      "manageAccount": "Gerir a minha conta"
+      "manageAccount": "Gerir a minha conta",
+      "contentLanguage": "Idioma do conteúdo",
+      "contentLanguageUnknown": "Não indicado"
     },
     "account": {
       "title": "Guardar o meu progresso",
@@ -2939,7 +2952,9 @@
     "saveDraft": "Guardar sem publicar",
     "unpublish": "Remover de Explorar",
     "saveError": "Não foi possível concluir a alteração. O teu texto continua aqui. Tenta novamente.",
-    "offline": "Estás offline. Liga-te para carregar ou guardar a publicação."
+    "offline": "Estás offline. Liga-te para carregar ou guardar a publicação.",
+    "contentLanguage": "Os jogadores veem o idioma do conteúdo: {{language}}. Altera-o nos Detalhes do jogo.",
+    "contentLanguageUnknown": "Os jogadores vão ver que o idioma do conteúdo não está indicado. Define-o nos Detalhes do jogo para saberem se conseguem acompanhar os desafios."
   },
   "gameSettings": {
     "title": "Definições do jogo",
@@ -2996,5 +3011,14 @@
     "deleteConfirmBody": "Isto elimina permanentemente o jogo, todas as bases, desafios, equipas e submissões. Não é possível desfazer.",
     "deleting": "A eliminar…",
     "deleteForever": "Eliminar para sempre"
+  },
+  "createGame": {
+    "title": "Criar novo jogo",
+    "name": "Nome",
+    "namePlaceholder": "p. ex. Raide Escutista 2026",
+    "description": "Descrição",
+    "descriptionPlaceholder": "Descrição opcional",
+    "submit": "Criar jogo",
+    "creating": "A criar..."
   }
 }

@@ -11,6 +11,7 @@ import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.repository.ResourceFolderRepository;
 import com.prayer.pointfinder.repository.ResourceRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
+import com.prayer.pointfinder.websocket.GameEventBroadcaster;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class ResourceService {
     private final OrganizationService organizationService;
     private final GameAccessService gameAccessService;
     private final QuotaService quotaService;
+    private final GameEventBroadcaster broadcaster;
 
     private static final String DOC_CONTENT_TYPE = "application/vnd.pointfinder.doc";
 
@@ -152,6 +154,7 @@ public class ResourceService {
         resource = resourceRepository.save(resource);
         log.info("[RESOURCE] operation=createGameResource gameId={} resourceId={} type={} operator={}",
                 gameId, resource.getId(), type, currentUser.getId());
+        signalGame(resource.getGame(), "created");
         return toResponse(resource);
     }
 
@@ -184,6 +187,7 @@ public class ResourceService {
 
         resource = resourceRepository.save(resource);
         log.info("[RESOURCE] operation=updateResource resourceId={} operator={}", resourceId, currentUser.getId());
+        signalGame(resource.getGame(), "updated");
         return toResponse(resource);
     }
 
@@ -200,8 +204,10 @@ public class ResourceService {
             }
         }
 
+        Game game = resource.getGame();
         resourceRepository.delete(resource);
         log.info("[RESOURCE] operation=deleteResource resourceId={} operator={}", resourceId, currentUser.getId());
+        signalGame(game, "deleted");
     }
 
     @Transactional(readOnly = true)
@@ -313,6 +319,16 @@ public class ResourceService {
         } catch (IOException e) {
             throw new BadRequestException("Failed to read uploaded file: " + e.getMessage());
         }
+    }
+
+    /**
+     * OW-08: a game's documents changed, so players' lists and open documents
+     * refresh. The signal carries no resource data; each client refetches
+     * through its own authorized endpoint, and it is sent after commit.
+     * Organization library resources are not delivered to players yet.
+     */
+    private void signalGame(Game game, String action) {
+        if (game != null) broadcaster.broadcastGameConfig(game.getId(), "resources", action);
     }
 
     ResourceResponse toResponse(Resource r) {

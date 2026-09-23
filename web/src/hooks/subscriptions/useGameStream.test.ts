@@ -268,6 +268,32 @@ describe('useGameStream', () => {
     })
   })
 
+  it('refreshes the resource library when a game document changes (OW-08)', () => {
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+    renderHook(() => useGameStream('game-1'), { wrapper })
+    const { onMessage } = getConnectArgs()
+
+    act(() => {
+      onMessage({ type: 'game_config', data: { entity: 'resources', action: 'updated' } })
+    })
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['game-resources', 'game-1'] })
+  })
+
+  it('refreshes bases and the game when another operator changes a stage route (OW-40)', () => {
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+    renderHook(() => useGameStream('game-1'), { wrapper })
+    const { onMessage } = getConnectArgs()
+
+    act(() => {
+      onMessage({ type: 'game_config', data: { entity: 'stages', action: 'updated' } })
+    })
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['stages', 'game-1'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['bases', 'game-1'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['game', 'game-1'] })
+  })
+
   it('invalidates game query on game_config without entity', () => {
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
     renderHook(() => useGameStream('game-1'), { wrapper })

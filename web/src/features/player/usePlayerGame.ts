@@ -5,6 +5,7 @@ import { baseRoute, missingPreviousBase, type CheckInProof, type PendingAction, 
 import { useAuth, useServices } from '@/app/player/services'
 import { gameCache } from '@/platform'
 import { buildLogbook, newlyUnlocked, type Logbook } from '@/features/player/logbook'
+import { isDocumentsChange } from '@/features/player/usePlayerDocuments'
 
 /** Realtime events that change what the player sees. Everything else is operator-only. */
 const SNAPSHOT_EVENTS = new Set(['activity', 'game_status', 'stage_unlock', 'submission_status'])
@@ -134,6 +135,7 @@ export function usePlayerGame() {
       if (SNAPSHOT_EVENTS.has(e.type)) void qc.invalidateQueries({ queryKey: ['snapshot', gameId] })
       if (DATA_EVENTS.has(e.type)) void qc.invalidateQueries({ queryKey: ['gameData', gameId] })
       if (e.type === 'notification') void qc.invalidateQueries({ queryKey: ['notifications'] })
+      if (isDocumentsChange(e)) void qc.invalidateQueries({ queryKey: ['documents', gameId] })
     })
     const offReconnect = client.realtime.onReconnect(() => { invalidate(); void sync() })
     return () => { offEvent(); offReconnect(); client.realtime.disconnect() }

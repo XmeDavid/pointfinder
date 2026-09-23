@@ -1249,7 +1249,18 @@
     "offline": "Connect to add or change documents.",
     "loadError": "Could not load documents.",
     "documentContent": "Document content…",
-    "documentTitle": "Document title"
+    "documentTitle": "Document title",
+    "emptyDocument": "This document is empty. Choose Edit to write it.",
+    "openFile": "Open file",
+    "openFailed": "Could not open the file. Check your connection and try again.",
+    "discardQuestion": "Discard your unsaved changes to this document?",
+    "keepEditing": "Keep editing",
+    "folderName": "Folder name",
+    "renameItem": "Rename {{name}}",
+    "deleteItem": "Delete {{name}}",
+    "deleteFolder": "Delete folder {{name}}",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteFolderTitle": "Delete folder {{name}}?"
   },
   "billing": {
     "title": "Billing & Plan",
@@ -1952,7 +1963,9 @@
       "saveProgressHint": "Create an account or sign in to get this game back on another phone.",
       "savedTo": "Saved to",
       "emailUnverified": "Email not confirmed yet. Check your inbox.",
-      "manageAccount": "Manage my account"
+      "manageAccount": "Manage my account",
+      "contentLanguage": "Content language",
+      "contentLanguageUnknown": "Not specified"
     },
     "account": {
       "title": "Save my progress",
@@ -2939,7 +2952,9 @@
     "saveDraft": "Save without publishing",
     "unpublish": "Remove from Explore",
     "saveError": "The change could not be completed. Your text is still here. Try again.",
-    "offline": "You’re offline. Reconnect to load or save your listing."
+    "offline": "You’re offline. Reconnect to load or save your listing.",
+    "contentLanguage": "Players see the content language: {{language}}. Change it under Game Details.",
+    "contentLanguageUnknown": "Players will see that the content language is not specified. Set it under Game Details so they know whether they can follow your challenges."
   },
   "gameSettings": {
     "title": "Game Settings",
@@ -2996,5 +3011,14 @@
     "deleteConfirmBody": "This will permanently delete the game, all bases, challenges, teams, and submissions. This cannot be undone.",
     "deleting": "Deleting…",
     "deleteForever": "Delete Forever"
+  },
+  "createGame": {
+    "title": "Create New Game",
+    "name": "Name",
+    "namePlaceholder": "e.g. Scout Rally 2026",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional description",
+    "submit": "Create Game",
+    "creating": "Creating..."
   }
 }

@@ -17,6 +17,23 @@ describe('SettingsScreen', () => {
     expect(screen.getByTestId('settings-pending-actions')).toHaveTextContent('0')
   })
 
+  const snapshotWithLanguage = (contentLanguage: string | null) => http.get('/api/games/:gameId/snapshot', () => HttpResponse.json({
+    stateVersion: 4, serverTime: '2026-09-05T10:30:00Z', game: { id: 'g1', name: 'Serra da Estrela', status: 'live', contentLanguage },
+    team: { id: 'team1', name: 'Falcons', memberCount: 4 }, progress: [], submissions: [], uploadSessions: [],
+  }))
+
+  it('names the language the game content is written in', async () => {
+    server.use(snapshotWithLanguage('pt'))
+    await renderPlayer(<SettingsScreen />)
+    expect(await screen.findByTestId('settings-content-language')).toHaveTextContent('Portuguese')
+  })
+
+  it('says when the organizer did not name the content language', async () => {
+    server.use(snapshotWithLanguage(null))
+    await renderPlayer(<SettingsScreen />)
+    expect(await screen.findByTestId('settings-content-language')).toHaveTextContent('Not specified')
+  })
+
   it('offers to save progress when the phone has no account', async () => {
     await renderPlayer(<SettingsScreen />)
     expect(await screen.findByTestId('settings-save-progress')).toHaveAttribute('href', '/account')

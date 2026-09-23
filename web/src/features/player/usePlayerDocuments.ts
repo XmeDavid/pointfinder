@@ -1,11 +1,18 @@
-import { useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, type PlayerResource } from '@pointfinder/api'
 import { useAuth, useServices } from '@/app/player/services'
 import { gameCache } from '@/platform'
 
 /** Presigned file links last about an hour; refresh the list before opening one older than this. */
 export const DOWNLOAD_URL_MAX_AGE_MS = 45 * 60_000
+/** Documents screens do not hold the realtime connection, so they also check back this often. */
+export const DOCUMENTS_REFRESH_MS = 60_000
+
+/** The server's content-free signal that a game's documents changed (OW-08). */
+export function isDocumentsChange(event: { type?: string; data?: unknown }): boolean {
+  return event.type === 'game_config' && (event.data as { entity?: unknown } | undefined)?.entity === 'resources'
+}
 
 export interface PlayerDocuments {
   resources: PlayerResource[]
@@ -25,6 +32,7 @@ export interface PlayerDocuments {
 export function usePlayerDocuments() {
   const auth = useAuth()
   const { client } = useServices()
+  const qc = useQueryClient()
   const gameId = auth.kind === 'player' ? auth.gameId : null
   const cacheKey = auth.kind === 'player' ? `files:${auth.playerId}:${auth.gameId}` : ''
 
@@ -47,7 +55,17 @@ export function usePlayerDocuments() {
     staleTime: 5 * 60_000,
     // Reopening Documents picks up newly shared game resources immediately.
     refetchOnMount: 'always',
+    refetchInterval: DOCUMENTS_REFRESH_MS,
+    refetchIntervalInBackground: false,
   })
+
+  // An organizer shared, edited or removed a document: refresh while connected.
+  useEffect(() => {
+    if (!gameId) return
+    return client.realtime.onEvent((event) => {
+      if (isDocumentsChange(event)) void qc.invalidateQueries({ queryKey: ['documents', gameId] })
+    })
+  }, [client, qc, gameId])
 
   const { refetch, data } = query
   const linkStillFresh = useCallback(

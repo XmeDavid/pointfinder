@@ -1249,7 +1249,18 @@
     "offline": "Verbinde dich mit dem Internet, um Dokumente hinzuzufügen oder zu ändern.",
     "loadError": "Dokumente konnten nicht geladen werden.",
     "documentContent": "Dokumentinhalt…",
-    "documentTitle": "Dokumenttitel"
+    "documentTitle": "Dokumenttitel",
+    "emptyDocument": "Dieses Dokument ist leer. Wähle Bearbeiten, um es zu schreiben.",
+    "openFile": "Datei öffnen",
+    "openFailed": "Die Datei konnte nicht geöffnet werden. Prüfe deine Verbindung und versuche es erneut.",
+    "discardQuestion": "Nicht gespeicherte Änderungen an diesem Dokument verwerfen?",
+    "keepEditing": "Weiter bearbeiten",
+    "folderName": "Ordnername",
+    "renameItem": "{{name}} umbenennen",
+    "deleteItem": "{{name}} löschen",
+    "deleteFolder": "Ordner {{name}} löschen",
+    "deleteTitle": "{{name}} löschen?",
+    "deleteFolderTitle": "Ordner {{name}} löschen?"
   },
   "billing": {
     "title": "Abrechnung & Plan",
@@ -1952,7 +1963,9 @@
       "saveProgressHint": "Erstelle ein Konto oder melde dich an, um dieses Spiel auf einem anderen Handy fortzusetzen.",
       "savedTo": "Gespeichert unter",
       "emailUnverified": "E-Mail noch nicht bestätigt. Sieh in deinem Posteingang nach.",
-      "manageAccount": "Mein Konto verwalten"
+      "manageAccount": "Mein Konto verwalten",
+      "contentLanguage": "Sprache der Inhalte",
+      "contentLanguageUnknown": "Nicht angegeben"
     },
     "account": {
       "title": "Fortschritt speichern",
@@ -2939,7 +2952,9 @@
     "saveDraft": "Ohne Veröffentlichung speichern",
     "unpublish": "Aus Entdecken entfernen",
     "saveError": "Die Änderung konnte nicht abgeschlossen werden. Dein Text ist noch da. Versuche es erneut.",
-    "offline": "Du bist offline. Verbinde dich, um deinen Eintrag zu laden oder zu speichern."
+    "offline": "Du bist offline. Verbinde dich, um deinen Eintrag zu laden oder zu speichern.",
+    "contentLanguage": "Spieler sehen die Sprache der Inhalte: {{language}}. Ändere sie unter Spieldetails.",
+    "contentLanguageUnknown": "Spieler sehen, dass die Sprache der Inhalte nicht angegeben ist. Lege sie unter Spieldetails fest, damit sie wissen, ob sie deinen Aufgaben folgen können."
   },
   "gameSettings": {
     "title": "Spieleinstellungen",
@@ -2996,5 +3011,14 @@
     "deleteConfirmBody": "Dadurch werden das Spiel sowie alle Basen, Aufgaben, Teams und Einreichungen dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
     "deleting": "Wird gelöscht…",
     "deleteForever": "Endgültig löschen"
+  },
+  "createGame": {
+    "title": "Neues Spiel erstellen",
+    "name": "Name",
+    "namePlaceholder": "z. B. Pfadfinder-Rallye 2026",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Optionale Beschreibung",
+    "submit": "Spiel erstellen",
+    "creating": "Wird erstellt..."
   }
 }
