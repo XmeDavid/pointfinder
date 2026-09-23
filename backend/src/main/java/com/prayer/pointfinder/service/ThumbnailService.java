@@ -60,6 +60,17 @@ public class ThumbnailService {
         this(null, System.getProperty("java.io.tmpdir"), System.getProperty("java.io.tmpdir"));
     }
 
+    /**
+     * The name of the thumbnail generated for {@code filename}, or null when
+     * none is ever generated for it (videos and non-image files).
+     */
+    public static String thumbnailNameFor(String filename) {
+        int dot = filename.lastIndexOf('.');
+        if (dot <= 0) return null;
+        String ext = filename.substring(dot + 1).toLowerCase();
+        return IMAGE_EXTENSIONS.contains(ext) ? filename.substring(0, dot) + "_thumb.jpg" : null;
+    }
+
     public Path generateThumbnail(Path sourceFile) {
         String filename = sourceFile.getFileName().toString();
         String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();

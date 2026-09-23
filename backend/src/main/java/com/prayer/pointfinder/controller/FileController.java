@@ -1,10 +1,12 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.entity.Player;
+import com.prayer.pointfinder.exception.ResourceNotFoundException;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.FileAccessService;
 import com.prayer.pointfinder.service.FileStorageService;
 import com.prayer.pointfinder.service.ObjectStorageService;
+import com.prayer.pointfinder.service.ThumbnailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -57,6 +59,38 @@ public class FileController {
             @PathVariable UUID gameId,
             @PathVariable String filename) {
         fileAccessService.ensureOperatorCanReadFile(gameId, filename);
+        return serveFile(gameId, filename);
+    }
+
+    /**
+     * OW-22: the generated thumbnail of a submitted photo, for review
+     * previews. Access is decided on the original file; the original is
+     * served when no thumbnail exists (still generating, not an image, or
+     * the image could not be decoded).
+     */
+    @GetMapping("/api/games/{gameId}/files/{filename}/thumbnail")
+    public ResponseEntity<?> getThumbnailAsOperator(
+            @PathVariable UUID gameId,
+            @PathVariable String filename) {
+        fileAccessService.ensureOperatorCanReadFile(gameId, filename);
+        String thumbnail = ThumbnailService.thumbnailNameFor(filename);
+        if (thumbnail != null) {
+            if (objectStorageService.isEnabled()) {
+                if (objectStorageService.exists(gameId + "/" + thumbnail)) {
+                    return serveFile(gameId, thumbnail);
+                }
+            } else {
+                try {
+                    Resource resource = fileStorageService.loadFile(gameId, thumbnail);
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.IMAGE_JPEG)
+                            .header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400")
+                            .body(resource);
+                } catch (ResourceNotFoundException missing) {
+                    // Not generated (yet): the original below still previews.
+                }
+            }
+        }
         return serveFile(gameId, filename);
     }
 

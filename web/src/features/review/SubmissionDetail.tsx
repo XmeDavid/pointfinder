@@ -25,7 +25,16 @@ function isVideoUrl(url: string): boolean {
   return /\.(mp4|mov)$/i.test(url)
 }
 
-function AuthMedia({ url, alt, className }: { url: string; alt: string; className?: string }) {
+/**
+ * OW-22: inline previews ask for the server-generated thumbnail of an
+ * operator-readable photo; the server answers with the original when no
+ * thumbnail exists. Videos and other paths load as they are.
+ */
+function previewPath(apiPath: string): string {
+  return !isVideoUrl(apiPath) && /^\/games\/[^/]+\/files\/[^/]+$/.test(apiPath) ? `${apiPath}/thumbnail` : apiPath
+}
+
+function AuthMedia({ url, alt, className, preview = false }: { url: string; alt: string; className?: string; preview?: boolean }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [error, setError] = useState(false)
   const blobRef = useRef<string | null>(null)
@@ -40,7 +49,7 @@ function AuthMedia({ url, alt, className }: { url: string; alt: string; classNam
     // apiClient already has baseURL="/api", so strip the prefix.
     const apiPath = url.startsWith('/api') ? url.slice(4) : url
     apiClient
-      .get(apiPath, { responseType: 'blob' })
+      .get(preview ? previewPath(apiPath) : apiPath, { responseType: 'blob' })
       .then(({ data }) => {
         if (cancelled) return
         const objUrl = URL.createObjectURL(data)
@@ -58,7 +67,7 @@ function AuthMedia({ url, alt, className }: { url: string; alt: string; classNam
         blobRef.current = null
       }
     }
-  }, [url])
+  }, [url, preview])
 
   if (error) {
     return (
@@ -475,6 +484,7 @@ export default function SubmissionDetail({ submissionId, gameId }: SubmissionDet
                       <AuthMedia
                         url={url}
                         alt={t('submissions.altFile', { index: idx + 1 })}
+                        preview
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent pointer-events-none" />
                       <div className="absolute bottom-3 left-3 text-xs text-muted-foreground">

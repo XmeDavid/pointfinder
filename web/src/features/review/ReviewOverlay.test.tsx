@@ -1,14 +1,16 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { createMockChallenge } from '@/test/factories/challenge'
+import { createMockSubmission } from '@/test/factories/submission'
 import { useWorkspaceStore } from '@/stores/workspace'
 import ReviewOverlay from './ReviewOverlay'
 import SubmissionList from './SubmissionList'
 import SubmissionDetail from './SubmissionDetail'
+import apiClient from '@/lib/api/client'
 
 let queryClient: QueryClient
 
@@ -305,6 +307,45 @@ describe('SubmissionDetail', () => {
       expect(screen.getByTestId('reviewed-state')).toBeInTheDocument()
       expect(screen.getByText('Approved')).toBeInTheDocument()
     })
+  })
+
+  it('previews photos from their thumbnails and opens the original full size (OW-22)', async () => {
+    server.use(
+      http.get('/api/games/:gameId/submissions', () => HttpResponse.json([
+        createMockSubmission({ id: 'sub-photo', status: 'pending', answer: '', fileUrl: null,
+          fileUrls: ['/api/games/game-1/files/photo.jpg', '/api/games/game-1/files/clip.mp4'] }),
+      ])),
+    )
+    // Media arrive as blobs, which MSW cannot produce under jsdom: answer those here.
+    const requested: string[] = []
+    const get = apiClient.get.bind(apiClient)
+    vi.spyOn(apiClient, 'get').mockImplementation(((path: string, config?: { responseType?: string }) => {
+      if (config?.responseType !== 'blob') return get(path, config)
+      requested.push(path)
+      return Promise.resolve({ data: new Blob(['jpeg']) })
+    }) as typeof apiClient.get)
+    // jsdom has no object URLs; the component only needs a string to render.
+    const objectUrls = { create: URL.createObjectURL, revoke: URL.revokeObjectURL }
+    URL.createObjectURL = vi.fn(() => 'blob:preview')
+    URL.revokeObjectURL = vi.fn()
+    try {
+      render(
+        <Wrapper>
+          <SubmissionDetail submissionId="sub-photo" gameId="game-1" />
+        </Wrapper>,
+      )
+      await waitFor(() => expect(screen.getByTestId('submission-image')).toBeInTheDocument())
+      // The inline preview asks for the thumbnail; videos have none and load as they are.
+      expect(requested).toContain('/games/game-1/files/photo.jpg/thumbnail')
+      expect(requested).toContain('/games/game-1/files/clip.mp4')
+      expect(requested).not.toContain('/games/game-1/files/photo.jpg')
+      await userEvent.click(screen.getByTestId('submission-image'))
+      await waitFor(() => expect(requested).toContain('/games/game-1/files/photo.jpg'))
+    } finally {
+      URL.createObjectURL = objectUrls.create
+      URL.revokeObjectURL = objectUrls.revoke
+      vi.restoreAllMocks()
+    }
   })
 
   it('shows team-resolved expected answer alongside the raw template', async () => {
