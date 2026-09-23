@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { ExploreGameResponse } from '@pointfinder/api'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ExploreGameResponse, PublicationReportResponse } from '@pointfinder/api'
 import { ChoiceOptionsEditor } from '@/components/inputs/ChoiceOptionsEditor'
 import { AnswerTypeBadge } from '@/components/status'
 import { ContentLanguageTag } from '@/components/data/ContentLanguageTag'
@@ -9,6 +10,9 @@ import { ChoiceReview } from '@/features/review/ChoiceReview'
 import { DiscoveryCard } from '@/features/user-home/DiscoveryCard'
 import { BuildShortcuts } from '@/features/build/BuildShortcuts'
 import { SectionChooser } from '@/features/build/SectionChooser'
+import { ReportListingForm } from '@/features/user-home/ReportListingForm'
+import { AdminReports } from '@/features/admin/AdminReports'
+import { ADMIN_REPORTS_QUERY_KEY } from '@/lib/api/admin'
 import type { ChoiceOption } from '@/types'
 import type { DrawerTab } from '@/stores/workspace'
 
@@ -98,6 +102,42 @@ export function ContentSectionFixtures() {
       <div className="max-w-xs rounded-md border border-border bg-card p-3">
         <Label>Phone section chooser</Label>
         <SectionChooser active={section} onSelect={setSection} />
+      </div>
+    </div>
+  )
+}
+
+const reports: PublicationReportResponse[] = [
+  { id: 'r1', gameId: 'g1', gameName: 'Trilho da costa', listed: true, reason: 'unsafe', details: 'The route crosses the national road without a crossing.', reporterName: 'Ana', createdAt: '2026-09-20T10:00:00Z' },
+  { id: 'r2', gameId: 'g1', gameName: 'Trilho da costa', listed: true, reason: 'misleading', details: null, reporterName: 'Rui', createdAt: '2026-09-21T08:30:00Z' },
+  { id: 'r3', gameId: 'g2', gameName: 'A very long listing title that wraps across two lines in the admin list', listed: false, reason: 'spam', details: null, reporterName: 'Mia', createdAt: '2026-09-22T18:10:00Z' },
+]
+
+/** Seeded, never-refetching client so the admin review renders without a backend. */
+function seededClient() {
+  const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } })
+  client.setQueryData(ADMIN_REPORTS_QUERY_KEY, reports)
+  return client
+}
+
+/** OW-06 fixtures: reporting a listing (online, offline) and the admin review of open reports. */
+export function ModerationFixtures() {
+  const [client] = useState(seededClient)
+  return (
+    <div className="grid gap-4 lg:grid-cols-2" data-testid="harness-moderation">
+      <div className="rounded-md border border-border bg-card p-3">
+        <Label>Report a listing</Label>
+        <ReportListingForm title="Trilho da costa" online onSubmit={async () => {}} onBack={() => {}} />
+      </div>
+      <div className="rounded-md border border-border bg-card p-3">
+        <Label>Report a listing, offline</Label>
+        <ReportListingForm title="Trilho da costa" online={false} onSubmit={async () => {}} onBack={() => {}} />
+      </div>
+      <div className="rounded-md border border-border bg-card p-3 lg:col-span-2">
+        <Label>Admin: open reports</Label>
+        <QueryClientProvider client={client}>
+          <AdminReports />
+        </QueryClientProvider>
       </div>
     </div>
   )

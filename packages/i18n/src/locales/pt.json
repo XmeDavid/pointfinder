@@ -248,6 +248,19 @@
       "actionError": "A alteração não foi aplicada. Tenta novamente.",
       "meta": "{{organizer}} · publicado a {{date}}",
       "filterListed": "Só listados"
+    },
+    "reports": {
+      "tab": "Denúncias",
+      "intro": "Denúncias abertas de contas com sessão iniciada, as mais antigas primeiro. Ignorar mantém a listagem; Remover tira-a do Explorar e mantém o jogo.",
+      "empty": "Não há denúncias abertas.",
+      "loadError": "Não foi possível carregar as denúncias.",
+      "count_one": "{{count}} denúncia",
+      "count_other": "{{count}} denúncias",
+      "notListed": "Já não está listado",
+      "reporter": "{{name}}, {{date}}",
+      "dismiss": "Ignorar",
+      "remove": "Remover do Explorar",
+      "actionError": "A alteração não foi feita. Tenta novamente."
     }
   },
   "game": {
@@ -2999,7 +3012,29 @@
     "continueOrganizingError": "Não foi possível carregar o último jogo que organizaste",
     "contentLanguageLabel": "Idioma do conteúdo: {{language}}",
     "contentLanguageUnknown": "Idioma do conteúdo não indicado",
-    "teamFull": "A equipa para novos jogadores está cheia. Pede um código à organização."
+    "teamFull": "A equipa para novos jogadores está cheia. Pede um código à organização.",
+    "report": {
+      "open": "Denunciar esta listagem",
+      "title": "Denunciar esta listagem",
+      "intro": "Diz-nos o que está mal em {{title}}. Um administrador analisa cada denúncia; o organizador não vê quem a enviou.",
+      "reasonLegend": "O que está mal?",
+      "reasons": {
+        "inappropriate": "Ofensivo ou impróprio",
+        "misleading": "Enganador ou não é um jogo real",
+        "unsafe": "Local ou atividade perigosos",
+        "spam": "Spam ou publicidade",
+        "other": "Outra coisa"
+      },
+      "details": "Detalhes (opcional)",
+      "detailsHint_one": "Resta {{count}} carácter.",
+      "detailsHint_other": "Restam {{count}} caracteres.",
+      "send": "Enviar denúncia",
+      "back": "Voltar",
+      "sent": "Obrigado. Um administrador vai analisar esta listagem.",
+      "gone": "Esta listagem já não está no Explorar.",
+      "error": "Não foi possível enviar a denúncia. Tenta novamente.",
+      "offline": "Volta a ligar-te para enviar uma denúncia."
+    }
   },
   "publication": {
     "heading": "Tornar público",

@@ -248,6 +248,19 @@
       "actionError": "The change did not go through. Try again.",
       "meta": "{{organizer}} · published {{date}}",
       "filterListed": "Listed only"
+    },
+    "reports": {
+      "tab": "Reports",
+      "intro": "Open reports from signed-in accounts, oldest first. Dismiss keeps the listing; Remove takes it out of Explore and keeps the game.",
+      "empty": "No open reports.",
+      "loadError": "Could not load reports.",
+      "count_one": "{{count}} report",
+      "count_other": "{{count}} reports",
+      "notListed": "No longer listed",
+      "reporter": "{{name}}, {{date}}",
+      "dismiss": "Dismiss",
+      "remove": "Remove from Explore",
+      "actionError": "The change did not go through. Try again."
     }
   },
   "game": {
@@ -2999,7 +3012,29 @@
     "continueOrganizingError": "Could not load your last organized game",
     "contentLanguageLabel": "Content language: {{language}}",
     "contentLanguageUnknown": "Content language not specified",
-    "teamFull": "The team for new players is full. Ask the organizer for a code."
+    "teamFull": "The team for new players is full. Ask the organizer for a code.",
+    "report": {
+      "open": "Report this listing",
+      "title": "Report this listing",
+      "intro": "Tell us what is wrong with {{title}}. An administrator reviews every report; the organizer does not see who sent it.",
+      "reasonLegend": "What is wrong?",
+      "reasons": {
+        "inappropriate": "Offensive or inappropriate",
+        "misleading": "Misleading or not a real game",
+        "unsafe": "Unsafe place or activity",
+        "spam": "Spam or advertising",
+        "other": "Something else"
+      },
+      "details": "Details (optional)",
+      "detailsHint_one": "{{count}} character left.",
+      "detailsHint_other": "{{count}} characters left.",
+      "send": "Send report",
+      "back": "Back",
+      "sent": "Thanks. An administrator will review this listing.",
+      "gone": "This listing is no longer in Explore.",
+      "error": "Could not send the report. Try again.",
+      "offline": "Reconnect to send a report."
+    }
   },
   "publication": {
     "heading": "Make it public",

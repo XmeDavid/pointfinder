@@ -134,6 +134,8 @@ class SecurityRulesTest {
     private com.prayer.pointfinder.service.ExploreService exploreService;
     @MockitoBean
     private com.prayer.pointfinder.service.GamePublicationService gamePublicationService;
+    @MockitoBean
+    private com.prayer.pointfinder.service.PublicationReportService publicationReportService;
 
     private static final String OPERATOR_TOKEN = "operator-jwt";
     private static final String PLAYER_TOKEN = "player-jwt";
@@ -264,6 +266,28 @@ class SecurityRulesTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/publications").header("Authorization", "Bearer " + OPERATOR_TOKEN))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void accountsReportListingsButOnlyAdminsReviewReports() throws Exception {
+        String body = "{\"reason\":\"spam\"}";
+        mockMvc.perform(post("/api/explore/games/" + java.util.UUID.randomUUID() + "/report")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(body)
+                        .header("Authorization", "Bearer " + PARTICIPANT_TOKEN))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/explore/games/" + java.util.UUID.randomUUID() + "/report")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(body)
+                        .header("Authorization", "Bearer " + PLAYER_TOKEN))
+                .andExpect(status().isForbidden());
+        for (String token : new String[] {PARTICIPANT_TOKEN, OPERATOR_TOKEN}) {
+            mockMvc.perform(get("/api/admin/publications/reports").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(post("/api/admin/publications/" + java.util.UUID.randomUUID() + "/reports/remove").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isForbidden());
+        }
+        when(publicationReportService.listOpen()).thenReturn(java.util.List.of());
+        mockMvc.perform(get("/api/admin/publications/reports").header("Authorization", "Bearer " + ADMIN_TOKEN))
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -915,3 +915,25 @@ export interface ExploreJoinRequest {
   displayName: string
   deviceId: string
 }
+
+/** OW-06: why an account reports a public listing. */
+export type PublicationReportReason = 'inappropriate' | 'misleading' | 'unsafe' | 'spam' | 'other'
+
+export interface PublicationReportRequest {
+  reason: PublicationReportReason
+  /** Up to 1000 characters. */
+  details?: string | null
+}
+
+/** OW-06: an open report as a platform admin reads it. Never sent to publishers. */
+export interface PublicationReportResponse {
+  id: EntityId
+  gameId: EntityId
+  gameName: string
+  /** Whether Explore still lists the game. */
+  listed: boolean
+  reason: PublicationReportReason
+  details: string | null
+  reporterName: string
+  createdAt: IsoDateTime
+}

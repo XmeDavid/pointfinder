@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.request.ExploreJoinRequest;
+import com.prayer.pointfinder.dto.request.PublicationReportRequest;
 import com.prayer.pointfinder.dto.response.ExploreGameResponse;
 import com.prayer.pointfinder.dto.response.ExplorePageResponse;
 import com.prayer.pointfinder.dto.response.PlayerAuthResponse;
@@ -8,6 +9,7 @@ import com.prayer.pointfinder.exception.RateLimitExceededException;
 import com.prayer.pointfinder.security.SecurityUtils;
 import com.prayer.pointfinder.service.ExploreService;
 import com.prayer.pointfinder.service.PlayerJoinRateLimiter;
+import com.prayer.pointfinder.service.PublicationReportService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class ExploreController {
 
     private final ExploreService exploreService;
     private final PlayerJoinRateLimiter playerJoinRateLimiter;
+    private final PublicationReportService publicationReportService;
 
     @GetMapping("/games")
     public ResponseEntity<ExplorePageResponse> list(
@@ -60,6 +63,13 @@ public class ExploreController {
     public ResponseEntity<PlayerAuthResponse> join(@PathVariable UUID gameId, @Valid @RequestBody ExploreJoinRequest request, HttpServletRequest httpRequest) {
         limit(httpRequest, request.getDeviceId(), "exploreJoin");
         return ResponseEntity.ok(exploreService.join(SecurityUtils.getCurrentUser(), gameId, request.getDisplayName(), request.getDeviceId()));
+    }
+
+    /** OW-06: reports a listed game to the platform admins. One open report per account and game. */
+    @PostMapping("/games/{gameId}/report")
+    public ResponseEntity<Void> report(@PathVariable UUID gameId, @Valid @RequestBody PublicationReportRequest request) {
+        publicationReportService.report(SecurityUtils.getCurrentUser(), gameId, request);
+        return ResponseEntity.noContent().build();
     }
 
     private void limit(HttpServletRequest httpRequest, String key, String operation) {

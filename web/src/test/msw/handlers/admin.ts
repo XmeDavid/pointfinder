@@ -162,6 +162,8 @@ export const adminHandlers = [
   }),
 
   http.get('/api/admin/orgs/:orgId', () => HttpResponse.json(orgDetail)),
+  // OW-06: no open reports unless a test says otherwise.
+  http.get('/api/admin/publications/reports', () => HttpResponse.json([])),
   http.get('/api/admin/orgs/:orgId/games', () => HttpResponse.json([])),
   http.get('/api/admin/orgs/:orgId/invoices', () => HttpResponse.json(invoices)),
 

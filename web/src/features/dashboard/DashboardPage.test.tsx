@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/msw/server'
 import { accountAuth, renderPlayer } from '@/features/player/test/renderPlayer'
@@ -36,6 +37,23 @@ describe('DashboardPage', () => {
   it('lists a signed-in account\'s published games from Explore, offline-safe', async () => {
     await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard', account: accountAuth })
     expect((await screen.findAllByText('Coastal trail')).length).toBeGreaterThan(0)
+  })
+
+  it('lets a signed-in account report a listing to the admins (OW-06)', async () => {
+    const reports: Array<{ gameId: string; body: unknown }> = []
+    server.use(http.post('/api/explore/games/:gameId/report', async ({ params, request }) => {
+      reports.push({ gameId: String(params.gameId), body: await request.json() })
+      return new HttpResponse(null, { status: 204 })
+    }))
+    await renderPlayer(<DashboardPage />, { auth: null, route: '/dashboard', account: accountAuth })
+    await userEvent.click((await screen.findAllByText('Coastal trail'))[0])
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(within(dialog).getByTestId('discovery-report'))
+    await userEvent.click(within(dialog).getByRole('radio', { name: 'Misleading or not a real game' }))
+    await userEvent.type(within(dialog).getByLabelText('Details (optional)'), 'No such trail')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Send report' }))
+    expect(await within(dialog).findByRole('status')).toHaveTextContent('Thanks. An administrator will review this listing.')
+    expect(reports).toEqual([{ gameId: expect.any(String), body: { reason: 'misleading', details: 'No such trail' } }])
   })
 
   it('shows the explore error state with a retry when the listing fails', async () => {

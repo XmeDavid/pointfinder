@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { adminApi } from '@/lib/api/admin'
+import { adminApi, ADMIN_REPORTS_QUERY_KEY } from '@/lib/api/admin'
 import { AdminUserDetail } from './AdminUserDetail'
 import { AdminOrgDetail } from './AdminOrgDetail'
 import { NewClubDialog } from './NewClubDialog'
@@ -17,8 +17,9 @@ import { formatClubDate } from '@/lib/clubBilling'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { AdminPublications } from './AdminPublications'
+import { AdminReports } from './AdminReports'
 
-type Tab = 'users' | 'orgs' | 'publications'
+type Tab = 'users' | 'orgs' | 'publications' | 'reports'
 type Detail = { type: 'user'; id: string } | { type: 'org'; id: string } | null
 
 const PAGE_SIZE = 50
@@ -113,6 +114,10 @@ export function AdminPanel() {
     enabled: tab === 'orgs',
   })
 
+  // OW-06: the open-report count on the tab keeps new reports visible from any tab.
+  const { data: reports } = useQuery({ queryKey: ADMIN_REPORTS_QUERY_KEY, queryFn: adminApi.listReports })
+  const openReports = reports?.length ?? 0
+
   const handleBack = useCallback(() => setDetail(null), [])
 
   return (
@@ -145,6 +150,14 @@ export function AdminPanel() {
                 <TabsTrigger value="users">{t('admin.users', 'Users')}</TabsTrigger>
                 <TabsTrigger value="orgs">{t('admin.organizations', 'Organizations')}</TabsTrigger>
                 <TabsTrigger value="publications" data-testid="admin-tab-publications">{t('admin.publications.tab')}</TabsTrigger>
+                <TabsTrigger value="reports" data-testid="admin-tab-reports">
+                  {t('admin.reports.tab')}
+                  {openReports > 0 && (
+                    <span className="ml-1.5 rounded-full bg-warning/15 px-1.5 text-xs text-warning" data-testid="admin-reports-count">
+                      {openReports}
+                    </span>
+                  )}
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -196,6 +209,8 @@ export function AdminPanel() {
             )}
 
             {tab === 'publications' && <AdminPublications />}
+
+            {tab === 'reports' && <AdminReports />}
 
             {/* Orgs tab */}
             {tab === 'orgs' && (

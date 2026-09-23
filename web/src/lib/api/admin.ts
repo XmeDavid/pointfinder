@@ -12,7 +12,10 @@ import type {
 import type { Organization } from '@/types/organization'
 import type { OrgInvoice } from '@/types/billing'
 import type { Game } from '../../types'
-import type { GamePublicationResponse } from '@pointfinder/api'
+import type { GamePublicationResponse, PublicationReportResponse } from '@pointfinder/api'
+
+/** Shared by the Reports tab and its count in the admin panel. */
+export const ADMIN_REPORTS_QUERY_KEY = ['admin', 'publication-reports'] as const
 
 export const adminApi = {
   // PF-07/OW-06: curation of Explore listings. Removal is the ordinary unpublish, which admins may use.
@@ -24,6 +27,16 @@ export const adminApi = {
 
   removeFromExplore: (gameId: string) =>
     apiClient.post<GamePublicationResponse>(`/games/${gameId}/publication/unpublish`).then(r => r.data),
+
+  // OW-06: reports from signed-in accounts about listed games, oldest first.
+  listReports: () =>
+    apiClient.get<PublicationReportResponse[]>('/admin/publications/reports').then(r => r.data),
+
+  dismissReports: (gameId: string) =>
+    apiClient.post(`/admin/publications/${gameId}/reports/dismiss`).then(() => undefined),
+
+  removeReported: (gameId: string) =>
+    apiClient.post<GamePublicationResponse>(`/admin/publications/${gameId}/reports/remove`).then(r => r.data),
 
   listUsers: (params?: { search?: string; page?: number; size?: number }) =>
     apiClient.get<{ content: AdminUser[]; totalElements: number }>('/admin/users', { params }).then(r => r.data),

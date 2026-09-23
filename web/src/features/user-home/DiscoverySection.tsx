@@ -2,12 +2,13 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LocateFixed, MapPin, Search, X } from "lucide-react";
+import { Flag, LocateFixed, MapPin, Search, X } from "lucide-react";
 import type {
   ExploreGameResponse,
   ExplorePageResponse,
   ExploreQuery,
   PlayerAuthResponse,
+  PublicationReportRequest,
 } from "@pointfinder/api";
 import { useAccountSession, useServices } from "@/app/player/services";
 import { getDeviceId } from "@/app/player/device";
@@ -23,6 +24,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { DiscoveryCard } from "./DiscoveryCard";
 import { useNearbyGames } from "./useNearbyGames";
 import { ContentLanguageTag } from "@/components/data/ContentLanguageTag";
+import { ReportListingForm } from "./ReportListingForm";
 
 const ExperienceMap = lazy(() =>
   import("./ExperienceMap").then((m) => ({ default: m.ExperienceMap })),
@@ -46,6 +48,7 @@ export function DiscoverySection() {
   const [selected, setSelected] = useState<ExploreGameResponse | null>(null);
   const [opening, setOpening] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [reporting, setReporting] = useState(false);
   const nearby = useNearbyGames();
   useEffect(() => {
     const timer = setTimeout(() => setSearch(query.trim()), 250);
@@ -87,6 +90,17 @@ export function DiscoverySection() {
   function selectGame(game: ExploreGameResponse) {
     setSelected(game);
     setJoinError(null);
+    setReporting(false);
+  }
+  async function reportGame(
+    game: ExploreGameResponse,
+    body: PublicationReportRequest,
+  ) {
+    if (session.kind === "operator") {
+      await services.account.api.explore.report(game.gameId, body);
+    } else {
+      await apiClient.post(`/explore/games/${game.gameId}/report`, body);
+    }
   }
   async function joinGame(game: ExploreGameResponse) {
     setOpening(true);
@@ -309,7 +323,22 @@ export function DiscoverySection() {
             if (!opening) setSelected(null);
           }}
         >
-          {selected && (
+          {selected && reporting && (
+            <>
+              <DialogTitle className="text-xl break-words">
+                {t("report.title")}
+              </DialogTitle>
+              <div className="mt-4">
+                <ReportListingForm
+                  title={selected.title}
+                  online={online}
+                  onSubmit={(body) => reportGame(selected, body)}
+                  onBack={() => setReporting(false)}
+                />
+              </div>
+            </>
+          )}
+          {selected && !reporting && (
             <>
               <p className="ex-eyebrow">{selected.place}</p>
               <DialogTitle className="text-2xl mt-2 break-words">
@@ -376,6 +405,18 @@ export function DiscoverySection() {
                 onClick={() => setSelected(null)}
               >
                 {t("backToDiscoveries")}
+              </Button>
+              {/* OW-06: public listings are organizer-written; anyone signed in can flag one. */}
+              <Button
+                className="w-full mt-2 min-h-11 text-muted-foreground"
+                variant="ghost"
+                size="sm"
+                disabled={opening}
+                onClick={() => setReporting(true)}
+                data-testid="discovery-report"
+              >
+                <Flag className="h-4 w-4" aria-hidden />
+                {t("report.open")}
               </Button>
             </>
           )}

@@ -34,6 +34,8 @@ import type {
   ExploreJoinRequest,
   ExplorePageResponse,
   ExploreQuery,
+  PublicationReportRequest,
+  PublicationReportResponse,
   GamePublicationRequest,
   GamePublicationResponse,
   EndSummaryResponse,
@@ -159,6 +161,12 @@ export function createApi(http: HttpClient) {
       list: () => http.get<GamePublicationResponse[]>('/api/admin/publications'),
       feature: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/feature`),
       unfeature: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/unfeature`),
+      /** OW-06: open reports, oldest first. */
+      reports: () => http.get<PublicationReportResponse[]>('/api/admin/publications/reports'),
+      /** Closes the game's open reports; the listing stays. */
+      dismissReports: (gameId: EntityId) => http.post<void>(`/api/admin/publications/${encodeURIComponent(gameId)}/reports/dismiss`),
+      /** Unpublishes the game and closes its open reports. */
+      removeReported: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/reports/remove`),
     },
   }
 
@@ -176,6 +184,8 @@ export function createApi(http: HttpClient) {
     get: (gameId: EntityId) => http.get<ExploreGameResponse>(`/api/explore/games/${encodeURIComponent(gameId)}`),
     /** Recovers this account's participation, or creates one on the designated admission team when `joinable`. Same result as account join. */
     join: (gameId: EntityId, body: ExploreJoinRequest) => http.post<PlayerAuthResponse>(`/api/explore/games/${encodeURIComponent(gameId)}/join`, body),
+    /** OW-06: reports a listed game to the platform admins; repeating an open report adds nothing. */
+    report: (gameId: EntityId, body: PublicationReportRequest) => http.post<void>(`/api/explore/games/${encodeURIComponent(gameId)}/report`, body),
   }
 
   /** PF-01: what a signed-in phone can do with its account. Bearer: the account session, not the player token. */

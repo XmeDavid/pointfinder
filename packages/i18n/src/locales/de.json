@@ -248,6 +248,19 @@
       "actionError": "Die Änderung wurde nicht übernommen. Versuche es erneut.",
       "meta": "{{organizer}} · veröffentlicht am {{date}}",
       "filterListed": "Nur gelistete"
+    },
+    "reports": {
+      "tab": "Meldungen",
+      "intro": "Offene Meldungen angemeldeter Konten, älteste zuerst. Verwerfen behält die Listung; Entfernen nimmt sie aus Entdecken und behält das Spiel.",
+      "empty": "Keine offenen Meldungen.",
+      "loadError": "Meldungen konnten nicht geladen werden.",
+      "count_one": "{{count}} Meldung",
+      "count_other": "{{count}} Meldungen",
+      "notListed": "Nicht mehr gelistet",
+      "reporter": "{{name}}, {{date}}",
+      "dismiss": "Verwerfen",
+      "remove": "Aus Entdecken entfernen",
+      "actionError": "Die Änderung wurde nicht übernommen. Versuch es noch einmal."
     }
   },
   "game": {
@@ -2999,7 +3012,29 @@
     "continueOrganizingError": "Dein zuletzt organisiertes Spiel konnte nicht geladen werden",
     "contentLanguageLabel": "Sprache der Inhalte: {{language}}",
     "contentLanguageUnknown": "Sprache der Inhalte nicht angegeben",
-    "teamFull": "Das Team für neue Spieler ist voll. Frag die Organisation nach einem Code."
+    "teamFull": "Das Team für neue Spieler ist voll. Frag die Organisation nach einem Code.",
+    "report": {
+      "open": "Diese Listung melden",
+      "title": "Diese Listung melden",
+      "intro": "Sag uns, was mit {{title}} nicht stimmt. Eine Administratorin oder ein Administrator prüft jede Meldung; der Veranstalter sieht nicht, wer sie geschickt hat.",
+      "reasonLegend": "Was stimmt nicht?",
+      "reasons": {
+        "inappropriate": "Beleidigend oder unangemessen",
+        "misleading": "Irreführend oder kein echtes Spiel",
+        "unsafe": "Gefährlicher Ort oder gefährliche Aktivität",
+        "spam": "Spam oder Werbung",
+        "other": "Etwas anderes"
+      },
+      "details": "Details (optional)",
+      "detailsHint_one": "Noch {{count}} Zeichen.",
+      "detailsHint_other": "Noch {{count}} Zeichen.",
+      "send": "Meldung senden",
+      "back": "Zurück",
+      "sent": "Danke. Eine Administratorin oder ein Administrator prüft diese Listung.",
+      "gone": "Diese Listung ist nicht mehr in Entdecken.",
+      "error": "Die Meldung konnte nicht gesendet werden. Versuch es noch einmal.",
+      "offline": "Verbinde dich erneut, um eine Meldung zu senden."
+    }
   },
   "publication": {
     "heading": "Öffentlich machen",
