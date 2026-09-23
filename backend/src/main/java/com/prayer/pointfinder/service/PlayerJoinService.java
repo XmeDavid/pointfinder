@@ -57,6 +57,7 @@ public class PlayerJoinService {
             // Enforce player limits only for new players (not rejoins)
             quotaService.enforcePracticeGamePlayerLimit(game);
             quotaService.enforcePlayersPerGameLimit(game);
+            enforceTeamCapacity(team);
             player = Player.builder()
                     .team(team)
                     .game(game)
@@ -111,5 +112,20 @@ public class PlayerJoinService {
         String jwt = tokenProvider.generatePlayerToken(player.getId(), team.getId(), game.getId());
 
         return PlayerAuthResponse.of(jwt, player, team, game);
+    }
+
+    /**
+     * OW-05: a limited team takes new players only while below its limit.
+     * Joins to it serialize on the game row, the lock every admission path
+     * takes first (Explore joins already hold it), so two phones cannot both
+     * take the last seat. Retired guest rows do not count.
+     */
+    private void enforceTeamCapacity(Team team) {
+        Integer max = team.getMaxPlayers();
+        if (max == null) return;
+        gameRepository.findByIdForUpdate(team.getGame().getId());
+        if (playerRepository.countByTeamId(team.getId()) >= max) {
+            throw new BadRequestException("This team is full", ErrorCode.TEAM_FULL);
+        }
     }
 }

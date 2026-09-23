@@ -99,6 +99,8 @@ export interface TeamExportDto {
   tempId: string;
   name: string;
   color: string;
+  /** OW-05: most players the team takes; absent or null means no limit. */
+  maxPlayers?: number | null;
 }
 
 export interface AssignmentExportDto {

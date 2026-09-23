@@ -74,7 +74,7 @@ describe('TeamDetail', () => {
       expect(screen.getByTestId('team-detail')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Identity')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Team' })).toBeInTheDocument()
     expect(screen.getByText(/Members/)).toBeInTheDocument()
     expect(screen.getByText('Journey Preview')).toBeInTheDocument()
     expect(screen.getByText('Team Variables')).toBeInTheDocument()
@@ -246,5 +246,57 @@ describe('TeamDetail', () => {
     await waitFor(() => {
       expect(screen.getByTestId('save-team')).toBeInTheDocument()
     })
+  })
+})
+
+describe('TeamDetail player limit (OW-05)', () => {
+  function limitFixture(maxPlayers: number | null, playerCount: number) {
+    const puts: Array<Record<string, unknown>> = []
+    let team = { id: 'team-1', gameId: 'game-1', name: 'Falcons', joinCode: 'FALC01', color: '#22c55e', maxPlayers }
+    server.use(
+      http.get('/api/games/:gameId/teams', () => HttpResponse.json([team])),
+      http.get('/api/games/:gameId/teams/:teamId/players', () => HttpResponse.json(
+        Array.from({ length: playerCount }, (_, i) => ({ id: `p${i}`, teamId: 'team-1', deviceId: `d${i}`, displayName: `Scout ${i}` })),
+      )),
+      http.put('/api/games/:gameId/teams/:teamId', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>
+        puts.push(body)
+        team = { ...team, maxPlayers: body.clearMaxPlayers ? null : (body.maxPlayers as number | undefined) ?? team.maxPlayers }
+        return HttpResponse.json(team)
+      }),
+    )
+    return puts
+  }
+
+  it('saves a limit and shows the team as full once it is reached', async () => {
+    const user = userEvent.setup()
+    const puts = limitFixture(null, 3)
+    render(createElement(TeamDetail, { teamId: 'team-1', gameId: 'game-1' }), { wrapper: createWrapper() })
+    const input = await screen.findByLabelText('Player limit')
+    expect(input).toHaveValue(null)
+    await user.type(input, '3')
+    await user.click(screen.getByTestId('save-team'))
+    await waitFor(() => expect(puts).toHaveLength(1))
+    expect(puts[0]).toMatchObject({ name: 'Falcons', maxPlayers: 3 })
+    expect(await screen.findByTestId('team-full-badge')).toHaveTextContent('Full')
+    expect(screen.getByText('Members (3 of 3)')).toBeInTheDocument()
+  })
+
+  it('clears the limit explicitly and never sends an invalid one', async () => {
+    const user = userEvent.setup()
+    const puts = limitFixture(4, 5)
+    render(createElement(TeamDetail, { teamId: 'team-1', gameId: 'game-1' }), { wrapper: createWrapper() })
+    const input = await screen.findByLabelText('Player limit')
+    await waitFor(() => expect(input).toHaveValue(4))
+    expect(screen.getByTestId('team-over-limit')).toHaveTextContent('already has 5 players')
+    await user.clear(input)
+    await user.type(input, '0')
+    expect(screen.getByText(/whole number from 1 to 500/)).toBeInTheDocument()
+    expect(screen.getByTestId('save-team')).toBeDisabled()
+    await user.clear(input)
+    await user.click(screen.getByTestId('save-team'))
+    await waitFor(() => expect(puts).toHaveLength(1))
+    expect(puts[0]).toMatchObject({ clearMaxPlayers: true })
+    expect(puts[0]).not.toHaveProperty('maxPlayers')
   })
 })

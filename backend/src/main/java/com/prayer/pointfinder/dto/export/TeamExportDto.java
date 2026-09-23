@@ -13,4 +13,6 @@ public class TeamExportDto {
     private String tempId;
     private String name;
     private String color;
+    /** OW-05: most players the team takes; absent or null means no limit. */
+    private Integer maxPlayers;
 }

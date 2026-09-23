@@ -45,6 +45,8 @@ export function describeError(err: unknown, t: TFunction): string {
         return t('account.alreadyLinked')
       case 'TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT':
         return t('join.practiceFull')
+      case 'TEAM_FULL':
+        return t('join.teamFull')
       case 'INVALID_CREDENTIALS':
         return t('login.invalid')
     }

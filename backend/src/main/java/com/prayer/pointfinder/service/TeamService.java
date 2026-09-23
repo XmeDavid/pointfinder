@@ -88,6 +88,12 @@ public class TeamService {
         if (request.getColor() != null) {
             team.setColor(request.getColor());
         }
+        // A lower limit never removes anyone; it only refuses new players until the team is below it.
+        if (Boolean.TRUE.equals(request.getClearMaxPlayers())) {
+            team.setMaxPlayers(null);
+        } else if (request.getMaxPlayers() != null) {
+            team.setMaxPlayers(request.getMaxPlayers());
+        }
         team = teamRepository.save(team);
         eventBroadcaster.broadcastGameConfig(gameId, "teams", "updated");
         return toResponse(team);
@@ -324,6 +330,7 @@ public class TeamService {
                 .name(team.getName())
                 .joinCode(team.getJoinCode())
                 .color(team.getColor())
+                .maxPlayers(team.getMaxPlayers())
                 .build();
     }
 }

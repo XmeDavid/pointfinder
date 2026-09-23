@@ -44,6 +44,8 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   // Local form state
   const [localName, setLocalName] = useState('')
   const [localColor, setLocalColor] = useState(team?.color ?? dataColors.legacyFallback)
+  // OW-05: blank means no limit.
+  const [localMaxPlayers, setLocalMaxPlayers] = useState('')
   const [copied, setCopied] = useState(false)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
@@ -57,6 +59,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
 
     setLocalName(team.name)
     setLocalColor(team.color)
+    setLocalMaxPlayers(team.maxPlayers != null ? String(team.maxPlayers) : '')
     setCopied(false)
     setQrUrl(null)
   }
@@ -83,12 +86,22 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
     await exportFile(new Blob([bytes], { type: 'image/png' }), `${team.name}-qr.png`)
   }, [team, qrUrl])
 
+  const maxPlayersText = localMaxPlayers.trim()
+  const parsedMaxPlayers = maxPlayersText === '' ? null : Number(maxPlayersText)
+  const maxPlayersValid = parsedMaxPlayers === null || (Number.isInteger(parsedMaxPlayers) && parsedMaxPlayers >= 1 && parsedMaxPlayers <= 500)
+
   const handleSave = useCallback(() => {
+    if (!maxPlayersValid) return
     updateTeam.mutate({
       teamId,
-      dto: { name: localName, color: localColor },
+      dto: {
+        name: localName,
+        color: localColor,
+        // Omitting the field keeps the server's limit; clearing is explicit.
+        ...(parsedMaxPlayers !== null ? { maxPlayers: parsedMaxPlayers } : team?.maxPlayers != null ? { clearMaxPlayers: true } : {}),
+      },
     })
-  }, [teamId, localName, localColor, updateTeam])
+  }, [teamId, localName, localColor, updateTeam, maxPlayersValid, parsedMaxPlayers, team?.maxPlayers])
 
   const handleRemovePlayer = useCallback(
     (playerId: string) => {
@@ -175,11 +188,11 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
     }
 
     if (unstagedEntries.length > 0) {
-      result.push({ stageName: 'Ungrouped', entries: unstagedEntries })
+      result.push({ stageName: t('teams.ungrouped'), entries: unstagedEntries })
     }
 
     return result
-  }, [teamAssignments, stages, bases, challenges])
+  }, [teamAssignments, stages, bases, challenges, t])
 
   if (!team) {
     return (
@@ -190,6 +203,8 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
   }
 
   const memberCount = players.length
+  // Retired guest rows (an account recovered on another phone) do not take a seat.
+  const activeMembers = players.filter((p) => !p.deviceId?.startsWith('retired:')).length
   const deleteDescription =
     t('common.confirm.deleteTeamDescription') +
     (memberCount > 0
@@ -201,14 +216,15 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
       {/* Identity section */}
       <section>
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Identity
+          {t('teams.identity')}
         </h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">
-              Name
+            <label htmlFor="team-name" className="block text-xs text-muted-foreground mb-1">
+              {t('teams.name')}
             </label>
             <Input
+              id="team-name"
               value={localName}
               onChange={(e) => setLocalName(e.target.value)}
               data-testid="team-name-input"
@@ -216,11 +232,12 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
             />
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">
-              Color
+            <label htmlFor="team-color" className="block text-xs text-muted-foreground mb-1">
+              {t('teams.color')}
             </label>
             <div className="flex items-center gap-2">
               <input
+                id="team-color"
                 type="color"
                 value={localColor}
                 onChange={(e) => setLocalColor(e.target.value)}
@@ -233,9 +250,9 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
             </div>
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">
-              Join Code
-            </label>
+            <p className="block text-xs text-muted-foreground mb-1">
+              {t('teams.joinCode')}
+            </p>
             <div className="flex items-center gap-2">
               <code
                 className="text-sm font-mono bg-muted px-2 py-1 rounded"
@@ -247,6 +264,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleCopyJoinCode}
+                aria-label={t('teams.copyJoinCode')}
                 data-testid="copy-join-code"
                 className="h-8 w-8"
               >
@@ -262,9 +280,10 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
                 onClick={handleShowQr}
                 data-testid="show-qr-btn"
                 className="h-8 w-8"
-                title="Show QR code"
+                title={t('teams.showQr')}
+                aria-label={t('teams.showQr')}
               >
-                <QrCode className="h-4 w-4" />
+                <QrCode className="h-4 w-4" aria-hidden />
               </Button>
             </div>
             <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
@@ -312,6 +331,34 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
               </DialogContent>
             </Dialog>
           </div>
+          {/* OW-05: an optional seat limit, saved with the team. */}
+          <div data-testid="team-max-players">
+            <label htmlFor="team-max-players" className="block text-xs text-muted-foreground mb-1">
+              {t('teams.maxPlayers')}
+            </label>
+            <Input
+              id="team-max-players"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={500}
+              value={localMaxPlayers}
+              onChange={(e) => setLocalMaxPlayers(e.target.value)}
+              placeholder={t('teams.maxPlayersPlaceholder')}
+              aria-invalid={!maxPlayersValid}
+              aria-describedby="team-max-players-hint"
+              data-testid="team-max-players-input"
+              className="h-10 w-32 text-sm"
+            />
+            <p id="team-max-players-hint" className={`mt-1 text-xs ${maxPlayersValid ? 'text-muted-foreground' : 'text-destructive'}`}>
+              {maxPlayersValid ? t('teams.maxPlayersHint') : t('teams.maxPlayersInvalid')}
+            </p>
+            {maxPlayersValid && parsedMaxPlayers !== null && activeMembers > parsedMaxPlayers && (
+              <p className="mt-1 text-xs text-warning" data-testid="team-over-limit">
+                {t('teams.overLimit', { count: activeMembers, max: parsedMaxPlayers })}
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
@@ -319,8 +366,12 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
       <section className="border-t border-border pt-4 mt-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Members{' '}
-            <span className="font-normal">({players.length})</span>
+            {team.maxPlayers != null
+              ? t('teams.membersOfLimit', { count: activeMembers, max: team.maxPlayers })
+              : t('teams.membersCount', { count: activeMembers })}
+            {team.maxPlayers != null && activeMembers >= team.maxPlayers && (
+              <Badge variant="warning" className="ml-2 normal-case tracking-normal" data-testid="team-full-badge">{t('teams.full')}</Badge>
+            )}
           </h3>
         </div>
         {players.length === 0 ? (
@@ -360,11 +411,11 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
       {/* Journey Preview */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Journey Preview
+          {t('teams.journeyPreview')}
         </h3>
         {journeyByStage.length === 0 ? (
           <p className="text-xs text-muted-foreground" data-testid="no-journey">
-            No assignments yet
+            {t('teams.noJourney')}
           </p>
         ) : (
           <div className="space-y-4" data-testid="journey-preview">
@@ -402,7 +453,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
       {/* Team Variables */}
       <section className="border-t border-border pt-4 mt-4">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Team Variables
+          {t('teams.variables')}
         </h3>
         <TeamVariablesEditor gameId={gameId} teams={teams} />
       </section>
@@ -412,12 +463,16 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
         <Button
           onClick={handleSave}
           loading={updateTeam.isPending}
+          disabled={!maxPlayersValid}
           data-testid="save-team"
           size="sm"
         >
           <Save className="h-4 w-4" />
-          Save Changes
+          {t('teams.saveChanges')}
         </Button>
+        {updateTeam.isError && (
+          <p className="mt-2 text-xs text-destructive" role="alert">{t('teams.saveError')}</p>
+        )}
       </div>
 
       {/* Delete */}
@@ -427,7 +482,7 @@ export function TeamDetail({ teamId, gameId }: TeamDetailProps) {
           data-testid="delete-team-btn"
           className="text-xs text-destructive hover:underline cursor-pointer"
         >
-          Delete team
+          {t('teams.deleteTeam')}
         </button>
       </div>
 

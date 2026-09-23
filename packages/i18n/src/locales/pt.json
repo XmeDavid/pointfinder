@@ -632,7 +632,28 @@
     "unlockOverrideRemoveConfirmDescription": "A base {{base}} voltará a ficar oculta para esta equipa. O histórico é preservado na auditoria.",
     "manualCheckInReasonLabel": "Motivo do operador (opcional)",
     "manualCheckInReasonPlaceholder": "ex. Falha de NFC, problema de GPS, avaria no dispositivo",
-    "hasAccount": "Conta"
+    "hasAccount": "Conta",
+    "identity": "Equipa",
+    "name": "Nome",
+    "color": "Cor",
+    "joinCode": "Código de entrada",
+    "copyJoinCode": "Copiar código de entrada",
+    "showQr": "Mostrar código QR",
+    "membersCount": "Membros ({{count}})",
+    "membersOfLimit": "Membros ({{count}} de {{max}})",
+    "maxPlayers": "Limite de jogadores",
+    "maxPlayersPlaceholder": "Sem limite",
+    "maxPlayersHint": "Uma equipa cheia recusa novos jogadores, incluindo entradas pelo Explorar. Ninguém que já esteja na equipa é removido.",
+    "maxPlayersInvalid": "Indica um número inteiro de 1 a 500, ou deixa vazio para não haver limite.",
+    "overLimit": "Esta equipa já tem {{count}} jogadores. Novos jogadores são recusados até ter menos de {{max}}.",
+    "full": "Cheia",
+    "journeyPreview": "Pré-visualização do percurso",
+    "noJourney": "Ainda não há atribuições",
+    "ungrouped": "Sem etapa",
+    "variables": "Variáveis da equipa",
+    "saveChanges": "Guardar alterações",
+    "saveError": "Não foi possível guardar a equipa. As alterações continuam aqui; tenta novamente.",
+    "deleteTeam": "Eliminar equipa"
   },
   "notifications": {
     "description": "Enviar mensagens para as equipas no terreno",
@@ -1131,7 +1152,8 @@
     "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Outro envio já usa esta chave de item.",
     "CHOICE_OPTIONS_INVALID": "Verifica as opções: pelo menos duas, todas com texto, e o número certo de opções corretas para o tipo de desafio.",
     "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para este desafio.",
-    "CHOICE_ALREADY_ANSWERED": "A tua equipa já respondeu a esta."
+    "CHOICE_ALREADY_ANSWERED": "A tua equipa já respondeu a esta.",
+    "TEAM_FULL": "Esta equipa está cheia. Pede à organização o código de outra equipa."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
@@ -1820,7 +1842,8 @@
       "orEnterCode": "Ou introduz o código manualmente",
       "cameraDisabled": "O acesso à câmara está desligado. Ativa-o nas definições para ler códigos.",
       "practiceFull": "Este jogo de treino já tem o seu único jogador.",
-      "signedInHint": "Este telemóvel recupera o teu jogo se esta conta já o estiver a jogar."
+      "signedInHint": "Este telemóvel recupera o teu jogo se esta conta já o estiver a jogar.",
+      "teamFull": "Esta equipa está cheia. Pede à organização o código de outra equipa."
     },
     "login": {
       "title": "Entrar como operador",
@@ -2975,7 +2998,8 @@
     "continueOrganizingLoading": "A procurar o último jogo que organizaste…",
     "continueOrganizingError": "Não foi possível carregar o último jogo que organizaste",
     "contentLanguageLabel": "Idioma do conteúdo: {{language}}",
-    "contentLanguageUnknown": "Idioma do conteúdo não indicado"
+    "contentLanguageUnknown": "Idioma do conteúdo não indicado",
+    "teamFull": "A equipa para novos jogadores está cheia. Pede um código à organização."
   },
   "publication": {
     "heading": "Tornar público",

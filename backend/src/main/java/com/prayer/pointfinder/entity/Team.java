@@ -33,6 +33,10 @@ public class Team {
     @Column(nullable = false, length = 7)
     private String color;
 
+    /** OW-05: most players this team takes; null means no limit. Retired guest rows do not count. */
+    @Column(name = "max_players")
+    private Integer maxPlayers;
+
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Player> players = new ArrayList<>();

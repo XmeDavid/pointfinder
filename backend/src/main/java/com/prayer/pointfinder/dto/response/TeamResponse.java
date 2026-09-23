@@ -8,5 +8,7 @@ public record TeamResponse(
         UUID gameId,
         String name,
         String joinCode,
-        String color
+        String color,
+        /** OW-05: most players this team takes; null means no limit. */
+        Integer maxPlayers
 ) {}

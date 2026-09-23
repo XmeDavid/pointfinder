@@ -632,7 +632,28 @@
     "unlockOverrideRemoveConfirmDescription": "This will re-hide the base {{base}} for this team. The history row is preserved on the audit trail.",
     "manualCheckInReasonLabel": "Operator reason (optional)",
     "manualCheckInReasonPlaceholder": "e.g. NFC failure, GPS issue, device problem",
-    "hasAccount": "Account"
+    "hasAccount": "Account",
+    "identity": "Team",
+    "name": "Name",
+    "color": "Color",
+    "joinCode": "Join Code",
+    "copyJoinCode": "Copy join code",
+    "showQr": "Show QR code",
+    "membersCount": "Members ({{count}})",
+    "membersOfLimit": "Members ({{count}} of {{max}})",
+    "maxPlayers": "Player limit",
+    "maxPlayersPlaceholder": "No limit",
+    "maxPlayersHint": "A full team refuses new players, including joins from Explore. Nobody already on the team is removed.",
+    "maxPlayersInvalid": "Enter a whole number from 1 to 500, or leave it empty for no limit.",
+    "overLimit": "This team already has {{count}} players. New players are refused until it has fewer than {{max}}.",
+    "full": "Full",
+    "journeyPreview": "Journey Preview",
+    "noJourney": "No assignments yet",
+    "ungrouped": "Ungrouped",
+    "variables": "Team Variables",
+    "saveChanges": "Save Changes",
+    "saveError": "Could not save the team. Your changes are still here; try again.",
+    "deleteTeam": "Delete team"
   },
   "notifications": {
     "description": "Send messages to teams in the field",
@@ -1131,7 +1152,8 @@
     "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "A different upload already uses this item key.",
     "CHOICE_OPTIONS_INVALID": "Check the options: at least two, each with text, and the right number of correct ones for the challenge type.",
     "CHOICE_SELECTION_INVALID": "Choose a valid option for this challenge.",
-    "CHOICE_ALREADY_ANSWERED": "Your team already answered this one."
+    "CHOICE_ALREADY_ANSWERED": "Your team already answered this one.",
+    "TEAM_FULL": "This team is full. Ask the organizer for another team's code."
   },
   "realtimeHealth": {
     "title": "Realtime Health",
@@ -1820,7 +1842,8 @@
       "orEnterCode": "Or enter the code manually",
       "cameraDisabled": "Camera access is off. Enable it in settings to scan codes.",
       "practiceFull": "This practice game already has its one player.",
-      "signedInHint": "This phone will get your game back if this account already plays it."
+      "signedInHint": "This phone will get your game back if this account already plays it.",
+      "teamFull": "This team is full. Ask the organizer for another team's code."
     },
     "login": {
       "title": "Operator sign in",
@@ -2975,7 +2998,8 @@
     "continueOrganizingLoading": "Finding your last organized game…",
     "continueOrganizingError": "Could not load your last organized game",
     "contentLanguageLabel": "Content language: {{language}}",
-    "contentLanguageUnknown": "Content language not specified"
+    "contentLanguageUnknown": "Content language not specified",
+    "teamFull": "The team for new players is full. Ask the organizer for a code."
   },
   "publication": {
     "heading": "Make it public",

@@ -119,6 +119,8 @@ export function DiscoverySection() {
       setJoinError(
         code === "DEVICE_ALREADY_IN_DIFFERENT_TEAM"
           ? "discoveryOtherTeam"
+          : code === "TEAM_FULL"
+            ? "teamFull"
           : code === "PUBLICATION_ADMISSION_CLOSED" ||
               (failure.status ?? failure.response?.status) === 404
             ? "admissionClosed"

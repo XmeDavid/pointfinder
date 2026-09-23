@@ -4,6 +4,8 @@ export interface Team {
   name: string
   joinCode: string
   color: string
+  /** OW-05: most players this team takes; null or absent means no limit. */
+  maxPlayers?: number | null
 }
 
 export interface Player {

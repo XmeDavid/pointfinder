@@ -632,7 +632,28 @@
     "unlockOverrideRemoveConfirmDescription": "Die Station {{base}} wird für dieses Team wieder versteckt. Der Verlauf bleibt im Audit-Log erhalten.",
     "manualCheckInReasonLabel": "Grund (optional)",
     "manualCheckInReasonPlaceholder": "z. B. NFC-Fehler, GPS-Problem, Geräteproblem",
-    "hasAccount": "Konto"
+    "hasAccount": "Konto",
+    "identity": "Team",
+    "name": "Name",
+    "color": "Farbe",
+    "joinCode": "Beitrittscode",
+    "copyJoinCode": "Beitrittscode kopieren",
+    "showQr": "QR-Code anzeigen",
+    "membersCount": "Mitglieder ({{count}})",
+    "membersOfLimit": "Mitglieder ({{count}} von {{max}})",
+    "maxPlayers": "Spielerlimit",
+    "maxPlayersPlaceholder": "Kein Limit",
+    "maxPlayersHint": "Ein volles Team nimmt keine neuen Spieler auf, auch nicht über Entdecken. Niemand, der schon im Team ist, wird entfernt.",
+    "maxPlayersInvalid": "Gib eine ganze Zahl von 1 bis 500 ein oder lass das Feld für kein Limit leer.",
+    "overLimit": "Dieses Team hat schon {{count}} Spieler. Neue Spieler werden abgelehnt, bis es weniger als {{max}} sind.",
+    "full": "Voll",
+    "journeyPreview": "Routenvorschau",
+    "noJourney": "Noch keine Zuweisungen",
+    "ungrouped": "Ohne Etappe",
+    "variables": "Teamvariablen",
+    "saveChanges": "Änderungen speichern",
+    "saveError": "Das Team konnte nicht gespeichert werden. Deine Änderungen sind noch da; versuche es erneut.",
+    "deleteTeam": "Team löschen"
   },
   "notifications": {
     "description": "Nachrichten an Teams im Feld senden",
@@ -1131,7 +1152,8 @@
     "UPLOAD_MEDIA_ITEM_KEY_CONFLICT": "Ein anderer Upload verwendet diesen Element-Schlüssel bereits.",
     "CHOICE_OPTIONS_INVALID": "Prüfe die Optionen: mindestens zwei, jede mit Text, und die passende Zahl richtiger Optionen für den Aufgabentyp.",
     "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Aufgabe.",
-    "CHOICE_ALREADY_ANSWERED": "Dein Team hat diese Aufgabe bereits beantwortet."
+    "CHOICE_ALREADY_ANSWERED": "Dein Team hat diese Aufgabe bereits beantwortet.",
+    "TEAM_FULL": "Dieses Team ist voll. Frag die Organisation nach dem Code eines anderen Teams."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",
@@ -1820,7 +1842,8 @@
       "orEnterCode": "Oder den Code manuell eingeben",
       "cameraDisabled": "Kamerazugriff ist aus. Aktiviere ihn in den Einstellungen, um Codes zu scannen.",
       "practiceFull": "Dieses Übungsspiel hat seine eine Person schon.",
-      "signedInHint": "Dieses Handy holt dein Spiel zurück, wenn dieses Konto es bereits spielt."
+      "signedInHint": "Dieses Handy holt dein Spiel zurück, wenn dieses Konto es bereits spielt.",
+      "teamFull": "Dieses Team ist voll. Frag die Organisation nach dem Code eines anderen Teams."
     },
     "login": {
       "title": "Operator-Anmeldung",
@@ -2975,7 +2998,8 @@
     "continueOrganizingLoading": "Dein zuletzt organisiertes Spiel wird gesucht…",
     "continueOrganizingError": "Dein zuletzt organisiertes Spiel konnte nicht geladen werden",
     "contentLanguageLabel": "Sprache der Inhalte: {{language}}",
-    "contentLanguageUnknown": "Sprache der Inhalte nicht angegeben"
+    "contentLanguageUnknown": "Sprache der Inhalte nicht angegeben",
+    "teamFull": "Das Team für neue Spieler ist voll. Frag die Organisation nach einem Code."
   },
   "publication": {
     "heading": "Öffentlich machen",

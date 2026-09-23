@@ -225,6 +225,10 @@ public enum ErrorCode {
     /** The team already answered this choice challenge at this base; there is one attempt. */
     CHOICE_ALREADY_ANSWERED,
 
+    // ── Team capacity (OW-05) ────────────────────────────────────────────
+    /** The team has as many players as its limit allows; existing members are unaffected. */
+    TEAM_FULL,
+
     // ── Resumable uploads ────────────────────────────────────────────────
     // Raised by ChunkedUploadService through UploadSessionException; the
     // response also carries `retryable` so a client knows whether to resend.

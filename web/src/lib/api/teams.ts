@@ -8,6 +8,10 @@ export interface CreateTeamDto {
 export interface UpdateTeamDto {
   name: string;
   color?: string;
+  /** OW-05: 1..500. Omit to keep the current limit. */
+  maxPlayers?: number;
+  /** Removes the limit; wins over `maxPlayers`. */
+  clearMaxPlayers?: boolean;
 }
 
 /**

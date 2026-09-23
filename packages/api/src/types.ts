@@ -301,6 +301,8 @@ export interface Team {
   name: string
   joinCode?: string | null
   color: string
+  /** OW-05: most players this team takes; null or absent means no limit. Operator-only. */
+  maxPlayers?: number | null
 }
 
 export interface PlayerResponse {
@@ -690,6 +692,10 @@ export interface CreateTeamRequest {
 export interface UpdateTeamRequest {
   name: string
   color?: string | null
+  /** OW-05: 1..500. Omit to keep the current limit. */
+  maxPlayers?: number | null
+  /** Removes the limit; wins over `maxPlayers`. */
+  clearMaxPlayers?: boolean | null
 }
 
 export interface CreateAssignmentRequest {

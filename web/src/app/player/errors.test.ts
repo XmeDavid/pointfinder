@@ -18,6 +18,10 @@ describe('describeError', () => {
     expect(describeError(apiError('TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT'), t)).toBe('This practice game already has its one player.')
   })
 
+  it('explains that a team is full without echoing the server (OW-05)', () => {
+    expect(describeError(apiError('TEAM_FULL'), t)).toBe("This team is full. Ask the organizer for another team's code.")
+  })
+
   it('explains choice refusals in the player’s language (OW-34)', () => {
     expect(describeError(apiError('CHOICE_ALREADY_ANSWERED'), t)).toBe('Your team already answered this one.')
     expect(describeError(apiError('CHOICE_SELECTION_INVALID'), t)).toBe('Choose a valid option for this question.')

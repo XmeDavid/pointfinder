@@ -170,6 +170,7 @@ public class GameImportExportService {
                         .tempId(teamIdMap.get(team.getId()))
                         .name(team.getName())
                         .color(team.getColor())
+                        .maxPlayers(team.getMaxPlayers())
                         .build())
                 .toList();
 
@@ -387,6 +388,9 @@ public class GameImportExportService {
                         .name(teamDto.getName())
                         .joinCode(joinCode)
                         .color(teamDto.getColor())
+                        // Out-of-range limits from a hand-edited file are dropped rather than failing the import.
+                        .maxPlayers(teamDto.getMaxPlayers() != null && teamDto.getMaxPlayers() >= 1 && teamDto.getMaxPlayers() <= 500
+                                ? teamDto.getMaxPlayers() : null)
                         .build();
                 team = teamRepository.save(team);
                 teamEntityMap.put(teamDto.getTempId(), team);
