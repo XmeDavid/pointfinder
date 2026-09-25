@@ -13,6 +13,12 @@ import { SectionChooser } from '@/features/build/SectionChooser'
 import { ReportListingForm } from '@/features/user-home/ReportListingForm'
 import { AdminReports } from '@/features/admin/AdminReports'
 import { ADMIN_REPORTS_QUERY_KEY } from '@/lib/api/admin'
+import { BaseRouteEditor } from '@/features/build/BaseRouteEditor'
+import type { BaseRouteGroup } from '@/features/build/baseRoutes'
+import { ResourceViewer } from '@/features/org/ResourceViewer'
+import { Button } from '@/components/ui/button'
+import type { Base } from '@/types'
+import type { Resource } from '@/types/resource'
 import type { ChoiceOption } from '@/types'
 import type { DrawerTab } from '@/stores/workspace'
 
@@ -139,6 +145,86 @@ export function ModerationFixtures() {
           <AdminReports />
         </QueryClientProvider>
       </div>
+    </div>
+  )
+}
+
+function base(id: string, name: string, stageId: string | null): Base {
+  return {
+    id, gameId: 'harness', name, description: '', lat: 39.6, lng: -9.07, nfcLinked: true, nfcToken: `tok-${id}`, hidden: false,
+    fixedChallengeId: undefined, tagIds: [], stageId, checkInMethod: 'NFC', checkInRadiusM: null,
+  }
+}
+
+const routes: BaseRouteGroup[] = [
+  { key: 'stage-explore', stageId: 's1', name: 'Explore the old town', enforced: false, bases: [base('b1', 'Fountain', 's1'), base('b2', 'Clock tower', 's1')] },
+  {
+    key: 'stage-trail', stageId: 's2', name: 'Final trail along the cliffs to the lighthouse', enforced: true,
+    bases: [base('b3', 'Harbour', 's2'), base('b4', 'Chapel above the beach with a very long name', 's2'), base('b5', 'Lighthouse', 's2')],
+  },
+]
+
+/** OW-40 fixtures: the route editor with an exploratory stage and an ordered stage, editable and read-only. */
+export function StageRouteFixtures() {
+  const all = routes.flatMap((route) => route.bases)
+  return (
+    <div className="grid gap-4 lg:grid-cols-2" data-testid="harness-stage-routes">
+      <div className="rounded-md border border-border bg-card">
+        <Label>Setup: arrange each ordered stage</Label>
+        <BaseRouteEditor gameId="harness" bases={all} routes={routes} editable onClose={() => {}} />
+      </div>
+      <div className="rounded-md border border-border bg-card">
+        <Label>Live: routes are read-only</Label>
+        <BaseRouteEditor gameId="harness" bases={all} routes={routes} editable={false} onClose={() => {}} />
+      </div>
+    </div>
+  )
+}
+
+const documentResource: Resource = {
+  id: 'harness-doc', orgId: null, gameId: 'harness', folderId: null, type: 'document', name: 'Safety briefing for the coastal trail',
+  contentType: 'text/html', content: '<h2>Before you start</h2><p>Stay on the marked paths and keep the team together near the cliffs.</p><ul><li>Water</li><li>Sun cream</li></ul>',
+  sizeBytes: 2048, sharedWithPlayers: true, downloadUrl: null, createdBy: 'u', createdByName: 'Organizer',
+  createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-20T10:00:00Z',
+}
+const viewerCases: Array<{ key: string; label: string; resource: Resource; online: boolean; mode?: 'read' | 'edit' }> = [
+  { key: 'read', label: 'Document, reading', resource: documentResource, online: true },
+  { key: 'edit', label: 'Document, editing', resource: documentResource, online: true, mode: 'edit' },
+  { key: 'empty', label: 'Empty document', resource: { ...documentResource, id: 'harness-empty', content: '' }, online: true },
+  { key: 'offline', label: 'Document, offline', resource: documentResource, online: false },
+  {
+    key: 'file', label: 'PDF file',
+    resource: { ...documentResource, id: 'harness-file', type: 'file', name: 'Route map.pdf', contentType: 'application/pdf', content: null, sizeBytes: 1_450_000, downloadUrl: 'https://example.invalid/route-map.pdf' },
+    online: true,
+  },
+]
+
+/** OW-08 fixtures: the read-first viewer in each state; opens as a phone-width sheet or a large dialog. */
+export function DocumentViewerFixtures() {
+  const [open, setOpen] = useState<string | null>(null)
+  const current = viewerCases.find((c) => c.key === open)
+  return (
+    <div className="flex flex-wrap gap-2" data-testid="harness-document-viewer">
+      {viewerCases.map((c) => (
+        <Button key={c.key} variant="outline" className="min-h-11" onClick={() => setOpen(c.key)} data-testid={`harness-open-viewer-${c.key}`}>
+          {c.label}
+        </Button>
+      ))}
+      {current && (
+        <ResourceViewer
+          key={current.key}
+          resource={current.resource}
+          scope={{ gameId: 'harness' }}
+          initialMode={current.mode}
+          online={current.online}
+          showShareToggle
+          sharing={false}
+          onToggleShare={() => {}}
+          onSave={async (fields) => ({ ...current.resource, ...fields })}
+          freshDownloadUrl={async () => null}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   )
 }

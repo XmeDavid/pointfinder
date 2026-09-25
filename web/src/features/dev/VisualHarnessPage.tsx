@@ -58,7 +58,7 @@ import { CoachBubble } from '@/components/tour/CoachBubble'
 import { TourPill } from '@/components/tour/TourPill'
 import { VariableAwareChipInput } from '@/components/inputs/VariableAwareChipInput'
 import { ReadinessPanel } from '@/features/build/ReadinessPanel'
-import { ChoiceFixtures, ContentLanguageFixtures, ContentSectionFixtures, ModerationFixtures } from './HarnessFeatureFixtures'
+import { ChoiceFixtures, ContentLanguageFixtures, ContentSectionFixtures, DocumentViewerFixtures, ModerationFixtures, StageRouteFixtures } from './HarnessFeatureFixtures'
 
 const DashboardPreview = lazy(() => import("@/features/dashboard/DashboardPage").then(m => ({ default: m.DashboardPage })))
 
@@ -441,6 +441,14 @@ export function VisualHarnessPage() {
 
           <HarnessSection title="Listing reports (report form, offline, admin review)">
             <ModerationFixtures />
+          </HarnessSection>
+
+          <HarnessSection title="Stage routes (exploratory and ordered stages, setup and live)">
+            <StageRouteFixtures />
+          </HarnessSection>
+
+          <HarnessSection title="Document viewer (read, edit, empty, offline, file)">
+            <DocumentViewerFixtures />
           </HarnessSection>
 
           <HarnessSection title="Continue organizing (setup, live, ended, long title)">
