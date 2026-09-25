@@ -278,6 +278,15 @@
       "notForAdmins": "Plattform-Administratoren können nicht gesperrt werden.",
       "error": "Die Änderung wurde nicht übernommen. Versuch es noch einmal.",
       "badge": "Gesperrt"
+    },
+    "realtime": {
+      "tab": "Echtzeit",
+      "intro": "Echtzeit-Ereignisse, die ein Server vor ihrem Ablauf nicht zustellen konnte. Spieler und Operatoren haben mit dem nächsten Snapshot aufgeholt, daher muss nichts erneut gesendet werden; ein stetiger Strom deutet auf ein Server- oder Netzwerkproblem hin.",
+      "empty": "Keine fehlgeschlagenen Echtzeit-Ereignisse.",
+      "loadError": "Fehlgeschlagene Echtzeit-Ereignisse konnten nicht geladen werden.",
+      "total_one": "{{count}} fehlgeschlagenes Ereignis gespeichert",
+      "total_other": "{{count}} fehlgeschlagene Ereignisse gespeichert",
+      "meta": "Server {{instance}}, Spiel {{game}}, {{attempts}} Versuche, {{when}}"
     }
   },
   "game": {

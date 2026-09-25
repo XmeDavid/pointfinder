@@ -14,6 +14,24 @@ import type { OrgInvoice } from '@/types/billing'
 import type { Game } from '../../types'
 import type { GamePublicationResponse, PublicationReportResponse } from '@pointfinder/api'
 
+/** OW-23: events are refresh signals; clients converge on a snapshot, so these are inspected, never replayed. */
+export interface RealtimeDeadLetters {
+  total: number
+  items: Array<{
+    outboxId: number
+    instanceId: string
+    gameId: string
+    audience: string
+    teamId: string | null
+    eventType: string
+    payload: string
+    attempts: number
+    lastError: string | null
+    createdAt: string
+    deadLetteredAt: string
+  }>
+}
+
 /** Shared by the Reports tab and its count in the admin panel. */
 export const ADMIN_REPORTS_QUERY_KEY = ['admin', 'publication-reports'] as const
 
@@ -37,6 +55,10 @@ export const adminApi = {
 
   unblockUser: (userId: string) =>
     apiClient.post<AdminUserDetail>(`/admin/users/${userId}/unblock`).then(r => r.data),
+
+  // OW-23: realtime events an instance could not deliver; read-only by design.
+  realtimeDeadLetters: (limit = 50) =>
+    apiClient.get<RealtimeDeadLetters>('/admin/realtime/dead-letters', { params: { limit } }).then(r => r.data),
 
   // OW-06: reports from signed-in accounts about listed games, oldest first.
   listReports: () =>

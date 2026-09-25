@@ -278,6 +278,15 @@
       "notForAdmins": "Os administradores da plataforma não podem ser bloqueados.",
       "error": "A alteração não foi feita. Tenta novamente.",
       "badge": "Bloqueada"
+    },
+    "realtime": {
+      "tab": "Tempo real",
+      "intro": "Eventos em tempo real que um servidor não conseguiu entregar antes de expirarem. Jogadores e operadores recuperaram com o snapshot seguinte, por isso nada precisa de ser reenviado; um fluxo constante indica um problema de servidor ou de rede.",
+      "empty": "Não há eventos em tempo real falhados.",
+      "loadError": "Não foi possível carregar os eventos em tempo real falhados.",
+      "total_one": "{{count}} evento falhado guardado",
+      "total_other": "{{count}} eventos falhados guardados",
+      "meta": "Servidor {{instance}}, jogo {{game}}, {{attempts}} tentativas, {{when}}"
     }
   },
   "game": {

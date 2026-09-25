@@ -108,6 +108,38 @@ public class RealtimeOutboxRepository {
         return n == null ? 0 : n;
     }
 
+    /** OW-23: a dead-lettered row as an admin inspects it. */
+    public record DeadLetter(long outboxId, String instanceId, UUID gameId, String audience, UUID teamId, String type,
+                             String payloadJson, int attempts, String lastError, Instant createdAt, Instant deadLetteredAt) {}
+
+    /** Every retained dead letter, across instances. */
+    public long countAllDeadLetters() {
+        Long n = jdbc.queryForObject("SELECT COUNT(*) FROM realtime_outbox_dead_letters", Long.class);
+        return n == null ? 0 : n;
+    }
+
+    /** The most recent dead letters, newest first. Read-only. */
+    public java.util.List<DeadLetter> recentDeadLetters(int limit) {
+        return jdbc.query("""
+                SELECT outbox_id, instance_id, game_id, audience, team_id, event_type, payload::text AS payload,
+                       attempts, last_error, created_at, dead_lettered_at
+                  FROM realtime_outbox_dead_letters
+                 ORDER BY dead_lettered_at DESC, id DESC
+                 LIMIT ?
+                """, (rs, i) -> new DeadLetter(
+                rs.getLong("outbox_id"),
+                rs.getString("instance_id"),
+                rs.getObject("game_id", UUID.class),
+                rs.getString("audience"),
+                rs.getObject("team_id", UUID.class),
+                rs.getString("event_type"),
+                rs.getString("payload"),
+                rs.getInt("attempts"),
+                rs.getString("last_error"),
+                rs.getTimestamp("created_at").toInstant(),
+                rs.getTimestamp("dead_lettered_at").toInstant()), limit);
+    }
+
     public int deleteDeadLettersOlderThan(Instant olderThan) {
         return jdbc.update("DELETE FROM realtime_outbox_dead_letters WHERE dead_lettered_at < ?", Timestamp.from(olderThan));
     }

@@ -139,6 +139,15 @@ mirror freshness. This is not an independent external uptime alert system;
 email workers now forward local monitor transitions to the approved recipient.
 They cannot detect their own complete host loss or a total-site outage.
 
+Realtime events a backend could not deliver before they aged out of the
+outbox are kept in `realtime_outbox_dead_letters` and counted by the
+`realtime.outbox.dead_lettered` metric. Inspect them in the admin panel's
+Realtime tab or with `GET /api/admin/realtime/dead-letters?limit=50` (platform
+admin, read-only, newest first). Do not replay them: each is a refresh signal
+and clients already converged on a snapshot. A steady stream from one
+`instanceId` points at that backend's sockets or network; the retention job
+removes old rows.
+
 ## Recovery and boot dependencies
 
 The main host must load `softdog` before Docker. Installed

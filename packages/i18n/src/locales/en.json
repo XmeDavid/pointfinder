@@ -278,6 +278,15 @@
       "notForAdmins": "Platform administrators cannot be blocked.",
       "error": "The change did not go through. Try again.",
       "badge": "Blocked"
+    },
+    "realtime": {
+      "tab": "Realtime",
+      "intro": "Realtime events a server could not deliver before they expired. Players and operators caught up from their next snapshot, so nothing needs replaying; a steady stream points at a server or network problem.",
+      "empty": "No failed realtime events.",
+      "loadError": "Could not load failed realtime events.",
+      "total_one": "{{count}} failed event kept",
+      "total_other": "{{count}} failed events kept",
+      "meta": "Server {{instance}}, game {{game}}, {{attempts}} attempts, {{when}}"
     }
   },
   "game": {

@@ -18,8 +18,9 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { AdminPublications } from './AdminPublications'
 import { AdminReports } from './AdminReports'
+import { AdminRealtime } from './AdminRealtime'
 
-type Tab = 'users' | 'orgs' | 'publications' | 'reports'
+type Tab = 'users' | 'orgs' | 'publications' | 'reports' | 'realtime'
 type Detail = { type: 'user'; id: string } | { type: 'org'; id: string } | null
 
 const PAGE_SIZE = 50
@@ -158,6 +159,7 @@ export function AdminPanel() {
                     </span>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="realtime" data-testid="admin-tab-realtime">{t('admin.realtime.tab')}</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -212,6 +214,8 @@ export function AdminPanel() {
             {tab === 'publications' && <AdminPublications />}
 
             {tab === 'reports' && <AdminReports />}
+
+            {tab === 'realtime' && <AdminRealtime />}
 
             {/* Orgs tab */}
             {tab === 'orgs' && (
