@@ -46,6 +46,9 @@ class RealtimeStatsControllerTest {
     @MockitoBean
     private com.prayer.pointfinder.security.FrozenAccountFilter frozenAccountFilter;
 
+    @MockitoBean
+    private com.prayer.pointfinder.ha.InstanceIdentity instanceIdentity;
+
     @Test
     void getRealtimeStatsReturnsShape() throws Exception {
         UUID gameId = UUID.randomUUID();
@@ -58,10 +61,13 @@ class RealtimeStatsControllerTest {
                 38,
                 121,
                 95,
-                Instant.parse("2026-04-08T12:34:56Z")
+                Instant.parse("2026-04-08T12:34:56Z"),
+                "instance",
+                null
         );
 
         when(realtimeMetricsService.getStatsForGame(gameId)).thenReturn(response);
+        when(instanceIdentity.id()).thenReturn("api-1");
 
         mockMvc.perform(get("/api/games/{gameId}/realtime-stats", gameId))
                 .andExpect(status().isOk())
@@ -73,7 +79,10 @@ class RealtimeStatsControllerTest {
                 .andExpect(jsonPath("$.stompDisconnectsLastHour").value(38))
                 .andExpect(jsonPath("$.mobileDisconnectsLastHour").value(121))
                 .andExpect(jsonPath("$.estimatedReconnectsLastHour").value(95))
-                .andExpect(jsonPath("$.lastUpdated").value("2026-04-08T12:34:56Z"));
+                .andExpect(jsonPath("$.lastUpdated").value("2026-04-08T12:34:56Z"))
+                // OW-24: the figures are this server's, and it says which server that is.
+                .andExpect(jsonPath("$.scope").value("instance"))
+                .andExpect(jsonPath("$.instanceId").value("api-1"));
 
         verify(gameAccessService).ensureCurrentUserCanAccessGame(gameId);
         verify(realtimeMetricsService).getStatsForGame(gameId);

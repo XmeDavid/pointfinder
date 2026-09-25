@@ -1,6 +1,7 @@
 package com.prayer.pointfinder.controller;
 
 import com.prayer.pointfinder.dto.response.RealtimeStatsResponse;
+import com.prayer.pointfinder.ha.InstanceIdentity;
 import com.prayer.pointfinder.service.GameAccessService;
 import com.prayer.pointfinder.service.RealtimeMetricsService;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,11 @@ public class RealtimeStatsController {
 
     private final RealtimeMetricsService realtimeMetricsService;
     private final GameAccessService gameAccessService;
+    private final InstanceIdentity instanceIdentity;
 
     @GetMapping("/{gameId}/realtime-stats")
     public ResponseEntity<RealtimeStatsResponse> getRealtimeStats(@PathVariable UUID gameId) {
         gameAccessService.ensureCurrentUserCanAccessGame(gameId);
-        return ResponseEntity.ok(realtimeMetricsService.getStatsForGame(gameId));
+        return ResponseEntity.ok(realtimeMetricsService.getStatsForGame(gameId).fromInstance(instanceIdentity.id()));
     }
 }

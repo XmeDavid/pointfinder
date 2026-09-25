@@ -12,6 +12,11 @@ import java.time.Instant;
  * sessions are instantaneous; the {@code …LastHour} fields are rolling
  * one-hour totals. Cumulative counters still live on Micrometer's
  * {@code /actuator/metrics/realtime.*} surface for long-range dashboards.
+ *
+ * <p>OW-24: every figure is the answering process's own; with several
+ * replicas each one counts only the sockets it holds. {@link #scope} is
+ * always {@code "instance"} and {@link #instanceId} names that process, so a
+ * reader never mistakes one server's numbers for the fleet's.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record RealtimeStatsResponse(
@@ -39,5 +44,18 @@ public record RealtimeStatsResponse(
         long estimatedReconnectsLastHour,
 
         /** Server wall clock at which this snapshot was produced. */
-        Instant lastUpdated
-) {}
+        Instant lastUpdated,
+
+        /** Always {@code "instance"}: these numbers cover only the server that answered. */
+        String scope,
+
+        /** The answering server ({@code app.instance-id}, else its hostname). */
+        String instanceId
+) {
+    /** The same figures, labelled with the server that produced them. */
+    public RealtimeStatsResponse fromInstance(String id) {
+        return new RealtimeStatsResponse(stompActiveSessions, mobileActiveSessions, totalActiveSessions,
+                stompConnectsLastHour, mobileConnectsLastHour, stompDisconnectsLastHour, mobileDisconnectsLastHour,
+                estimatedReconnectsLastHour, lastUpdated, "instance", id);
+    }
+}

@@ -156,4 +156,8 @@ export interface RealtimeStats {
   mobileDisconnectsLastHour: number;
   estimatedReconnectsLastHour: number;
   lastUpdated: string;
+  /** OW-24: always "instance": the figures cover only the server that answered, never the fleet. */
+  scope?: "instance";
+  /** The answering server; compare before adding figures from two requests. */
+  instanceId?: string | null;
 }

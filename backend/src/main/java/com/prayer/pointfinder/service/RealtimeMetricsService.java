@@ -227,7 +227,9 @@ public class RealtimeMetricsService {
                 stompDisconnects,
                 mobileDisconnects,
                 stompReconnects + mobileReconnects,
-                now
+                now,
+                "instance",
+                null
         );
     }
 
