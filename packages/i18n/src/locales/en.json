@@ -215,7 +215,8 @@
       "on": "On",
       "off": "Off",
       "invalid": "Enter a number above zero.",
-      "modeFor": "{{limit}} limit"
+      "modeFor": "{{limit}} limit",
+      "activeGames": "Active games"
     },
     "createdBy": "Created by",
     "invoice": {

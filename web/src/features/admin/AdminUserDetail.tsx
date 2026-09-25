@@ -8,6 +8,15 @@ import { Button } from '@/components/ui/button'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
 import { EmptyState } from '@/components/feedback/EmptyState'
+import { ClubLimitsFields } from './ClubLimitsFields'
+import {
+  PERSONAL_LIMIT_FIELDS,
+  invalidLimitKeys,
+  limitsFromOverrides,
+  limitsToOverrides,
+  unmanagedOverrides,
+  type LimitState,
+} from './clubLimits'
 
 const USER_TIERS = ['free', 'pro']
 const SUBSCRIPTION_STATUSES = ['active', 'past_due', 'grace_period', 'frozen', 'cancelled']
@@ -35,9 +44,8 @@ export function AdminUserDetail({ userId, onBack }: Props) {
 
   const [tier, setTier] = useState('')
   const [status, setStatus] = useState('')
-  const [quotaJson, setQuotaJson] = useState('')
+  const [limits, setLimits] = useState<LimitState>({})
   const [adminNote, setAdminNote] = useState('')
-  const [jsonError, setJsonError] = useState('')
   const [saved, setSaved] = useState(false)
 
   // Initialise form once data loads
@@ -45,7 +53,7 @@ export function AdminUserDetail({ userId, onBack }: Props) {
   if (user && !formInit) {
     setTier(user.subscriptionTier)
     setStatus(user.subscriptionStatus)
-    setQuotaJson(user.quotaOverrides ? JSON.stringify(user.quotaOverrides, null, 2) : '')
+    setLimits(limitsFromOverrides(user.quotaOverrides, PERSONAL_LIMIT_FIELDS))
     setAdminNote(user.adminNote ?? '')
     setFormInit(true)
   }
@@ -61,18 +69,12 @@ export function AdminUserDetail({ userId, onBack }: Props) {
     },
   })
 
+  // Keys the form cannot show (set by hand before it existed) survive a save.
+  const invalidLimits = invalidLimitKeys(limits, PERSONAL_LIMIT_FIELDS)
   const handleSave = () => {
-    setJsonError('')
-    let quotaOverrides: Record<string, unknown> | null = null
-    if (quotaJson.trim()) {
-      try {
-        quotaOverrides = JSON.parse(quotaJson)
-      } catch {
-        setJsonError('Invalid JSON')
-        return
-      }
-    }
-    override.mutate({ tier, status, quotaOverrides, adminNote: adminNote || null })
+    if (invalidLimits.length > 0) return
+    const merged = { ...unmanagedOverrides(user?.quotaOverrides, PERSONAL_LIMIT_FIELDS), ...limitsToOverrides(limits, PERSONAL_LIMIT_FIELDS) }
+    override.mutate({ tier, status, quotaOverrides: Object.keys(merged).length ? merged : null, adminNote: adminNote || null })
   }
 
   const formatBytes = (bytes: number) => {
@@ -167,17 +169,15 @@ export function AdminUserDetail({ userId, onBack }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              {t('admin.quotaOverrides', 'Quota Overrides (JSON)')}
-            </label>
-            <textarea
-              value={quotaJson}
-              onChange={e => { setQuotaJson(e.target.value); setJsonError('') }}
-              rows={4}
-              placeholder="{}"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            <p className="block text-sm font-medium text-foreground mb-2">{t('admin.limits.title')}</p>
+            <ClubLimitsFields
+              value={limits}
+              onChange={setLimits}
+              invalidKeys={invalidLimits}
+              disabled={override.isPending}
+              fields={PERSONAL_LIMIT_FIELDS}
+              data-testid="user-limits"
             />
-            {jsonError && <p className="text-xs text-destructive mt-1">{jsonError}</p>}
           </div>
 
           <div>
@@ -195,7 +195,7 @@ export function AdminUserDetail({ userId, onBack }: Props) {
           <div className="flex items-center gap-3">
             <Button
               onClick={handleSave}
-              disabled={override.isPending}
+              disabled={override.isPending || invalidLimits.length > 0}
               loading={override.isPending}
             >
               {override.isPending ? t('common.saving', 'Saving...') : t('admin.saveOverrides', 'Save Overrides')}

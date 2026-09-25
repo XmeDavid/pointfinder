@@ -215,7 +215,8 @@
       "on": "Ligado",
       "off": "Desligado",
       "invalid": "Introduza um número acima de zero.",
-      "modeFor": "Limite de {{limit}}"
+      "modeFor": "Limite de {{limit}}",
+      "activeGames": "Jogos ativos"
     },
     "createdBy": "Criado por",
     "invoice": {

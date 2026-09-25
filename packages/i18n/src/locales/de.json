@@ -215,7 +215,8 @@
       "on": "An",
       "off": "Aus",
       "invalid": "Geben Sie eine Zahl über null ein.",
-      "modeFor": "Limit für {{limit}}"
+      "modeFor": "Limit für {{limit}}",
+      "activeGames": "Aktive Spiele"
     },
     "createdBy": "Erstellt von",
     "invoice": {

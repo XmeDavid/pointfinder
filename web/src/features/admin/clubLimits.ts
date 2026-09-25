@@ -52,7 +52,22 @@ export const CLUB_LIMIT_FIELDS: LimitField[] = [
   { key: 'location_check_in', kind: 'toggle', labelKey: 'admin.limits.locationCheckIn', clubDefault: value('true') },
 ]
 
-const FIELDS_BY_KEY = new Map(CLUB_LIMIT_FIELDS.map((field) => [field.key, field]))
+const tierDefault: LimitEntry = { mode: 'default', input: '' }
+
+/**
+ * The keys a personal (free or Pro) plan reads from a user's
+ * `quota_overrides`; see `QuotaService.resolvePersonalLimits`. There is no
+ * standard deal to pre-fill, so every row starts at the tier default.
+ */
+export const PERSONAL_LIMIT_FIELDS: LimitField[] = [
+  { key: 'max_active_games', kind: 'count', labelKey: 'admin.limits.activeGames', clubDefault: tierDefault },
+  { key: 'max_players_per_game', kind: 'count', labelKey: 'admin.limits.playersPerGame', clubDefault: tierDefault },
+  { key: 'max_bases_per_game', kind: 'count', labelKey: 'admin.limits.basesPerGame', clubDefault: tierDefault },
+  { key: 'max_operators_per_game', kind: 'count', labelKey: 'admin.limits.operatorsPerGame', clubDefault: tierDefault },
+  { key: 'max_file_size_bytes', kind: 'bytes', labelKey: 'admin.limits.fileSize', clubDefault: tierDefault },
+  { key: 'max_resource_storage_bytes', kind: 'bytes', labelKey: 'admin.limits.storage', clubDefault: tierDefault },
+  { key: 'location_check_in', kind: 'toggle', labelKey: 'admin.limits.locationCheckIn', clubDefault: tierDefault },
+]
 
 /** The form a new club opens on: the standard deal, every key explicit. */
 export function clubDefaultLimits(): LimitState {
@@ -71,9 +86,12 @@ function gbInput(bytes: number): string {
  * The form for a club that already exists. A key the org does not carry reads
  * as `default`, an explicit `null` as `unlimited`.
  */
-export function limitsFromOverrides(overrides: Record<string, unknown> | null | undefined): LimitState {
+export function limitsFromOverrides(
+  overrides: Record<string, unknown> | null | undefined,
+  fields: LimitField[] = CLUB_LIMIT_FIELDS,
+): LimitState {
   const state: LimitState = {}
-  for (const field of CLUB_LIMIT_FIELDS) {
+  for (const field of fields) {
     if (!overrides || !(field.key in overrides)) {
       state[field.key] = { mode: 'default', input: '' }
       continue
@@ -98,8 +116,8 @@ export function limitsFromOverrides(overrides: Record<string, unknown> | null | 
 }
 
 /** Keys whose `value` mode carries something that is not a usable number. */
-export function invalidLimitKeys(state: LimitState): string[] {
-  return CLUB_LIMIT_FIELDS.filter((field) => {
+export function invalidLimitKeys(state: LimitState, fields: LimitField[] = CLUB_LIMIT_FIELDS): string[] {
+  return fields.filter((field) => {
     const entry = state[field.key]
     if (!entry || entry.mode !== 'value' || field.kind === 'toggle') return false
     const parsed = Number(entry.input.replace(',', '.'))
@@ -111,9 +129,12 @@ export function invalidLimitKeys(state: LimitState): string[] {
  * The `quotaOverrides` payload. `default` rows are omitted so the tier default
  * applies; `unlimited` rows send an explicit `null`.
  */
-export function limitsToOverrides(state: LimitState): Record<string, number | boolean | null> {
+export function limitsToOverrides(
+  state: LimitState,
+  fields: LimitField[] = CLUB_LIMIT_FIELDS,
+): Record<string, number | boolean | null> {
   const overrides: Record<string, number | boolean | null> = {}
-  for (const field of CLUB_LIMIT_FIELDS) {
+  for (const field of fields) {
     const entry = state[field.key]
     if (!entry || entry.mode === 'default') continue
     if (entry.mode === 'unlimited') {
@@ -139,10 +160,12 @@ export function limitsToOverrides(state: LimitState): Record<string, number | bo
  */
 export function unmanagedOverrides(
   overrides: Record<string, unknown> | null | undefined,
+  fields: LimitField[] = CLUB_LIMIT_FIELDS,
 ): Record<string, unknown> {
+  const byKey = new Map(fields.map((field) => [field.key, field]))
   const extra: Record<string, unknown> = {}
   for (const [key, raw] of Object.entries(overrides ?? {})) {
-    const field = FIELDS_BY_KEY.get(key)
+    const field = byKey.get(key)
     if (!field) {
       extra[key] = raw
       continue

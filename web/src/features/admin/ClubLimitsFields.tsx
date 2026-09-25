@@ -9,6 +9,9 @@ interface Props {
   /** Keys whose number the form cannot use, marked so the row explains itself. */
   invalidKeys?: string[]
   disabled?: boolean
+  /** The rows to show; a club's deal by default, a user's personal plan otherwise. */
+  fields?: LimitField[]
+  'data-testid'?: string
 }
 
 /**
@@ -16,7 +19,14 @@ interface Props {
  * chooses between a number, unlimited, and the tier default; the byte limits
  * are entered in gigabytes because that is how a deal is written down.
  */
-export function ClubLimitsFields({ value, onChange, invalidKeys = [], disabled = false }: Props) {
+export function ClubLimitsFields({
+  value,
+  onChange,
+  invalidKeys = [],
+  disabled = false,
+  fields = CLUB_LIMIT_FIELDS,
+  'data-testid': testId = 'club-limits',
+}: Props) {
   const { t } = useTranslation()
 
   const set = (key: string, next: Partial<LimitState[string]>) => {
@@ -24,8 +34,8 @@ export function ClubLimitsFields({ value, onChange, invalidKeys = [], disabled =
   }
 
   return (
-    <div className="space-y-3" data-testid="club-limits">
-      {CLUB_LIMIT_FIELDS.map((field) => (
+    <div className="space-y-3" data-testid={testId}>
+      {fields.map((field) => (
         <LimitRow
           key={field.key}
           field={field}
