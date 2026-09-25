@@ -25,8 +25,18 @@ export const adminApi = {
   setFeatured: (gameId: string, featured: boolean) =>
     apiClient.post<GamePublicationResponse>(`/admin/publications/${gameId}/${featured ? 'feature' : 'unfeature'}`).then(r => r.data),
 
+  // Owner decision 2026-09-24: an admin removal holds the listing until an admin allows it again.
   removeFromExplore: (gameId: string) =>
-    apiClient.post<GamePublicationResponse>(`/games/${gameId}/publication/unpublish`).then(r => r.data),
+    apiClient.post<GamePublicationResponse>(`/admin/publications/${gameId}/remove`).then(r => r.data),
+
+  releaseListing: (gameId: string) =>
+    apiClient.post<GamePublicationResponse>(`/admin/publications/${gameId}/release`).then(r => r.data),
+
+  blockUser: (userId: string, reason: string) =>
+    apiClient.post<AdminUserDetail>(`/admin/users/${userId}/block`, { reason }).then(r => r.data),
+
+  unblockUser: (userId: string) =>
+    apiClient.post<AdminUserDetail>(`/admin/users/${userId}/unblock`).then(r => r.data),
 
   // OW-06: reports from signed-in accounts about listed games, oldest first.
   listReports: () =>

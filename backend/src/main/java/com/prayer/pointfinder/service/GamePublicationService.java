@@ -116,6 +116,10 @@ public class GamePublicationService {
         throttle();
         GamePublication publication = requirePublication(gameId);
         ensurePublishable(game);
+        if (publication.isOnHold()) {
+            throw new BadRequestException("A platform administrator removed this listing; it can be listed again once they allow it",
+                    ErrorCode.PUBLICATION_ON_HOLD);
+        }
         if (publication.getPublishedAt() == null) {
             User actor = SecurityUtils.getCurrentUser();
             publication.setPublishedAt(Instant.now());
@@ -151,6 +155,58 @@ public class GamePublicationService {
     public List<GamePublicationResponse> listAll() {
         gameAccessService.ensureCurrentUserIsAdmin();
         return publicationRepository.findAllWithGame().stream().map(this::toResponse).toList();
+    }
+
+    /**
+     * Owner decision 2026-09-24: an admin removal delists the game and holds
+     * the listing, so its publisher cannot list it again until an admin
+     * releases it. The summary stays as a draft. Idempotent.
+     */
+    @Transactional
+    public GamePublicationResponse adminRemove(UUID gameId) {
+        gameAccessService.ensureCurrentUserIsAdmin();
+        lockGame(gameId);
+        return toResponse(holdAndDelist(requirePublication(gameId), SecurityUtils.getCurrentUser()));
+    }
+
+    /** Lets the publisher list the game again; does not relist it. Idempotent. */
+    @Transactional
+    public GamePublicationResponse release(UUID gameId) {
+        gameAccessService.ensureCurrentUserIsAdmin();
+        User admin = SecurityUtils.getCurrentUser();
+        Game game = lockGame(gameId);
+        GamePublication publication = requirePublication(gameId);
+        if (publication.isOnHold()) {
+            publication.setModerationHoldAt(null);
+            publication.setModerationHoldBy(null);
+            publication = publicationRepository.saveAndFlush(publication);
+            log.info("[PUBLICATION] operation=release gameId={} adminId={}", gameId, admin.getId());
+            audit(game, "release", null, null, admin);
+        }
+        return toResponse(publication);
+    }
+
+    /**
+     * Delists and holds one publication for {@code actor}, auditing each
+     * change. The caller holds the game row's lock and has authorized the
+     * actor as a platform admin.
+     */
+    GamePublication holdAndDelist(GamePublication publication, User actor) {
+        Game game = publication.getGame();
+        if (publication.getPublishedAt() != null) {
+            publication.setPublishedAt(null);
+            publication.setPublishedBy(null);
+            clearFeatured(publication);
+            log.info("[PUBLICATION] operation=unpublish gameId={} adminId={}", game.getId(), actor.getId());
+            audit(game, "unpublish", null, null, actor);
+        }
+        if (!publication.isOnHold()) {
+            publication.setModerationHoldAt(Instant.now());
+            publication.setModerationHoldBy(actor);
+            log.info("[PUBLICATION] operation=hold gameId={} adminId={}", game.getId(), actor.getId());
+            audit(game, "hold", null, null, actor);
+        }
+        return publicationRepository.saveAndFlush(publication);
     }
 
     /** Featured is a curation flag on a listed publication; delisting clears it. */
@@ -240,7 +296,10 @@ public class GamePublicationService {
 
     /** One audit row per listing change, carrying the acting account. */
     private void audit(Game game, String operation, Team team, Team previousTeam) {
-        User actor = SecurityUtils.getCurrentUser();
+        audit(game, operation, team, previousTeam, SecurityUtils.getCurrentUser());
+    }
+
+    private void audit(Game game, String operation, Team team, Team previousTeam, User actor) {
         eventRepository.save(GamePublicationEvent.builder()
                 .game(game)
                 .operation(operation)
@@ -293,6 +352,7 @@ public class GamePublicationService {
                 p.getPublishedBy() != null ? p.getPublishedBy().getName() : null,
                 Boolean.TRUE.equals(p.getFeatured()),
                 p.getFeaturedAt(),
-                p.getUpdatedAt());
+                p.getUpdatedAt(),
+                p.isOnHold());
     }
 }

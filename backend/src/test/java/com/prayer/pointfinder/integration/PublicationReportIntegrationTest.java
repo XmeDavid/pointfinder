@@ -181,10 +181,11 @@ class PublicationReportIntegrationTest extends IntegrationTestBase {
         assertTrue(gameRepository.findById(game.getId()).isPresent());
         JsonNode draft = node(call(owner, HttpMethod.GET, "/api/games/" + game.getId() + "/publication", null));
         assertEquals("A walk along the harbour.", draft.get("summary").asText());
+        // Removal delists and holds the listing (owner decision 2026-09-24), both as the admin's own actions.
         List<GamePublicationEvent> events = publicationEventRepository.findByGameIdOrderByCreatedAtAsc(game.getId());
-        GamePublicationEvent last = events.get(events.size() - 1);
-        assertEquals("unpublish", last.getOperation());
-        assertEquals(admin.getId(), last.getActorUser().getId());
+        List<String> lastTwo = events.subList(events.size() - 2, events.size()).stream().map(GamePublicationEvent::getOperation).toList();
+        assertEquals(List.of("unpublish", "hold"), lastTwo);
+        assertTrue(events.subList(events.size() - 2, events.size()).stream().allMatch(e -> e.getActorUser().getId().equals(admin.getId())));
     }
 
     @Test

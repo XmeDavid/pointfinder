@@ -10,5 +10,7 @@ public record AdminUserResponse(
     String role,
     String subscriptionTier,
     String subscriptionStatus,
-    Instant createdAt
+    Instant createdAt,
+    /** When a platform admin blocked the account, or null. */
+    Instant blockedAt
 ) {}

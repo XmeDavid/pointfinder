@@ -25,5 +25,7 @@ public record GamePublicationResponse(
         String publishedByName,
         boolean featured,
         Instant featuredAt,
-        Instant updatedAt
+        Instant updatedAt,
+        /** A platform admin removed the listing; it cannot be listed again until an admin releases it. */
+        boolean moderationHold
 ) {}

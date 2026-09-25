@@ -190,6 +190,7 @@ export function AdminPanel() {
                         <div className="flex items-center gap-2 ml-4 shrink-0">
                           <AdminBadge value={u.subscriptionTier} toneMap={TIER_TONES} />
                           <AdminBadge value={u.subscriptionStatus} toneMap={STATUS_TONES} />
+                          {u.blockedAt && <StatusBadge tone="destructive" label={t('admin.block.badge')} />}
                           <span className="text-xs text-muted-foreground">→</span>
                         </div>
                       </li>

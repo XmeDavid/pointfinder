@@ -65,6 +65,21 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = true;
 
+    /** Set when a platform admin blocks the account: no sign-in, no session, listings held. */
+    @Column(name = "blocked_at")
+    private Instant blockedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "blocked_by")
+    private User blockedBy;
+
+    @Column(name = "blocked_reason", length = 500)
+    private String blockedReason;
+
+    public boolean isBlocked() {
+        return blockedAt != null;
+    }
+
     @ManyToMany(mappedBy = "operators")
     @Builder.Default
     private Set<Game> operatedGames = new HashSet<>();

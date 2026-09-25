@@ -161,6 +161,10 @@ export function createApi(http: HttpClient) {
       list: () => http.get<GamePublicationResponse[]>('/api/admin/publications'),
       feature: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/feature`),
       unfeature: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/unfeature`),
+      /** Delists and holds the listing until an admin releases it (owner decision 2026-09-24). */
+      remove: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/remove`),
+      /** Lets the publisher list the game again; does not relist it. */
+      release: (gameId: EntityId) => http.post<GamePublicationResponse>(`/api/admin/publications/${encodeURIComponent(gameId)}/release`),
       /** OW-06: open reports, oldest first. */
       reports: () => http.get<PublicationReportResponse[]>('/api/admin/publications/reports'),
       /** Closes the game's open reports; the listing stays. */

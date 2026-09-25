@@ -78,6 +78,8 @@ public class AuthService {
         }
 
         loginAttemptService.recordSuccess(request.getEmail());
+        // Checked only after the password, so a stranger cannot learn an account is blocked.
+        ensureNotBlocked(user);
         // A participant account signs in here too (the player app keeps it signed in);
         // the operator-only security default is what keeps that token harmless elsewhere.
         return generateAuthResponse(user);
@@ -246,6 +248,7 @@ public class AuthService {
         // immediately. This handles the race condition where a page refresh kills
         // the browser before the new token response is processed — the client
         // retries with the old token on reload and it still works.
+        ensureNotBlocked(storedToken.getUser());
         storedToken.setExpiresAt(Instant.now().plusSeconds(30));
         refreshTokenRepository.save(storedToken);
 
@@ -263,6 +266,7 @@ public class AuthService {
     public AuthResponse exchangeForOrganizerSession(User authUser) {
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new BadRequestException("User not found"));
+        ensureNotBlocked(user);
         if (user.getRole() == UserRole.participant) {
             throw new ForbiddenException("Organizer role required", ErrorCode.ORGANIZER_ROLE_REQUIRED);
         }
@@ -340,6 +344,13 @@ public class AuthService {
      * bumps consistently. Initialises null values (legacy rows before V54's
      * default) to a fresh counter of 1.
      */
+    /** A platform admin blocked this account: no sign-in and no refreshed session. */
+    private static void ensureNotBlocked(User user) {
+        if (user.isBlocked()) {
+            throw new ForbiddenException("This account has been blocked", ErrorCode.ACCOUNT_BLOCKED);
+        }
+    }
+
     private void bumpTokenVersion(User user) {
         int current = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
         user.setTokenVersion(current + 1);

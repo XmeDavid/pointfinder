@@ -245,10 +245,12 @@
       "unfeature": "Stop featuring",
       "remove": "Remove from Explore",
       "removeTitle": "Remove {{title}} from Explore?",
-      "removeDescription": "The listing disappears from Explore and loses its featured place. The game, its players and the organizer's draft summary stay; the organizer can publish again.",
+      "removeDescription": "The listing disappears from Explore and loses its featured place. The game, its players and the organizer's draft summary stay, but the organizer cannot list it again until an administrator allows it.",
       "actionError": "The change did not go through. Try again.",
       "meta": "{{organizer}} · published {{date}}",
-      "filterListed": "Listed only"
+      "filterListed": "Listed only",
+      "onHold": "On hold",
+      "release": "Allow listing again"
     },
     "reports": {
       "tab": "Reports",
@@ -262,6 +264,20 @@
       "dismiss": "Dismiss",
       "remove": "Remove from Explore",
       "actionError": "The change did not go through. Try again."
+    },
+    "block": {
+      "title": "Account access",
+      "intro": "Blocking signs the account out everywhere and refuses sign-in. Its Explore listings are removed and held. Its games, teams and players stay.",
+      "reason": "Reason for blocking",
+      "block": "Block account",
+      "confirmTitle": "Block {{name}}?",
+      "confirmDescription": "They are signed out on every device and cannot sign in. Their Explore listings are removed and held until an administrator allows them again.",
+      "blocked": "Blocked on {{date}}: {{reason}}",
+      "unblock": "Unblock account",
+      "unblockHint": "Unblocking restores sign-in only. Held listings stay held until you allow each one again in Publications.",
+      "notForAdmins": "Platform administrators cannot be blocked.",
+      "error": "The change did not go through. Try again.",
+      "badge": "Blocked"
     }
   },
   "game": {
@@ -1167,7 +1183,9 @@
     "CHOICE_OPTIONS_INVALID": "Check the options: at least two, each with text, and the right number of correct ones for the challenge type.",
     "CHOICE_SELECTION_INVALID": "Choose a valid option for this challenge.",
     "CHOICE_ALREADY_ANSWERED": "Your team already answered this one.",
-    "TEAM_FULL": "This team is full. Ask the organizer for another team's code."
+    "TEAM_FULL": "This team is full. Ask the organizer for another team's code.",
+    "ACCOUNT_BLOCKED": "This account has been blocked by an administrator. Contact support if you think this is a mistake.",
+    "PUBLICATION_ON_HOLD": "An administrator removed this game from Explore. It cannot be listed again until they allow it."
   },
   "realtimeHealth": {
     "title": "Realtime Health",
@@ -1917,7 +1935,8 @@
       "CHECK_IN_OUT_OF_RANGE": "You're about {{distance}} m away. Get within {{allowed}} m of the base.",
       "CHECK_IN_CLAIM_NOT_DWELLED": "Stay near the base a little longer, then try again.",
       "CHOICE_ALREADY_ANSWERED": "Your team already answered this one.",
-      "CHOICE_SELECTION_INVALID": "Choose a valid option for this question."
+      "CHOICE_SELECTION_INVALID": "Choose a valid option for this question.",
+      "ACCOUNT_BLOCKED": "This account has been blocked by an administrator. Contact support if you think this is a mistake."
     },
     "sync": {
       "pending_one": "{{count}} action waiting to sync",
@@ -3072,7 +3091,8 @@
     "saveError": "The change could not be completed. Your text is still here. Try again.",
     "offline": "You’re offline. Reconnect to load or save your listing.",
     "contentLanguage": "Players see the content language: {{language}}. Change it under Game Details.",
-    "contentLanguageUnknown": "Players will see that the content language is not specified. Set it under Game Details so they know whether they can follow your challenges."
+    "contentLanguageUnknown": "Players will see that the content language is not specified. Set it under Game Details so they know whether they can follow your challenges.",
+    "onHold": "An administrator removed this game from Explore. It cannot be listed again until they allow it. Contact support if you think this is a mistake."
   },
   "gameSettings": {
     "title": "Game Settings",

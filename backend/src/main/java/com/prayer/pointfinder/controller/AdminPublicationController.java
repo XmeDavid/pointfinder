@@ -40,6 +40,18 @@ public class AdminPublicationController {
         return ResponseEntity.ok(publicationService.setFeatured(gameId, false));
     }
 
+    /** Delists the game and holds it until an admin releases it (owner decision 2026-09-24). */
+    @PostMapping("/{gameId}/remove")
+    public ResponseEntity<GamePublicationResponse> remove(@PathVariable UUID gameId) {
+        return ResponseEntity.ok(publicationService.adminRemove(gameId));
+    }
+
+    /** Lets the publisher list the game again; does not relist it. */
+    @PostMapping("/{gameId}/release")
+    public ResponseEntity<GamePublicationResponse> release(@PathVariable UUID gameId) {
+        return ResponseEntity.ok(publicationService.release(gameId));
+    }
+
     /** Open reports, oldest first. */
     @GetMapping("/reports")
     public ResponseEntity<List<PublicationReportResponse>> reports() {

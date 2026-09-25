@@ -13,6 +13,8 @@ public interface PublicationReportRepository extends JpaRepository<PublicationRe
 
     boolean existsByGameIdAndReporterIdAndStatus(UUID gameId, UUID reporterId, PublicationReportStatus status);
 
+    boolean existsByGameIdAndStatus(UUID gameId, PublicationReportStatus status);
+
     List<PublicationReport> findByGameIdAndStatus(UUID gameId, PublicationReportStatus status);
 
     /** Open reports for the admin queue, oldest first, with the game and its publication state. */

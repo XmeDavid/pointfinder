@@ -8,6 +8,8 @@ export interface AdminUser {
   subscriptionTier: string
   subscriptionStatus: string
   createdAt: string
+  /** When a platform admin blocked the account, or null. */
+  blockedAt?: string | null
 }
 
 export interface AdminUserDetail extends AdminUser {
@@ -19,6 +21,7 @@ export interface AdminUserDetail extends AdminUser {
   gameCount: number
   orgCount: number
   resourceStorageBytes: number
+  blockedReason?: string | null
 }
 
 export interface AdminOrg {

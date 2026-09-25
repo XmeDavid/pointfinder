@@ -9,5 +9,6 @@ public record AdminUserDetailResponse(
     String subscriptionTier, String subscriptionStatus, String billingCycle,
     Instant currentPeriodEnd, Instant gracePeriodEnd,
     Map<String, Object> quotaOverrides, String adminNote,
-    int gameCount, int orgCount, long resourceStorageBytes, Instant createdAt
+    int gameCount, int orgCount, long resourceStorageBytes, Instant createdAt,
+    Instant blockedAt, String blockedReason
 ) {}

@@ -108,3 +108,20 @@ it("does not offer publication mutations to a co-operator", async () => {
   );
   expect(screen.queryByTestId("publication-form")).not.toBeInTheDocument();
 });
+it("explains an admin hold and cannot be made public again (owner decision 2026-09-24)", async () => {
+  server.use(
+    http.get("/api/games/game-1/publication", () =>
+      HttpResponse.json({
+        gameId: "game-1", gameName: "River adventure", gameStatus: "live", organizer: "Owner", contentLanguage: null,
+        title: "River adventure", summary: "Along the river", place: "Coimbra", lat: null, lng: null, category: "other",
+        admissionTeamId: null, admissionTeamName: null, listed: false, publishedAt: null, publishedById: null,
+        publishedByName: null, featured: false, featuredAt: null, updatedAt: "2026-09-24T10:00:00Z", moderationHold: true,
+      }),
+    ),
+  );
+  renderSection();
+  expect(await screen.findByTestId("publication-hold")).toHaveTextContent(
+    "An administrator removed this game from Explore",
+  );
+  expect(screen.getByRole("switch", { name: "Make it public" })).toBeDisabled();
+});

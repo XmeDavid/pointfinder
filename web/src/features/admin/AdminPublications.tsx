@@ -17,8 +17,9 @@ const QUERY_KEY = ['admin', 'publications'] as const
 
 /**
  * OW-06: platform-admin curation of Explore. Featuring is a flag on a listed
- * publication; removing a listing is the ordinary unpublish, which keeps the
- * game, its players and the organizer's draft summary.
+ * publication. Removing a listing delists it and holds it (owner decision
+ * 2026-09-24): the game, its players and the draft summary stay, and the
+ * organizer cannot list it again until an admin allows it here.
  */
 export function AdminPublications() {
   const { t, i18n } = useTranslation()
@@ -38,7 +39,10 @@ export function AdminPublications() {
     onSuccess: refresh,
   })
   const remove = useMutation({ mutationFn: (gameId: string) => adminApi.removeFromExplore(gameId), onSuccess: refresh })
-  const busyId = (feature.isPending ? feature.variables?.gameId : undefined) ?? (remove.isPending ? remove.variables : undefined)
+  const release = useMutation({ mutationFn: (gameId: string) => adminApi.releaseListing(gameId), onSuccess: refresh })
+  const busyId = (feature.isPending ? feature.variables?.gameId : undefined)
+    ?? (remove.isPending ? remove.variables : undefined)
+    ?? (release.isPending ? release.variables : undefined)
 
   const rows = useMemo(() => {
     const all = publications.data ?? []
@@ -55,7 +59,7 @@ export function AdminPublications() {
         <Switch id="admin-publications-listed" checked={listedOnly} onCheckedChange={setListedOnly} />
         <label htmlFor="admin-publications-listed" className="text-sm">{t('admin.publications.filterListed')}</label>
       </div>
-      {(feature.isError || remove.isError) && (
+      {(feature.isError || remove.isError || release.isError) && (
         <p role="alert" className="mb-3 text-sm text-destructive">{t('admin.publications.actionError')}</p>
       )}
       {publications.isPending && <LoadingState label={t('common.loading')} />}
@@ -74,6 +78,9 @@ export function AdminPublications() {
                   <p className="min-w-0 truncate text-sm font-medium text-foreground">{p.title || p.gameName}</p>
                   <GameStatusBadge status={p.gameStatus} />
                   <StatusBadge size="sm" tone={p.listed ? 'success' : 'muted'} label={t(p.listed ? 'admin.publications.listed' : 'admin.publications.draft')} />
+                  {p.moderationHold && (
+                    <StatusBadge size="sm" tone="warning" label={t('admin.publications.onHold')} />
+                  )}
                   {p.featured && (
                     <StatusBadge size="sm" tone="info" label={<span className="inline-flex items-center gap-1"><Star className="h-3 w-3" aria-hidden />{t('admin.publications.featured')}</span>} />
                   )}
@@ -97,6 +104,18 @@ export function AdminPublications() {
                     data-testid={`admin-feature-${p.gameId}`}
                   >
                     {t(p.featured ? 'admin.publications.unfeature' : 'admin.publications.feature')}
+                  </Button>
+                )}
+                {p.moderationHold && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11"
+                    disabled={busyId === p.gameId}
+                    onClick={() => release.mutate(p.gameId)}
+                    data-testid={`admin-release-${p.gameId}`}
+                  >
+                    {t('admin.publications.release')}
                   </Button>
                 )}
                 {p.listed && (

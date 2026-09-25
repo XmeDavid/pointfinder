@@ -75,6 +75,14 @@ describe('LoginPage', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(true)
   })
 
+  it('says a blocked account is blocked instead of calling the password wrong', async () => {
+    server.use(http.post('/api/auth/login', () => HttpResponse.json({ message: 'This account has been blocked', code: 'ACCOUNT_BLOCKED' }, { status: 403 })))
+    mount()
+    await signIn()
+    expect(await screen.findByText(/This account has been blocked by an administrator/)).toBeInTheDocument()
+    expect(screen.queryByText('Invalid email or password')).not.toBeInTheDocument()
+  })
+
   it('keeps the form and its error on a failed sign-in', async () => {
     server.use(http.post('/api/auth/login', () => HttpResponse.json({ message: 'Invalid credentials' }, { status: 401 })))
     mount()

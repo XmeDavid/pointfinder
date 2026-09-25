@@ -164,6 +164,11 @@ function PublicationEditor({
       }}
       data-testid="publication-form"
     >
+      {saved?.moderationHold && (
+        <p role="status" className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm" data-testid="publication-hold">
+          {t("onHold")}
+        </p>
+      )}
       <fieldset disabled={mutation.isPending} className="space-y-4">
         <div className="flex min-h-11 items-center justify-between gap-3">
           <label htmlFor={`public-${game.id}`} className="text-sm font-medium">
@@ -173,7 +178,7 @@ function PublicationEditor({
             id={`public-${game.id}`}
             checked={listed}
             onCheckedChange={setListed}
-            disabled={!online || (game.status === "ended" && !listed)}
+            disabled={!online || (game.status === "ended" && !listed) || (!!saved?.moderationHold && !listed)}
           />
         </div>
         {listed && (

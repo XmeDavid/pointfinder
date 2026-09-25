@@ -66,6 +66,8 @@ public enum ErrorCode {
     EMAIL_CHANGE_TOKEN_EXPIRED,
     /** An operator session was requested for an account that is a participant, not an operator or admin (OW-01). */
     ORGANIZER_ROLE_REQUIRED,
+    /** A platform admin blocked this account; it cannot sign in or refresh a session. */
+    ACCOUNT_BLOCKED,
 
     // ── Billing / account state ──────────────────────────────────────────
     /** The operator's account is frozen; they must update their payment method. */
@@ -122,6 +124,8 @@ public enum ErrorCode {
     PUBLICATION_TEAM_INVALID,
     /** No new participation can be created from Explore: listing gone, game not live, or no admission team. */
     PUBLICATION_ADMISSION_CLOSED,
+    /** A platform admin removed this listing; it cannot be listed again until an admin releases it. */
+    PUBLICATION_ON_HOLD,
 
     // ── Quota enforcement ────────────────────────────────────────────────
     /** User has reached the maximum number of active games for their tier. */

@@ -71,6 +71,9 @@ app:
   mail:
     from: ${MAIL_FROM:info@pointfinder.pt}
     enabled: ${MAIL_ENABLED:false}
+  moderation:
+    # Comma-separated. The first open report on a listing emails these addresses.
+    alert-emails: ${MODERATION_ALERT_EMAILS:dev@davidsbatista.com}
   apns:
     enabled: ${APNS_ENABLED:false}
     # Default to the Apple key filename convention used in the mounted secrets folder.

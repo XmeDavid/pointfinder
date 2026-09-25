@@ -39,4 +39,12 @@ public interface GamePublicationRepository extends JpaRepository<GamePublication
             ORDER BY p.updatedAt DESC
             """)
     List<GamePublication> findAllWithGame();
+
+    /** Listed publications of games this account created or listed; blocking the account takes them down. */
+    @Query("""
+            SELECT p.gameId FROM GamePublication p
+              JOIN p.game g LEFT JOIN g.createdBy creator LEFT JOIN p.publishedBy publisher
+            WHERE p.publishedAt IS NOT NULL AND (creator.id = :userId OR publisher.id = :userId)
+            """)
+    List<UUID> findListedGameIdsByCreatorOrPublisher(@Param("userId") UUID userId);
 }

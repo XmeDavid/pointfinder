@@ -18,6 +18,11 @@ describe('describeError', () => {
     expect(describeError(apiError('TUTORIAL_PRACTICE_GAME_PLAYER_LIMIT'), t)).toBe('This practice game already has its one player.')
   })
 
+  it('says an account is blocked rather than echoing the server', () => {
+    expect(describeError(new ApiError({ status: 403, message: 'server text', code: 'ACCOUNT_BLOCKED', fieldErrors: {} }), t))
+      .toBe('This account has been blocked by an administrator. Contact support if you think this is a mistake.')
+  })
+
   it('explains that a team is full without echoing the server (OW-05)', () => {
     expect(describeError(apiError('TEAM_FULL'), t)).toBe("This team is full. Ask the organizer for another team's code.")
   })

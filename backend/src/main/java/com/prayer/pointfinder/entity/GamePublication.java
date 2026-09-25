@@ -75,6 +75,14 @@ public class GamePublication {
     @JoinColumn(name = "featured_by")
     private User featuredBy;
 
+    /** Set when a platform admin removes the listing; the publisher cannot list it again until released. */
+    @Column(name = "moderation_hold_at")
+    private Instant moderationHoldAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderation_hold_by")
+    private User moderationHoldBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -85,5 +93,9 @@ public class GamePublication {
 
     public boolean isListed() {
         return publishedAt != null;
+    }
+
+    public boolean isOnHold() {
+        return moderationHoldAt != null;
     }
 }

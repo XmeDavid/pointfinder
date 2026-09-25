@@ -857,6 +857,8 @@ export interface GamePublicationResponse {
   featured: boolean
   featuredAt: IsoDateTime | null
   updatedAt: IsoDateTime
+  /** A platform admin removed the listing; it cannot be listed again until an admin releases it. */
+  moderationHold: boolean
 }
 
 /** Bounded Explore query. `lat`/`lng` together; `radiusKm` needs them. */

@@ -218,6 +218,37 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, html);
     }
 
+    /**
+     * OW-06: tells the moderation recipients that a listing received its first
+     * open report. Everything organizer- or reporter-written is escaped.
+     */
+    @Async
+    public void sendModerationAlert(java.util.List<String> recipients, String gameName, String reason, String details, String reporterName) {
+        String subject = "Explore listing reported: " + gameName.replaceAll("[\\r\\n]+", " ");
+        String link = frontendUrl + "/admin";
+        String detailsHtml = details == null || details.isBlank() ? "" : """
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6; white-space: pre-line;">%s</p>
+                """.formatted(escapeHtml(details));
+        String html = buildEmailTemplate(
+                "Moderation",
+                "A listing was reported",
+                """
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    <strong>%s</strong> reported <strong>%s</strong> in Explore as <strong>%s</strong>.
+                </p>
+                %s
+                <p style="margin: 0 0 14px; color: #404040; font-size: 16px; line-height: 1.6;">
+                    Review it in the admin panel's Reports tab: dismiss the report or remove the listing.
+                </p>
+                """.formatted(escapeHtml(reporterName), escapeHtml(gameName), escapeHtml(reason), detailsHtml),
+                "Open reports",
+                link
+        );
+        for (String recipient : recipients) {
+            sendHtmlEmail(recipient, subject, html);
+        }
+    }
+
     private String loadEmailTemplate() {
         if (emailTemplateCache != null) {
             return emailTemplateCache;

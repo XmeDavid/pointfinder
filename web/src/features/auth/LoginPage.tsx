@@ -46,7 +46,10 @@ export function LoginPage() {
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-      if (status === 429) {
+      const code = axios.isAxiosError(err) ? (err.response?.data as { code?: string } | undefined)?.code : undefined;
+      if (code === "ACCOUNT_BLOCKED") {
+        setError(t("errors.ACCOUNT_BLOCKED"));
+      } else if (status === 429) {
         setError(t("auth.tooManyAttempts"));
       } else if (status === 500) {
         setError(t("auth.serverError"));

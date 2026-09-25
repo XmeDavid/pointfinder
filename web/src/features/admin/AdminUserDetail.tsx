@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { adminApi } from '@/lib/api/admin'
+import type { AdminUserDetail as AdminUserDetailModel } from '@/types/admin'
 import { Spinner } from '@/components/feedback/Spinner'
 import { Button } from '@/components/ui/button'
 import { SurfacePanel } from '@/components/layout/SurfacePanel'
 import { ResultsStat, ResultsSummary } from '@/components/results/ResultsSummary'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ClubLimitsFields } from './ClubLimitsFields'
+import { Textarea } from '@/components/ui/textarea'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-dialog'
 import {
   PERSONAL_LIMIT_FIELDS,
   invalidLimitKeys,
@@ -45,6 +48,8 @@ export function AdminUserDetail({ userId, onBack }: Props) {
   const [tier, setTier] = useState('')
   const [status, setStatus] = useState('')
   const [limits, setLimits] = useState<LimitState>({})
+  const [blockReason, setBlockReason] = useState('')
+  const [confirmBlock, setConfirmBlock] = useState(false)
   const [adminNote, setAdminNote] = useState('')
   const [saved, setSaved] = useState(false)
 
@@ -68,6 +73,16 @@ export function AdminUserDetail({ userId, onBack }: Props) {
       setTimeout(() => setSaved(false), 2000)
     },
   })
+
+  // Owner decision 2026-09-24: admins can block abusive accounts.
+  const accountChanged = (next: AdminUserDetailModel) => {
+    queryClient.setQueryData(['admin', 'user', userId], next)
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'publications'] })
+    setBlockReason('')
+  }
+  const block = useMutation({ mutationFn: (reason: string) => adminApi.blockUser(userId, reason), onSuccess: accountChanged })
+  const unblock = useMutation({ mutationFn: () => adminApi.unblockUser(userId), onSuccess: accountChanged })
 
   // Keys the form cannot show (set by hand before it existed) survive a save.
   const invalidLimits = invalidLimitKeys(limits, PERSONAL_LIMIT_FIELDS)
@@ -208,6 +223,66 @@ export function AdminUserDetail({ userId, onBack }: Props) {
             )}
           </div>
         </div>
+      </SurfacePanel>
+
+      {/* Account access: blocking (owner decision 2026-09-24) */}
+      <SurfacePanel padding="lg" className="mb-6">
+        <h3 className="font-semibold text-foreground mb-2">{t('admin.block.title')}</h3>
+        {user.role === 'admin' ? (
+          <p className="text-sm text-muted-foreground">{t('admin.block.notForAdmins')}</p>
+        ) : user.blockedAt ? (
+          <div className="space-y-3" data-testid="admin-user-blocked">
+            <p className="text-sm text-foreground break-words">
+              {t('admin.block.blocked', {
+                date: new Date(user.blockedAt).toLocaleDateString(i18n.language),
+                reason: user.blockedReason ?? '',
+              })}
+            </p>
+            <p className="text-xs text-muted-foreground">{t('admin.block.unblockHint')}</p>
+            <Button variant="outline" className="min-h-11" onClick={() => unblock.mutate()} loading={unblock.isPending} disabled={unblock.isPending}>
+              {t('admin.block.unblock')}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t('admin.block.intro')}</p>
+            <div>
+              <label htmlFor="admin-block-reason" className="block text-sm font-medium text-foreground mb-1">{t('admin.block.reason')}</label>
+              <Textarea
+                id="admin-block-reason"
+                value={blockReason}
+                maxLength={500}
+                rows={2}
+                onChange={(e) => setBlockReason(e.target.value)}
+                disabled={block.isPending}
+              />
+            </div>
+            <Button
+              variant="destructive"
+              className="min-h-11"
+              disabled={!blockReason.trim() || block.isPending}
+              loading={block.isPending}
+              onClick={() => setConfirmBlock(true)}
+              data-testid="admin-user-block"
+            >
+              {t('admin.block.block')}
+            </Button>
+          </div>
+        )}
+        {(block.isError || unblock.isError) && (
+          <p role="alert" className="mt-2 text-sm text-destructive">{t('admin.block.error')}</p>
+        )}
+        <ConfirmDeleteDialog
+          open={confirmBlock}
+          title={t('admin.block.confirmTitle', { name: user.name })}
+          description={t('admin.block.confirmDescription')}
+          confirmLabel={t('admin.block.block')}
+          onCancel={() => setConfirmBlock(false)}
+          onConfirm={() => {
+            setConfirmBlock(false)
+            block.mutate(blockReason.trim())
+          }}
+        />
       </SurfacePanel>
 
       {/* Games list */}

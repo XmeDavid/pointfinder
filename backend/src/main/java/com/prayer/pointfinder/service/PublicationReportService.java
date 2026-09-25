@@ -15,10 +15,14 @@ import com.prayer.pointfinder.repository.PublicationReportRepository;
 import com.prayer.pointfinder.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +40,13 @@ import java.util.stream.Collectors;
  *
  * <p>Resolution takes the game row's write lock first, the same lock order
  * every publication mutation uses, so a dismiss and a remove never interleave.
+ * Removal holds the listing (owner decision 2026-09-24).
+ *
+ * <p>Alerts: when a game receives its first open report, the moderation
+ * recipients ({@code app.moderation.alert-emails}) get one email after the
+ * report commits. Further reports on that game while it has open reports do
+ * not send more, so a pile-on cannot flood the inbox; resolving the reports
+ * re-arms the alert.
  */
 @Service
 @RequiredArgsConstructor
@@ -47,6 +58,10 @@ public class PublicationReportService {
     private final GameRepository gameRepository;
     private final GamePublicationService publicationService;
     private final GameAccessService gameAccessService;
+    private final EmailService emailService;
+
+    @Value("${app.moderation.alert-emails:}")
+    private String alertEmails;
 
     /** 404 for anything Explore does not list, so reports cannot probe unlisted games. */
     @Transactional
@@ -59,6 +74,7 @@ public class PublicationReportService {
             return;
         }
         String details = request.getDetails() == null || request.getDetails().isBlank() ? null : request.getDetails().trim();
+        boolean firstOpen = !reportRepository.existsByGameIdAndStatus(gameId, PublicationReportStatus.open);
         reportRepository.saveAndFlush(PublicationReport.builder()
                 .game(publication.getGame())
                 .reporter(reporter)
@@ -67,6 +83,24 @@ public class PublicationReportService {
                 .details(details)
                 .build());
         log.info("[PUBLICATION] operation=report gameId={} userId={} reason={}", gameId, reporter.getId(), reason);
+        if (firstOpen) alertAfterCommit(publication.getGame().getName(), reason.name(), details, reporter.getName());
+    }
+
+    private void alertAfterCommit(String gameName, String reason, String details, String reporterName) {
+        List<String> recipients = Arrays.stream(alertEmails.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).toList();
+        if (recipients.isEmpty()) return;
+        Runnable send = () -> emailService.sendModerationAlert(recipients, gameName, reason, details, reporterName);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    send.run();
+                }
+            });
+        } else {
+            send.run();
+        }
     }
 
     /** Open reports, oldest first. */
@@ -104,7 +138,7 @@ public class PublicationReportService {
     @Transactional
     public GamePublicationResponse remove(UUID gameId) {
         gameAccessService.ensureCurrentUserIsAdmin();
-        GamePublicationResponse unpublished = publicationService.unpublish(gameId);
+        GamePublicationResponse unpublished = publicationService.adminRemove(gameId);
         int closed = resolve(gameId, PublicationReportStatus.removed);
         log.info("[PUBLICATION] operation=removeReported gameId={} adminId={} reports={}", gameId, SecurityUtils.getCurrentUser().getId(), closed);
         return unpublished;

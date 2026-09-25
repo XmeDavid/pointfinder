@@ -43,7 +43,8 @@ public class AdminService {
                     u.getRole().name(),
                     sub != null ? sub.getTier().name() : IndividualTier.free.name(),
                     sub != null ? sub.getStatus().name() : SubscriptionStatus.active.name(),
-                    u.getCreatedAt()
+                    u.getCreatedAt(),
+                    u.getBlockedAt()
             );
         });
     }
@@ -73,7 +74,9 @@ public class AdminService {
                 gameCount,
                 orgCount,
                 storageBytes,
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getBlockedAt(),
+                user.getBlockedReason()
         );
     }
 

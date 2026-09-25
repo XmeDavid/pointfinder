@@ -245,10 +245,12 @@
       "unfeature": "Deixar de destacar",
       "remove": "Remover do Explorar",
       "removeTitle": "Remover {{title}} do Explorar?",
-      "removeDescription": "A listagem desaparece do Explorar e perde o destaque. O jogo, os jogadores e o rascunho da organização mantêm-se; a organização pode voltar a publicar.",
+      "removeDescription": "A listagem desaparece do Explorar e perde o destaque. O jogo, os jogadores e o rascunho da organização mantêm-se, mas a organização não a pode voltar a listar até que um administrador o permita.",
       "actionError": "A alteração não foi aplicada. Tenta novamente.",
       "meta": "{{organizer}} · publicado a {{date}}",
-      "filterListed": "Só listados"
+      "filterListed": "Só listados",
+      "onHold": "Suspensa",
+      "release": "Permitir listar de novo"
     },
     "reports": {
       "tab": "Denúncias",
@@ -262,6 +264,20 @@
       "dismiss": "Ignorar",
       "remove": "Remover do Explorar",
       "actionError": "A alteração não foi feita. Tenta novamente."
+    },
+    "block": {
+      "title": "Acesso à conta",
+      "intro": "Bloquear termina todas as sessões da conta e recusa o início de sessão. As listagens no Explorar são removidas e suspensas. Os jogos, equipas e jogadores mantêm-se.",
+      "reason": "Motivo do bloqueio",
+      "block": "Bloquear conta",
+      "confirmTitle": "Bloquear {{name}}?",
+      "confirmDescription": "A sessão é terminada em todos os dispositivos e não pode voltar a entrar. As listagens no Explorar são removidas e suspensas até que um administrador as permita de novo.",
+      "blocked": "Bloqueada a {{date}}: {{reason}}",
+      "unblock": "Desbloquear conta",
+      "unblockHint": "Desbloquear só repõe o início de sessão. As listagens suspensas continuam assim até as permitires de novo em Publicações.",
+      "notForAdmins": "Os administradores da plataforma não podem ser bloqueados.",
+      "error": "A alteração não foi feita. Tenta novamente.",
+      "badge": "Bloqueada"
     }
   },
   "game": {
@@ -1167,7 +1183,9 @@
     "CHOICE_OPTIONS_INVALID": "Verifica as opções: pelo menos duas, todas com texto, e o número certo de opções corretas para o tipo de desafio.",
     "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para este desafio.",
     "CHOICE_ALREADY_ANSWERED": "A tua equipa já respondeu a esta.",
-    "TEAM_FULL": "Esta equipa está cheia. Pede à organização o código de outra equipa."
+    "TEAM_FULL": "Esta equipa está cheia. Pede à organização o código de outra equipa.",
+    "ACCOUNT_BLOCKED": "Esta conta foi bloqueada por um administrador. Contacta o suporte se achas que é um engano.",
+    "PUBLICATION_ON_HOLD": "Um administrador removeu este jogo do Explorar. Não pode voltar a ser listado até que o permita."
   },
   "realtimeHealth": {
     "title": "Saúde em Tempo Real",
@@ -1917,7 +1935,8 @@
       "CHECK_IN_OUT_OF_RANGE": "Estás a cerca de {{distance}} m. Aproxima-te até {{allowed}} m da base.",
       "CHECK_IN_CLAIM_NOT_DWELLED": "Fica mais um pouco perto da base e tenta outra vez.",
       "CHOICE_ALREADY_ANSWERED": "A tua equipa já respondeu a esta.",
-      "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para esta pergunta."
+      "CHOICE_SELECTION_INVALID": "Escolhe uma opção válida para esta pergunta.",
+      "ACCOUNT_BLOCKED": "Esta conta foi bloqueada por um administrador. Contacta o suporte se achas que é um engano."
     },
     "sync": {
       "pending_one": "{{count}} ação à espera de sincronizar",
@@ -3072,7 +3091,8 @@
     "saveError": "Não foi possível concluir a alteração. O teu texto continua aqui. Tenta novamente.",
     "offline": "Estás offline. Liga-te para carregar ou guardar a publicação.",
     "contentLanguage": "Os jogadores veem o idioma do conteúdo: {{language}}. Altera-o nos Detalhes do jogo.",
-    "contentLanguageUnknown": "Os jogadores vão ver que o idioma do conteúdo não está indicado. Define-o nos Detalhes do jogo para saberem se conseguem acompanhar os desafios."
+    "contentLanguageUnknown": "Os jogadores vão ver que o idioma do conteúdo não está indicado. Define-o nos Detalhes do jogo para saberem se conseguem acompanhar os desafios.",
+    "onHold": "Um administrador removeu este jogo do Explorar. Não pode voltar a ser listado até que o permita. Contacta o suporte se achas que é um engano."
   },
   "gameSettings": {
     "title": "Definições do jogo",

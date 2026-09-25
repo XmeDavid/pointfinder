@@ -1,7 +1,10 @@
 package com.prayer.pointfinder.controller;
 
+import com.prayer.pointfinder.dto.request.BlockAccountRequest;
+import com.prayer.pointfinder.service.AccountModerationService;
 import com.prayer.pointfinder.service.AdminService;
 import com.prayer.pointfinder.service.GameAccessService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,6 +21,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final GameAccessService gameAccessService;
+    private final AccountModerationService accountModerationService;
 
     @GetMapping("/users")
     public ResponseEntity<?> listUsers(
@@ -32,6 +36,20 @@ public class AdminController {
     public ResponseEntity<?> getUserDetail(@PathVariable UUID userId) {
         gameAccessService.ensureCurrentUserIsAdmin();
         return ResponseEntity.ok(adminService.getUserDetail(userId));
+    }
+
+    /** Signs the account out everywhere, refuses sign-in and takes its listings down. */
+    @PostMapping("/users/{userId}/block")
+    public ResponseEntity<?> blockUser(@PathVariable UUID userId, @Valid @RequestBody BlockAccountRequest request) {
+        gameAccessService.ensureCurrentUserIsAdmin();
+        return ResponseEntity.ok(accountModerationService.block(userId, request.getReason()));
+    }
+
+    /** Restores sign-in; held listings stay held. */
+    @PostMapping("/users/{userId}/unblock")
+    public ResponseEntity<?> unblockUser(@PathVariable UUID userId) {
+        gameAccessService.ensureCurrentUserIsAdmin();
+        return ResponseEntity.ok(accountModerationService.unblock(userId));
     }
 
     @GetMapping("/orgs")

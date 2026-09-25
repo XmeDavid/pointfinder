@@ -11,8 +11,8 @@ const CHECK_IN_CODES = new Set([
   'CHECK_IN_CLAIM_NOT_DWELLED',
 ])
 
-/** Answer refusals the player can understand without the server's English wording. */
-const ANSWER_CODES = new Set(['CHOICE_ALREADY_ANSWERED', 'CHOICE_SELECTION_INVALID'])
+/** Refusals the player can understand without the server's English wording. */
+const ANSWER_CODES = new Set(['CHOICE_ALREADY_ANSWERED', 'CHOICE_SELECTION_INVALID', 'ACCOUNT_BLOCKED'])
 
 function rounded(value: string | undefined): string {
   const n = Number(value)

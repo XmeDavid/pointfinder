@@ -245,10 +245,12 @@
       "unfeature": "Nicht mehr hervorheben",
       "remove": "Aus Entdecken entfernen",
       "removeTitle": "{{title}} aus Entdecken entfernen?",
-      "removeDescription": "Die Listung verschwindet aus Entdecken und verliert die Hervorhebung. Das Spiel, seine Spieler und der Entwurf der Organisation bleiben; die Organisation kann erneut veröffentlichen.",
+      "removeDescription": "Die Listung verschwindet aus Entdecken und verliert die Hervorhebung. Das Spiel, seine Spieler und der Entwurf der Organisation bleiben, aber die Organisation kann sie erst wieder listen, wenn eine Administratorin oder ein Administrator es erlaubt.",
       "actionError": "Die Änderung wurde nicht übernommen. Versuche es erneut.",
       "meta": "{{organizer}} · veröffentlicht am {{date}}",
-      "filterListed": "Nur gelistete"
+      "filterListed": "Nur gelistete",
+      "onHold": "Gesperrt",
+      "release": "Listen wieder erlauben"
     },
     "reports": {
       "tab": "Meldungen",
@@ -262,6 +264,20 @@
       "dismiss": "Verwerfen",
       "remove": "Aus Entdecken entfernen",
       "actionError": "Die Änderung wurde nicht übernommen. Versuch es noch einmal."
+    },
+    "block": {
+      "title": "Kontozugang",
+      "intro": "Sperren meldet das Konto überall ab und verweigert die Anmeldung. Seine Listungen in Entdecken werden entfernt und gesperrt. Spiele, Teams und Spieler bleiben.",
+      "reason": "Grund für die Sperre",
+      "block": "Konto sperren",
+      "confirmTitle": "{{name}} sperren?",
+      "confirmDescription": "Das Konto wird auf allen Geräten abgemeldet und kann sich nicht anmelden. Seine Listungen in Entdecken werden entfernt und gesperrt, bis eine Administratorin oder ein Administrator sie wieder erlaubt.",
+      "blocked": "Gesperrt am {{date}}: {{reason}}",
+      "unblock": "Sperre aufheben",
+      "unblockHint": "Das Aufheben stellt nur die Anmeldung wieder her. Gesperrte Listungen bleiben gesperrt, bis du sie unter Veröffentlichungen einzeln wieder erlaubst.",
+      "notForAdmins": "Plattform-Administratoren können nicht gesperrt werden.",
+      "error": "Die Änderung wurde nicht übernommen. Versuch es noch einmal.",
+      "badge": "Gesperrt"
     }
   },
   "game": {
@@ -1167,7 +1183,9 @@
     "CHOICE_OPTIONS_INVALID": "Prüfe die Optionen: mindestens zwei, jede mit Text, und die passende Zahl richtiger Optionen für den Aufgabentyp.",
     "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Aufgabe.",
     "CHOICE_ALREADY_ANSWERED": "Dein Team hat diese Aufgabe bereits beantwortet.",
-    "TEAM_FULL": "Dieses Team ist voll. Frag die Organisation nach dem Code eines anderen Teams."
+    "TEAM_FULL": "Dieses Team ist voll. Frag die Organisation nach dem Code eines anderen Teams.",
+    "ACCOUNT_BLOCKED": "Dieses Konto wurde von einer Administratorin oder einem Administrator gesperrt. Wende dich an den Support, wenn du das für einen Fehler hältst.",
+    "PUBLICATION_ON_HOLD": "Eine Administratorin oder ein Administrator hat dieses Spiel aus Entdecken entfernt. Es kann erst wieder gelistet werden, wenn sie oder er es erlaubt."
   },
   "realtimeHealth": {
     "title": "Echtzeit-Status",
@@ -1917,7 +1935,8 @@
       "CHECK_IN_OUT_OF_RANGE": "Du bist etwa {{distance}} m entfernt. Komm auf {{allowed}} m an die Station heran.",
       "CHECK_IN_CLAIM_NOT_DWELLED": "Bleib noch etwas länger in der Nähe der Station und versuch es dann erneut.",
       "CHOICE_ALREADY_ANSWERED": "Dein Team hat diese Frage schon beantwortet.",
-      "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Frage."
+      "CHOICE_SELECTION_INVALID": "Wähle eine gültige Option für diese Frage.",
+      "ACCOUNT_BLOCKED": "Dieses Konto wurde von einer Administratorin oder einem Administrator gesperrt. Wende dich an den Support, wenn du das für einen Fehler hältst."
     },
     "sync": {
       "pending_one": "{{count}} Aktion wartet auf Synchronisierung",
@@ -3072,7 +3091,8 @@
     "saveError": "Die Änderung konnte nicht abgeschlossen werden. Dein Text ist noch da. Versuche es erneut.",
     "offline": "Du bist offline. Verbinde dich, um deinen Eintrag zu laden oder zu speichern.",
     "contentLanguage": "Spieler sehen die Sprache der Inhalte: {{language}}. Ändere sie unter Spieldetails.",
-    "contentLanguageUnknown": "Spieler sehen, dass die Sprache der Inhalte nicht angegeben ist. Lege sie unter Spieldetails fest, damit sie wissen, ob sie deinen Aufgaben folgen können."
+    "contentLanguageUnknown": "Spieler sehen, dass die Sprache der Inhalte nicht angegeben ist. Lege sie unter Spieldetails fest, damit sie wissen, ob sie deinen Aufgaben folgen können.",
+    "onHold": "Eine Administratorin oder ein Administrator hat dieses Spiel aus Entdecken entfernt. Es kann erst wieder gelistet werden, wenn sie oder er es erlaubt. Wende dich an den Support, wenn du das für einen Fehler hältst."
   },
   "gameSettings": {
     "title": "Spieleinstellungen",

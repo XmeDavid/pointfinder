@@ -13,7 +13,7 @@ const publication = (over: Partial<GamePublicationResponse>): GamePublicationRes
   gameId: 'g1', gameName: 'Coast', gameStatus: 'live', organizer: 'Scouts', contentLanguage: 'pt', title: 'Coast trail',
   summary: 'Cliffs', place: 'Nazaré', lat: null, lng: null, category: 'coast', admissionTeamId: null, admissionTeamName: null,
   listed: true, publishedAt: '2026-09-01T10:00:00Z', publishedById: 'u1', publishedByName: 'Ana', featured: false, featuredAt: null,
-  updatedAt: '2026-09-01T10:00:00Z', ...over,
+  updatedAt: '2026-09-01T10:00:00Z', moderationHold: false, ...over,
 })
 
 function renderWithClient(ui: React.ReactNode) {
@@ -29,7 +29,11 @@ describe('AdminPublications (OW-06)', () => {
       http.get('/api/admin/publications', () => HttpResponse.json(rows)),
       http.post('/api/admin/publications/:gameId/:action', ({ params }) => {
         calls.push(`${params.action}:${params.gameId}`)
-        rows = rows.map((r) => (r.gameId === params.gameId ? { ...r, featured: params.action === 'feature' } : r))
+        const change: Partial<GamePublicationResponse> =
+          params.action === 'remove' ? { listed: false, featured: false, publishedAt: null, moderationHold: true }
+            : params.action === 'release' ? { moderationHold: false }
+              : { featured: params.action === 'feature' }
+        rows = rows.map((r) => (r.gameId === params.gameId ? { ...r, ...change } : r))
         return HttpResponse.json(rows.find((r) => r.gameId === params.gameId))
       }),
       http.post('/api/games/:gameId/publication/unpublish', ({ params }) => {
@@ -65,8 +69,24 @@ describe('AdminPublications (OW-06)', () => {
     expect(screen.getByRole('dialog', { name: 'Remove Coast trail from Explore?' })).toBeInTheDocument()
     expect(calls).toEqual([])
     await user.click(screen.getByTestId('confirm-action-btn'))
-    await waitFor(() => expect(calls).toEqual(['unpublish:g1']))
+    await waitFor(() => expect(calls).toEqual(['remove:g1']))
     await waitFor(() => expect(screen.queryByTestId('admin-publication-g1')).not.toBeInTheDocument())
+  })
+
+  it('holds a removed listing until an admin allows it again (owner decision 2026-09-24)', async () => {
+    const user = userEvent.setup()
+    const calls = fixture()
+    renderWithClient(<AdminPublications />)
+    await user.click(within(await screen.findByTestId('admin-publication-g1')).getByRole('button', { name: 'Remove from Explore' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('cannot list it again until an administrator allows it')
+    await user.click(screen.getByTestId('confirm-action-btn'))
+    await waitFor(() => expect(calls).toEqual(['remove:g1']))
+    await user.click(screen.getByRole('switch', { name: 'Listed only' }))
+    const row = await screen.findByTestId('admin-publication-g1')
+    expect(row).toHaveTextContent('On hold')
+    await user.click(within(row).getByRole('button', { name: 'Allow listing again' }))
+    await waitFor(() => expect(calls).toEqual(['remove:g1', 'release:g1']))
+    await waitFor(() => expect(screen.getByTestId('admin-publication-g1')).not.toHaveTextContent('On hold'))
   })
 })
 
