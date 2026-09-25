@@ -45,8 +45,9 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 - [ ] Add a shared lobby with operator, automatic and player-choice team placement. [OW-05](#ow-05)
 - [x] Add admin controls for featuring games. [OW-06](#ow-06)
 - [x] Add public-game reporting and admin removal. [OW-06](#ow-06)
-- [ ] Decide whether admin removal should hold a listing until an admin allows it again. [OW-06](#ow-06)
-- [ ] Add uploaded listing artwork. [OW-06](#ow-06)
+- [x] Hold a listing an admin removed until an admin allows it again. [OW-06](#ow-06)
+- [x] Email the moderators when a listing is first reported, and let admins block abusive accounts. [OW-06](#ow-06)
+- [ ] Add uploaded listing artwork (published in good faith, taken down through reports). [OW-06](#ow-06)
 - [ ] Decide how to represent game areas for nearby discovery; implement that model. [OW-07](#ow-07)
 - [ ] Scale discovery queries and refresh listings when publication changes. [OW-07](#ow-07)
 - [ ] Make organization resources available to eligible game participants. [OW-08](#ow-08)
@@ -56,11 +57,12 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 
 ### Field use, media and release checks
 
-- [ ] Add browser QR scanning and define browser presence rechecks. [OW-03](#ow-03)
-- [ ] Define camera-only challenges and supported media formats, including HEIC. [OW-10](#ow-10)
+- [ ] Make playing app-only: direct browser visitors who try to play to the app. [OW-03](#ow-03)
+- [ ] Support HEIC photos (convert when they cannot be used as they are); define camera-only challenges. [OW-10](#ow-10)
 - [x] Show upload progress for each file. [OW-10](#ow-10)
 - [ ] Decide whether to support arrival detection while the app is in the background. [OW-11](#ow-11)
-- [ ] Complete missing visual previews and review remaining styling inconsistencies. [OW-12](#ow-12)
+- [x] Complete missing visual previews for the September features. [OW-12](#ow-12)
+- [ ] Review remaining styling inconsistencies from the advisory audit. [OW-12](#ow-12)
 - [ ] Refresh the store graphic, printed signs, social previews and exports with the current brand. [OW-13](#ow-13)
 - [ ] Check native icons on devices and decide dark/tinted icon variants. [OW-13](#ow-13)
 - [ ] Test real-phone account recovery, offline replay, push, check-in, sharing and accessibility. [OW-15](#ow-15)
@@ -70,13 +72,13 @@ Check off completed tasks here. Each reference opens the detailed scope below. I
 ### Backend and operational follow-ups
 
 - [x] Record searchable game lifecycle audit events. [OW-14](#ow-14)
-- [ ] Detect uploads stalled mid-transfer and give operators useful recovery actions. [OW-18](#ow-18)
+- [x] Detect uploads stalled mid-transfer and give operators useful recovery actions. [OW-18](#ow-18)
 - [ ] Decide when old single-request uploads can be retired safely. [OW-18](#ow-18)
 - [ ] Fill meaningful native/E2E test gaps. [OW-19](#ow-19)
 - [ ] Rehearse failure recovery and decide remaining infrastructure resilience work. [OW-20](#ow-20)
 - [x] Use generated thumbnails in the UI or stop generating unused ones. [OW-22](#ow-22)
-- [ ] Provide a supported way to inspect and recover failed realtime events. [OW-23](#ow-23)
-- [ ] Make realtime health figures cover all servers, or clearly label their scope. [OW-24](#ow-24)
+- [x] Provide a supported way to inspect and recover failed realtime events. [OW-23](#ow-23)
+- [x] Make realtime health figures cover all servers, or clearly label their scope. [OW-24](#ow-24)
 - [ ] Decide whether unchanged snapshots should skip sending the full response. [OW-25](#ow-25)
 - [x] Reconcile unused event types and inconsistent error codes. [OW-26](#ow-26)
 - [ ] Verify and decide security controls on the HA ingress route. [OW-27](#ow-27)
@@ -131,9 +133,9 @@ Status: Implemented in the shared browser/Tauri frontend; focused editor/input t
 
 ### OW-03
 
-**Browser camera QR and presence flow.** `web/src/platform/qr.ts` refuses browser scanning. Define and implement the secure-browser QR path and how browser players satisfy challenges requiring an NFC presence recheck. Native NFC/QR code already exists; do not label all scanning missing.
+**Playing is app-only.** Owner decision 2026-09-24: no player should play in a browser; playing needs the app. This replaces the earlier plan for browser QR scanning and browser presence rechecks, which are no longer wanted. `web/src/platform/qr.ts` already refuses browser scanning. Remaining work: browser visitors who open a join link, a base link or a player route should be sent to the app (store links, deep link where installed) without breaking organizing on the web, Explore browsing, account pages or existing player sessions mid-game. Decide what happens to a guest already playing in a browser when this ships.
 
-Status: Missing / Decision.
+Status: Decided; not started.
 
 ### OW-04
 
@@ -157,11 +159,13 @@ Status: Team-size limits implemented (integration, component and error-mapping t
 
 Shipped 2026-09-23: signed-in accounts report a listed game from its Explore dialog with a reason and optional details (V86, one open report per account and game). Admins see open reports grouped by game with reporters, then dismiss them or remove the listing (the ordinary audited unpublish). Publishers never see reports. Removal is not a hold: the publisher can list the game again, so a moderation hold, admin notification of new reports and blocking abusive accounts remain decisions.
 
-Status: Curation and reporting implemented (integration, security-rule, component and browser/native-artifact smoke tests). Artwork and a moderation hold remain.
+Shipped 2026-09-25 (owner decisions 2026-09-24): an admin removal holds the listing (V87); the publisher can still edit the summary but cannot list it again until an admin allows it from Publications. The first open report on a listing emails `app.moderation.alert-emails` (default dev@davidsbatista.com) after it commits; more reports on the same open listing send nothing more. Admins can block an abusive account with a reason: it is signed out everywhere, sign-in and session refresh are refused with `ACCOUNT_BLOCKED`, and its listings are removed and held. Unblocking restores sign-in only. Platform admins cannot be blocked. Listing artwork: publish in good faith without approval and take it down through reports.
+
+Status: Curation, reporting, hold, alerts and blocking implemented (integration, security-rule, component and smoke tests). Artwork remains. Player sessions of a blocked participant account are separate tokens and are not revoked.
 
 ### OW-07
 
-**Area-based nearby discovery.** Publication UI saves no pinpoint, while nearby/map discovery depends on optional coordinates. Agree an area/approximate-location model so new listings can appear nearby without implying games occupy one point. `ExploreService` still filters/sorts/pages in memory; move this into bounded database queries when scale warrants. Listing changes have no realtime invalidation.
+**Area-based nearby discovery.** Publication UI saves no pinpoint, while nearby/map discovery depends on optional coordinates. Agree an area/approximate-location model so new listings can appear nearby without implying games occupy one point. `ExploreService` still filters/sorts/pages in memory; move this into bounded database queries when scale warrants (deliberately not done on 2026-09-25: listing counts are small and the nearest-first order and distance rounding would have to be reproduced in SQL). Listing changes have no realtime invalidation; a removed listing disappears on the next refetch and a join to it is refused.
 
 Status: Decision / Partial.
 
@@ -185,7 +189,9 @@ Status: Decision.
 
 Shipped 2026-09-23: the player sync banner lists each pending upload with its own labelled progress (waiting, percent sent, sent), and failed queued actions explain the refusal in the player's language.
 
-Status: Per-file progress implemented (component tests). Camera-only policy and HEIC remain Decision.
+Owner decision 2026-09-24: support HEIC; where a HEIC photo cannot be used as it is, convert it. Since playing is app-only (OW-03), conversion can happen in the app before upload, where the platform decoders exist; the server cannot decode HEIC or WebP today (OW-22).
+
+Status: Per-file progress implemented (component tests). HEIC support is decided, not started; camera-only challenges remain Decision.
 
 ### OW-11
 
@@ -197,7 +203,9 @@ Status: Missing / Decision.
 
 **Visual coverage and map density.** Generated tokens, canonical panels/statuses and visual harness already exist. Complete useful missing fixtures from the [preview matrix](../visual-system/preview-matrix.md), then validate actual mobile journeys, both themes, long EN/PT/DE copy, focus and reduced motion. Team clustering is already implemented in `web/src/components/map/TeamMarkers.tsx`; the advisory audit now reports 16 findings (12 raw-color matches and four local surface styles), some intentional QR/tag fixture colors. Triage those instead of reviving the historical refactor list.
 
-Status: Partial / Verify.
+Shipped 2026-09-25: the stage-route editor and document viewer fixtures, the last two September rows the preview matrix marked pending.
+
+Status: Partial / Verify (styling review of the advisory audit remains).
 
 ### OW-13
 
@@ -324,15 +332,17 @@ All 54 visible docs files plus 12 ignored plan files and five ignored agent-stat
 - Variable-authoring spec/plan → OW-02; most editor/preview/readiness work exists. The old register map-walk animation was superseded by the illustrated landing/auth direction; do not resurrect it as unfinished required UX.
 - Native handoff, validation, phone review, media rollout, frontend consolidation, realtime/mobile and pre-release checklist → OW-03/10/11/15/17, platform ownership and release checks. Old machine-specific tooling failures and version-specific pass counts are not ongoing defects.
 - Landing cache review → OW-16. Visual docs → current guidance, OW-12/13; removed the historical visual audit and “no harness/token source” readiness document. Store graphic retained but flagged as stale, not submission-ready.
-- Backend/API/business/infrastructure and historical audit material → contracts, operations references and the backend follow-ups below. Historical compile failures fixed by the later test repair are not current failures. Applied migrations retain their historical spec comments unchanged to preserve Flyway checksums; those names refer to Git history, not current guidance. The root `TODO` remains a separate older note; its player-limit and all-games-for-admin claims are already contradicted by `PlayerJoinService` quota enforcement and `GameService.getAllGames` workspace filtering. The admin panel now links back to the organizer's games; reproduce its remaining navigation/billing complaints before carrying them into the owner's list.
+- Backend/API/business/infrastructure and historical audit material → contracts, operations references and the backend follow-ups below. Historical compile failures fixed by the later test repair are not current failures. Applied migrations retain their historical spec comments unchanged to preserve Flyway checksums; those names refer to Git history, not current guidance. The root `TODO` remains a separate older note; its player-limit and all-games-for-admin claims are already contradicted by `PlayerJoinService` quota enforcement and `GameService.getAllGames` workspace filtering. The admin panel now links back to the organizer's games, the workspace switcher opens a workspace's games instead of Home, and admins edit a user's limits in a form instead of JSON. Its remaining billing complaints need reproducing before they join the owner's list.
 
 ## Backend and maintenance follow-ups
 
 ### OW-18
 
-**Active-upload stalls and legacy upload retirement.** `GameSchedulerService` detects completed uploads left unlinked, not transfers stalled while active. Choose an active-stall threshold/recovery signal without deleting recoverable work. Decide when the legacy single-request upload endpoint can retire after shipping-client compatibility is checked.
+**Active-upload stalls and legacy upload retirement.** Decide when the legacy single-request upload endpoint can retire after shipping-client compatibility is checked.
 
-Status: Missing / Decision.
+Shipped 2026-09-25: an active upload that received nothing for 30 minutes (`app.uploads.stalled-threshold-minutes`) is stalled. The operator snapshot counts it (`stalledUploads`), a scheduled detector logs and meters it, and `GET /api/games/{id}/uploads/attention` lists stalled and unlinked uploads with team, player, file and progress. Monitor shows an "uploads need attention" panel only when there is something, telling the operator which team to contact; nothing is expired, deleted or relinked because the work is still on the player's phone.
+
+Status: Stall detection and operator signal implemented (integration and component tests). Legacy endpoint retirement remains Decision.
 
 ### OW-19
 
@@ -366,13 +376,17 @@ Status: Implemented for operator review (controller and component tests). The pl
 
 **Outbox failure recovery tooling.** Failed events can become retained dead-letter rows with a metric, but there is no supported inspection/replay UI/script or alert on that counter. Decide whether SQL-only intervention suffices; otherwise add a bounded, auditable operator procedure. `realtime/RealtimeOutboxRepository.java`, `service/jobs/ScheduledJobs.java`.
 
-Status: Partial / Decision.
+Shipped 2026-09-25 (decision: inspect, never replay): platform admins read retained dead letters in the admin panel's Realtime tab or `GET /api/admin/realtime/dead-letters` (bounded, newest first). Replay is deliberately absent because each event is a refresh signal and clients converge on a snapshot. `deploy/ha/OPERATIONS.md` describes the procedure. An alert on the `realtime.outbox.dead_lettered` counter is not wired into the production alerting yet.
+
+Status: Implemented (integration and component tests); production alert wiring remains an operations task.
 
 ### OW-24
 
-**Realtime health across replicas.** `RealtimeMetricsService` reports the responding process's sockets/counters. Aggregate fleet health or explicitly label the scope so two replicas do not produce misleading operator totals.
+**Realtime health across replicas.** `RealtimeMetricsService` reports the responding process's sockets/counters.
 
-Status: Partial.
+Shipped 2026-09-25: the realtime stats response is labelled `scope: "instance"` with the answering server's `instanceId`, so two replicas' figures are never read as one total. Fleet aggregation was not added.
+
+Status: Implemented (scope labelled; controller tests).
 
 ### OW-25
 

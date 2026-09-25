@@ -332,6 +332,8 @@ export interface OperatorSnapshotResponse {
   activeUploads: number;
   /** Count of completed-but-unlinked upload sessions past the needs-attention threshold. */
   needsAttention: number;
+  /** OW-18: active uploads with no progress for the stall threshold. */
+  stalledUploads?: number;
 }
 
 // Player snapshot — deliberately carries NO scoring information at any

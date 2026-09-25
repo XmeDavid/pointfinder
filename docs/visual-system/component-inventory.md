@@ -1017,3 +1017,25 @@ Location: `web/src/features/admin/AdminReports.tsx`
 Modes: Admin / Organization / Billing
 States: loading, error with retry, empty, reports grouped by game (count, reason, details, reporter and time), no longer listed (dismiss only), dismiss, remove behind the canonical confirm dialog, action error. Test ids: `admin-reports`, `admin-report-group-<gameId>`, `admin-report-dismiss-<gameId>`, `admin-report-remove-<gameId>`; tab `admin-tab-reports` with `admin-reports-count`.
 Notes: OW-06. Remove is the ordinary unpublish; the publisher can list the game again.
+
+Component: UploadAttention
+Status: canonical
+Location: `web/src/features/command/UploadAttention.tsx`
+Modes: Operator Command
+States: hidden when nothing needs attention; collapsed summary with count; expanded list of stalled uploads (percent sent, minutes without progress) and unlinked uploads (arrived, answer not sent), each with team and player, plus the contact hint; long names wrap. Test ids: `upload-attention`, `upload-attention-<sessionId>`.
+Notes: OW-18. Uses the semantic `sync` icon. Read-only: the operator's action is to contact the team.
+
+Component: Account blocking (admin user detail)
+Status: canonical
+Location: `web/src/features/admin/AdminUserDetail.tsx`
+Modes: Admin / Organization / Billing
+States: not blocked (reason required, confirm dialog), blocked (date, reason, unblock with hint that held listings stay held), platform admin (not offered), action error. Test ids: `admin-user-block`, `admin-user-blocked`; list badge on blocked users. The personal limits form (`user-limits`) replaces the raw quota JSON.
+Notes: Owner decision 2026-09-24. Held listings show "On hold" with "Allow listing again" in Publications (`admin-release-<gameId>`); the publisher sees `publication-hold`.
+
+Component: AdminRealtime
+Status: canonical
+Location: `web/src/features/admin/AdminRealtime.tsx`
+Modes: Admin / Organization / Billing
+States: loading, error with retry, empty, retained total with the newest failed events (type, audience, server, game, attempts, time, trimmed error). Read-only by design. Test ids: `admin-realtime`, `admin-dead-letter-<outboxId>`, tab `admin-tab-realtime`.
+Notes: OW-23.
+

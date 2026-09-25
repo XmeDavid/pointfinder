@@ -60,8 +60,8 @@ Canonical scenarios come from `design-system/scenarios.json`: default, selected,
 | Game content language: named, uncommon code, not specified, discovery card | yes | n/a | n/a |
 | Content sections: Build shortcuts and phone section chooser | yes | n/a | n/a |
 | Listing reports: report form (online, offline), admin review grouped by game | yes | n/a | n/a |
-| Stage routes: per-stage order switch, grouped base list, route editor per ordered stage | pending (component tests) | n/a | n/a |
-| Operator document viewer: read, edit, discard confirmation, file open, offline | pending (component tests) | n/a | n/a |
+| Stage routes: route editor with an exploratory and an ordered stage, setup and read-only | yes | n/a | n/a |
+| Operator document viewer: read, edit, empty, offline, file | yes | n/a | n/a |
 
 Required screenshot widths for migrated web journeys: 390, 768, 1280, and 1600 pixels. A row moves to `yes` only when its canonical states render without backend data and the relevant accessibility labels are present. Check-in method rows are marked `n/a` for the legacy Swift and Compose apps: those apps keep working for NFC bases only and receive no QR or location UI. Guided tutorials are marked `n/a` for the legacy apps too: the operator tutorial engine ships once in `web/` for the browser and the Tauri shell.
 
