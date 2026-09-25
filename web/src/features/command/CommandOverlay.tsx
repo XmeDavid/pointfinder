@@ -10,6 +10,7 @@ import { Leaderboard } from './Leaderboard'
 import { TeamInspector } from './TeamInspector'
 import { BaseInspector } from './BaseInspector'
 import { NotificationSender } from './NotificationSender'
+import { UploadAttention } from './UploadAttention'
 
 export function CommandOverlay({ gameId }: { gameId: string }) {
   const { t } = useTranslation()
@@ -22,15 +23,18 @@ export function CommandOverlay({ gameId }: { gameId: string }) {
 
   return (
     <>
-      {connectionError && (
-        <OverlayPanel
-          data-testid="ws-error-banner"
-          padding="none"
-          className="absolute left-1/2 top-14 z-30 -translate-x-1/2 border-destructive/30 bg-destructive/90 px-3 py-1.5 text-xs text-destructive-foreground"
-        >
-          {t('workspace.connectionIssue', { error: connectionError })}
-        </OverlayPanel>
-      )}
+      <div className="pointer-events-none absolute left-1/2 top-14 z-30 flex -translate-x-1/2 flex-col items-center gap-2">
+        {connectionError && (
+          <OverlayPanel
+            data-testid="ws-error-banner"
+            padding="none"
+            className="border-destructive/30 bg-destructive/90 px-3 py-1.5 text-xs text-destructive-foreground"
+          >
+            {t('workspace.connectionIssue', { error: connectionError })}
+          </OverlayPanel>
+        )}
+        <UploadAttention gameId={gameId} />
+      </div>
       <ActivityFeed
         gameId={gameId}
         mobileExpanded={isMobile ? mobileActivityOpen : undefined}

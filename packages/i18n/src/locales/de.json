@@ -1515,6 +1515,14 @@
       "activity": "Aktivität",
       "results": "Ergebnisse",
       "label": "Live-Spielübersicht"
+    },
+    "uploads": {
+      "summary_one": "{{count}} Upload braucht Aufmerksamkeit",
+      "summary_other": "{{count}} Uploads brauchen Aufmerksamkeit",
+      "stalled": "{{file}}: {{percent}} % gesendet, seit {{minutes}} Min. nichts Neues.",
+      "unlinked": "{{file}} ist angekommen, aber die Antwort wurde nicht gesendet (vor {{minutes}} Min.).",
+      "unnamed": "Eine Datei",
+      "hint": "Die Dateien sind auf dem Handy der Spielerin oder des Spielers sicher. Bitte das Team, PointFinder mit Verbindung zu öffnen; der Upload läuft von selbst weiter."
     }
   },
   "review": {

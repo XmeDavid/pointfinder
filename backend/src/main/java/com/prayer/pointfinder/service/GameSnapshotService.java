@@ -69,6 +69,7 @@ public class GameSnapshotService {
     private final PlayerRepository playerRepository;
     private final SubmissionRepository submissionRepository;
     private final UploadSessionRepository uploadSessionRepository;
+    private final UploadAttentionService uploadAttentionService;
     private final PlayerService playerService;
     private final BaseOrderService baseOrderService;
     private final MonitoringService monitoringService;
@@ -186,6 +187,7 @@ public class GameSnapshotService {
                 gameId,
                 now.minus(Duration.ofMinutes(needsAttentionThresholdMinutes))
         );
+        long stalledUploads = uploadSessionRepository.countStalledByGameId(gameId, now, uploadAttentionService.stalledCutoff(now));
 
         return new OperatorSnapshotResponse(
                 stateVersion,
@@ -208,7 +210,8 @@ public class GameSnapshotService {
                 leaderboard,
                 (int) pendingReviews,
                 (int) activeUploads,
-                (int) needsAttention
+                (int) needsAttention,
+                (int) stalledUploads
         );
     }
 

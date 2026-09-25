@@ -1515,6 +1515,14 @@
       "activity": "Atividade",
       "results": "Resultados",
       "label": "Resumo do jogo em direto"
+    },
+    "uploads": {
+      "summary_one": "{{count}} envio precisa de atenção",
+      "summary_other": "{{count}} envios precisam de atenção",
+      "stalled": "{{file}}: {{percent}}% enviado, nada de novo há {{minutes}} min.",
+      "unlinked": "{{file}} chegou, mas a resposta não foi enviada (há {{minutes}} min).",
+      "unnamed": "Um ficheiro",
+      "hint": "Os ficheiros estão seguros no telemóvel do jogador. Pede à equipa para abrir o PointFinder com ligação; o envio continua sozinho."
     }
   },
   "review": {

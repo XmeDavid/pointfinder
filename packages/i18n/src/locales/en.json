@@ -1515,6 +1515,14 @@
       "activity": "Activity",
       "results": "Results",
       "label": "Live game summary"
+    },
+    "uploads": {
+      "summary_one": "{{count}} upload needs attention",
+      "summary_other": "{{count}} uploads need attention",
+      "stalled": "{{file}}: {{percent}}% sent, nothing new for {{minutes}} min.",
+      "unlinked": "{{file}} arrived, but its answer was not sent ({{minutes}} min ago).",
+      "unnamed": "A file",
+      "hint": "The files are safe on the player's phone. Ask the team to open PointFinder with a connection; the upload carries on by itself."
     }
   },
   "review": {

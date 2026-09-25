@@ -31,7 +31,24 @@ export interface AuditExportFilters {
   includeArchived?: boolean;
 }
 
+/** OW-18: an upload an operator should know about; the player's app still holds the bytes. */
+export interface UploadAttentionItem {
+  sessionId: string;
+  /** "stalled": active, nothing received since `since`; "unlinked": finished at `since`, no answer claimed it. */
+  kind: "stalled" | "unlinked";
+  teamId: string;
+  teamName: string;
+  playerName: string;
+  fileName: string | null;
+  totalBytes: number;
+  receivedBytes: number;
+  since: string;
+}
+
 export const monitoringApi = {
+  getUploadAttention: async (gameId: string): Promise<UploadAttentionItem[]> =>
+    (await apiClient.get<UploadAttentionItem[]>(`/games/${gameId}/uploads/attention`)).data,
+
   getActivityEvents: async (gameId: string): Promise<ActivityEvent[]> => {
     const { data } = await apiClient.get(`/games/${gameId}/monitoring/activity`);
     return data;

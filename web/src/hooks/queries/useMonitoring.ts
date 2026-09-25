@@ -9,6 +9,16 @@ export function useDashboardStats(gameId: string | undefined) {
   })
 }
 
+/** OW-18: stalled and unlinked uploads; refreshed every minute while Monitor is open. */
+export function useUploadAttention(gameId: string | undefined) {
+  return useQuery({
+    queryKey: ['monitoring', 'upload-attention', gameId],
+    queryFn: () => monitoringApi.getUploadAttention(gameId!),
+    enabled: !!gameId,
+    refetchInterval: 60_000,
+  })
+}
+
 export function useLeaderboard(gameId: string | undefined) {
   return useQuery({
     queryKey: ['monitoring', 'leaderboard', gameId],

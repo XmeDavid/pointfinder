@@ -45,6 +45,7 @@ public class ScheduledJobs {
     public static final String PURGE_EMAIL_CHANGE_TOKENS = "auth.purgeEmailChangeTokens";
     public static final String EXPIRE_UPLOAD_SESSIONS = "uploads.expireStaleSessions";
     public static final String DETECT_NEEDS_ATTENTION_UPLOADS = "uploads.detectNeedsAttention";
+    public static final String DETECT_STALLED_UPLOADS = "uploads.detectStalled";
     public static final String SWEEP_ORPHAN_CHUNKS = "uploads.sweepOrphanChunks";
     public static final String CLEANUP_RATE_LIMITS = "rateLimits.cleanup";
     public static final String EXPIRE_PRESENCE = "presence.expireStale";
@@ -98,6 +99,12 @@ public class ScheduledJobs {
     @Scheduled(fixedRate = 900000)
     public void detectNeedsAttentionUploads() {
         coordinator.run(DETECT_NEEDS_ATTENTION_UPLOADS, Duration.ofMinutes(5), gameSchedulerService::detectNeedsAttentionUploads);
+    }
+
+    /** OW-18: active uploads with no progress for the stall threshold. */
+    @Scheduled(fixedRate = 900000)
+    public void detectStalledUploads() {
+        coordinator.run(DETECT_STALLED_UPLOADS, Duration.ofMinutes(5), gameSchedulerService::detectStalledUploads);
     }
 
     @Scheduled(fixedRate = 3600000)

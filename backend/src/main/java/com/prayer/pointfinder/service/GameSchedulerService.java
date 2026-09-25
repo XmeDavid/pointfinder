@@ -12,6 +12,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,7 @@ public class GameSchedulerService {
     private final com.prayer.pointfinder.xp.XpService xpService;
     private final jakarta.persistence.EntityManager entityManager;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
+    private final UploadAttentionService uploadAttentionService;
 
     /**
      * How old a completed-but-unlinked upload session must be before the
@@ -218,6 +220,29 @@ public class GameSchedulerService {
                 stuck.size(),
                 needsAttentionThresholdMinutes
         );
+    }
+
+    /**
+     * OW-18: surfaces active uploads that received nothing for the stall
+     * threshold, as a log line and a {@code uploads.sessions.needs_attention}
+     * count with reason {@code active_stalled}. Read-only, like the detector
+     * above: the player's app still holds the bytes and resumes when it can.
+     */
+    @Transactional(readOnly = true, timeout = 30)
+    public void detectStalledUploads() {
+        Instant now = Instant.now();
+        List<UploadSession> stalled = uploadSessionRepository.findStalled(
+                now, uploadAttentionService.stalledCutoff(now), PageRequest.of(0, 500));
+        for (UploadSession session : stalled) {
+            String gameId = session.getGame() != null && session.getGame().getId() != null
+                    ? session.getGame().getId().toString()
+                    : "unknown";
+            meterRegistry.counter("uploads.sessions.needs_attention", "gameId", gameId, "reason", "active_stalled").increment();
+            log.warn("Upload session stalled: sessionId={} gameId={} createdAt={}", session.getId(), gameId, session.getCreatedAt());
+        }
+        if (!stalled.isEmpty()) {
+            log.info("Stalled-upload detector surfaced {} active upload session(s)", stalled.size());
+        }
     }
 
     /**

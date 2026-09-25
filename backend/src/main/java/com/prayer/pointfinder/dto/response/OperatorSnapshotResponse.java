@@ -50,7 +50,14 @@ public record OperatorSnapshotResponse(
          * {@code app.uploads.needs-attention-threshold-minutes}. Same row set the
          * needs-attention detector alerts on. Zero means "no stuck media".
          */
-        int needsAttention
+        int needsAttention,
+
+        /**
+         * OW-18: active uploads that received nothing for
+         * {@code app.uploads.stalled-threshold-minutes}. The player's app still
+         * holds the bytes; {@code GET /api/games/{id}/uploads/attention} lists them.
+         */
+        int stalledUploads
 ) {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

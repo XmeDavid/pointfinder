@@ -41,4 +41,12 @@ public interface UploadSessionChunkRepository extends JpaRepository<UploadSessio
             @Param("chunkSizeBytes") int chunkSizeBytes,
             @Param("now") java.time.Instant now
     );
+
+    /** OW-18: bytes received so far for one session. */
+    @Query("SELECT COALESCE(SUM(c.chunkSizeBytes), 0) FROM UploadSessionChunk c WHERE c.sessionId = :sessionId")
+    long sumReceivedBytes(@Param("sessionId") UUID sessionId);
+
+    /** OW-18: when the last chunk of one session arrived, or null before any. */
+    @Query("SELECT MAX(c.createdAt) FROM UploadSessionChunk c WHERE c.sessionId = :sessionId")
+    java.time.Instant lastChunkAt(@Param("sessionId") UUID sessionId);
 }

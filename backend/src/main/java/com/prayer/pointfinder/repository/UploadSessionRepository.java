@@ -247,4 +247,52 @@ public interface UploadSessionRepository extends JpaRepository<UploadSession, UU
             @Param("gameId") UUID gameId,
             @Param("olderThan") Instant olderThan
     );
+
+    /**
+     * OW-18: active, unexpired transfers with no progress since {@code progressBefore}:
+     * the last chunk (or the session's creation, before any chunk) is older than that.
+     * Read-only: the player's app keeps the bytes and resumes when it can.
+     */
+    @Query("""
+            SELECT s
+            FROM UploadSession s
+            WHERE s.status = com.prayer.pointfinder.entity.UploadSessionStatus.active
+              AND s.expiresAt > :now
+              AND COALESCE((SELECT MAX(c.createdAt) FROM UploadSessionChunk c WHERE c.sessionId = s.id), s.createdAt) < :progressBefore
+            ORDER BY s.createdAt ASC
+            """)
+    List<UploadSession> findStalled(@Param("now") Instant now, @Param("progressBefore") Instant progressBefore, Pageable pageable);
+
+    /** {@link #findStalled} for one game. */
+    @Query("""
+            SELECT s
+            FROM UploadSession s JOIN FETCH s.player p JOIN FETCH p.team
+            WHERE s.game.id = :gameId
+              AND s.status = com.prayer.pointfinder.entity.UploadSessionStatus.active
+              AND s.expiresAt > :now
+              AND COALESCE((SELECT MAX(c.createdAt) FROM UploadSessionChunk c WHERE c.sessionId = s.id), s.createdAt) < :progressBefore
+            """)
+    List<UploadSession> findStalledByGameId(@Param("gameId") UUID gameId, @Param("now") Instant now, @Param("progressBefore") Instant progressBefore);
+
+    @Query("""
+            SELECT COUNT(s)
+            FROM UploadSession s
+            WHERE s.game.id = :gameId
+              AND s.status = com.prayer.pointfinder.entity.UploadSessionStatus.active
+              AND s.expiresAt > :now
+              AND COALESCE((SELECT MAX(c.createdAt) FROM UploadSessionChunk c WHERE c.sessionId = s.id), s.createdAt) < :progressBefore
+            """)
+    long countStalledByGameId(@Param("gameId") UUID gameId, @Param("now") Instant now, @Param("progressBefore") Instant progressBefore);
+
+    /** The completed-but-unlinked rows of {@link #countNeedsAttentionByGameId}, with their player and team. */
+    @Query("""
+            SELECT s
+            FROM UploadSession s JOIN FETCH s.player p JOIN FETCH p.team
+            WHERE s.game.id = :gameId
+              AND s.status = com.prayer.pointfinder.entity.UploadSessionStatus.completed
+              AND s.submission IS NULL
+              AND s.completedAt IS NOT NULL
+              AND s.completedAt < :olderThan
+            """)
+    List<UploadSession> findNeedsAttentionByGameId(@Param("gameId") UUID gameId, @Param("olderThan") Instant olderThan);
 }
