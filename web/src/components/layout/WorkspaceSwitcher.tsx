@@ -5,12 +5,18 @@ import { useWorkspaceContext } from '../../stores/workspaceContext'
 import { cn } from '../../lib/utils/cn'
 import { useTranslation } from 'react-i18next'
 
+/** A workspace's games live on the Organize page; Home is not the destination. */
+const ORGANIZE = '/dashboard?view=organize'
+
 export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { data: workspaces } = useWorkspaces()
   const { active, setActive } = useWorkspaceContext()
+  const openOrganize = () => {
+    if (location.pathname + location.search !== ORGANIZE) navigate(ORGANIZE)
+  }
 
   const isPersonalActive = active.type === 'personal'
 
@@ -20,7 +26,7 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
       <button
         onClick={() => {
           setActive({ type: 'personal' })
-          if (location.pathname !== '/dashboard') navigate('/dashboard')
+          openOrganize()
         }}
         className={cn(
           'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm transition-all cursor-pointer',
@@ -53,7 +59,7 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
             key={org.id}
             onClick={() => {
               setActive({ type: 'org', orgId: org.id, orgName: org.name })
-              if (location.pathname !== '/dashboard') navigate('/dashboard')
+              openOrganize()
             }}
             className={cn(
               'w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-xs transition-all cursor-pointer',
