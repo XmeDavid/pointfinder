@@ -180,6 +180,11 @@ export function RichTextEditor({
   const toast = useToast();
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // The editor rewrites loaded content into its own schema (list items gain a
+  // paragraph, a trailing paragraph is added) and reports that as an update.
+  // Until someone works in the editor that is not an edit, so it is not passed
+  // on: otherwise opening a document marks it changed and asks to discard.
+  const touched = useRef(false);
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   // Keep a ref to the latest variableKeys / onCreateVariable so the
@@ -224,7 +229,12 @@ export function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor: e }) => {
+      if (!touched.current && !e.isFocused) return;
+      touched.current = true;
       onChange(sanitize(e.getHTML()));
+    },
+    onFocus: () => {
+      touched.current = true;
     },
     editorProps: {
       attributes: {
@@ -326,6 +336,8 @@ export function RichTextEditor({
   const insertFileEmbed = useCallback(
     (resource: FileEmbedResource) => {
       if (!editor) return;
+      // Called by the parent on a user's behalf, possibly before the editor was focused.
+      touched.current = true;
       editor
         .chain()
         .focus()
@@ -369,7 +381,15 @@ export function RichTextEditor({
   if (!editor) return null;
 
   return (
-    <div className={cn("rounded-md border border-input", className)}>
+    <div
+      className={cn("rounded-md border border-input", className)}
+      onPointerDownCapture={() => {
+        touched.current = true;
+      }}
+      onKeyDownCapture={() => {
+        touched.current = true;
+      }}
+    >
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/50 px-2 py-1">
         <ToolbarButton

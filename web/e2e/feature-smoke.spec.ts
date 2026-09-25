@@ -17,7 +17,7 @@ function operatorGame(status: 'setup' | 'live') {
 async function operatorFixture(page: Page, status: 'setup' | 'live' = 'setup') {
   const state = {
     challenge: { id: 'c1', gameId: 'g', title: 'Which tree?', description: '', content: '<p>Look around the clearing.</p>', completionContent: '', answerType: 'text', autoValidate: false, correctAnswer: [], points: 10, locationBound: false, tagIds: [], unlocksBaseIds: [], createdAt: '2026-01-01' } as Record<string, unknown>,
-    document: { id: 'd1', orgId: null, gameId: 'g', folderId: null, type: 'document', name: 'Safety briefing', contentType: 'text/html', content: '<p>Stay on the marked paths.</p>', sizeBytes: 31, sharedWithPlayers: false, downloadUrl: null, createdBy: 'u', createdByName: 'Organizer', createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-01T10:00:00Z' } as Record<string, unknown>,
+    document: { id: 'd1', orgId: null, gameId: 'g', folderId: null, type: 'document', name: 'Safety briefing', contentType: 'text/html', content: '<p>Stay on the marked paths.</p><ul><li>Water</li><li>Sun cream</li></ul>', sizeBytes: 31, sharedWithPlayers: false, downloadUrl: null, createdBy: 'u', createdByName: 'Organizer', createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-01T10:00:00Z' } as Record<string, unknown>,
     documentSaves: [] as Array<Record<string, unknown>>,
   }
   const base = { id: 'b1', gameId: 'g', name: 'Clearing', description: '', lat: 40.09, lng: -8.87, nfcLinked: true, nfcToken: 'tok1', hidden: false, fixedChallengeId: 'c1', checkInMethod: 'NFC', checkInRadiusM: null, tagIds: [] }
@@ -101,12 +101,20 @@ test('a document opens to be read, then edits and saves back to reading', async 
   await expect(viewer.getByText('Stay on the marked paths.')).toBeVisible()
   await expect(viewer.getByTestId('resource-viewer-title-input')).toHaveCount(0)
   await page.screenshot({ path: `test-results/${info.project.name}-document-viewer.png` })
+  // Opening the editor is not an edit, even though it rewrites lists into its own shape.
+  await viewer.getByTestId('resource-viewer-edit').click()
+  await expect(viewer.locator('.ProseMirror')).toBeVisible()
+  await page.waitForTimeout(300)
+  await expect(viewer.getByTestId('resource-viewer-save-status')).toHaveCount(0)
+  await viewer.getByTestId('resource-viewer-cancel').click()
+  await expect(viewer.getByTestId('resource-viewer-discard')).toHaveCount(0)
+  await expect(viewer.getByTestId('resource-viewer-edit')).toBeVisible()
   await viewer.getByTestId('resource-viewer-edit').click()
   await viewer.getByTestId('resource-viewer-title-input').fill('Safety briefing v2')
   await viewer.getByTestId('resource-viewer-save').click()
   await expect(viewer.getByTestId('resource-viewer-title-input')).toHaveCount(0)
   await expect(viewer.getByRole('heading', { name: 'Safety briefing v2' })).toBeVisible()
-  expect(state.documentSaves).toEqual([expect.objectContaining({ name: 'Safety briefing v2', content: '<p>Stay on the marked paths.</p>' })])
+  expect(state.documentSaves).toEqual([expect.objectContaining({ name: 'Safety briefing v2' })])
 })
 
 test('Results open from Monitor and return to it', async ({ page }) => {
